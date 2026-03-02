@@ -37,6 +37,30 @@ async def riverside_dashboard(
     )
 
 
+@router.get("/partials/riverside-badge", response_class=HTMLResponse)
+async def riverside_badge(
+    request: Request,
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """HTMX partial for Riverside navigation badge.
+
+    Returns a badge showing critical alerts count if any exist.
+    Used in the main navigation to alert users to critical gaps.
+    """
+    authz.ensure_at_least_one_tenant()
+    service = RiversideService(db)
+    summary = service.get_riverside_summary()
+
+    return templates.TemplateResponse(
+        "components/riverside_badge.html",
+        {
+            "request": request,
+            "total_critical_gaps": summary.get("total_critical_gaps", 0),
+        },
+    )
+
+
 # ============================================================================
 # API Routes
 # ============================================================================
