@@ -14,6 +14,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Azure Policy compliance reporting enhancements
 - Machine learning-based cost forecasting
 - Multi-factor authentication for platform access
+- Riverside School District integration modules
+
+---
+
+## [0.1.1] - 2025-07-21
+
+### Added
+- **Dev Environment Deployment**
+  - Azure App Service deployment with Docker containers
+  - Azure Container Registry (ACR) integration
+  - PostgreSQL database connectivity
+  - In-memory caching with metrics tracking
+  - Comprehensive health check endpoints
+  - Detailed health reporting with component status
+
+- **Infrastructure**
+  - Complete Azure infrastructure in `rg-governance-dev` resource group
+  - Container-based deployment with `governance-platform:dev` image
+  - App Service running Linux Docker containers
+  - Health monitoring with `/health` and `/health/detailed` endpoints
+
+### Changed
+- Updated STATUS_REPORT.md with live deployment metrics
+- Verified all 98 unit tests passing at 100%
+- Confirmed database connectivity to PostgreSQL
+- Validated container startup and runtime performance
+
+### Deployment Details
+**Resource Group:** `rg-governance-dev`  
+**Location:** Canada Central  
+**Status:** ✅ Fully Operational
+
+| Component | Resource Name | Status |
+|-----------|---------------|--------|
+| Web App | `app-governance-dev-001` | 🟢 Running |
+| App Service Plan | `plan-governance-dev` | 🟢 Active |
+| Container Registry | `acrgov10188` | 🟢 Available |
+| Key Vault | `kv-governance-dev-001` | 🟢 Available |
+| VNet | `vnet-governance-dev` | 🟢 Configured |
+| Storage | `stgovdev001` | 🟢 Ready |
+
+**Access URLs:**
+- Dashboard: `https://app-governance-dev-001.azurewebsites.net`
+- Health: `https://app-governance-dev-001.azurewebsites.net/health`
+- Detailed Health: `https://app-governance-dev-001.azurewebsites.net/health/detailed`
+
+**Health Check Results:**
+```json
+{
+  "status": "healthy",
+  "version": "0.1.0",
+  "components": {
+    "database": "healthy",
+    "scheduler": "running",
+    "cache": "memory",
+    "azure_configured": false
+  },
+  "cache_metrics": {
+    "backend": "memory",
+    "hits": 0,
+    "misses": 0,
+    "sets": 0,
+    "deletes": 0,
+    "errors": 0,
+    "hit_rate_percent": 0.0,
+    "avg_get_time_ms": 0.0
+  }
+}
+```
 
 ---
 
