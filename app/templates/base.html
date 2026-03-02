@@ -83,35 +83,125 @@
     <!-- Riverside Custom Styles -->
     <link rel="stylesheet" href="/static/css/riverside.css">
     
+    <!-- HTMX Navigation Styles -->
     <style>
-        [x-cloak] { display: none !important; }
+        /* HTMX Indicator States */
         .htmx-indicator { display: none; }
         .htmx-request .htmx-indicator { display: inline-block; }
         .htmx-request.htmx-indicator { display: inline-block; }
+        
+        /* Requesting state for elements */
+        .htmx-requesting {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        /* Progress bar styles */
+        #htmx-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: #0053e2;
+            width: 0%;
+            z-index: 9999;
+            transition: width 200ms ease-out;
+            box-shadow: 0 0 10px #0053e2;
+        }
+        
+        /* Smooth page transitions for hx-boost */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 150ms ease-out;
+        }
+        
+        /* Active navigation item */
+        .nav-active {
+            background-color: #004ac9 !important;
+            color: white !important;
+        }
+        
+        /* Screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* No-JS fallback styles */
+        .no-js .htmx-indicator,
+        .no-js [hx-boost] {
+            display: block !important;
+            opacity: 1 !important;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-wm-gray-5 text-wm-gray-160 min-h-screen">
+<body class="bg-wm-gray-5 text-wm-gray-160 min-h-screen" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
+    <!-- HTMX Progress Bar -->
+    <div id="htmx-progress-bar" aria-hidden="true"></div>
+    
+    <!-- Screen Reader Announcer -->
+    <div id="page-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    
     <!-- Navigation -->
-    <nav class="bg-wm-blue-100 text-white shadow-lg">
+    <nav class="bg-wm-blue-100 text-white shadow-lg" role="navigation" aria-label="Main navigation">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <span class="text-2xl font-bold">Azure Governance</span>
+                        <a href="/" class="text-2xl font-bold hover:opacity-90 transition-opacity" aria-label="Azure Governance Home">
+                            Azure Governance
+                        </a>
                     </div>
                     <div class="hidden md:block ml-10">
-                        <div class="flex items-baseline space-x-4">
-                            <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_dashboard %}{% endblock %}">Dashboard</a>
-                            <a href="/sync-dashboard" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_sync_dashboard %}{% endblock %}">Sync Status</a>
-                            <a href="/api/v1/preflight" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_preflight %}{% endblock %}">Preflight</a>
-                            <a href="/costs" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_costs %}{% endblock %}">Costs</a>
-                            <a href="/compliance" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_compliance %}{% endblock %}">Compliance</a>
-                            <a href="/resources" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_resources %}{% endblock %}">Resources</a>
-                            <a href="/identity" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_identity %}{% endblock %}">Identity</a>
-                            <a href="/riverside" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_riverside %}{% endblock %} flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-baseline space-x-1">
+                            <a href="/" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_dashboard %}{% endblock %}" 
+                               data-nav-path="/">
+                                Dashboard
+                            </a>
+                            <a href="/sync-dashboard" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_sync_dashboard %}{% endblock %}" 
+                               data-nav-path="/sync-dashboard">
+                                Sync Status
+                            </a>
+                            <a href="/api/v1/preflight" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_preflight %}{% endblock %}" 
+                               data-nav-path="/api/v1/preflight">
+                                Preflight
+                            </a>
+                            <a href="/costs" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_costs %}{% endblock %}" 
+                               data-nav-path="/costs">
+                                Costs
+                            </a>
+                            <a href="/compliance" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_compliance %}{% endblock %}" 
+                               data-nav-path="/compliance">
+                                Compliance
+                            </a>
+                            <a href="/resources" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_resources %}{% endblock %}" 
+                               data-nav-path="/resources">
+                                Resources
+                            </a>
+                            <a href="/identity" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_identity %}{% endblock %}" 
+                               data-nav-path="/identity">
+                                Identity
+                            </a>
+                            <a href="/riverside" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 transition-colors {% block nav_riverside %}{% endblock %} flex items-center gap-2" 
+                               data-nav-path="/riverside">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
                                 <span>Riverside</span>
@@ -119,14 +209,23 @@
                                       hx-get="/partials/riverside-badge"
                                       hx-trigger="load, every 60s"
                                       hx-target="#riverside-badge"
-                                      hx-swap="innerHTML">
+                                      hx-swap="innerHTML"
+                                      class="ml-1">
                                 </span>
                             </a>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center">
-                    <span class="text-sm text-wm-blue-50">4 Tenants Connected</span>
+                <div class="flex items-center gap-4">
+                    <!-- Loading indicator for navigation actions -->
+                    <div id="nav-loading-indicator" class="htmx-indicator flex items-center gap-2 text-wm-blue-50 text-sm">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="sr-only">Loading</span>
+                    </div>
+                    <span class="text-sm text-wm-blue-50" aria-label="4 tenants connected">4 Tenants Connected</span>
                 </div>
             </div>
         </div>
@@ -148,5 +247,15 @@
     </footer>
 
     {% block extra_scripts %}{% endblock %}
+    
+    <!-- HTMX Navigation Enhancement - Modular -->
+    <script src="/static/js/navigation/progressBar.js"></script>
+    <script src="/static/js/navigation/toast.js"></script>
+    <script src="/static/js/navigation/navHighlight.js"></script>
+    <script src="/static/js/navigation/confirmDialog.js"></script>
+    <script src="/static/js/navigation/index.js"></script>
+    
+    <!-- Include Loading Component Templates -->
+    {% include 'components/loading.html' %}
 </body>
 </html>

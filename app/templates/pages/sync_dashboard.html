@@ -156,31 +156,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-    // HTMX event handlers for user feedback
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-        // Show success toast on sync trigger
-        if (evt.detail.requestConfig.verb === 'post' && evt.detail.requestConfig.path.includes('/api/v1/sync/')) {
-            if (evt.detail.successful) {
-                // Could add a toast notification here
-                console.log('Sync triggered successfully');
-            }
-        }
-    });
-
-    // Add loading indicators for HTMX requests
-    document.body.addEventListener('htmx:beforeRequest', function(evt) {
-        const trigger = evt.detail.elt;
-        if (trigger && trigger.tagName === 'BUTTON') {
-            trigger.classList.add('opacity-75', 'cursor-wait');
-        }
-    });
-
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-        const trigger = evt.detail.elt;
-        if (trigger && trigger.tagName === 'BUTTON') {
-            trigger.classList.remove('opacity-75', 'cursor-wait');
-        }
-    });
-</script>
+<!-- Sync dashboard specific scripts -->
 {% endblock %}
