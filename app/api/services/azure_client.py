@@ -21,16 +21,13 @@ SECURITY FEATURES:
 """
 
 import logging
-import time
-from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.policyinsights import PolicyInsightsClient
 from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.resource.subscriptions import SubscriptionClient
 from azure.mgmt.security import SecurityCenter
+from azure.mgmt.subscription import SubscriptionClient
 
 from app.core.config import get_settings
 
@@ -101,8 +98,9 @@ class AzureClientManager:
     - Manual cache clearing for security rotations
     """
 
-    # Default credential TTL: 1 hour (3600 seconds)
-    DEFAULT_CREDENTIAL_TTL_SECONDS: int = 3600
+    def __init__(self):
+        self._credentials: dict[str, ClientSecretCredential] = {}
+        self._default_credential: DefaultAzureCredential | None = None
 
     def __init__(self, credential_ttl_seconds: int | None = None) -> None:
         self._credentials: dict[str, CachedCredential] = {}
