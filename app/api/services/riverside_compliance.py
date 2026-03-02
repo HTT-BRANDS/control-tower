@@ -6,6 +6,7 @@ for the Riverside compliance tracking system.
 
 import logging
 from datetime import date
+from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -75,7 +76,7 @@ def calculate_compliance_summary(db: Session) -> dict:
     total_completed = 0
 
     # Maturity distribution counters
-    maturity_distribution = {
+    maturity_distribution: dict[str, int] = {
         "below_2": 0,  # Critical risk
         "2_to_3": 0,   # Needs improvement
         "3_to_4": 0,   # Good
@@ -115,7 +116,7 @@ def calculate_compliance_summary(db: Session) -> dict:
     elif compliance_percentage < 50:
         trend = "declining"
 
-    return {
+    result: dict[str, Any] = {
         "overall_compliance_percentage": round(compliance_percentage, 1),
         "average_maturity_score": round(avg_maturity, 1),
         "weighted_maturity_score": round(avg_maturity, 1),  # Placeholder for future weighting
@@ -126,6 +127,7 @@ def calculate_compliance_summary(db: Session) -> dict:
         "requirements_completed": total_completed,
         "requirements_total": total_requirements,
     }
+    return result
 
 
 def analyze_mfa_gaps(db: Session, tenant_id: str | None = None) -> dict:
@@ -180,8 +182,8 @@ def analyze_mfa_gaps(db: Session, tenant_id: str | None = None) -> dict:
     total_admin_coverage = 0.0
     total_unprotected = 0
     total_users = 0
-    high_risk_tenants: list[dict] = []
-    tenant_breakdown: list[dict] = []
+    high_risk_tenants: list[dict[str, Any]] = []
+    tenant_breakdown: list[dict[str, Any]] = []
 
     for record in mfa_records:
         coverage = record.mfa_coverage_percentage
@@ -231,7 +233,7 @@ def analyze_mfa_gaps(db: Session, tenant_id: str | None = None) -> dict:
             "Consider conditional access policies to enforce MFA for critical applications"
         )
 
-    return {
+    result: dict[str, Any] = {
         "overall_coverage_percentage": round(avg_coverage, 1),
         "admin_coverage_percentage": round(avg_admin_coverage, 1),
         "total_unprotected_users": total_unprotected,
@@ -242,3 +244,4 @@ def analyze_mfa_gaps(db: Session, tenant_id: str | None = None) -> dict:
         "tenant_breakdown": tenant_breakdown,
         "recommendations": recommendations,
     }
+    return result

@@ -7,6 +7,7 @@ metrics, requirement progress tracking, deadline monitoring, and executive summa
 
 import logging
 from datetime import date, timedelta
+from typing import Any
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -127,7 +128,7 @@ def track_requirement_progress(db: Session, requirement_id: int) -> dict:
     if requirement.due_date and requirement.due_date < today:
         blockers.append("Past due date")
 
-    return {
+    result: dict[str, Any] = {
         "requirement_id": requirement_id,
         "requirement_identifier": requirement.requirement_id,
         "title": requirement.title,
@@ -149,6 +150,7 @@ def track_requirement_progress(db: Session, requirement_id: int) -> dict:
         "owner": requirement.owner,
         "has_evidence": bool(requirement.evidence_url),
     }
+    return result
 
 
 def get_deadline_status(db: Session, days_window: int = 30) -> dict:
@@ -259,7 +261,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
     else:
         risk_assessment = "low"
 
-    return {
+    result: dict[str, Any] = {
         "deadline_date": RIVERSIDE_DEADLINE.isoformat(),
         "days_until_deadline": days_until,
         "deadline_status": deadline_status,
@@ -272,6 +274,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
         "completed_requirements": completed_requirements,
         "completion_rate": round(completion_rate * 100, 1),
     }
+    return result
 
 
 def get_riverside_metrics(db: Session) -> dict:
@@ -485,7 +488,7 @@ def get_riverside_metrics(db: Session) -> dict:
     else:
         overall_status = "critical"
 
-    executive_summary = {
+    executive_summary: dict[str, Any] = {
         "overall_status": overall_status,
         "deadline_days_remaining": days_until,
         "key_strengths": [],
@@ -506,7 +509,7 @@ def get_riverside_metrics(db: Session) -> dict:
     if days_until < 180 and completion_rate < 50:
         executive_summary["key_concerns"].append("At risk of missing deadline")
 
-    return {
+    result: dict[str, Any] = {
         "tenant_count": tenant_count,
         "security_posture_score": round(posture_score, 1),
         "maturity_metrics": {
@@ -548,3 +551,4 @@ def get_riverside_metrics(db: Session) -> dict:
         },
         "executive_summary": executive_summary,
     }
+    return result

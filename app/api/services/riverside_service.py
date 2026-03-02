@@ -8,7 +8,7 @@ import logging
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from app.models.riverside import (
@@ -283,7 +283,7 @@ class RiversideService:
                 RiversideRequirement.tenant_id,
                 func.count(RiversideRequirement.id).label("total"),
                 func.sum(
-                    func.case(
+                    case(
                         (RiversideRequirement.status == RequirementStatus.COMPLETED, 1),
                         else_=0,
                     )
@@ -379,7 +379,7 @@ class RiversideService:
                 RiversideRequirement.category,
                 func.count(RiversideRequirement.id).label("total"),
                 func.sum(
-                    func.case(
+                    case(
                         (RiversideRequirement.status == RequirementStatus.COMPLETED, 1),
                         else_=0,
                     )
@@ -400,7 +400,7 @@ class RiversideService:
                 RiversideRequirement.priority,
                 func.count(RiversideRequirement.id).label("total"),
                 func.sum(
-                    func.case(
+                    case(
                         (RiversideRequirement.status == RequirementStatus.COMPLETED, 1),
                         else_=0,
                     )
