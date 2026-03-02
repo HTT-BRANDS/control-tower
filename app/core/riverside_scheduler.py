@@ -7,7 +7,7 @@ Integrates with the notification system for alerting.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -17,9 +17,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.alerts.deadline_alerts import (
+    AlertLevel,
     DeadlineAlert,
     DeadlineTracker,
-    DeadlineTrackingResult,
 )
 from app.core.config import get_settings
 from app.core.database import get_db_context
@@ -68,18 +68,6 @@ class MFAComplianceResult:
     mfa_enrolled_users: int
     admin_accounts_total: int
     admin_accounts_mfa: int
-
-
-@dataclass
-class DeadlineAlert:
-    """Alert for an approaching or overdue requirement deadline."""
-
-    requirement_id: str
-    tenant_id: str
-    title: str
-    days_until_deadline: int
-    is_overdue: bool
-    alert_stage: int | None  # Which threshold (90, 60, 30, 14, 7, 1) triggered this
 
 
 @dataclass
@@ -236,6 +224,7 @@ async def check_requirement_deadlines(
                     tenant_id=req.tenant_id,
                     title=req.title,
                     days_until_deadline=days_until,
+                    alert_level=AlertLevel.CRITICAL,
                     is_overdue=True,
                     alert_stage=None,
                 )
@@ -246,11 +235,21 @@ async def check_requirement_deadlines(
                 )
             elif days_until in DEADLINE_ALERT_INTERVALS:
                 # Approaching deadline at alert interval
+                # Map days to alert level
+                if days_until == 90:
+                    alert_level = AlertLevel.INFO
+                elif days_until == 60:
+                    alert_level = AlertLevel.WARNING
+                elif days_until == 30:
+                    alert_level = AlertLevel.HIGH
+                else:  # 14, 7, 1
+                    alert_level = AlertLevel.CRITICAL
                 alert = DeadlineAlert(
                     requirement_id=req.requirement_id,
                     tenant_id=req.tenant_id,
                     title=req.title,
                     days_until_deadline=days_until,
+                    alert_level=alert_level,
                     is_overdue=False,
                     alert_stage=days_until,
                 )

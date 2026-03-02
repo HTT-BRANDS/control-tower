@@ -2,7 +2,7 @@
 
 Provides automated deadline monitoring with escalating alert levels:
 - INFO: 90 days before deadline
-- WARNING: 60 days before deadline  
+- WARNING: 60 days before deadline
 - HIGH: 30 days before deadline
 - CRITICAL: 14, 7, 1 days before deadline and overdue
 
@@ -12,8 +12,8 @@ to track requirement statuses across tenants.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
-from enum import Enum
+from datetime import date, datetime
+from enum import StrEnum
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-class AlertLevel(str, Enum):
+class AlertLevel(StrEnum):
     """Alert severity levels for deadline tracking.
-    
+
     Escalating levels based on days until deadline:
     - INFO: Early warning (90 days)
     - WARNING: Approaching deadline (60 days)
@@ -74,7 +74,7 @@ DEFAULT_DEADLINE = date(2026, 7, 8)
 @dataclass
 class DeadlineAlert:
     """Alert for an approaching or overdue requirement deadline.
-    
+
     Attributes:
         requirement_id: Unique identifier for the requirement
         tenant_id: Tenant identifier
@@ -98,7 +98,7 @@ class DeadlineAlert:
 @dataclass
 class DeadlineTrackingResult:
     """Result of deadline tracking check.
-    
+
     Attributes:
         alerts: List of deadline alerts generated
         info_count: Number of INFO level alerts
@@ -119,11 +119,11 @@ class DeadlineTrackingResult:
 
 class DeadlineTracker:
     """Tracks Riverside compliance requirement deadlines and generates alerts.
-    
+
     Monitors requirements across tenants and generates escalating alerts as
     deadlines approach. Supports configurable deadline dates and alert
     schedules with notification integration.
-    
+
     Example:
         >>> tracker = DeadlineTracker()
         >>> result = await tracker.track_requirement_deadlines()
@@ -136,7 +136,7 @@ class DeadlineTracker:
         alert_schedule: dict[int, AlertLevel] | None = None,
     ):
         """Initialize deadline tracker.
-        
+
         Args:
             target_deadline: Target deadline date (defaults to July 8, 2026)
             alert_schedule: Custom alert schedule mapping days to alert levels
@@ -150,18 +150,18 @@ class DeadlineTracker:
         db: Session | None = None,
     ) -> DeadlineTrackingResult:
         """Query riverside_requirements and track deadlines.
-        
+
         Queries incomplete requirements with due dates and generates
         alerts based on days until deadline using the configured
         alert schedule.
-        
+
         Args:
             db: Optional database session. If not provided, a new session
                 will be created using get_db_context().
-                
+
         Returns:
             DeadlineTrackingResult containing all generated alerts.
-            
+
         Raises:
             Exception: If database query fails.
         """
@@ -217,11 +217,11 @@ class DeadlineTracker:
         today: date,
     ) -> DeadlineAlert | None:
         """Evaluate a single requirement for deadline alerts.
-        
+
         Args:
             req: The requirement to evaluate
             today: Current date for comparison
-            
+
         Returns:
             DeadlineAlert if an alert should be generated, None otherwise
         """
@@ -260,7 +260,7 @@ class DeadlineTracker:
 
     def _update_counts(self, result: DeadlineTrackingResult, alert: DeadlineAlert) -> None:
         """Update alert counts based on alert level.
-        
+
         Args:
             result: Result object to update
             alert: Alert that was generated
@@ -283,13 +283,13 @@ class DeadlineTracker:
         today: date | None = None,
     ) -> list[DeadlineAlert]:
         """Calculate WARNING level alerts (60 days) for requirements.
-        
+
         Filters requirements that are at the warning threshold.
-        
+
         Args:
             requirements: List of requirements to check
             today: Optional date to use (defaults to today)
-            
+
         Returns:
             List of WARNING level deadline alerts
         """
@@ -321,11 +321,11 @@ class DeadlineTracker:
         today: date | None = None,
     ) -> list[DeadlineAlert]:
         """Calculate CRITICAL level alerts (14, 7, 1 days, overdue) for requirements.
-        
+
         Args:
             requirements: List of requirements to check
             today: Optional date to use (defaults to today)
-            
+
         Returns:
             List of CRITICAL level deadline alerts
         """
@@ -371,13 +371,13 @@ class DeadlineTracker:
         alert: DeadlineAlert,
     ) -> dict[str, Any]:
         """Send deadline notification for a single alert.
-        
+
         Creates and sends a notification for the given deadline alert,
         respecting deduplication rules.
-        
+
         Args:
             alert: The deadline alert to notify about
-            
+
         Returns:
             Dict with notification result details
         """
@@ -451,10 +451,10 @@ class DeadlineTracker:
         alerts: list[DeadlineAlert],
     ) -> list[dict[str, Any]]:
         """Send notifications for multiple deadline alerts.
-        
+
         Args:
             alerts: List of deadline alerts to notify about
-            
+
         Returns:
             List of notification results
         """
@@ -473,10 +473,10 @@ class DeadlineTracker:
 
     def _build_alert_key(self, alert: DeadlineAlert) -> str:
         """Build unique key for alert deduplication.
-        
+
         Args:
             alert: The alert to build key for
-            
+
         Returns:
             Unique alert key string
         """
@@ -492,10 +492,10 @@ async def check_deadlines_with_tracker(
     db: Session | None = None,
 ) -> DeadlineTrackingResult:
     """Convenience function to check deadlines using DeadlineTracker.
-    
+
     Args:
         db: Optional database session
-        
+
     Returns:
         DeadlineTrackingResult with all alerts
     """
@@ -507,10 +507,10 @@ async def send_deadline_alerts_from_tracker(
     alerts: list[DeadlineAlert],
 ) -> list[dict[str, Any]]:
     """Convenience function to send alerts using DeadlineTracker.
-    
+
     Args:
         alerts: List of alerts to send
-        
+
     Returns:
         List of notification results
     """
@@ -522,10 +522,10 @@ async def track_requirement_deadlines(
     db: Session | None = None,
 ) -> DeadlineTrackingResult:
     """Convenience function to track deadlines.
-    
+
     Args:
         db: Optional database session
-        
+
     Returns:
         DeadlineTrackingResult with all alerts
     """
@@ -537,10 +537,10 @@ async def trigger_deadline_alert(
     alert: DeadlineAlert,
 ) -> dict[str, Any]:
     """Convenience function to trigger a single deadline alert.
-    
+
     Args:
         alert: The deadline alert to trigger
-        
+
     Returns:
         Notification result dict
     """
@@ -553,11 +553,11 @@ def calculate_deadline_warnings(
     today: date | None = None,
 ) -> list[DeadlineAlert]:
     """Convenience function to calculate warning alerts.
-    
+
     Args:
         requirements: List of requirements to check
         today: Optional date (defaults to today)
-        
+
     Returns:
         List of WARNING level deadline alerts
     """
@@ -570,11 +570,11 @@ def calculate_critical_alerts(
     today: date | None = None,
 ) -> list[DeadlineAlert]:
     """Convenience function to calculate critical alerts.
-    
+
     Args:
         requirements: List of requirements to check
         today: Optional date (defaults to today)
-        
+
     Returns:
         List of CRITICAL level deadline alerts
     """
