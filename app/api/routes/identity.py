@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.services.azure_ad_admin_service import azure_ad_admin_service
 from app.api.services.identity_service import IdentityService
 from app.core.auth import User, get_current_user
 from app.core.authorization import (
@@ -198,3 +199,194 @@ async def get_identity_trends(
 
     service = IdentityService(db)
     return service.get_identity_trends(tenant_ids=filtered_tenant_ids, days=days)
+
+
+# ============================================================================
+# Admin Role and Privileged Access Endpoints
+# ============================================================================
+
+@router.get("/admin-roles/summary")
+async def get_admin_roles_summary(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    use_cache: bool = Query(default=True, description="Use cached data if available"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get comprehensive admin role summary for a tenant.
+
+    Returns statistics on:
+    - Total directory roles
+    - Total role assignments
+    - Global admin count
+    - Security admin count
+    - Privileged role admin count
+    - Other admin count
+    - Service principals with admin roles
+    - PIM assignments
+
+    Args:
+        tenant_id: The Azure tenant ID to query
+        use_cache: Whether to use cached data
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        summary = await azure_ad_admin_service.get_admin_role_summary(
+            tenant_id=tenant_id,
+            use_cache=use_cache,
+        )
+        return summary.__dict__
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get admin roles summary: {e}",
+        )
+
+
+@router.get("/admin-roles/privileged-users")
+async def get_privileged_users_admin_roles(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    include_pim: bool = Query(default=True, description="Include PIM eligible/active assignments"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get all privileged users with their admin role assignments.
+
+    Returns users with directory roles including:
+    - Global Administrators
+    - Security Administrators
+    - Privileged Role Administrators
+    - Other admin roles
+
+    Args:
+        tenant_id: The Azure tenant ID to query
+        include_pim: Whether to include PIM assignments
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        users = await azure_ad_admin_service.get_privileged_users(
+            tenant_id=tenant_id,
+            include_pim=include_pim,
+        )
+        return {
+            "tenant_id": tenant_id,
+            "count": len(users),
+            "users": users,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get privileged users: {e}",
+        )
+
+
+@router.get("/admin-roles/global-admins")
+async def get_global_admins(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get all Global Administrators.
+
+    Args:
+        tenant_id: The Azure tenant ID to query
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        admins = await azure_ad_admin_service.get_global_admins(tenant_id=tenant_id)
+        return {
+            "tenant_id": tenant_id,
+            "count": len(admins),
+            "admins": admins,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get global admins: {e}",
+        )
+
+
+@router.get("/admin-roles/security-admins")
+async def get_security_admins(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get all Security Administrators.
+
+    Args:
+        tenant_id: The Azure tenant ID to query
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        admins = await azure_ad_admin_service.get_security_admins(tenant_id=tenant_id)
+        return {
+            "tenant_id": tenant_id,
+            "count": len(admins),
+            "admins": admins,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get security admins: {e}",
+        )
+
+
+@router.get("/admin-roles/service-principals")
+async def get_privileged_service_principals(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get service principals with admin role assignments.
+
+    Args:
+        tenant_id: The Azure tenant ID to query
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        sps = await azure_ad_admin_service.get_privileged_service_principals(
+            tenant_id=tenant_id
+        )
+        return {
+            "tenant_id": tenant_id,
+            "count": len(sps),
+            "service_principals": sps,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get privileged service principals: {e}",
+        )
+
+
+@router.post("/admin-roles/cache/invalidate")
+async def invalidate_admin_roles_cache(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    data_type: str | None = Query(default=None, description="Specific data type to invalidate"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Invalidate cached admin role data for a tenant.
+
+    Use this endpoint to force a refresh of admin role data.
+
+    Args:
+        tenant_id: The Azure tenant ID
+        data_type: Optional specific data type to invalidate (roles, assignments, pim, summary)
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    count = await azure_ad_admin_service.invalidate_cache(
+        tenant_id=tenant_id,
+        data_type=data_type,
+    )
+    return {
+        "tenant_id": tenant_id,
+        "data_type": data_type,
+        "cache_entries_invalidated": count,
+    }
