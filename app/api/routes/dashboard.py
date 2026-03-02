@@ -19,6 +19,7 @@ from app.core.authorization import (
     get_user_tenants,
 )
 from app.core.database import get_db
+from app.core.tenant_context import get_brand_context_for_request
 from app.models.monitoring import Alert, SyncJobLog
 from app.models.tenant import Tenant
 
@@ -78,12 +79,14 @@ async def dashboard(
 ):
     """Main dashboard page."""
     data = await _get_dashboard_data(db, authz)
+    brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {
             "request": request,
             **data,
+            **brand_context,
         },
     )
 
@@ -96,12 +99,14 @@ async def dashboard_page(
 ):
     """Main dashboard view - alias for root."""
     data = await _get_dashboard_data(db, authz)
+    brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
         "pages/dashboard.html",
         {
             "request": request,
             **data,
+            **brand_context,
         },
     )
 

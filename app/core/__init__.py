@@ -52,6 +52,19 @@ from app.core.rate_limit import (
     rate_limiter,
 )
 from app.core.scheduler import get_scheduler, init_scheduler, trigger_manual_sync
+from app.core.tenant_context import (
+    BrandColors,
+    DEFAULT_BRAND,
+    get_all_brand_palettes,
+    get_brand_colors,
+    get_brand_colors_by_code,
+    get_brand_context_for_request,
+    get_brand_css_variables,
+    get_template_context,
+    get_tenant_brand_from_request,
+    register_template_filters,
+    TenantContextMiddleware,
+)
 
 __all__ = [
     # Config
@@ -106,4 +119,16 @@ __all__ = [
     "severity_meets_threshold",
     "create_dashboard_url",
     "create_retry_url",
+    # Tenant Context
+    "BrandColors",
+    "DEFAULT_BRAND",
+    "TenantContextMiddleware",
+    "get_brand_colors",
+    "get_brand_colors_by_code",
+    "get_all_brand_palettes",
+    "get_tenant_brand_from_request",
+    "get_brand_css_variables",
+    "get_template_context",
+    "get_brand_context_for_request",
+    "register_template_filters",
 ]

@@ -16,6 +16,7 @@ from app.core.authorization import (
     get_tenant_authorization,
 )
 from app.core.database import get_db
+from app.core.tenant_context import get_brand_context_for_request
 
 router = APIRouter(
     tags=["riverside"],
@@ -31,9 +32,10 @@ async def riverside_dashboard(
     current_user: User = Depends(get_current_user),
 ):
     """Riverside compliance dashboard page."""
+    brand_context = get_brand_context_for_request(request)
     return templates.TemplateResponse(
         "pages/riverside_dashboard.html",
-        {"request": request},
+        {"request": request, **brand_context},
     )
 
 
@@ -51,12 +53,14 @@ async def riverside_badge(
     authz.ensure_at_least_one_tenant()
     service = RiversideService(db)
     summary = service.get_riverside_summary()
+    brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
         "components/riverside_badge.html",
         {
             "request": request,
             "total_critical_gaps": summary.get("total_critical_gaps", 0),
+            **brand_context,
         },
     )
 

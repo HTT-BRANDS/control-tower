@@ -22,6 +22,7 @@ from app.core.authorization import (
 from app.core.database import get_db
 from app.core.rate_limit import rate_limit
 from app.core.scheduler import get_scheduler, trigger_manual_sync
+from app.core.tenant_context import get_brand_context_for_request
 
 router = APIRouter(
     prefix="/api/v1/sync",
@@ -263,6 +264,7 @@ async def sync_status_partial(
     monitoring = MonitoringService(db)
     status = monitoring.get_overall_status()
     metrics = monitoring.get_metrics()
+    brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
         "components/sync_status.html",
@@ -270,6 +272,7 @@ async def sync_status_partial(
             "request": request,
             "status": status,
             "metrics": metrics,
+            **brand_context,
         },
     )
 
@@ -284,6 +287,7 @@ async def sync_alerts_partial(
     monitoring = MonitoringService(db)
     alerts = monitoring.get_active_alerts()[:10]  # Limit to 10 most recent
     stats = monitoring.get_alert_stats()
+    brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
         "components/sync_alerts.html",
@@ -291,5 +295,6 @@ async def sync_alerts_partial(
             "request": request,
             "alerts": alerts,
             "stats": stats,
+            **brand_context,
         },
     )
