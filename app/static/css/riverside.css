@@ -1,0 +1,1038 @@
+/**
+ * Riverside Compliance Dashboard Styles
+ * Tailwind CSS Custom Extensions for Visual Indicators
+ * 
+ * Brand Colors (Walmart):
+ * - Blue: Primary actions, info states (wm-blue-100: #0053e2)
+ * - Spark (Yellow): Warnings, highlights (wm-spark-100: #ffc220)
+ * - Green: Success, complete states (wm-green-100: #2a8703)
+ * - Red: Danger, critical states (wm-red-100: #ea1100)
+ * - Gray: Neutrals, backgrounds (wm-gray-*)
+ */
+
+/* ==========================================================================
+   CSS Custom Properties (Design Tokens)
+   ========================================================================== */
+:root {
+  /* Progress Bar Colors */
+  --rs-progress-bg: #f5f5f5;
+  --rs-progress-green: #2a8703;
+  --rs-progress-yellow: #ffc220;
+  --rs-progress-red: #ea1100;
+  --rs-progress-blue: #0053e2;
+  
+  /* Status Badge Colors */
+  --rs-status-complete-bg: #f0fff0;
+  --rs-status-complete-text: #2a8703;
+  --rs-status-in-progress-bg: #f2f8ff;
+  --rs-status-in-progress-text: #0053e2;
+  --rs-status-pending-bg: #fffbf0;
+  --rs-status-pending-text: #b37f00;
+  --rs-status-blocked-bg: #fff5f5;
+  --rs-status-blocked-text: #ea1100;
+  
+  /* MFA Coverage Colors */
+  --rs-mfa-good: #2a8703;
+  --rs-mfa-fair: #ffc220;
+  --rs-mfa-poor: #ea1100;
+  
+  /* Alert Colors */
+  --rs-alert-critical-bg: #fff5f5;
+  --rs-alert-critical-border: #ea1100;
+  --rs-alert-warning-bg: #fffbf0;
+  --rs-alert-warning-border: #ffc220;
+  --rs-alert-info-bg: #f2f8ff;
+  --rs-alert-info-border: #0053e2;
+  
+  /* Deadline Countdown */
+  --rs-countdown-urgent: #ea1100;
+  --rs-countdown-warning: #ffc220;
+  --rs-countdown-safe: #2a8703;
+  
+  /* Animation Durations */
+  --rs-transition-fast: 150ms;
+  --rs-transition-normal: 300ms;
+  --rs-transition-slow: 500ms;
+}
+
+/* ==========================================================================
+   Compliance Progress Bars
+   ========================================================================== */
+
+/* Base Progress Bar Container */
+.rs-progress-bar {
+  width: 100%;
+  height: 0.75rem;
+  background-color: var(--rs-progress-bg);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.rs-progress-bar.rs-progress-sm {
+  height: 0.5rem;
+}
+
+.rs-progress-bar.rs-progress-lg {
+  height: 1rem;
+}
+
+.rs-progress-bar.rs-progress-xl {
+  height: 1.5rem;
+}
+
+/* Progress Fill */
+.rs-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width var(--rs-transition-slow) ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Color Variants */
+.rs-progress-fill.rs-progress-green {
+  background: linear-gradient(90deg, #1a5902 0%, #2a8703 50%, #5cd65c 100%);
+}
+
+.rs-progress-fill.rs-progress-yellow {
+  background: linear-gradient(90deg, #b37f00 0%, #ffc220 50%, #ffd966 100%);
+}
+
+.rs-progress-fill.rs-progress-red {
+  background: linear-gradient(90deg, #a00c00 0%, #ea1100 50%, #ff7a7a 100%);
+}
+
+.rs-progress-fill.rs-progress-blue {
+  background: linear-gradient(90deg, #003999 0%, #0053e2 50%, #74a8ff 100%);
+}
+
+/* Striped Animation for In-Progress */
+.rs-progress-fill.rs-progress-striped {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: rs-progress-stripes 1s linear infinite;
+}
+
+@keyframes rs-progress-stripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 1rem 0; }
+}
+
+/* Pulse Animation for Critical */
+.rs-progress-fill.rs-progress-pulse {
+  animation: rs-progress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rs-progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Progress with Label */
+.rs-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.rs-progress-label-text {
+  font-weight: 500;
+  color: #212121;
+}
+
+.rs-progress-label-value {
+  font-weight: 600;
+  color: #616161;
+}
+
+/* ==========================================================================
+   Status Badges
+   ========================================================================== */
+
+.rs-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.rs-status-badge::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Status Variants */
+.rs-status-badge.rs-status-complete {
+  background-color: var(--rs-status-complete-bg);
+  color: var(--rs-status-complete-text);
+}
+
+.rs-status-badge.rs-status-complete::before {
+  background-color: var(--rs-status-complete-text);
+}
+
+.rs-status-badge.rs-status-in-progress {
+  background-color: var(--rs-status-in-progress-bg);
+  color: var(--rs-status-in-progress-text);
+}
+
+.rs-status-badge.rs-status-in-progress::before {
+  background-color: var(--rs-status-in-progress-text);
+  animation: rs-status-pulse 2s infinite;
+}
+
+.rs-status-badge.rs-status-pending {
+  background-color: var(--rs-status-pending-bg);
+  color: var(--rs-status-pending-text);
+}
+
+.rs-status-badge.rs-status-pending::before {
+  background-color: var(--rs-status-pending-text);
+}
+
+.rs-status-badge.rs-status-blocked {
+  background-color: var(--rs-status-blocked-bg);
+  color: var(--rs-status-blocked-text);
+}
+
+.rs-status-badge.rs-status-blocked::before {
+  background-color: var(--rs-status-blocked-text);
+}
+
+/* Priority Badges */
+.rs-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.25rem;
+}
+
+.rs-priority-badge.rs-priority-p0 {
+  background-color: #ea1100;
+  color: white;
+}
+
+.rs-priority-badge.rs-priority-p1 {
+  background-color: #ffc220;
+  color: #212121;
+}
+
+.rs-priority-badge.rs-priority-p2 {
+  background-color: #0053e2;
+  color: white;
+}
+
+@keyframes rs-status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   MFA Enrollment Indicators
+   ========================================================================== */
+
+/* MFA Coverage Bar Container */
+.rs-mfa-coverage {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  transition: background-color var(--rs-transition-fast);
+}
+
+.rs-mfa-coverage:hover {
+  background-color: #fafafa;
+}
+
+.rs-mfa-tenant-name {
+  width: 8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #212121;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rs-mfa-progress-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-mfa-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.rs-mfa-progress-header-count {
+  color: #9e9e9e;
+}
+
+.rs-mfa-progress-header-percent {
+  font-weight: 600;
+}
+
+.rs-mfa-progress-header-percent.rs-mfa-good {
+  color: var(--rs-mfa-good);
+}
+
+.rs-mfa-progress-header-percent.rs-mfa-fair {
+  color: #b37f00;
+}
+
+.rs-mfa-progress-header-percent.rs-mfa-poor {
+  color: var(--rs-mfa-poor);
+}
+
+/* MFA Status Badge */
+.rs-mfa-status {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.rs-mfa-status.rs-mfa-good {
+  background-color: #f0fff0;
+  color: var(--rs-mfa-good);
+}
+
+.rs-mfa-status.rs-mfa-fair {
+  background-color: #fff5d6;
+  color: #b37f00;
+}
+
+.rs-mfa-status.rs-mfa-poor {
+  background-color: #ffe5e5;
+  color: var(--rs-mfa-poor);
+}
+
+/* MFA Summary Card */
+.rs-mfa-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f2f8ff 0%, #e5f1ff 100%);
+  border-radius: 0.5rem;
+  border: 1px solid #74a8ff;
+}
+
+.rs-mfa-summary-label {
+  font-size: 0.875rem;
+  color: #616161;
+}
+
+.rs-mfa-summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0053e2;
+}
+
+/* ==========================================================================
+   Maturity Score Visualizations
+   ========================================================================== */
+
+/* Maturity Gauge Container */
+.rs-maturity-gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #fafafa;
+  border-radius: 0.75rem;
+  transition: transform var(--rs-transition-fast), box-shadow var(--rs-transition-fast);
+}
+
+.rs-maturity-gauge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Circular Gauge SVG */
+.rs-gauge-svg {
+  width: 8rem;
+  height: 8rem;
+  transform: rotate(-90deg);
+}
+
+.rs-gauge-track {
+  fill: none;
+  stroke: #e5e7eb;
+  stroke-width: 8;
+}
+
+.rs-gauge-progress {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--rs-transition-slow) ease;
+}
+
+.rs-gauge-progress.rs-gauge-green {
+  stroke: var(--rs-progress-green);
+}
+
+.rs-gauge-progress.rs-gauge-yellow {
+  stroke: var(--rs-progress-yellow);
+}
+
+.rs-gauge-progress.rs-gauge-red {
+  stroke: var(--rs-progress-red);
+}
+
+.rs-gauge-progress.rs-gauge-blue {
+  stroke: var(--rs-progress-blue);
+}
+
+/* Gauge Value Display */
+.rs-gauge-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #212121;
+}
+
+.rs-gauge-value::after {
+  content: '/5.0';
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #9e9e9e;
+  margin-left: 0.25rem;
+}
+
+/* Gauge Label */
+.rs-gauge-label {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #212121;
+  text-align: center;
+}
+
+.rs-gauge-target {
+  font-size: 0.75rem;
+  color: #9e9e9e;
+  margin-top: 0.25rem;
+}
+
+/* Maturity Progress Bar */
+.rs-maturity-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  margin-top: 0.75rem;
+  overflow: hidden;
+}
+
+.rs-maturity-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width var(--rs-transition-slow) ease;
+}
+
+/* ==========================================================================
+   Critical Alert Styling
+   ========================================================================== */
+
+/* Critical Alert Banner */
+.rs-alert-banner {
+  position: relative;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.rs-alert-banner.rs-alert-critical {
+  background-color: var(--rs-alert-critical-bg);
+  border-left-color: var(--rs-alert-critical-border);
+}
+
+.rs-alert-banner.rs-alert-warning {
+  background-color: var(--rs-alert-warning-bg);
+  border-left-color: var(--rs-alert-warning-border);
+}
+
+.rs-alert-banner.rs-alert-info {
+  background-color: var(--rs-alert-info-bg);
+  border-left-color: var(--rs-alert-info-border);
+}
+
+.rs-alert-banner.rs-alert-success {
+  background-color: #f0fff0;
+  border-left-color: #2a8703;
+}
+
+/* Alert Icon */
+.rs-alert-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.rs-alert-banner.rs-alert-critical .rs-alert-icon {
+  color: var(--rs-alert-critical-border);
+}
+
+.rs-alert-banner.rs-alert-warning .rs-alert-icon {
+  color: var(--rs-alert-warning-border);
+}
+
+.rs-alert-banner.rs-alert-info .rs-alert-icon {
+  color: var(--rs-alert-info-border);
+}
+
+.rs-alert-banner.rs-alert-success .rs-alert-icon {
+  color: #2a8703;
+}
+
+/* Alert Content */
+.rs-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-alert-title {
+  font-weight: 600;
+  color: #212121;
+  margin-bottom: 0.25rem;
+}
+
+.rs-alert-message {
+  font-size: 0.875rem;
+  color: #616161;
+}
+
+/* Critical Alert Panel */
+.rs-critical-panel {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ea1100;
+  overflow: hidden;
+}
+
+.rs-critical-panel-header {
+  padding: 1rem 1.5rem;
+  background-color: var(--rs-alert-critical-bg);
+  border-bottom: 1px solid #ffe5e5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rs-critical-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ea1100;
+}
+
+.rs-critical-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  background-color: #ea1100;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+/* Alert Row Styling (for tables) */
+.rs-alert-row {
+  background-color: #fff5f5;
+  transition: background-color var(--rs-transition-fast);
+}
+
+.rs-alert-row:hover {
+  background-color: #ffe5e5;
+}
+
+.rs-alert-row-overdue {
+  background-color: #ffe5e5;
+}
+
+/* ==========================================================================
+   Deadline Countdown Styling
+   ========================================================================== */
+
+/* Countdown Container */
+.rs-countdown {
+  background: linear-gradient(135deg, #0053e2 0%, #003999 100%);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.rs-countdown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top right, rgba(116, 168, 255, 0.3) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Countdown Header */
+.rs-countdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .rs-countdown-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.rs-countdown-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.rs-countdown-subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Financial Risk Badge */
+.rs-countdown-risk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #ea1100;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Countdown Digits Grid */
+.rs-countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .rs-countdown-grid {
+    gap: 1rem;
+  }
+}
+
+/* Countdown Item */
+.rs-countdown-item {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (min-width: 768px) {
+  .rs-countdown-item {
+    padding: 1rem;
+  }
+}
+
+.rs-countdown-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .rs-countdown-value {
+    font-size: 2.25rem;
+  }
+}
+
+.rs-countdown-value.rs-countdown-urgent {
+  color: #ffc220;
+  animation: rs-countdown-flash 1s ease-in-out infinite;
+}
+
+.rs-countdown-value.rs-countdown-critical {
+  color: #ff7a7a;
+  animation: rs-countdown-pulse 0.5s ease-in-out infinite;
+}
+
+.rs-countdown-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .rs-countdown-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Countdown Progress Bar */
+.rs-countdown-progress-container {
+  margin-top: 1.5rem;
+}
+
+.rs-countdown-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.rs-countdown-progress-bar {
+  height: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.rs-countdown-progress-fill {
+  height: 100%;
+  background-color: white;
+  border-radius: 9999px;
+  transition: width var(--rs-transition-slow) ease;
+}
+
+.rs-countdown-progress-fill.rs-countdown-urgent {
+  background-color: #ffc220;
+}
+
+.rs-countdown-progress-fill.rs-countdown-critical {
+  background-color: #ff7a7a;
+  animation: rs-countdown-pulse 1s ease-in-out infinite;
+}
+
+/* Countdown Animations */
+@keyframes rs-countdown-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes rs-countdown-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+/* Deadline Reached State */
+.rs-countdown-reached {
+  background-color: #ea1100;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.rs-countdown-reached-icon {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 1rem;
+  color: white;
+}
+
+.rs-countdown-reached-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.rs-countdown-reached-date {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   Compliance Summary Cards
+   ========================================================================== */
+
+.rs-summary-card {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid transparent;
+  transition: transform var(--rs-transition-fast), box-shadow var(--rs-transition-fast);
+}
+
+.rs-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.rs-summary-card.rs-summary-green {
+  border-left-color: #2a8703;
+}
+
+.rs-summary-card.rs-summary-blue {
+  border-left-color: #0053e2;
+}
+
+.rs-summary-card.rs-summary-yellow {
+  border-left-color: #ffc220;
+}
+
+.rs-summary-card.rs-summary-red {
+  border-left-color: #ea1100;
+}
+
+.rs-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.rs-summary-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #616161;
+}
+
+.rs-summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212121;
+  line-height: 1;
+}
+
+.rs-summary-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rs-summary-icon.rs-summary-green {
+  background-color: #f0fff0;
+  color: #2a8703;
+}
+
+.rs-summary-icon.rs-summary-blue {
+  background-color: #f2f8ff;
+  color: #0053e2;
+}
+
+.rs-summary-icon.rs-summary-yellow {
+  background-color: #fffbf0;
+  color: #b37f00;
+}
+
+.rs-summary-icon.rs-summary-red {
+  background-color: #fff5f5;
+  color: #ea1100;
+}
+
+.rs-summary-progress {
+  margin-top: 1rem;
+}
+
+.rs-summary-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.rs-summary-progress-label {
+  color: #9e9e9e;
+}
+
+.rs-summary-progress-value {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Table Styling for Requirements
+   ========================================================================== */
+
+.rs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rs-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #616161;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rs-table td {
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #212121;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rs-table tbody tr {
+  transition: background-color var(--rs-transition-fast);
+}
+
+.rs-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.rs-table .rs-table-overdue {
+  color: #ea1100;
+  font-weight: 600;
+}
+
+.rs-table .rs-table-overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background-color: #ea1100;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+/* ==========================================================================
+   Animation Utilities
+   ========================================================================== */
+
+.rs-animate-fade-in {
+  animation: rs-fade-in var(--rs-transition-normal) ease-out;
+}
+
+.rs-animate-slide-up {
+  animation: rs-slide-up var(--rs-transition-normal) ease-out;
+}
+
+.rs-animate-pulse {
+  animation: rs-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rs-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rs-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rs-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+.rs-text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rs-line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rs-line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .rs-mfa-coverage {
+    flex-wrap: wrap;
+  }
+  
+  .rs-mfa-tenant-name {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .rs-mfa-progress-container {
+    width: 100%;
+    order: 3;
+  }
+  
+  .rs-summary-card {
+    padding: 1rem;
+  }
+  
+  .rs-summary-value {
+    font-size: 1.5rem;
+  }
+}
