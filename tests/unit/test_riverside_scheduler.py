@@ -15,13 +15,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlalchemy.orm import Session
 
+from app.alerts.deadline_alerts import AlertLevel, DeadlineAlert
 from app.core.riverside_scheduler import (
     DEADLINE_ALERT_INTERVALS,
     MFA_ADMIN_TARGET_PERCENTAGE,
     MFA_USER_TARGET_PERCENTAGE,
     THREAT_SCORE_CRITICAL_THRESHOLD,
     THREAT_SCORE_HIGH_THRESHOLD,
-    DeadlineAlert,
     MaturityRegression,
     MFAComplianceResult,
     ThreatEscalation,
@@ -82,6 +82,7 @@ class TestDeadlineAlert:
             tenant_id="test-tenant",
             title="Test Requirement",
             days_until_deadline=-5,
+            alert_level=AlertLevel.CRITICAL,
             is_overdue=True,
             alert_stage=None,
         )
@@ -96,6 +97,7 @@ class TestDeadlineAlert:
             tenant_id="test-tenant",
             title="Test Requirement",
             days_until_deadline=7,
+            alert_level=AlertLevel.CRITICAL,
             is_overdue=False,
             alert_stage=7,
         )
@@ -718,6 +720,7 @@ class TestSendAlerts:
                 tenant_id="tenant-1",
                 title="Overdue Req",
                 days_until_deadline=-5,
+                alert_level=AlertLevel.CRITICAL,
                 is_overdue=True,
                 alert_stage=None,
             )
@@ -728,6 +731,7 @@ class TestSendAlerts:
                 tenant_id="tenant-1",
                 title="Approaching Req",
                 days_until_deadline=7,
+                alert_level=AlertLevel.CRITICAL,
                 is_overdue=False,
                 alert_stage=7,
             )
@@ -846,6 +850,7 @@ class TestRunScheduledJobs:
                 tenant_id="tenant-1",
                 title="Overdue",
                 days_until_deadline=-5,
+                alert_level=AlertLevel.CRITICAL,
                 is_overdue=True,
                 alert_stage=None,
             )
@@ -856,6 +861,7 @@ class TestRunScheduledJobs:
                 tenant_id="tenant-1",
                 title="Approaching",
                 days_until_deadline=7,
+                alert_level=AlertLevel.CRITICAL,
                 is_overdue=False,
                 alert_stage=7,
             )

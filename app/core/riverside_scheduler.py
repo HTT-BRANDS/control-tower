@@ -16,6 +16,11 @@ from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.alerts.deadline_alerts import (
+    AlertLevel,
+    DeadlineAlert,
+    DeadlineTracker,
+)
 from app.core.config import get_settings
 from app.core.database import get_db_context
 from app.core.notifications import (
@@ -63,18 +68,6 @@ class MFAComplianceResult:
     mfa_enrolled_users: int
     admin_accounts_total: int
     admin_accounts_mfa: int
-
-
-@dataclass
-class DeadlineAlert:
-    """Alert for an approaching or overdue requirement deadline."""
-
-    requirement_id: str
-    tenant_id: str
-    title: str
-    days_until_deadline: int
-    is_overdue: bool
-    alert_stage: int | None  # Which threshold (90, 60, 30, 14, 7, 1) triggered this
 
 
 @dataclass
@@ -231,6 +224,7 @@ async def check_requirement_deadlines(
                     tenant_id=req.tenant_id,
                     title=req.title,
                     days_until_deadline=days_until,
+                    alert_level=AlertLevel.CRITICAL,
                     is_overdue=True,
                     alert_stage=None,
                 )
@@ -241,11 +235,21 @@ async def check_requirement_deadlines(
                 )
             elif days_until in DEADLINE_ALERT_INTERVALS:
                 # Approaching deadline at alert interval
+                # Map days to alert level
+                if days_until == 90:
+                    alert_level = AlertLevel.INFO
+                elif days_until == 60:
+                    alert_level = AlertLevel.WARNING
+                elif days_until == 30:
+                    alert_level = AlertLevel.HIGH
+                else:  # 14, 7, 1
+                    alert_level = AlertLevel.CRITICAL
                 alert = DeadlineAlert(
                     requirement_id=req.requirement_id,
                     tenant_id=req.tenant_id,
                     title=req.title,
                     days_until_deadline=days_until,
+                    alert_level=alert_level,
                     is_overdue=False,
                     alert_stage=days_until,
                 )
@@ -256,8 +260,7 @@ async def check_requirement_deadlines(
                 )
 
         logger.info(
-            f"Deadline check completed: {len(overdue)} overdue, "
-            f"{len(approaching)} approaching"
+            f"Deadline check completed: {len(overdue)} overdue, {len(approaching)} approaching"
         )
         return overdue, approaching
 
@@ -329,9 +332,7 @@ async def check_maturity_regressions(
                         f"{current.overall_maturity_score:.1f} (-{score_drop:.1f})"
                     )
 
-        logger.info(
-            f"Maturity regression check completed: {len(regressions)} regressions detected"
-        )
+        logger.info(f"Maturity regression check completed: {len(regressions)} regressions detected")
         return regressions
 
     except Exception as e:
@@ -385,9 +386,7 @@ async def check_threat_escalations(
                 (RiversideThreatData.tenant_id == latest_snapshots.c.tenant_id)
                 & (RiversideThreatData.snapshot_date == latest_snapshots.c.max_date),
             )
-            .filter(
-                RiversideThreatData.threat_score >= THREAT_SCORE_HIGH_THRESHOLD
-            )
+            .filter(RiversideThreatData.threat_score >= THREAT_SCORE_HIGH_THRESHOLD)
         )
 
         # If previous check time provided, only get new records
@@ -420,9 +419,7 @@ async def check_threat_escalations(
                 f"{record.malicious_domain_alerts} malicious domain alerts"
             )
 
-        logger.info(
-            f"Threat escalation check completed: {len(escalations)} escalations detected"
-        )
+        logger.info(f"Threat escalation check completed: {len(escalations)} escalations detected")
         return escalations
 
     except Exception as e:
@@ -525,7 +522,9 @@ async def send_deadline_alerts(
 
     # Send approaching deadline alerts
     for alert in approaching:
-        alert_key = f"deadline_approaching_{alert.requirement_id}_{alert.tenant_id}_{alert.alert_stage}"
+        alert_key = (
+            f"deadline_approaching_{alert.requirement_id}_{alert.tenant_id}_{alert.alert_stage}"
+        )
 
         if not should_notify(alert_key, job_type="riverside_deadlines"):
             continue
@@ -606,7 +605,9 @@ async def send_threat_escalation_alerts(
     results: list[dict[str, Any]] = []
 
     for escalation in escalations:
-        alert_key = f"threat_escalation_{escalation.tenant_id}_{escalation.snapshot_date.isoformat()}"
+        alert_key = (
+            f"threat_escalation_{escalation.tenant_id}_{escalation.snapshot_date.isoformat()}"
+        )
 
         if not should_notify(alert_key, job_type="riverside_threats"):
             continue
@@ -824,7 +825,9 @@ def init_riverside_scheduler() -> AsyncIOScheduler:
     Sets up scheduled jobs for:
     - Hourly MFA compliance checks
     - Daily compliance reports (8 AM)
+    - Daily deadline tracking with DeadlineTracker (9 AM, 2 PM)
     - Weekly deadline reviews (Monday 9 AM)
+    - Weekly maturity and threat checks
 
     Returns:
         Configured AsyncIOScheduler instance.
@@ -851,7 +854,10 @@ def init_riverside_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
 
-    # Weekly deadline review (Monday 9 AM)
+    # Add DeadlineTracker-based deadline monitoring jobs
+    add_deadline_tracker_jobs(_riverside_scheduler)
+
+    # Weekly deadline review (Monday 9 AM) - legacy backup
     _riverside_scheduler.add_job(
         run_deadline_check,
         trigger=CronTrigger(day_of_week="mon", hour=9, minute=0),
@@ -1015,3 +1021,91 @@ async def remove_mfa_alert_checks(job_id: str = "mfa_gap_alerts") -> dict[str, A
             "job_id": job_id,
             "error": str(e),
         }
+async def schedule_deadline_checks() -> dict[str, Any]:
+    """Run scheduled deadline monitoring using the DeadlineTracker.
+
+    This is the scheduled job wrapper for deadline monitoring using
+    the new DeadlineTracker class with granular alert levels.
+
+    Queries riverside_requirements and sends notifications at:
+    - INFO: 90 days before deadline
+    - WARNING: 60 days before deadline
+    - HIGH: 30 days before deadline
+    - CRITICAL: 14, 7, 1 days before and overdue
+
+    Returns:
+        Dict with check results and notification status.
+
+    Example:
+        >>> result = await schedule_deadline_checks()
+        >>> print(f"Sent {result['notifications_sent']} notifications")
+    """
+    logger.info("Starting scheduled deadline check with DeadlineTracker")
+
+    try:
+        tracker = DeadlineTracker()
+        result = await tracker.track_requirement_deadlines()
+
+        # Send notifications for all alerts
+        notifications = await tracker.send_deadline_notifications(result.alerts)
+
+        successful_notifications = len([n for n in notifications if n.get("success")])
+
+        return {
+            "success": True,
+            "alerts_found": len(result.alerts),
+            "info_count": result.info_count,
+            "warning_count": result.warning_count,
+            "high_count": result.high_count,
+            "critical_count": result.critical_count,
+            "overdue_count": result.overdue_count,
+            "notifications_sent": successful_notifications,
+            "notifications_failed": len(notifications) - successful_notifications,
+            "checked_at": result.checked_at.isoformat(),
+            "alert_details": [
+                {
+                    "requirement_id": a.requirement_id,
+                    "tenant_id": a.tenant_id,
+                    "days_until": a.days_until_deadline,
+                    "level": a.alert_level.value,
+                    "is_overdue": a.is_overdue,
+                }
+                for a in result.alerts
+            ],
+        }
+
+    except Exception as e:
+        logger.error(f"Scheduled deadline check failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e),
+            "alerts_found": 0,
+            "notifications_sent": 0,
+        }
+
+
+def add_deadline_tracker_jobs(scheduler: AsyncIOScheduler) -> None:
+    """Add DeadlineTracker-based deadline monitoring jobs to scheduler.
+
+    Args:
+        scheduler: The APScheduler instance to add jobs to
+    """
+    # Daily deadline check at 9 AM using DeadlineTracker
+    scheduler.add_job(
+        schedule_deadline_checks,
+        trigger=CronTrigger(hour=9, minute=0),
+        id="riverside_deadline_tracker",
+        name="Riverside Deadline Tracker Check",
+        replace_existing=True,
+    )
+
+    # Additional check at 2 PM for critical deadlines
+    scheduler.add_job(
+        schedule_deadline_checks,
+        trigger=CronTrigger(hour=14, minute=0),
+        id="riverside_deadline_tracker_afternoon",
+        name="Riverside Deadline Tracker Afternoon Check",
+        replace_existing=True,
+    )
+
+    logger.info("Added DeadlineTracker deadline monitoring jobs to scheduler")
