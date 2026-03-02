@@ -21,6 +21,9 @@ SECURITY FEATURES:
 """
 
 import logging
+import time
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
@@ -98,9 +101,7 @@ class AzureClientManager:
     - Manual cache clearing for security rotations
     """
 
-    def __init__(self):
-        self._credentials: dict[str, ClientSecretCredential] = {}
-        self._default_credential: DefaultAzureCredential | None = None
+    DEFAULT_CREDENTIAL_TTL_SECONDS = 3600  # 1 hour
 
     def __init__(self, credential_ttl_seconds: int | None = None) -> None:
         self._credentials: dict[str, CachedCredential] = {}
@@ -110,7 +111,7 @@ class AzureClientManager:
         self._settings = get_settings()
         self._credential_ttl = credential_ttl_seconds or self.DEFAULT_CREDENTIAL_TTL_SECONDS
         logger.debug(f"AzureClientManager initialized with credential TTL: {self._credential_ttl}s")
-    def _get_key_vault_client(self) -> SecretClient | None:
+    def _get_key_vault_client(self) -> "SecretClient | None":
         """Get or create Key Vault client using DefaultAzureCredential.
 
         Returns None if Key Vault is not configured or package not installed.

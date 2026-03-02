@@ -741,6 +741,26 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
         # Riverside checks not available
         pass
 
+    # Import and add admin risk checks
+    try:
+        from app.preflight.admin_risk_checks import (
+            AdminComplianceGapCheck,
+            AdminMfaCheck,
+            InactiveAdminCheck,
+            OverprivilegedAccountCheck,
+            SharedAdminCheck,
+        )
+        checks.extend([
+            AdminMfaCheck(),
+            OverprivilegedAccountCheck(),
+            InactiveAdminCheck(),
+            SharedAdminCheck(),
+            AdminComplianceGapCheck(),
+        ])
+    except ImportError:
+        # Admin risk checks not available
+        pass
+
     return {check.check_id: check for check in checks}
 
 
