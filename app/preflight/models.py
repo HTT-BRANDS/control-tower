@@ -39,6 +39,9 @@ class CheckCategory(str, Enum):
     # System checks
     SYSTEM = "system"
 
+    # Riverside checks
+    RIVERSIDE = "riverside"
+
 
 class CheckResult(BaseModel):
     """Result of a single preflight check."""

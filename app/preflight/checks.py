@@ -721,6 +721,26 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
         GitHubActionsCheck(),
     ]
 
+    # Import and add Riverside checks
+    try:
+        from app.preflight.riverside_checks import (
+            RiversideAPIEndpointCheck,
+            RiversideAzureADPermissionsCheck,
+            RiversideDatabaseCheck,
+            RiversideMFADataSourceCheck,
+            RiversideSchedulerCheck,
+        )
+        checks.extend([
+            RiversideDatabaseCheck(),
+            RiversideAPIEndpointCheck(),
+            RiversideSchedulerCheck(),
+            RiversideAzureADPermissionsCheck(),
+            RiversideMFADataSourceCheck(),
+        ])
+    except ImportError:
+        # Riverside checks not available
+        pass
+
     return {check.check_id: check for check in checks}
 
 

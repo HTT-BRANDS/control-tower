@@ -227,6 +227,7 @@ class PreflightRunner:
             CheckCategory.AZURE_RESOURCES,
             CheckCategory.AZURE_GRAPH,
             CheckCategory.AZURE_SECURITY,
+            CheckCategory.RIVERSIDE,
         }
         return any(check.category in tenant_categories for check in checks)
 
@@ -249,6 +250,7 @@ class PreflightRunner:
             CheckCategory.AZURE_RESOURCES,
             CheckCategory.AZURE_GRAPH,
             CheckCategory.AZURE_SECURITY,
+            CheckCategory.RIVERSIDE,
         }
 
         tenant_checks = []
@@ -361,6 +363,7 @@ class PreflightRunner:
             CheckCategory.GITHUB_ACTIONS: "GitHub Actions",
             CheckCategory.DATABASE: "Database",
             CheckCategory.SYSTEM: "System",
+            CheckCategory.RIVERSIDE: "Riverside Compliance",
         }
 
         summaries = []
