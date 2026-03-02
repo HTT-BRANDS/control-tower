@@ -921,3 +921,97 @@ async def trigger_manual_check(check_type: str) -> dict[str, Any]:
         }
 
     return await check_functions[check_type]()
+
+
+async def schedule_mfa_alert_checks(
+    interval_minutes: int = 60,
+    job_id: str = "mfa_gap_alerts",
+) -> dict[str, Any]:
+    """Schedule MFA gap alert checks using the Riverside scheduler.
+
+    Creates a scheduled job that runs MFA gap detection and alerting
+    at the specified interval. Integrates with the existing notification
+    system from #ryi.
+
+    Args:
+        interval_minutes: Interval between checks in minutes. Default 60.
+        job_id: Unique identifier for the scheduled job.
+
+    Returns:
+        Dict with job configuration details.
+
+    Raises:
+        RuntimeError: If scheduler is not initialized.
+    """
+    global _riverside_scheduler
+
+    if _riverside_scheduler is None:
+        raise RuntimeError(
+            "Riverside scheduler not initialized. "
+            "Call init_riverside_scheduler() first."
+        )
+
+    # Import here to avoid circular dependencies
+    from app.alerts.mfa_alerts import MFAGapDetector
+
+    async def _mfa_alert_job() -> dict[str, Any]:
+        """Scheduled job wrapper for MFA alerts."""
+        logger.info(f"Running scheduled MFA alert check (job_id: {job_id})")
+        detector = MFAGapDetector()
+        return await detector.check_and_alert()
+
+    # Add job to scheduler
+    _riverside_scheduler.add_job(
+        _mfa_alert_job,
+        trigger=IntervalTrigger(minutes=interval_minutes),
+        id=job_id,
+        name="MFA Gap Alert Check",
+        replace_existing=True,
+    )
+
+    logger.info(
+        f"Scheduled MFA alert checks: interval={interval_minutes}min, job_id={job_id}"
+    )
+
+    return {
+        "success": True,
+        "job_id": job_id,
+        "interval_minutes": interval_minutes,
+        "scheduler_active": _riverside_scheduler.state == "started"
+        if hasattr(_riverside_scheduler, "state")
+        else True,
+    }
+
+
+async def remove_mfa_alert_checks(job_id: str = "mfa_gap_alerts") -> dict[str, Any]:
+    """Remove scheduled MFA gap alert checks.
+
+    Args:
+        job_id: The job ID to remove. Default 'mfa_gap_alerts'.
+
+    Returns:
+        Dict with removal status.
+    """
+    global _riverside_scheduler
+
+    if _riverside_scheduler is None:
+        return {
+            "success": False,
+            "error": "Scheduler not initialized",
+        }
+
+    try:
+        _riverside_scheduler.remove_job(job_id)
+        logger.info(f"Removed MFA alert checks job: {job_id}")
+        return {
+            "success": True,
+            "job_id": job_id,
+            "message": "Job removed successfully",
+        }
+    except Exception as e:
+        logger.warning(f"Could not remove MFA alert job {job_id}: {e}")
+        return {
+            "success": False,
+            "job_id": job_id,
+            "error": str(e),
+        }
