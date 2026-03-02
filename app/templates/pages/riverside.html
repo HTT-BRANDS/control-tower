@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+
+{% block title %}Riverside Executive Dashboard{% endblock %}
+
+{% block nav_dashboard %}bg-wm-blue-130{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="riversideDashboard()">
+    <!-- Page Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-wm-gray-160">Riverside Executive Dashboard</h1>
+            <p class="text-wm-gray-100 mt-1">Compliance tracking for July 8, 2026 deadline</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Financial Risk Badge -->
+            <div class="inline-flex items-center px-3 py-1.5 bg-wm-red-10 text-wm-red-100 rounded-lg border border-wm-red-50">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="font-bold text-sm">Financial Risk: $4M</span>
+            </div>
+            <!-- Sync Button -->
+            <button 
+                hx-post="/api/v1/riverside/sync" 
+                hx-swap="none"
+                class="inline-flex items-center px-4 py-2 bg-wm-blue-100 text-white rounded-lg hover:bg-wm-blue-110 transition-colors font-medium"
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span class="htmx-indicator hidden">Syncing...</span>
+                <span>Sync Now</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Deadline Countdown Card -->
+    <div class="bg-gradient-to-r from-wm-blue-100 to-wm-blue-130 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold mb-1">Compliance Deadline Countdown</h2>
+                <p class="text-wm-blue-50 text-sm">Target: July 8, 2026 • $4M Financial Exposure</p>
+            </div>
+            <div class="grid grid-cols-4 gap-4 text-center">
+                <div class="bg-white/10 rounded-lg p-3 min-w-[80px]">
+                    <div class="text-3xl font-bold" id="countdown-days">--</div>
+                    <div class="text-xs text-wm-blue-50 uppercase tracking-wide">Days</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-3 min-w-[80px]">
+                    <div class="text-3xl font-bold" id="countdown-hours">--</div>
+                    <div class="text-xs text-wm-blue-50 uppercase tracking-wide">Hours</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-3 min-w-[80px]">
+                    <div class="text-3xl font-bold" id="countdown-minutes">--</div>
+                    <div class="text-xs text-wm-blue-50 uppercase tracking-wide">Mins</div>
+                </div>
+                <div class="bg-white/10 rounded-lg p-3 min-w-[80px]">
+                    <div class="text-3xl font-bold" id="countdown-seconds">--</div>
+                    <div class="text-xs text-wm-blue-50 uppercase tracking-wide">Secs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary Cards (HTMX Auto-refresh) -->
+    <div hx-get="/api/v1/riverside/summary" 
+         hx-trigger="load, every 60s"
+         hx-target="#executive-cards"
+         hx-swap="innerHTML"
+         hx-indicator="#executive-loading">
+        <div id="executive-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Loading State -->
+            {% for i in range(4) %}
+            <div class="bg-white rounded-lg shadow p-6 animate-pulse">
+                <div class="h-4 bg-wm-gray-10 rounded w-1/2 mb-4"></div>
+                <div class="h-8 bg-wm-gray-10 rounded w-1/3"></div>
+            </div>
+            {% endfor %}
+        </div>
+        <div id="executive-loading" class="hidden">
+            <div class="flex justify-center py-4">
+                <svg class="w-6 h-6 text-wm-blue-100 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- MFA Enrollment Chart Section -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-semibold text-wm-gray-160">MFA Enrollment by Tenant</h2>
+                <p class="text-sm text-wm-gray-100">Multi-factor authentication coverage across all tenants</p>
+            </div>
+            <button 
+                hx-get="/api/v1/riverside/mfa-status"
+                hx-target="#mfa-chart-container"
+                hx-swap="innerHTML"
+                class="text-wm-blue-100 hover:text-wm-blue-110 text-sm font-medium">
+                Refresh
+            </button>
+        </div>
+        <div id="mfa-chart-container" hx-get="/api/v1/riverside/mfa-status" hx-trigger="load" hx-swap="innerHTML">
+            <div class="h-64 flex items-center justify-center">
+                <svg class="w-8 h-8 text-wm-gray-50 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maturity Score Gauges -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-semibold text-wm-gray-160">Domain Maturity Scores</h2>
+                <p class="text-sm text-wm-gray-100">Target: 3.0/5.0 • Deadline: July 8, 2026</p>
+            </div>
+            <button 
+                hx-get="/api/v1/riverside/maturity-scores"
+                hx-target="#maturity-gauges"
+                hx-swap="innerHTML"
+                class="text-wm-blue-100 hover:text-wm-blue-110 text-sm font-medium">
+                Refresh
+            </button>
+        </div>
+        <div id="maturity-gauges" hx-get="/api/v1/riverside/maturity-scores" hx-trigger="load" hx-swap="innerHTML">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for domain in ['IAM', 'GS', 'DS'] %}
+                <div class="text-center p-4 bg-wm-gray-5 rounded-lg animate-pulse">
+                    <div class="h-24 bg-wm-gray-10 rounded-full w-24 mx-auto mb-3"></div>
+                    <div class="h-4 bg-wm-gray-10 rounded w-24 mx-auto"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Requirements Status with Filters -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-wm-gray-50">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-wm-gray-160">Requirements Status</h2>
+                    <p class="text-sm text-wm-gray-100">Track compliance requirements by category and priority</p>
+                </div>
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-3">
+                    <select 
+                        name="category" 
+                        hx-get="/api/v1/riverside/requirements"
+                        hx-target="#requirements-table-container"
+                        hx-include="[name='category'],[name='priority'],[name='status']"
+                        class="border border-wm-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wm-blue-100 focus:border-wm-blue-100">
+                        <option value="">All Categories</option>
+                        <option value="IAM">Identity & Access (IAM)</option>
+                        <option value="GS">Governance & Security (GS)</option>
+                        <option value="DS">Data Security (DS)</option>
+                    </select>
+                    <select 
+                        name="priority"
+                        hx-get="/api/v1/riverside/requirements"
+                        hx-target="#requirements-table-container"
+                        hx-include="[name='category'],[name='priority'],[name='status']"
+                        class="border border-wm-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wm-blue-100 focus:border-wm-blue-100">
+                        <option value="">All Priorities</option>
+                        <option value="P0">P0 - Critical</option>
+                        <option value="P1">P1 - High</option>
+                        <option value="P2">P2 - Medium</option>
+                    </select>
+                    <select 
+                        name="status"
+                        hx-get="/api/v1/riverside/requirements"
+                        hx-target="#requirements-table-container"
+                        hx-include="[name='category'],[name='priority'],[name='status']"
+                        class="border border-wm-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-wm-blue-100 focus:border-wm-blue-100">
+                        <option value="">All Statuses</option>
+                        <option value="completed">Completed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="not_started">Not Started</option>
+                        <option value="blocked">Blocked</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Requirements Table -->
+        <div id="requirements-table-container" hx-get="/api/v1/riverside/requirements" hx-trigger="load" hx-swap="innerHTML">
+            <div class="p-8 flex items-center justify-center">
+                <svg class="w-8 h-8 text-wm-gray-50 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alerts Panel -->
+    <div class="bg-white rounded-lg shadow border-l-4 border-wm-red-100">
+        <div class="p-6 border-b border-wm-gray-50 bg-wm-red-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-wm-red-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <h2 class="text-lg font-semibold text-wm-red-100">Critical Alerts</h2>
+                </div>
+                <span id="critical-alert-count" class="px-3 py-1 bg-wm-red-100 text-white text-sm font-medium rounded-full">--</span>
+            </div>
+        </div>
+        <div id="critical-alerts-container" hx-get="/api/v1/riverside/gaps" hx-trigger="load" hx-swap="innerHTML">
+            <div class="p-8 flex items-center justify-center">
+                <svg class="w-8 h-8 text-wm-gray-50 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-wm-gray-5 rounded-lg p-6 border border-wm-gray-50">
+        <h3 class="text-lg font-semibold text-wm-gray-160 mb-4">Quick Actions</h3>
+        <div class="flex flex-wrap gap-3">
+            <a href="/api/v1/riverside/requirements" class="inline-flex items-center px-4 py-2 bg-white border border-wm-gray-50 rounded-lg hover:bg-wm-gray-10 transition-colors text-sm font-medium text-wm-gray-160">
+                <svg class="w-4 h-4 mr-2 text-wm-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                View All Requirements
+            </a>
+            <a href="/api/v1/riverside/gaps" class="inline-flex items-center px-4 py-2 bg-white border border-wm-gray-50 rounded-lg hover:bg-wm-gray-10 transition-colors text-sm font-medium text-wm-gray-160">
+                <svg class="w-4 h-4 mr-2 text-wm-red-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                View All Gaps
+            </a>
+            <a href="/riverside-dashboard" class="inline-flex items-center px-4 py-2 bg-white border border-wm-gray-50 rounded-lg hover:bg-wm-gray-10 transition-colors text-sm font-medium text-wm-gray-160">
+                <svg class="w-4 h-4 mr-2 text-wm-green-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Legacy Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Countdown Timer
+    function updateCountdown() {
+        const deadline = new Date('2026-07-08T00:00:00');
+        const now = new Date();
+        const diff = deadline - now;
+
+        if (diff > 0) {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown-days').textContent = days;
+            document.getElementById('countdown-hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('countdown-minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('countdown-seconds').textContent = seconds.toString().padStart(2, '0');
+        }
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // HTMX Response Handlers for Dynamic Content
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Handle executive summary cards
+        if (evt.detail.target.id === 'executive-cards') {
+            try {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderExecutiveCards(data);
+            } catch (e) {
+                console.error('Failed to parse executive summary:', e);
+            }
+        }
+        
+        // Handle MFA chart
+        if (evt.detail.target.id === 'mfa-chart-container') {
+            try {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderMFAChart(data);
+            } catch (e) {
+                console.error('Failed to parse MFA data:', e);
+            }
+        }
+        
+        // Handle maturity gauges
+        if (evt.detail.target.id === 'maturity-gauges') {
+            try {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderMaturityGauges(data);
+            } catch (e) {
+                console.error('Failed to parse maturity data:', e);
+            }
+        }
+        
+        // Handle requirements table
+        if (evt.detail.target.id === 'requirements-table-container') {
+            try {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderRequirementsTable(data);
+            } catch (e) {
+                console.error('Failed to parse requirements data:', e);
+            }
+        }
+        
+        // Handle critical alerts
+        if (evt.detail.target.id === 'critical-alerts-container') {
+            try {
+                const data = JSON.parse(evt.detail.xhr.response);
+                renderCriticalAlerts(data);
+            } catch (e) {
+                console.error('Failed to parse gaps data:', e);
+            }
+        }
+    });
+
+    function renderExecutiveCards(data) {
+        const cards = [
+            {
+                title: 'Overall Compliance',
+                value: data.overall_completion_percentage ? data.overall_completion_percentage.toFixed(1) + '%' : '--',
+                target: 'Target: 100%',
+                progress: data.overall_completion_percentage || 0,
+                color: 'wm-green',
+                icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+            },
+            {
+                title: 'Maturity Score',
+                value: data.overall_maturity_average ? data.overall_maturity_average.toFixed(1) + '/5.0' : '--',
+                target: 'Target: 3.0',
+                progress: data.overall_maturity_average ? (data.overall_maturity_average / 5) * 100 : 0,
+                color: 'wm-blue',
+                icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
+            },
+            {
+                title: 'MFA Coverage',
+                value: data.average_mfa_coverage ? data.average_mfa_coverage.toFixed(1) + '%' : '--',
+                target: 'Target: 100%',
+                progress: data.average_mfa_coverage || 0,
+                color: 'wm-spark',
+                icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+            },
+            {
+                title: 'Critical Alerts',
+                value: data.total_critical_gaps !== undefined ? data.total_critical_gaps.toString() : '--',
+                target: 'Needs Attention',
+                progress: 0,
+                color: 'wm-red',
+                icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+            }
+        ];
+
+        document.getElementById('executive-cards').innerHTML = cards.map(card => `
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-${card.color}-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-wm-gray-100">${card.title}</p>
+                        <p class="text-3xl font-bold text-wm-gray-160">${card.value}</p>
+                    </div>
+                    <div class="p-3 bg-${card.color}-5 rounded-full">
+                        <svg class="w-6 h-6 text-${card.color}-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${card.icon}"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-wm-gray-100">${card.target}</span>
+                        <span class="text-${card.color}-100 font-medium">${card.progress.toFixed ? card.progress.toFixed(1) : card.progress}%</span>
+                    </div>
+                    <div class="mt-2 bg-wm-gray-10 rounded-full h-2">
+                        <div class="bg-${card.color}-100 h-2 rounded-full transition-all duration-500" style="width: ${Math.min(card.progress, 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderMFAChart(data) {
+        const tenants = data.tenants || [];
+        
+        if (tenants.length === 0) {
+            document.getElementById('mfa-chart-container').innerHTML = `
+                <div class="h-64 flex items-center justify-center text-wm-gray-100">
+                    No MFA data available
+                </div>
+            `;
+            return;
+        }
+
+        // Create horizontal bar chart
+        const maxCoverage = Math.max(...tenants.map(t => t.coverage_percentage || 0), 100);
+        
+        document.getElementById('mfa-chart-container').innerHTML = `
+            <div class="space-y-4">
+                ${tenants.map(t => {
+                    const coverage = t.coverage_percentage || 0;
+                    const color = coverage >= 90 ? 'wm-green' : coverage >= 70 ? 'wm-spark' : 'wm-red';
+                    return `
+                        <div class="flex items-center gap-4">
+                            <div class="w-24 text-sm font-medium text-wm-gray-160 truncate">${t.tenant_name}</div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-wm-gray-100">${t.mfa_enabled_count || 0} / ${t.total_users || 0} users</span>
+                                    <span class="font-medium text-${color}-100">${coverage.toFixed(1)}%</span>
+                                </div>
+                                <div class="bg-wm-gray-10 rounded-full h-3">
+                                    <div class="bg-${color}-100 h-3 rounded-full transition-all duration-500" style="width: ${Math.min(coverage, 100)}%"></div>
+                                </div>
+                            </div>
+                            <div class="w-16 text-right">
+                                <span class="text-xs px-2 py-1 rounded-full ${coverage >= 90 ? 'bg-wm-green-10 text-wm-green-100' : coverage >= 70 ? 'bg-wm-spark-10 text-wm-spark-130' : 'bg-wm-red-10 text-wm-red-100'}">
+                                    ${coverage >= 90 ? 'Good' : coverage >= 70 ? 'Fair' : 'Poor'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div class="mt-4 pt-4 border-t border-wm-gray-50">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-wm-gray-100">Average Coverage</span>
+                    <span class="font-bold text-wm-gray-160">${data.average_coverage ? data.average_coverage.toFixed(1) : '--'}%</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderMaturityGauges(data) {
+        const domains = [
+            { key: 'iam', label: 'Identity & Access', color: 'wm-blue' },
+            { key: 'gs', label: 'Governance & Security', color: 'wm-green' },
+            { key: 'ds', label: 'Data Security', color: 'wm-spark' }
+        ];
+
+        const summary = data.summary || {};
+
+        document.getElementById('maturity-gauges').innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                ${domains.map(domain => {
+                    const score = summary[`${domain.key}_average`] || 0;
+                    const percentage = (score / 5) * 100;
+                    const color = score >= 3 ? domain.color : score >= 2 ? 'wm-spark' : 'wm-red';
+                    return `
+                        <div class="text-center p-4 bg-wm-gray-5 rounded-lg">
+                            <!-- Gauge SVG -->
+                            <div class="relative w-32 h-32 mx-auto mb-3">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                    <!-- Background arc -->
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8" stroke-dasharray="188.5" stroke-dashoffset="47.1" stroke-linecap="round"/>
+                                    <!-- Progress arc -->
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="8" 
+                                        class="text-${color}-100"
+                                        stroke-dasharray="188.5" 
+                                        stroke-dashoffset="${188.5 - (percentage / 100) * 188.5}" 
+                                        stroke-linecap="round"
+                                        style="transition: stroke-dashoffset 0.5s ease"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-2xl font-bold text-wm-gray-160">${score.toFixed(1)}</span>
+                                </div>
+                            </div>
+                            <div class="text-sm font-medium text-wm-gray-160">${domain.label}</div>
+                            <div class="text-xs text-wm-gray-100 mt-1">Target: 3.0</div>
+                            <div class="mt-3 bg-wm-gray-10 rounded-full h-2">
+                                <div class="bg-${color}-100 h-2 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    function renderRequirementsTable(data) {
+        const requirements = data.requirements || [];
+        const statusColors = {
+            'completed': 'bg-wm-green-10 text-wm-green-100',
+            'in_progress': 'bg-wm-blue-10 text-wm-blue-100',
+            'not_started': 'bg-wm-gray-10 text-wm-gray-130',
+            'blocked': 'bg-wm-red-10 text-wm-red-100'
+        };
+        const priorityColors = {
+            'P0': 'bg-wm-red-100 text-white',
+            'P1': 'bg-wm-spark-100 text-wm-gray-160',
+            'P2': 'bg-wm-blue-100 text-white'
+        };
+
+        if (requirements.length === 0) {
+            document.getElementById('requirements-table-container').innerHTML = `
+                <div class="p-8 text-center text-wm-gray-100">
+                    No requirements found matching the selected filters.
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('requirements-table-container').innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-wm-gray-50">
+                    <thead class="bg-wm-gray-5">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">Requirement</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-gray-100 uppercase tracking-wider">Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-wm-gray-50">
+                        ${requirements.map(req => `
+                            <tr class="hover:bg-wm-gray-5 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-wm-gray-160">${req.id}</td>
+                                <td class="px-6 py-4 text-sm text-wm-gray-160">
+                                    <div class="font-medium">${req.title}</div>
+                                    <div class="text-xs text-wm-gray-100 mt-1">${req.description ? req.description.substring(0, 60) + '...' : ''}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-wm-gray-100">${req.category}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${priorityColors[req.priority] || 'bg-wm-gray-10 text-wm-gray-130'}">${req.priority}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColors[req.status] || 'bg-wm-gray-10 text-wm-gray-130'}">${req.status.replace('_', ' ').toUpperCase()}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm ${req.is_overdue ? 'text-wm-red-100 font-bold' : 'text-wm-gray-100'}">
+                                    ${req.due_date || 'N/A'}${req.is_overdue ? ' (Overdue)' : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-wm-gray-50 bg-wm-gray-5">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-wm-gray-100">Showing ${requirements.length} requirements</span>
+                    <div class="flex gap-4">
+                        ${data.requirements_by_status ? Object.entries(data.requirements_by_status).map(([status, count]) => `
+                            <span class="text-wm-gray-100"><span class="font-medium text-wm-gray-160">${count}</span> ${status.replace('_', ' ')}</span>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCriticalAlerts(data) {
+        const gaps = data.critical_gaps || [];
+        
+        document.getElementById('critical-alert-count').textContent = gaps.length;
+
+        if (gaps.length === 0) {
+            document.getElementById('critical-alerts-container').innerHTML = `
+                <div class="p-8 text-center">
+                    <svg class="w-12 h-12 text-wm-green-100 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-wm-green-100 font-medium">No critical alerts</p>
+                    <p class="text-sm text-wm-gray-100 mt-1">All systems are operating normally.</p>
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('critical-alerts-container').innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-wm-gray-50">
+                    <thead class="bg-wm-red-5">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">Gap</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">Risk Level</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-wm-red-100 uppercase tracking-wider">Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-wm-gray-50">
+                        ${gaps.slice(0, 10).map(gap => `
+                            <tr class="${gap.is_overdue ? 'bg-wm-red-5' : ''} hover:bg-wm-gray-5 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-wm-gray-160">${gap.requirement_id}</td>
+                                <td class="px-6 py-4 text-sm text-wm-gray-160">
+                                    <div class="font-medium">${gap.title}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-wm-gray-100">${gap.category}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${gap.priority === 'P0' ? 'bg-wm-red-100 text-white' : 'bg-wm-spark-100 text-wm-gray-160'}">${gap.priority}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${gap.risk_level === 'Critical' ? 'bg-wm-red-100 text-white' : 'bg-wm-orange-500 text-white'}">${gap.risk_level}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm ${gap.is_overdue ? 'text-wm-red-100 font-bold' : 'text-wm-gray-100'}">
+                                    ${gap.due_date || 'N/A'}${gap.is_overdue ? ' (Overdue)' : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${gaps.length > 10 ? `
+                <div class="px-6 py-3 border-t border-wm-gray-50 bg-wm-gray-5 text-center">
+                    <a href="/api/v1/riverside/gaps" class="text-wm-blue-100 hover:text-wm-blue-110 text-sm font-medium">
+                        View all ${gaps.length} gaps →
+                    </a>
+                </div>
+            ` : ''}
+        `;
+    }
+</script>
+{% endblock %}
