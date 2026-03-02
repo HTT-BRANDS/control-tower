@@ -6,7 +6,7 @@ MFA enrollment tracking, requirement management, and dashboard data aggregation.
 
 import logging
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
@@ -426,7 +426,7 @@ class RiversideService:
         )
 
         requirements_by_status: dict[str, int] = {
-            s.status.value: s.count for s in status_stats
+            s.status.value: cast(int, s.count) for s in status_stats
         }
 
         return RiversideDashboardSummary(
