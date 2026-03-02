@@ -41,6 +41,7 @@ class NotificationChannel(str, Enum):
     TEAMS = "teams"
     EMAIL = "email"
     WEBHOOK = "webhook"
+    BOTH = "both"  # Send to both Teams and email
 
 
 class Severity(str, Enum):
@@ -329,7 +330,7 @@ def sanitize_log_message(message: str) -> str:
     sanitized = WEBHOOK_URL_PATTERN.sub("[WEBHOOK_URL_REDACTED]", sanitized)
 
     # Redact sensitive patterns
-    for pattern_name, pattern in SENSITIVE_PATTERNS.items():
+    for _pattern_name, pattern in SENSITIVE_PATTERNS.items():
         def replace_sensitive(match: re.Match) -> str:
             """Replace sensitive value with [REDACTED]."""
             # If there are capture groups, preserve the key/prefix part
@@ -421,6 +422,119 @@ async def send_teams_notification(notification: Notification) -> dict[str, Any]:
         }
 
 
+async def send_email_notification(notification: Notification) -> dict[str, Any]:
+    """Send notification via email using the email service.
+
+    Args:
+        notification: The notification to send
+
+    Returns:
+        Dict with success status and response details
+    """
+    try:
+        # Import here to avoid circular imports
+        from app.services.email_service import EmailService
+
+        settings = get_settings()
+        email_recipients = getattr(settings, "notification_email_recipients", [])
+
+        if not email_recipients:
+            logger.debug("No email recipients configured")
+            return {
+                "success": False,
+                "error": "No email recipients configured",
+                "channel": NotificationChannel.EMAIL,
+            }
+
+        service = EmailService()
+        return await service.send_notification(notification, email_recipients)
+
+    except ImportError:
+        logger.warning("Email service not available")
+        return {
+            "success": False,
+            "error": "Email service not available",
+            "channel": NotificationChannel.EMAIL,
+        }
+    except Exception as e:
+        error_msg = sanitize_log_message(f"Failed to send email: {e}")
+        safe_log("error", error_msg)
+        return {
+            "success": False,
+            "error": str(e),
+            "channel": NotificationChannel.EMAIL,
+        }
+
+
+async def send_notification(
+    notification: Notification,
+    webhook_url: str | None = None,
+) -> dict[str, Any]:
+    """Generic notification dispatcher - sends to Teams and optionally email.
+
+    Routes notifications to appropriate channel(s) based on configuration.
+    When channel is 'both', sends to both Teams and email.
+
+    Args:
+        notification: The notification to send
+        webhook_url: Optional custom webhook URL (deprecated, use settings)
+
+    Returns:
+        Dict with success status and response details for all channels
+    """
+    settings = get_settings()
+
+    # Check if notifications are enabled
+    if not settings.notification_enabled:
+        logger.debug("Notifications disabled in settings")
+        return {
+            "success": False,
+            "error": "Notifications disabled",
+            "channel": notification.channel,
+        }
+
+    # Check severity threshold
+    if not severity_meets_threshold(notification.severity, settings.notification_min_severity):
+        logger.debug(
+            f"Notification severity {notification.severity} below threshold "
+            f"{settings.notification_min_severity}"
+        )
+        return {
+            "success": False,
+            "error": f"Severity {notification.severity} below threshold",
+            "channel": notification.channel,
+        }
+
+    # Dispatch to appropriate channel(s)
+    results: dict[str, Any] = {
+        "teams": {"success": False, "error": "Not sent"},
+        "email": {"success": False, "error": "Not sent"},
+    }
+
+    # Always send to Teams if configured
+    results["teams"] = await send_teams_notification(notification)
+
+    # Send to email if channel is BOTH or EMAIL
+    if notification.channel in (NotificationChannel.BOTH, NotificationChannel.EMAIL):
+        results["email"] = await send_email_notification(notification)
+
+    # Determine overall success
+    teams_ok = results["teams"].get("success", False)
+    email_ok = results["email"].get("success", False)
+
+    if notification.channel == NotificationChannel.TEAMS:
+        return results["teams"]
+    elif notification.channel == NotificationChannel.EMAIL:
+        return results["email"]
+    else:  # BOTH or default
+        return {
+            "success": teams_ok or email_ok,
+            "teams": results["teams"],
+            "email": results["email"],
+            "channel": NotificationChannel.BOTH,
+        }
+
+
 async def send_webhook_notification(
     notification: Notification,
     webhook_url: str,
@@ -476,65 +590,6 @@ async def send_webhook_notification(
         }
 
 
-async def send_notification(
-    notification: Notification,
-    webhook_url: str | None = None,
-) -> dict[str, Any]:
-    """Generic notification dispatcher.
-
-    Routes notifications to appropriate channel based on configuration.
-
-    Args:
-        notification: The notification to send
-        webhook_url: Optional custom webhook URL for webhook channel
-
-    Returns:
-        Dict with success status and response details
-    """
-    settings = get_settings()
-
-    # Check if notifications are enabled
-    if not settings.notification_enabled:
-        logger.debug("Notifications disabled in settings")
-        return {
-            "success": False,
-            "error": "Notifications disabled",
-            "channel": notification.channel,
-        }
-
-    # Check severity threshold
-    if not severity_meets_threshold(notification.severity, settings.notification_min_severity):
-        logger.debug(
-            f"Notification severity {notification.severity} below threshold "
-            f"{settings.notification_min_severity}"
-        )
-        return {
-            "success": False,
-            "error": f"Severity {notification.severity} below threshold",
-            "channel": notification.channel,
-        }
-
-    # Dispatch to appropriate channel
-    if notification.channel == NotificationChannel.TEAMS:
-        return await send_teams_notification(notification)
-    elif notification.channel == NotificationChannel.WEBHOOK and webhook_url:
-        return await send_webhook_notification(notification, webhook_url)
-    elif notification.channel == NotificationChannel.EMAIL:
-        # Email not yet implemented
-        logger.warning("Email notifications not yet implemented")
-        return {
-            "success": False,
-            "error": "Email channel not implemented",
-            "channel": NotificationChannel.EMAIL,
-        }
-    else:
-        return {
-            "success": False,
-            "error": f"Unknown channel: {notification.channel}",
-            "channel": notification.channel,
-        }
-
-
 def create_dashboard_url(job_type: str | None = None) -> str | None:
     """Generate dashboard URL for notifications.
 
@@ -568,3 +623,23 @@ def create_retry_url(job_type: str, tenant_id: str | None = None) -> str | None:
     if tenant_id:
         return f"{base_url}/api/sync/{job_type}?tenant_id={tenant_id}"
     return f"{base_url}/api/sync/{job_type}"
+
+
+__all__ = [
+    "Notification",
+    "NotificationChannel",
+    "Severity",
+    "should_notify",
+    "record_notification_sent",
+    "severity_meets_threshold",
+    "get_severity_color",
+    "format_sync_alert",
+    "sanitize_log_message",
+    "safe_log",
+    "send_notification",
+    "send_teams_notification",
+    "send_email_notification",
+    "send_webhook_notification",
+    "create_dashboard_url",
+    "create_retry_url",
+]
