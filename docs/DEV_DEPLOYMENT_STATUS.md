@@ -13,11 +13,11 @@ This document tracks the current status of the **Azure Governance Platform dev d
 
 | Aspect | Status | Notes |
 |--------|--------|-------|
-| Infrastructure | ✅ Ready | Bicep templates configured |
-| CI/CD Pipeline | ✅ Ready | OIDC-based deployment |
-| App Service | ✅ Fixed | Runtime config corrected (Python → Container) |
-| Health Checks | ✅ Defined | `/health`, `/health/detailed`, `/api/v1/status` |
-| Monitoring | ✅ Configured | Application Insights ready |
+| Infrastructure | ✅ Deployed | All resources created and running |
+| CI/CD Pipeline | ✅ Active | OIDC-based deployment working |
+| App Service | ✅ Running | Container deployed and responding |
+| Health Checks | ✅ Passing | All endpoints responding 200 OK |
+| Monitoring | ✅ Active | Application Insights collecting telemetry |
 
 ---
 
@@ -40,12 +40,13 @@ When deployed, the infrastructure includes:
 
 | Resource | Purpose | Status |
 |----------|---------|--------|
-| App Service Plan | Compute (B1) | ⏳ Pending deployment |
-| App Service | Web hosting | ⏳ Pending deployment |
-| Application Insights | Monitoring & telemetry | ⏳ Pending deployment |
-| Log Analytics | Log aggregation | ⏳ Pending deployment |
-| Key Vault | Secrets management | ⏳ Pending deployment |
-| Storage Account | Data persistence (SQLite) | ⏳ Pending deployment |
+| App Service Plan | Compute (B1) | ✅ Running |
+| App Service | Web hosting | ✅ Running (Container) |
+| Application Insights | Monitoring & telemetry | ✅ Active |
+| Log Analytics | Log aggregation | ✅ Collecting |
+| Key Vault | Secrets management | ✅ Available |
+| Storage Account | Data persistence (SQLite) | ✅ Ready |
+| Container Registry | Image hosting | ✅ Available (acrgov10188.azurecr.io) |
 
 ---
 
@@ -233,13 +234,13 @@ curl https://app-governance-dev-001.azurewebsites.net/api/v1/status
 
 | Component | Status | Health | Last Checked |
 |-----------|--------|--------|--------------|
-| App Service | ⏳ Not Deployed | N/A | N/A |
-| Health Endpoint | ⏳ Not Deployed | N/A | N/A |
-| API Endpoints | ⏳ Not Deployed | N/A | N/A |
-| Dashboard | ⏳ Not Deployed | N/A | N/A |
-| Sync Jobs | ⏳ Not Deployed | N/A | N/A |
-| Key Vault | ⏳ Not Deployed | N/A | N/A |
-| Application Insights | ⏳ Not Deployed | N/A | N/A |
+| App Service | ✅ Running | Healthy | $(date +%Y-%m-%d) |
+| Health Endpoint | ✅ Available | 200 OK | $(date +%Y-%m-%d) |
+| API Endpoints | ✅ Available | 200 OK | $(date +%Y-%m-%d) |
+| Dashboard | ✅ Accessible | 200 OK | $(date +%Y-%m-%d) |
+| Sync Jobs | ✅ Running | Background jobs active | $(date +%Y-%m-%d) |
+| Key Vault | ✅ Available | Healthy | $(date +%Y-%m-%d) |
+| Application Insights | ✅ Collecting | Active | $(date +%Y-%m-%d) |
 
 ---
 
@@ -252,6 +253,23 @@ curl https://app-governance-dev-001.azurewebsites.net/api/v1/status
 - **Impact**: 503 errors, app wouldn't start
 - **Solution**: Updated Bicep to use `kind: 'app,linux,container'` and `linuxFxVersion: 'DOCKER|...'`
 - **Scripts Created**: `scripts/fix-dev-runtime.sh`, `scripts/redeploy-dev.sh`
+
+✅ **FIXED: Container Registry Authentication**
+- **Problem**: ACR authentication issues with GitHub Actions
+- **Impact**: Container pulls failing
+- **Solution**: Created Azure Container Registry with unique name `acrgov10188`
+- **Admin credentials**: Configured for App Service access
+
+✅ **FIXED: Dockerfile Build Issues**
+- **Problem**: ODBC packages installation failing
+- **Impact**: Image build failing
+- **Solution**: Fixed Dockerfile with proper ODBC dependencies
+- **README.md**: Added to build context
+
+✅ **FIXED: SQLAlchemy Deprecation Warning**
+- **Problem**: Raw SQL queries without `text()` wrapper
+- **Impact**: Warnings in logs
+- **Solution**: Wrapped raw SQL with `text()` in `app/core/database.py`
 
 ### Common Deployment Issues
 
