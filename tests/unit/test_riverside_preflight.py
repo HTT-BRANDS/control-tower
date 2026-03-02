@@ -188,6 +188,185 @@ class TestRiversideMFADataSourceCheck:
             assert "tenant" in result.message.lower()
 
 
+class TestRiversideEvidenceCheck:
+    """Tests for RiversideEvidenceCheck."""
+
+    @pytest.fixture
+    def check(self):
+        """Create a RiversideEvidenceCheck instance."""
+        from app.preflight.riverside_checks import RiversideEvidenceCheck
+        return RiversideEvidenceCheck()
+
+    def test_check_initialization(self, check):
+        """Test check is initialized with correct attributes."""
+        assert check.check_id == "riverside_requirement_evidence"
+        assert check.name == "Riverside Requirement Evidence Verification"
+        assert check.category == CheckCategory.RIVERSIDE
+
+    def test_get_severity_for_priority(self, check):
+        """Test severity mapping based on priority."""
+        from app.preflight.riverside_checks import SeverityLevel
+
+        assert check._get_severity_for_priority("P0") == SeverityLevel.CRITICAL
+        assert check._get_severity_for_priority("P1") == SeverityLevel.WARNING
+        assert check._get_severity_for_priority("P2") == SeverityLevel.INFO
+        assert check._get_severity_for_priority("UNKNOWN") == SeverityLevel.INFO
+
+    def test_validate_evidence_format(self, check):
+        """Test evidence format validation."""
+        # Test valid PDF
+        result = check._validate_evidence_format("/path/to/evidence.pdf")
+        assert result["valid"] is True
+        assert result["type"] == "local_file"
+
+        # Test valid external URL
+        result = check._validate_evidence_format("https://sharepoint.com/doc.pdf")
+        assert result["valid"] is True
+        assert result["type"] == "external_url"
+
+        # Test invalid extension
+        result = check._validate_evidence_format("/path/to/evidence.exe")
+        assert result["valid"] is False
+        assert result["reason"] == "invalid_extension"
+
+        # Test no URL
+        result = check._validate_evidence_format(None)
+        assert result["valid"] is False
+        assert result["reason"] == "no_evidence_url"
+
+    def test_check_evidence_exists_external(self, check):
+        """Test evidence existence check for external URLs."""
+        result = check._check_evidence_exists("https://example.com/doc.pdf")
+        assert result["exists"] is True
+        assert result["type"] == "external"
+
+    def test_check_evidence_exists_no_url(self, check):
+        """Test evidence existence check with no URL."""
+        result = check._check_evidence_exists(None)
+        assert result["exists"] is False
+        assert result["reason"] == "no_url"
+
+    @pytest.mark.asyncio
+    async def test_check_no_completed_requirements(self, check):
+        """Test check when no completed requirements exist."""
+        with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
+            mock_db = MagicMock()
+            mock_session.return_value = mock_db
+            mock_db.query.return_value.filter.return_value.all.return_value = []
+
+            result = await check.run()
+
+            assert result.status == CheckStatus.PASS
+            assert "no completed requirements" in result.message.lower()
+            assert result.details["completed_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_check_with_completed_requirements_all_have_evidence(self, check):
+        """Test check with completed requirements that all have evidence."""
+        from app.models.riverside import (
+            RequirementStatus,
+            RequirementPriority,
+            RiversideRequirement,
+        )
+
+        # Create mock completed requirements with evidence
+        mock_req = MagicMock(spec=RiversideRequirement)
+        mock_req.requirement_id = "RC-001"
+        mock_req.title = "Test Requirement"
+        mock_req.priority = RequirementPriority.P1
+        mock_req.status = RequirementStatus.COMPLETED
+        mock_req.tenant_id = "tenant-123"
+        mock_req.evidence_url = "https://example.com/evidence.pdf"
+
+        with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
+            mock_db = MagicMock()
+            mock_session.return_value = mock_db
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
+
+            result = await check.run()
+
+            assert result.status == CheckStatus.PASS
+            assert result.details["completed_count"] == 1
+            assert result.details["with_evidence"] == 1
+            assert result.details["missing_evidence"] == 0
+
+    @pytest.mark.asyncio
+    async def test_check_p0_missing_evidence(self, check):
+        """Test check fails when P0 requirement is missing evidence."""
+        from app.models.riverside import (
+            RequirementStatus,
+            RequirementPriority,
+            RiversideRequirement,
+        )
+
+        # Create mock P0 requirement without evidence
+        mock_req = MagicMock(spec=RiversideRequirement)
+        mock_req.requirement_id = "RC-001"
+        mock_req.title = "Critical Requirement"
+        mock_req.priority = RequirementPriority.P0
+        mock_req.status = RequirementStatus.COMPLETED
+        mock_req.tenant_id = "tenant-123"
+        mock_req.evidence_url = None
+
+        with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
+            mock_db = MagicMock()
+            mock_session.return_value = mock_db
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
+
+            result = await check.run()
+
+            assert result.status == CheckStatus.FAIL
+            assert result.details["p0_missing"] == 1
+            assert "critical" in result.message.lower()
+            assert len(result.recommendations) > 0
+
+    @pytest.mark.asyncio
+    async def test_check_p1_missing_evidence(self, check):
+        """Test check warns when P1 requirement is missing evidence."""
+        from app.models.riverside import (
+            RequirementStatus,
+            RequirementPriority,
+            RiversideRequirement,
+        )
+
+        # Create mock P1 requirement without evidence
+        mock_req = MagicMock(spec=RiversideRequirement)
+        mock_req.requirement_id = "RC-002"
+        mock_req.title = "High Priority Requirement"
+        mock_req.priority = RequirementPriority.P1
+        mock_req.status = RequirementStatus.COMPLETED
+        mock_req.tenant_id = "tenant-123"
+        mock_req.evidence_url = None
+
+        with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
+            mock_db = MagicMock()
+            mock_session.return_value = mock_db
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
+
+            result = await check.run()
+
+            assert result.status == CheckStatus.WARNING
+            assert result.details["p1_missing"] == 1
+            assert "warning" in result.message.lower()
+
+    @pytest.mark.asyncio
+    async def test_check_with_tenant_filter(self, check):
+        """Test check respects tenant_id filter."""
+        with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
+            mock_db = MagicMock()
+            mock_session.return_value = mock_db
+            mock_query = MagicMock()
+            mock_db.query.return_value = mock_query
+            mock_query.filter.return_value = mock_query
+            mock_query.all.return_value = []
+
+            result = await check.run(tenant_id="test-tenant-123")
+
+            # Verify tenant filter was applied
+            mock_query.filter.assert_called()
+            assert result.status == CheckStatus.PASS
+
+
 class TestRiversideCheckFunctions:
     """Tests for Riverside check convenience functions."""
 
@@ -199,7 +378,7 @@ class TestRiversideCheckFunctions:
         with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
             mock_db = MagicMock()
             mock_session.return_value = mock_db
-            mock_db.query.return_value.count.return_value = 0
+            mock_db.query.return_value.filter.return_value.all.return_value = []
 
             # Mock all the checks to avoid external dependencies
             with patch("app.preflight.riverside_checks.httpx.AsyncClient"):
@@ -211,8 +390,8 @@ class TestRiversideCheckFunctions:
 
                         results = await run_all_riverside_checks()
 
-        # Should return 5 check results
-        assert len(results) == 5
+        # Should return 6 check results (including new evidence check)
+        assert len(results) == 6
         # All should be CheckResult instances
         from app.preflight.models import CheckResult
         assert all(isinstance(r, CheckResult) for r in results)
@@ -223,11 +402,13 @@ class TestRiversideCheckFunctions:
 
         checks = get_riverside_checks()
 
-        # Should return 5 checks
-        assert len(checks) == 5
+        # Should return 6 checks (including new evidence check)
+        assert len(checks) == 6
         # All should have the correct category
         from app.preflight.base import BasePreflightCheck
         assert all(isinstance(c, BasePreflightCheck) for c in checks.values())
+        # Verify evidence check is included
+        assert "riverside_requirement_evidence" in checks
 
 
 class TestCheckResultStructure:
