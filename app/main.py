@@ -25,7 +25,7 @@ from app.api.routes import (
 from app.core.cache import cache_manager
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.core.rate_limit import rate_limiter, apply_rate_limit_headers
+from app.core.rate_limit import rate_limiter
 from app.core.scheduler import init_scheduler
 
 # Configure logging
@@ -206,9 +206,10 @@ async def get_system_status():
     - Sync job summaries
     - Active alerts count
     """
-    from datetime import datetime, UTC
-    from app.core.database import SessionLocal, get_db_stats
+    from datetime import UTC, datetime
+
     from app.api.services.monitoring_service import MonitoringService
+    from app.core.database import SessionLocal, get_db_stats
     from app.core.monitoring import get_performance_dashboard
 
     status = {
