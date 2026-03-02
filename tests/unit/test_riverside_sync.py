@@ -168,8 +168,8 @@ class TestSyncTenantMFA:
         with patch("app.services.riverside_sync.GraphClient") as MockGraphClient:
             mock_graph = MagicMock()
             MockGraphClient.return_value = mock_graph
-            mock_graph.get_mfa_status = AsyncMock(return_value={"value": mock_mfa_registrations})
-            mock_graph.get_users = AsyncMock(return_value=mock_users)
+            mock_graph.get_mfa_registration_details_paginated = AsyncMock(return_value=mock_mfa_registrations)
+            mock_graph.get_users_paginated = AsyncMock(return_value=mock_users)
             mock_graph.get_directory_roles = AsyncMock(return_value=mock_directory_roles)
 
             # Execute
@@ -182,6 +182,9 @@ class TestSyncTenantMFA:
             assert result["admin_accounts"] == 2
             mock_session.add.assert_called_once()
             mock_session.commit.assert_called_once()
+            # Verify new paginated methods were called
+            mock_graph.get_users_paginated.assert_called_once()
+            mock_graph.get_mfa_registration_details_paginated.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_sync_tenant_mfa_tenant_not_found(self):
@@ -216,8 +219,8 @@ class TestSyncTenantMFA:
         with patch("app.services.riverside_sync.GraphClient") as MockGraphClient:
             mock_graph = MagicMock()
             MockGraphClient.return_value = mock_graph
-            mock_graph.get_mfa_status = AsyncMock(return_value={"value": mock_mfa_registrations})
-            mock_graph.get_users = AsyncMock(return_value=mock_users)
+            mock_graph.get_mfa_registration_details_paginated = AsyncMock(return_value=mock_mfa_registrations)
+            mock_graph.get_users_paginated = AsyncMock(return_value=mock_users)
             mock_graph.get_directory_roles = AsyncMock(return_value=mock_directory_roles)
 
             result = await sync_tenant_mfa("test-tenant-id", mock_session)
