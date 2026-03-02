@@ -741,6 +741,24 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
         # Riverside checks not available
         pass
 
+    # Import and add MFA compliance checks
+    try:
+        from app.preflight.mfa_checks import (
+            MFATenantDataCheck,
+            MFAAdminEnrollmentCheck,
+            MFAUserEnrollmentCheck,
+            MFAGapReportCheck,
+        )
+        checks.extend([
+            MFATenantDataCheck(),
+            MFAAdminEnrollmentCheck(),
+            MFAUserEnrollmentCheck(),
+            MFAGapReportCheck(),
+        ])
+    except ImportError:
+        # MFA checks not available
+        pass
+
     return {check.check_id: check for check in checks}
 
 

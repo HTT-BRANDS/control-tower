@@ -69,6 +69,20 @@ from app.preflight.riverside_checks import (
     run_all_riverside_checks,
 )
 
+# MFA compliance checks
+from app.preflight.mfa_checks import (
+    MFATenantDataCheck,
+    MFAAdminEnrollmentCheck,
+    MFAUserEnrollmentCheck,
+    MFAGapReportCheck,
+    check_mfa_tenant_data,
+    check_mfa_admin_enrollment,
+    check_mfa_user_enrollment,
+    check_mfa_gap_report,
+    get_mfa_checks,
+    run_all_mfa_checks,
+)
+
 # Tenant orchestration
 from app.preflight.tenant_checks import (
     check_all_tenants,
@@ -101,6 +115,11 @@ __all__ = [
     "RiversideSchedulerCheck",
     "RiversideAzureADPermissionsCheck",
     "RiversideMFADataSourceCheck",
+    # Class-based MFA compliance checks
+    "MFATenantDataCheck",
+    "MFAAdminEnrollmentCheck",
+    "MFAUserEnrollmentCheck",
+    "MFAGapReportCheck",
     # Function-based Azure checks
     "check_azure_authentication",
     "check_azure_subscriptions",
@@ -119,6 +138,13 @@ __all__ = [
     "check_riverside_mfa_data_source",
     "run_all_riverside_checks",
     "get_riverside_checks",
+    # Function-based MFA compliance checks
+    "check_mfa_tenant_data",
+    "check_mfa_admin_enrollment",
+    "check_mfa_user_enrollment",
+    "check_mfa_gap_report",
+    "run_all_mfa_checks",
+    "get_mfa_checks",
     # Tenant orchestration
     "check_all_tenants",
     "check_single_tenant",

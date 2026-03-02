@@ -42,6 +42,9 @@ class CheckCategory(str, Enum):
     # Riverside checks
     RIVERSIDE = "riverside"
 
+    # MFA compliance checks
+    MFA_COMPLIANCE = "mfa_compliance"
+
 
 class CheckResult(BaseModel):
     """Result of a single preflight check."""
