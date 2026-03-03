@@ -1,0 +1,142 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Azure Lighthouse delegation template for Azure Governance Platform",
+    "version": "1.0.0",
+    "author": "Azure Governance Platform",
+    "supportedTenantTypes": ["htt", "frenchies", "bishops", "tll"]
+  },
+  "parameters": {
+    "managedByTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure AD tenant ID of the service provider (Azure Governance Platform)"
+      }
+    },
+    "managedByPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Object ID of the Managed Identity from the Azure Governance Platform App Service"
+      }
+    },
+    "mspOfferName": {
+      "type": "string",
+      "defaultValue": "Azure Governance Platform",
+      "metadata": {
+        "description": "Name of the Lighthouse offer"
+      }
+    },
+    "mspOfferDescription": {
+      "type": "string",
+      "defaultValue": "Multi-tenant governance, compliance, and cost management through Azure Lighthouse delegation",
+      "metadata": {
+        "description": "Description of the Lighthouse offer"
+      }
+    },
+    "principalDisplayName": {
+      "type": "string",
+      "defaultValue": "Azure Governance Platform Managed Identity",
+      "metadata": {
+        "description": "Display name for the managed identity principal"
+      }
+    }
+  },
+  "variables": {
+    "registrationDefinitionName": "[parameters('mspOfferName')]",
+    "registrationDefinitionId": "[guid(parameters('mspOfferName'), parameters('managedByTenantId'), subscription().subscriptionId)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedServices/registrationDefinitions",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('registrationDefinitionId')]",
+      "properties": {
+        "registrationDefinitionName": "[parameters('mspOfferName')]",
+        "description": "[parameters('mspOfferDescription')]",
+        "managedByTenantId": "[parameters('managedByTenantId')]",
+        "authorizations": [
+          {
+            "principalId": "[parameters('managedByPrincipalId')]",
+            "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Contributor')]",
+            "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+          },
+          {
+            "principalId": "[parameters('managedByPrincipalId')]",
+            "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Cost Management Reader')]",
+            "roleDefinitionId": "72fafb9e-0641-4937-9268-a91bfd8191a3"
+          },
+          {
+            "principalId": "[parameters('managedByPrincipalId')]",
+            "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Security Reader')]",
+            "roleDefinitionId": "39bc4728-0917-49c7-9d2c-d95423bc2eb4"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ManagedServices/registrationAssignments",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('registrationDefinitionId')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedServices/registrationDefinitions', variables('registrationDefinitionId'))]"
+      ],
+      "properties": {
+        "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions', variables('registrationDefinitionId'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "registrationDefinitionId": {
+      "type": "string",
+      "value": "[variables('registrationDefinitionId')]",
+      "metadata": {
+        "description": "The unique ID of the Lighthouse registration definition"
+      }
+    },
+    "registrationDefinitionName": {
+      "type": "string",
+      "value": "[variables('registrationDefinitionName')]",
+      "metadata": {
+        "description": "The name of the Lighthouse registration definition"
+      }
+    },
+    "managedByTenantId": {
+      "type": "string",
+      "value": "[parameters('managedByTenantId')]",
+      "metadata": {
+        "description": "The service provider tenant ID"
+      }
+    },
+    "subscriptionId": {
+      "type": "string",
+      "value": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The customer subscription ID where delegation is applied"
+      }
+    },
+    "authorizations": {
+      "type": "array",
+      "value": [
+        {
+          "roleName": "Contributor",
+          "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+          "description": "Grants full access to manage all resources, but does not allow assigning roles"
+        },
+        {
+          "roleName": "Cost Management Reader",
+          "roleDefinitionId": "72fafb9e-0641-4937-9268-a91bfd8191a3",
+          "description": "Can view cost data and configuration"
+        },
+        {
+          "roleName": "Security Reader",
+          "roleDefinitionId": "39bc4728-0917-49c7-9d2c-d95423bc2eb4",
+          "description": "Can view security-related information such as policies, recommendations, and security alerts"
+        }
+      ],
+      "metadata": {
+        "description": "List of RBAC roles delegated to the service provider"
+      }
+    }
+  }
+}

@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     azure_region: str | None = Field(default=None, alias="AZURE_REGION")
     azure_subscription_id: str | None = Field(default=None, alias="AZURE_SUBSCRIPTION_ID")
     azure_resource_group: str | None = Field(default=None, alias="AZURE_RESOURCE_GROUP")
+    azure_managed_identity_object_id: str | None = Field(default=None, alias="AZURE_MANAGED_IDENTITY_OBJECT_ID")
 
     # Application
     app_name: str = "Azure Governance Platform"
@@ -105,6 +106,18 @@ class Settings(BaseSettings):
     azure_tenant_id: str | None = None
     azure_client_id: str | None = None
     azure_client_secret: str | None = None
+
+    # Azure Lighthouse Configuration
+    managed_identity_object_id: str | None = Field(
+        default=None,
+        alias="MANAGED_IDENTITY_OBJECT_ID",
+        description="Object ID of the Managed Identity for Lighthouse delegation",
+    )
+    lighthouse_enabled: bool = Field(
+        default=True,
+        alias="LIGHTHOUSE_ENABLED",
+        description="Enable self-service onboarding via Azure Lighthouse",
+    )
 
     # Key Vault (for multi-tenant credentials and secrets)
     key_vault_url: str | None = None

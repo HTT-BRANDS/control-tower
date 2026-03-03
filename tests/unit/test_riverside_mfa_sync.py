@@ -18,7 +18,6 @@ sys.modules['azure.core.exceptions'] = azure_mock
 
 from app.models.riverside import RequirementStatus
 from app.services.riverside_sync import (
-    MFAError,
     SyncError,
     sync_all_tenants,
     sync_tenant_mfa,

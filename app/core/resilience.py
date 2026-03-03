@@ -22,6 +22,7 @@ Example:
 """
 
 import asyncio
+import inspect
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -160,7 +161,7 @@ class ResilientAzureClient:
         """Execute a function with rate limiting and circuit breaker protection.
 
         Args:
-            func: The async function to execute
+            func: The async or sync function to execute
             *args: Positional arguments for the function
             **kwargs: Keyword arguments for the function
 
@@ -182,8 +183,17 @@ class ResilientAzureClient:
                 api_name=self.api_name,
             )
 
+        # Auto-wrap sync functions in asyncio.to_thread
+        if not inspect.iscoroutinefunction(func):
+            # Sync function - wrap it to run in thread pool
+            async def async_wrapper(*args, **kwargs):
+                return await asyncio.to_thread(func, *args, **kwargs)
+            wrapped_func = async_wrapper
+        else:
+            wrapped_func = func
+
         # Execute with circuit breaker
-        return await self.circuit_breaker.call_async(func, *args, **kwargs)
+        return await self.circuit_breaker.call_async(wrapped_func, *args, **kwargs)
 
     async def call_with_retry(
         self,

@@ -18,6 +18,7 @@ from app.api.routes import (
     dmarc_router,
     exports_router,
     identity_router,
+    onboarding_router,
     resources_router,
     riverside_router,
     sync_router,
@@ -135,6 +136,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Include routers - Auth router first (no auth required for login)
 app.include_router(auth_router)
+
+# Onboarding router (public for self-service)
+app.include_router(onboarding_router)
 
 # Protected routers (will be secured via dependencies in route files)
 app.include_router(dashboard_router)
