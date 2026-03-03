@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     azure_region: str | None = Field(default=None, alias="AZURE_REGION")
     azure_subscription_id: str | None = Field(default=None, alias="AZURE_SUBSCRIPTION_ID")
     azure_resource_group: str | None = Field(default=None, alias="AZURE_RESOURCE_GROUP")
+    azure_managed_identity_object_id: str | None = Field(default=None, alias="AZURE_MANAGED_IDENTITY_OBJECT_ID")
 
     # Application
     app_name: str = "Azure Governance Platform"
