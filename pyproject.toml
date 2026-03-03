@@ -42,6 +42,7 @@ dependencies = [
     "azure-mgmt-subscription>=3.1.1",
     # "azure-keyvault-secrets>=4.7.0",  # Uncomment for production
     "six>=1.17.0",
+    "alembic>=1.18.4",
 ]
 
 [project.optional-dependencies]

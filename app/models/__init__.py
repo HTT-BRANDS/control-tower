@@ -1,6 +1,7 @@
 """Database models module."""
 
 # Brand configuration for multi-tenant theming
+from app.models.backfill_job import BackfillJob, BackfillStatus
 from app.models.brand_config import BrandConfig
 from app.models.compliance import ComplianceSnapshot, PolicyState
 from app.models.cost import CostAnomaly, CostSnapshot
@@ -45,6 +46,9 @@ __all__ = [
     "IdentitySnapshot",
     "PrivilegedUser",
     "SyncJob",
+    # Backfill models
+    "BackfillJob",
+    "BackfillStatus",
     # Monitoring models
     "SyncJobLog",
     "SyncJobMetrics",
