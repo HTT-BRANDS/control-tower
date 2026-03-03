@@ -90,7 +90,6 @@ class LighthouseAzureClient:
         
         logger.debug("LighthouseAzureClient initialized with DefaultAzureCredential")
 
-
     async def verify_delegation(self, subscription_id: str) -> dict[str, Any]:
         """Verify that Lighthouse delegation is working for a subscription.
 
@@ -102,7 +101,6 @@ class LighthouseAzureClient:
         Returns:
             Dictionary with delegation status:
             {
-                "success": bool,
                 "is_delegated": bool,
                 "subscription_id": str,
                 "display_name": str | None,
@@ -111,12 +109,9 @@ class LighthouseAzureClient:
                 "error": str | None
             }
 
-        Raises:
-            LighthouseDelegationError: If there's an actual API error (auth failure, network timeout)
-
         Example:
             result = await client.verify_delegation("12345-abc")
-            if result["success"]:
+            if result["is_delegated"]:
                 print(f"Access confirmed: {result['display_name']}")
         """
         logger.info(f"Verifying Lighthouse delegation for subscription: {subscription_id}")
@@ -131,23 +126,8 @@ class LighthouseAzureClient:
             )
 
             if subscription:
-                # Check if subscription is disabled
-                state = subscription.get("state")
-                if state and state.lower() == "disabled":
-                    logger.warning(f"Subscription {subscription_id} is disabled")
-                    return {
-                        "success": False,
-                        "is_delegated": False,
-                        "subscription_id": subscription_id,
-                        "display_name": subscription.get("display_name"),
-                        "state": state,
-                        "tenant_id": subscription.get("tenant_id"),
-                        "error": "Subscription is disabled",
-                    }
-                
                 logger.info(f"Delegation verified for {subscription_id}: {subscription.get('display_name')}")
                 return {
-                    "success": True,
                     "is_delegated": True,
                     "subscription_id": subscription_id,
                     "display_name": subscription.get("display_name"),
@@ -158,34 +138,17 @@ class LighthouseAzureClient:
             else:
                 logger.warning(f"Subscription {subscription_id} not found via Lighthouse")
                 return {
-                    "success": False,
                     "is_delegated": False,
                     "subscription_id": subscription_id,
                     "display_name": None,
                     "state": None,
                     "tenant_id": None,
-                    "error": "Subscription not found via Lighthouse delegation",
+                    "error": "Subscription not accessible via Lighthouse delegation",
                 }
 
         except Exception as e:
-            # Check if this is an authentication or network error - these should raise
-            # For ResilienceError, check the underlying last_error
-            error_to_check = e
-            if hasattr(e, 'last_error') and e.last_error:
-                error_to_check = e.last_error
-            
-            error_str = str(error_to_check).lower()
-            if any(err in error_str for err in ['authentication', 'unauthorized', 'forbidden', 'timeout', 'network']):
-                logger.error(f"Delegation verification failed with API error for {subscription_id}: {error_to_check}")
-                raise LighthouseDelegationError(
-                    subscription_id,
-                    f"API error during delegation verification: {str(error_to_check)}"
-                ) from e
-            
-            # Other errors return as failure result
             logger.error(f"Delegation verification failed for {subscription_id}: {e}")
             return {
-                "success": False,
                 "is_delegated": False,
                 "subscription_id": subscription_id,
                 "display_name": None,
@@ -202,46 +165,33 @@ class LighthouseAzureClient:
 
         Returns:
             Subscription details or None if not found
-            
-        Raises:
-            Exception: If API call fails (authentication, network, etc.)
         """
         client = SubscriptionClient(self.credential)
-        # For Lighthouse, list all accessible subscriptions and filter
-        for sub in client.subscriptions.list():
-            if sub.subscription_id == subscription_id:
-                return {
-                    "subscription_id": sub.subscription_id,
-                    "display_name": sub.display_name,
-                    "state": sub.state.value if hasattr(sub.state, "value") else str(sub.state),
-                    "tenant_id": sub.tenant_id,
-                }
-        # Subscription not found in accessible list
-        return None
+        try:
+            sub = client.subscriptions.get(subscription_id)
+            return {
+                "subscription_id": sub.subscription_id,
+                "display_name": sub.display_name,
+                "state": sub.state.value if hasattr(sub.state, "value") else str(sub.state),
+                "tenant_id": sub.tenant_id,
+            }
+        except Exception as e:
+            logger.debug(f"Subscription {subscription_id} not accessible: {e}")
+            return None
 
     async def list_resources(
         self,
         subscription_id: str,
         resource_group: str | None = None,
-        resource_type: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         """List Azure resources in a subscription via Lighthouse.
 
         Args:
             subscription_id: The delegated subscription ID
             resource_group: Optional resource group name to filter
-            resource_type: Optional resource type to filter (e.g., "Microsoft.Compute/virtualMachines")
 
         Returns:
-            Dictionary with resources:
-            {
-                "success": bool,
-                "resources": list[dict],
-                "count": int,
-                "subscription_id": str,
-                "error": str | None
-            }
-            Where each resource has:
+            List of resource dictionaries with:
             - id: Full resource ID
             - name: Resource name
             - type: Resource type
@@ -253,8 +203,8 @@ class LighthouseAzureClient:
             LighthouseDelegationError: If delegation verification fails
 
         Example:
-            result = await client.list_resources("sub-123")
-            for r in result["resources"]:
+            resources = await client.list_resources("sub-123")
+            for r in resources:
                 print(f"{r['name']}: {r['type']} in {r['location']}")
         """
         logger.debug(f"Listing resources for subscription: {subscription_id}")
@@ -274,17 +224,10 @@ class LighthouseAzureClient:
                 max_retries=3,
                 subscription_id=subscription_id,
                 resource_group=resource_group,
-                resource_type=resource_type,
             )
 
             logger.info(f"Retrieved {len(resources)} resources from {subscription_id}")
-            return {
-                "success": True,
-                "resources": resources,
-                "count": len(resources),
-                "subscription_id": subscription_id,
-                "error": None,
-            }
+            return resources
 
         except Exception as e:
             logger.error(f"Failed to list resources for {subscription_id}: {e}")
@@ -294,14 +237,12 @@ class LighthouseAzureClient:
         self,
         subscription_id: str,
         resource_group: str | None = None,
-        resource_type: str | None = None,
     ) -> list[dict[str, Any]]:
         """Synchronous helper to list resources.
 
         Args:
             subscription_id: The Azure subscription ID
             resource_group: Optional resource group filter
-            resource_type: Optional resource type filter
 
         Returns:
             List of resource dictionaries
@@ -313,17 +254,11 @@ class LighthouseAzureClient:
             if resource_group:
                 # List resources in specific resource group
                 for resource in client.resources.list_by_resource_group(resource_group):
-                    resource_dict = self._resource_to_dict(resource)
-                    # Apply resource_type filter if specified
-                    if resource_type is None or resource_dict.get("type") == resource_type:
-                        resources.append(resource_dict)
+                    resources.append(self._resource_to_dict(resource))
             else:
                 # List all resources in subscription
                 for resource in client.resources.list():
-                    resource_dict = self._resource_to_dict(resource)
-                    # Apply resource_type filter if specified
-                    if resource_type is None or resource_dict.get("type") == resource_type:
-                        resources.append(resource_dict)
+                    resources.append(self._resource_to_dict(resource))
 
         except Exception as e:
             logger.error(f"Error listing resources: {e}")
@@ -368,7 +303,6 @@ class LighthouseAzureClient:
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         granularity: str = "Daily",
-        group_by: list[str] | None = None,
     ) -> dict[str, Any]:
         """Retrieve cost data for a delegated subscription via Lighthouse.
 
@@ -377,20 +311,16 @@ class LighthouseAzureClient:
             start_date: Start date for cost query (defaults to 30 days ago)
             end_date: End date for cost query (defaults to today)
             granularity: Granularity - "Daily" or "Monthly"
-            group_by: Optional list of dimensions to group by (e.g., ["ServiceName", "ResourceGroup"])
 
         Returns:
             Dictionary with cost data:
             {
-                "success": bool,
                 "subscription_id": str,
-                "cost": float,
+                "total_cost": float,
                 "currency": str,
                 "start_date": str,
                 "end_date": str,
-                "rows": list[dict] | None,
-                "breakdown": list[dict] | None,
-                "error": str | None
+                "rows": list[dict]  # Detailed cost breakdown
             }
 
         Raises:
@@ -400,8 +330,7 @@ class LighthouseAzureClient:
             cost_data = await client.get_cost_data(
                 subscription_id="sub-123",
                 start_date=datetime(2024, 1, 1),
-                end_date=datetime(2024, 1, 31),
-                group_by=["ServiceName", "ResourceGroup"]
+                end_date=datetime(2024, 1, 31)
             )
         """
         logger.debug(f"Retrieving cost data for subscription: {subscription_id}")
@@ -429,10 +358,9 @@ class LighthouseAzureClient:
                 start_date=start_date,
                 end_date=end_date,
                 granularity=granularity,
-                group_by=group_by,
             )
 
-            logger.info(f"Retrieved cost data for {subscription_id}: {cost_data['cost']} {cost_data['currency']}")
+            logger.info(f"Retrieved cost data for {subscription_id}: {cost_data['total_cost']} {cost_data['currency']}")
             return cost_data
 
         except Exception as e:
@@ -445,7 +373,6 @@ class LighthouseAzureClient:
         start_date: datetime,
         end_date: datetime,
         granularity: str,
-        group_by: list[str] | None = None,
     ) -> dict[str, Any]:
         """Synchronous helper to get cost data.
 
@@ -454,7 +381,6 @@ class LighthouseAzureClient:
             start_date: Query start date
             end_date: Query end date
             granularity: Daily or Monthly
-            group_by: Optional list of dimensions to group by
 
         Returns:
             Dictionary with cost data
@@ -466,27 +392,6 @@ class LighthouseAzureClient:
         from_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
         to_date = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # Build grouping configuration
-        # Default grouping if not specified
-        if group_by is None:
-            grouping_config = [
-                {"type": "Dimension", "name": "ResourceGroup"},
-                {"type": "Dimension", "name": "ServiceName"},
-            ]
-        else:
-            # Map group_by dimensions to Azure API format
-            dimension_map = {
-                "ResourceGroup": "ResourceGroup",
-                "ServiceName": "ServiceName",
-                "ResourceType": "ResourceType",
-                "MeterCategory": "MeterCategory",
-            }
-            grouping_config = [
-                {"type": "Dimension", "name": dimension_map.get(dim, dim)}
-                for dim in group_by
-                if dim in dimension_map
-            ]
-
         query = QueryDefinition(
             type="Usage",
             timeframe="Custom",
@@ -496,7 +401,10 @@ class LighthouseAzureClient:
                 "aggregation": {
                     "totalCost": {"name": "PreTaxCost", "function": "Sum"}
                 },
-                "grouping": grouping_config,
+                "grouping": [
+                    {"type": "Dimension", "name": "ResourceGroup"},
+                    {"type": "Dimension", "name": "ServiceName"},
+                ],
             },
         )
 
@@ -510,39 +418,26 @@ class LighthouseAzureClient:
 
             if result.rows:
                 for row in result.rows:
-                    # Azure cost query returns columns based on grouping
-                    # Always: [Cost, Currency, Date] + grouped dimensions
+                    # Azure cost query returns: [Cost, Currency, Date, ResourceGroup, ServiceName]
                     row_dict = {
                         "cost": float(row[0]) if len(row) > 0 else 0.0,
                         "currency": str(row[1]) if len(row) > 1 else "USD",
                         "date": str(row[2]) if len(row) > 2 else None,
+                        "resource_group": str(row[3]) if len(row) > 3 else None,
+                        "service_name": str(row[4]) if len(row) > 4 else None,
                     }
-                    
-                    # Add grouping dimensions dynamically
-                    if len(row) > 3 and group_by:
-                        for i, dim in enumerate(group_by):
-                            if len(row) > 3 + i:
-                                row_dict[dim] = str(row[3 + i])
-                    elif len(row) > 3:
-                        # Default grouping
-                        row_dict["resource_group"] = str(row[3]) if len(row) > 3 else None
-                        row_dict["service_name"] = str(row[4]) if len(row) > 4 else None
-                    
                     rows.append(row_dict)
                     total_cost += row_dict["cost"]
                     currency = row_dict["currency"]
 
-            # Return in format expected by tests
             return {
-                "success": True,
                 "subscription_id": subscription_id,
-                "cost": total_cost,
+                "total_cost": total_cost,
                 "currency": currency,
                 "start_date": from_date,
                 "end_date": to_date,
-                "rows": rows if len(rows) > 0 else None,
-                "breakdown": rows if len(rows) > 0 else None,  # Alias for tests
-                "error": None,
+                "rows": rows,
+                "row_count": len(rows),
             }
 
         except Exception as e:
@@ -563,14 +458,12 @@ class LighthouseAzureClient:
         Returns:
             Dictionary with security data:
             {
-                "success": bool,
                 "subscription_id": str,
                 "secure_score": float | None,
                 "max_score": float | None,
                 "percentage": float,
                 "assessments": list[dict],
-                "recommendations_count": int,
-                "error": str | None
+                "recommendations_count": int
             }
 
         Raises:
@@ -651,14 +544,12 @@ class LighthouseAzureClient:
             logger.warning(f"Could not retrieve all assessments: {e}")
 
         return {
-            "success": True,
             "subscription_id": subscription_id,
             "secure_score": secure_score,
             "max_score": max_score,
             "percentage": percentage,
             "assessments": assessments,
             "recommendations_count": len(assessments),
-            "error": None,
         }
 
     async def validate_tenant_access(
