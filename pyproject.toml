@@ -42,6 +42,7 @@ dependencies = [
     "azure-mgmt-subscription>=3.1.1",
     # "azure-keyvault-secrets>=4.7.0",  # Uncomment for production
     "six>=1.17.0",
+    "alembic>=1.18.4",
 ]
 
 [project.optional-dependencies]
@@ -88,6 +89,7 @@ ignore = [
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
+"scripts/*" = ["E402"]
 
 [tool.mypy]
 python_version = "3.11"

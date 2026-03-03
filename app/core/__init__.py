@@ -9,6 +9,22 @@ from app.core.cache import (
     invalidate_on_sync_completion,
     set_cached,
 )
+from app.core.circuit_breaker import (
+    COST_SYNC_BREAKER,
+    COMPLIANCE_SYNC_BREAKER,
+    RESOURCE_SYNC_BREAKER,
+    IDENTITY_SYNC_BREAKER,
+    GRAPH_API_BREAKER,
+    RIVERSIDE_SYNC_BREAKER,
+    DMARC_SYNC_BREAKER,
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerError,
+    CircuitBreakerRegistry,
+    CircuitState,
+    circuit_breaker,
+    circuit_breaker_registry,
+)
 from app.core.config import Settings, get_settings
 from app.core.database import (
     Base,
@@ -46,12 +62,42 @@ from app.core.notifications import (
     should_notify,
 )
 from app.core.rate_limit import (
+    AZURE_API_RATE_LIMITS,
+    DEFAULT_LIMITS,
+    MultiApiRateLimiter,
     RateLimitConfig,
     RateLimitStrategy,
+    TokenBucketRateLimiter,
+    calculate_backoff,
+    extract_retry_after,
+    multi_api_limiter,
     rate_limit,
     rate_limiter,
 )
+from app.core.resilience import (
+    ResilientAzureClient,
+    ResilienceConfig,
+    ResilienceError,
+    get_arm_client,
+    get_cost_client,
+    get_graph_client,
+    get_security_client,
+    resilient_api_call,
+)
 from app.core.scheduler import get_scheduler, init_scheduler, trigger_manual_sync
+from app.core.tenant_context import (
+    BrandColors,
+    DEFAULT_BRAND,
+    get_all_brand_palettes,
+    get_brand_colors,
+    get_brand_colors_by_code,
+    get_brand_context_for_request,
+    get_brand_css_variables,
+    get_template_context,
+    get_tenant_brand_from_request,
+    register_template_filters,
+    TenantContextMiddleware,
+)
 
 __all__ = [
     # Config
@@ -90,6 +136,38 @@ __all__ = [
     "RateLimitStrategy",
     "rate_limit",
     "rate_limiter",
+    # Token Bucket Rate Limiting
+    "TokenBucketRateLimiter",
+    "MultiApiRateLimiter",
+    "multi_api_limiter",
+    "AZURE_API_RATE_LIMITS",
+    "DEFAULT_LIMITS",
+    "calculate_backoff",
+    "extract_retry_after",
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitBreakerError",
+    "CircuitBreakerRegistry",
+    "CircuitState",
+    "circuit_breaker",
+    "circuit_breaker_registry",
+    "COST_SYNC_BREAKER",
+    "COMPLIANCE_SYNC_BREAKER",
+    "RESOURCE_SYNC_BREAKER",
+    "IDENTITY_SYNC_BREAKER",
+    "GRAPH_API_BREAKER",
+    "RIVERSIDE_SYNC_BREAKER",
+    "DMARC_SYNC_BREAKER",
+    # Resilience
+    "ResilientAzureClient",
+    "ResilienceConfig",
+    "ResilienceError",
+    "resilient_api_call",
+    "get_arm_client",
+    "get_graph_client",
+    "get_cost_client",
+    "get_security_client",
     # Scheduler
     "get_scheduler",
     "init_scheduler",
@@ -106,4 +184,16 @@ __all__ = [
     "severity_meets_threshold",
     "create_dashboard_url",
     "create_retry_url",
+    # Tenant Context
+    "BrandColors",
+    "DEFAULT_BRAND",
+    "TenantContextMiddleware",
+    "get_brand_colors",
+    "get_brand_colors_by_code",
+    "get_all_brand_palettes",
+    "get_tenant_brand_from_request",
+    "get_brand_css_variables",
+    "get_template_context",
+    "get_brand_context_for_request",
+    "register_template_filters",
 ]

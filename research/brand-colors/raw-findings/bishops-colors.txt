@@ -1,0 +1,61 @@
+BISHOPS HAIRCUTS (bishops.co) - Raw Color Extraction
+=====================================================
+
+HEX COLORS (found in HTML/CSS):
+-------------------------------
+#000000 - Black
+#00d084 - Green
+#0693e3 - Sky Blue
+#32373c - CHARCOAL (text)
+#7bdcb5 - Mint
+#8ed1fc - Light Blue
+#9b51e0 - Purple
+#abb8c3 - Blue Gray
+#CE9F7C - TAN/BEIGE (secondary)
+#cf2e2e - Red
+#eb631b - ORANGE (primary)
+#EB631B - ORANGE (primary - uppercase variant)
+#EBEBDF - CREAM/BEIGE (background)
+#f78da7 - Pink
+#fcb900 - Gold
+#ff6900 - Orange
+#ffffff - White
+
+RGB COLORS:
+-----------
+rgb(255,105,0) - Orange
+rgb(0, 0, 0) - Black
+
+RGBA COLORS:
+------------
+rgba(255,255,255,1) - White
+rgba(0, 0, 0, 0.2) - Light black overlay
+rgba(0, 0, 0, 0.4) - Medium black overlay
+
+USAGE PATTERNS:
+---------------
+- Primary Brand: #EB631B (Vibrant Orange)
+- Secondary: #CE9F7C (Tan/Beige)
+- Accent: #eb631b (Orange repeated)
+- Text Primary: #000000 (Black)
+- Text Secondary: #32373c (Charcoal)
+- Background: #EBEBDF (Warm Beige/Cream)
+- Background 2: #ffffff (White)
+- Buttons: #EB631B (Orange filled, white text)
+
+LOGO COLORS:
+------------
+- Orange (#EB631B) for "BISHOPS"
+- Orange (#EB631B) for "CUTS / COLOR"
+
+GRADIENTS:
+----------
+- None prominent - bold solid colors
+
+NOTABLE:
+--------
+- Very bold, energetic orange (#EB631B) - 5 occurrences
+- Creative, youth-oriented aesthetic
+- High contrast with black text
+- "ISN'T YOUR STYLE" - celebrates individuality
+- "WE FIXED THAT" - bold statements in orange

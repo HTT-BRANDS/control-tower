@@ -37,6 +37,9 @@ class Tenant(Base):
     user_mappings: Mapped[list["UserTenant"]] = relationship(
         "UserTenant", back_populates="tenant", cascade="all, delete-orphan"
     )
+    brand_config: Mapped["BrandConfig"] = relationship(
+        "BrandConfig", back_populates="tenant", uselist=False, cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Tenant {self.name} ({self.tenant_id})>"

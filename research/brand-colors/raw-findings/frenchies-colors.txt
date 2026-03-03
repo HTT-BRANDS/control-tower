@@ -1,0 +1,75 @@
+FRENCHIES NAILS (frenchiesnails.com) - Raw Color Extraction
+============================================================
+
+HEX COLORS (found in HTML/CSS):
+-------------------------------
+#000000 - Black
+#004a59 - NAVY BLUE (PRIMARY)
+#005a87 - Medium Navy
+#006ba1 - Bright Navy
+#007cba - Light Navy
+#00d084 - Green
+#020381 - Deep Blue
+#052b48 - DEEP NAVY (PRIMARY BRAND)
+#0693e3 - Sky Blue
+#2874fc - Bright Blue
+#313131 - Dark Gray (text)
+#31cdcf - Cyan
+#32373c - Charcoal
+#330968 - Deep Purple
+#34e2e4 - Bright Cyan
+#4721fb - Purple
+#67a671 - Sage Green
+#7a00df - Violet
+#7bdcb5 - Mint
+#8ed1fc - Light Blue
+#9b51e0 - Purple
+#ab1dfe - Bright Purple
+#abb8c3 - Blue Gray
+#cf2e2e - Red
+#dad0ec - Lavender
+#ebf0f5 - LIGHT BLUE-GRAY (background)
+#f78da7 - ROSE PINK (accent)
+#faaca8 - SOFT PEACH PINK (accent)
+#fafae1 - Cream
+#fcb900 - Gold
+#fdd79a - Light Gold
+#ff6900 - Orange
+#ffffff - White (background)
+
+RGB COLORS:
+-----------
+rgb(255,105,0) - Orange
+rgb(0, 0, 0) - Black
+
+RGBA COLORS:
+------------
+rgba(0,0,0,.1) - Very light black overlay
+rgba(0, 0, 0, 0.2) - Light black overlay
+
+USAGE PATTERNS:
+---------------
+- Primary Brand: #052b48 (Deep Navy Blue)
+- Secondary: #004a59 (Navy variant)
+- Accent: #faaca8 (Soft Peach Pink)
+- Accent 2: #f78da7 (Rose Pink)
+- Text Primary: #052b48 (Navy)
+- Text Secondary: #313131 (Dark Gray)
+- Background: #ffffff (White)
+- Background Accent: #ebf0f5 (Light Blue-Gray)
+- Buttons: #052b48 (Navy filled/outline)
+
+LOGO COLORS:
+------------
+- Navy (#052b48) for wordmark
+- Clean, simple sans-serif
+
+GRADIENTS:
+----------
+- None prominent - uses solid colors
+
+NOTABLE:
+--------
+- Heavy use of navy (#052b48) - 12 occurrences
+- Clean, health-focused aesthetic
+- "Not just a nail salon, a revolution"

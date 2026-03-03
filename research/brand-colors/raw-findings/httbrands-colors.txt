@@ -1,0 +1,90 @@
+HTT BRANDS (httbrands.com) - Raw Color Extraction
+==================================================
+
+HEX COLORS (found in HTML/CSS):
+-------------------------------
+#000000 - Black (text)
+#004a59 - Teal
+#005a87 - Blue
+#006ba1 - Medium Blue
+#007cba - Bright Blue
+#00d084 - Green
+#020381 - Deep Blue
+#0693e3 - Sky Blue
+#0bb139 - Green
+#11a41e - Forest Green
+#141617 - Near Black
+#212326 - Dark Gray
+#25bdb4 - Turquoise
+#2874fc - Bright Blue
+#2c2dc3 - Indigo
+#313131 - Dark Gray (primary text)
+#31cdcf - Cyan
+#32373c - Charcoal
+#330968 - Deep Purple
+#34e2e4 - Bright Cyan
+#45d04f - Lime Green
+#4721fb - Purple
+#500711 - DEEP BURGUNDY (PRIMARY BRAND COLOR)
+#5ba949 - Green
+#5c2070 - Purple
+#63ad41 - Green
+#67a671 - Sage Green
+#7a00df - Violet
+#7bdcb5 - Mint
+#897799 - Mauve
+#8ed1fc - Light Blue
+#9b51e0 - Purple
+#aaaaaa - Gray
+#ab1dfe - Bright Purple
+#abb8c3 - Blue Gray
+#b0031a - Red
+#c56767 - Dusty Rose
+#caf238 - Lime
+#cf2e2e - Red
+#d1bdbf - MAUVE/PINK (SECONDARY)
+#dad0ec - Lavender
+#ed9bbd - Pink (button/accent)
+#f78da7 - Rose Pink
+#f9332b - Red
+#faaca8 - Peach
+#fafae1 - Cream
+#fcb900 - Gold/Yellow
+#fdd79a - Light Gold
+#ff6900 - Orange
+#ffc957 - GOLD/YELLOW (ACCENT)
+#ffffff - White
+
+RGB COLORS:
+-----------
+rgb(255,105,0) - Orange
+rgb(0, 0, 0) - Black
+
+RGBA COLORS:
+------------
+rgba(209,189,191,0.26) - Transparent mauve
+rgba(80,7,17,0) - Transparent burgundy
+rgba(80,7,17,0.84) - Burgundy overlay
+rgba(80,7,17,0.83) - Burgundy overlay
+rgba(255,255,255,0) - Transparent white
+
+USAGE PATTERNS:
+---------------
+- Primary Brand: #500711 (Deep Burgundy)
+- Secondary: #d1bdbf (Soft Mauve/Pink)
+- Accent: #ffc957 (Gold/Yellow)
+- Text Primary: #313131 (Dark Gray)
+- Text Secondary: #000000 (Black)
+- Background: #ffffff (White)
+- Background Accent: #fafae1 (Cream)
+- Buttons: #ed9bbd (Pink)
+
+LOGO COLORS:
+------------
+- Burgundy (#500711) for HT monogram
+- Dark text for "HEAD TO TOE BRANDS"
+
+GRADIENTS:
+----------
+- Button gradients using pink tones (#ed9bbd family)
+- Hero section with burgundy overlays

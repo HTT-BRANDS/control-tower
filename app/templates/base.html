@@ -1,78 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ brand.theme_name if brand else 'default' }}" style="{{ brand.inline_style if brand else '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Azure Governance Platform{% endblock %}</title>
     
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        // Walmart brand colors
-                        'wm-blue': {
-                            5: '#f2f8ff',
-                            10: '#e5f1ff',
-                            50: '#74a8ff',
-                            100: '#0053e2',
-                            110: '#004ac9',
-                            130: '#003999',
-                            140: '#002e7a',
-                            160: '#001e52',
-                            180: '#000f29',
-                        },
-                        'wm-spark': {
-                            5: '#fffbf0',
-                            10: '#fff5d6',
-                            50: '#ffd966',
-                            100: '#ffc220',
-                            110: '#e6a300',
-                            130: '#b37f00',
-                            140: '#995213',
-                            160: '#663800',
-                            180: '#331c00',
-                        },
-                        'wm-green': {
-                            5: '#f0fff0',
-                            10: '#e0ffe0',
-                            50: '#5cd65c',
-                            100: '#2a8703',
-                            110: '#247602',
-                            130: '#1a5902',
-                            140: '#144701',
-                            160: '#0d2f01',
-                            180: '#071800',
-                        },
-                        'wm-red': {
-                            5: '#fff5f5',
-                            10: '#ffe5e5',
-                            50: '#ff7a7a',
-                            100: '#ea1100',
-                            110: '#d10f00',
-                            130: '#a00c00',
-                            140: '#800900',
-                            160: '#550600',
-                            180: '#2a0300',
-                        },
-                        'wm-gray': {
-                            5: '#fafafa',
-                            10: '#f5f5f5',
-                            50: '#e0e0e0',
-                            100: '#9e9e9e',
-                            110: '#8a8a8a',
-                            130: '#616161',
-                            140: '#424242',
-                            160: '#212121',
-                            180: '#121212',
-                        },
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- CSS-First Tailwind v4 -->
+    <link rel="stylesheet" href="/static/css/theme.css">
     
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -80,38 +14,142 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Riverside Custom Styles -->
+    <!-- Riverside Custom Styles (kept for compatibility) -->
     <link rel="stylesheet" href="/static/css/riverside.css">
     
+    <!-- Brand Color Injection -->
+    {% if brand %}
     <style>
-        [x-cloak] { display: none !important; }
+        :root {
+            --brand-primary: {{ brand.primary }};
+            --brand-secondary: {{ brand.secondary }};
+            --brand-accent: {{ brand.accent }};
+            {% for var_name, value in brand.css_variables.items() %}
+            {{ var_name }}: {{ value }};
+            {% endfor %}
+        }
+    </style>
+    {% endif %}
+    
+    <!-- HTMX Navigation Styles -->
+    <style>
+        /* HTMX Indicator States */
         .htmx-indicator { display: none; }
         .htmx-request .htmx-indicator { display: inline-block; }
         .htmx-request.htmx-indicator { display: inline-block; }
+        
+        /* Requesting state for elements */
+        .htmx-requesting {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        /* Progress bar styles */
+        #htmx-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--brand-primary, #0053e2);
+            width: 0%;
+            z-index: 9999;
+            transition: width 200ms ease-out;
+            box-shadow: 0 0 10px var(--brand-primary, #0053e2);
+        }
+        
+        /* Smooth page transitions for hx-boost */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 150ms ease-out;
+        }
+        
+        /* Active navigation item */
+        .nav-active {
+            background-color: var(--brand-primary-110, #004ac9) !important;
+            color: white !important;
+        }
+        
+        /* Screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* No-JS fallback styles */
+        .no-js .htmx-indicator,
+        .no-js [hx-boost] {
+            display: block !important;
+            opacity: 1 !important;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-wm-gray-5 text-wm-gray-160 min-h-screen">
+<body class="bg-gray-5 text-gray-160 min-h-screen" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
+    <!-- HTMX Progress Bar -->
+    <div id="htmx-progress-bar" aria-hidden="true"></div>
+    
+    <!-- Screen Reader Announcer -->
+    <div id="page-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    
     <!-- Navigation -->
-    <nav class="bg-wm-blue-100 text-white shadow-lg">
+    <nav class="bg-brand-primary-100 text-white shadow-lg" role="navigation" aria-label="Main navigation">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <span class="text-2xl font-bold">Azure Governance</span>
+                        <a href="/" class="text-2xl font-bold hover:opacity-90 transition-opacity" aria-label="Azure Governance Home">
+                            Azure Governance
+                        </a>
                     </div>
                     <div class="hidden md:block ml-10">
-                        <div class="flex items-baseline space-x-4">
-                            <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_dashboard %}{% endblock %}">Dashboard</a>
-                            <a href="/sync-dashboard" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_sync_dashboard %}{% endblock %}">Sync Status</a>
-                            <a href="/api/v1/preflight" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_preflight %}{% endblock %}">Preflight</a>
-                            <a href="/costs" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_costs %}{% endblock %}">Costs</a>
-                            <a href="/compliance" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_compliance %}{% endblock %}">Compliance</a>
-                            <a href="/resources" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_resources %}{% endblock %}">Resources</a>
-                            <a href="/identity" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_identity %}{% endblock %}">Identity</a>
-                            <a href="/riverside" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-wm-blue-110 {% block nav_riverside %}{% endblock %} flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-baseline space-x-1">
+                            <a href="/" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_dashboard %}{% endblock %}" 
+                               data-nav-path="/">
+                                Dashboard
+                            </a>
+                            <a href="/sync-dashboard" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_sync_dashboard %}{% endblock %}" 
+                               data-nav-path="/sync-dashboard">
+                                Sync Status
+                            </a>
+                            <a href="/api/v1/preflight" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_preflight %}{% endblock %}" 
+                               data-nav-path="/api/v1/preflight">
+                                Preflight
+                            </a>
+                            <a href="/costs" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_costs %}{% endblock %}" 
+                               data-nav-path="/costs">
+                                Costs
+                            </a>
+                            <a href="/compliance" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_compliance %}{% endblock %}" 
+                               data-nav-path="/compliance">
+                                Compliance
+                            </a>
+                            <a href="/resources" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_resources %}{% endblock %}" 
+                               data-nav-path="/resources">
+                                Resources
+                            </a>
+                            <a href="/identity" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_identity %}{% endblock %}" 
+                               data-nav-path="/identity">
+                                Identity
+                            </a>
+                            <a href="/riverside" 
+                               class="nav-item px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-primary-110 transition-colors {% block nav_riverside %}{% endblock %} flex items-center gap-2" 
+                               data-nav-path="/riverside">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
                                 <span>Riverside</span>
@@ -119,14 +157,23 @@
                                       hx-get="/partials/riverside-badge"
                                       hx-trigger="load, every 60s"
                                       hx-target="#riverside-badge"
-                                      hx-swap="innerHTML">
+                                      hx-swap="innerHTML"
+                                      class="ml-1">
                                 </span>
                             </a>
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center">
-                    <span class="text-sm text-wm-blue-50">4 Tenants Connected</span>
+                <div class="flex items-center gap-4">
+                    <!-- Loading indicator for navigation actions -->
+                    <div id="nav-loading-indicator" class="htmx-indicator flex items-center gap-2 text-brand-primary-50 text-sm">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="sr-only">Loading</span>
+                    </div>
+                    <span class="text-sm text-brand-primary-50" aria-label="4 tenants connected">4 Tenants Connected</span>
                 </div>
             </div>
         </div>
@@ -138,9 +185,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-wm-gray-10 border-t border-wm-gray-50 mt-auto">
+    <footer class="bg-gray-10 border-t border-gray-50 mt-auto">
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center text-sm text-wm-gray-100">
+            <div class="flex justify-between items-center text-sm text-gray-100">
                 <span>Azure Governance Platform v0.1.0</span>
                 <span>Last sync: <span id="last-sync">Never</span></span>
             </div>
@@ -148,5 +195,15 @@
     </footer>
 
     {% block extra_scripts %}{% endblock %}
+    
+    <!-- HTMX Navigation Enhancement - Modular -->
+    <script src="/static/js/navigation/progressBar.js"></script>
+    <script src="/static/js/navigation/toast.js"></script>
+    <script src="/static/js/navigation/navHighlight.js"></script>
+    <script src="/static/js/navigation/confirmDialog.js"></script>
+    <script src="/static/js/navigation/index.js"></script>
+    
+    <!-- Include Loading Component Templates -->
+    {% include 'components/loading.html' %}
 </body>
 </html>

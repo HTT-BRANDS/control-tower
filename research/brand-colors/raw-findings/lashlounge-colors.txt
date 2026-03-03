@@ -1,0 +1,69 @@
+THE LASH LOUNGE (thelashlounge.com) - Raw Color Extraction
+=============================================================
+
+HEX COLORS (found in HTML/CSS):
+-------------------------------
+#000000 - Black
+#00d084 - Green
+#0693e3 - Sky Blue
+#232323 - NEAR BLACK (CTAs)
+#32373c - Charcoal (text)
+#513550 - DEEP PURPLE (PRIMARY BRAND)
+#7bdcb5 - Mint
+#8ed1fc - Light Blue
+#9b51e0 - Purple
+#abb8c3 - Blue Gray
+#cf2e2e - Red
+#D3BCC5 - SOFT LAVENDER/MAUVE (secondary)
+#ebe1e5 - PALE PINK-LAVENDER (background)
+#EBE1E5 - PALE PINK-LAVENDER (background - uppercase)
+#f78da7 - Pink
+#f7f7f7 - Light Gray
+#FCFAFB - WARM WHITE (background)
+#fcb900 - Gold
+#ff6900 - Orange
+#ffffff - White
+
+RGB COLORS:
+-----------
+(embedded in CSS)
+
+RGBA COLORS:
+------------
+rgba(255,105,0,1) - Orange
+rgba(0, 0, 0, 1) - Black
+rgba(0, 0, 0, 0.2) - Light black overlay
+rgba(6,147,227,1) - Blue
+rgba(255, 255, 255, 1) - White
+rgba(252,185,0,1) - Gold
+rgba(0, 0, 0, 0.4) - Medium black overlay
+
+USAGE PATTERNS:
+---------------
+- Primary Brand: #513550 (Deep Purple/Mauve)
+- Secondary: #D3BCC5 (Soft Lavender)
+- Secondary 2: #EBE1E5 (Pale Pink-Lavender)
+- Accent: #232323 (Near Black - CTAs)
+- Text Primary: #513550 (Purple - headers)
+- Text Secondary: #32373c (Dark Gray - body)
+- Background: #ffffff (White)
+- Background 2: #FCFAFB (Warm White)
+- Background 3: #EBE1E5 (Pale Lavender)
+- Buttons: #232323 (Dark charcoal filled)
+
+LOGO COLORS:
+------------
+- Purple (#513550) for stylized "L" and script
+- Purple (#513550) for "the LASH LOUNGE" text
+
+GRADIENTS:
+----------
+- None prominent - elegant solid colors
+
+NOTABLE:
+--------
+- Sophisticated purple palette - 9 occurrences of #EBE1E5
+- Luxury positioning with soft lavender tones
+- Dark charcoal buttons for strong CTAs
+- "Choose Lashes, Invest in You" - luxury messaging
+- Light, airy feel with lavender tints

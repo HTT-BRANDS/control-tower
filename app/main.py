@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from app.api.routes import (
     auth_router,
@@ -27,6 +28,11 @@ from app.core.config import get_settings
 from app.core.database import init_db
 from app.core.rate_limit import rate_limiter
 from app.core.scheduler import init_scheduler
+from app.core.tenant_context import register_template_filters
+
+# Initialize Jinja2 templates and register custom filters
+templates = Jinja2Templates(directory="app/templates")
+register_template_filters(templates.env)
 
 # Configure logging
 logging.basicConfig(

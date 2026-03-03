@@ -30,6 +30,7 @@ from app.preflight.runner import (
     get_runner,
     set_latest_report,
 )
+from app.core.tenant_context import get_brand_context_for_request
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ async def preflight_page(
     """Preflight checks dashboard page."""
     latest = get_latest_report()
     runner = get_runner()
+    brand_context = get_brand_context_for_request(request)
 
     category_summaries = []
     tenant_summaries = []
@@ -67,6 +69,7 @@ async def preflight_page(
             "category_summaries": category_summaries,
             "tenant_summaries": tenant_summaries,
             "results": results,
+            **brand_context,
         },
     )
 

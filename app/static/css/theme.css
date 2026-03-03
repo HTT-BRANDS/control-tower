@@ -1,0 +1,543 @@
+/**
+ * Theme Configuration - CSS-First Tailwind v4 with Brand Color Support
+ * 
+ * This file uses Tailwind CSS v4's CSS-first configuration approach.
+ * The @import "tailwindcss" imports all Tailwind utilities.
+ * Custom theme extensions are defined using CSS custom properties.
+ * 
+ * Brand Colors:
+ * - HTT: Burgundy (#500711), Mauve (#d1bdbf), Gold (#ffc957)
+ * - Frenchies: Navy (#052b48), Peach (#faaca8)
+ * - Bishops: Orange (#EB631B), Tan (#CE9F7C)
+ * - Lash Lounge: Purple (#513550), Lavender (#D3BCC5)
+ */
+
+/* ==========================================================================
+   Tailwind CSS v4 Import
+   ========================================================================== */
+@import "tailwindcss";
+
+/* ==========================================================================
+   CSS Custom Properties - Brand Colors
+   These are dynamically updated per tenant via inline style injection
+   ========================================================================== */
+:root {
+  /* Primary Brand Color - Maps to tenant's primary */
+  --brand-primary: #0053e2;
+  --brand-primary-5: #f2f8ff;
+  --brand-primary-10: #e5f1ff;
+  --brand-primary-50: #74a8ff;
+  --brand-primary-100: #0053e2;
+  --brand-primary-110: #004ac9;
+  --brand-primary-130: #003999;
+  --brand-primary-140: #002e7a;
+  --brand-primary-160: #001e52;
+  --brand-primary-180: #000f29;
+  
+  /* Secondary Brand Color */
+  --brand-secondary: #ffc220;
+  --brand-secondary-5: #fffbf0;
+  --brand-secondary-10: #fff5d6;
+  --brand-secondary-50: #ffd966;
+  --brand-secondary-100: #ffc220;
+  --brand-secondary-110: #e6a300;
+  --brand-secondary-130: #b37f00;
+  --brand-secondary-140: #995213;
+  --brand-secondary-160: #663800;
+  --brand-secondary-180: #331c00;
+  
+  /* Accent Brand Color */
+  --brand-accent: #2a8703;
+  --brand-accent-5: #f0fff0;
+  --brand-accent-10: #e0ffe0;
+  --brand-accent-50: #5cd65c;
+  --brand-accent-100: #2a8703;
+  --brand-accent-110: #247602;
+  --brand-accent-130: #1a5902;
+  --brand-accent-140: #144701;
+  --brand-accent-160: #0d2f01;
+  --brand-accent-180: #071800;
+  
+  /* Semantic Colors */
+  --color-success: #2a8703;
+  --color-warning: #ffc220;
+  --color-danger: #ea1100;
+  --color-info: #0053e2;
+  
+  /* Neutral Grays */
+  --color-gray-5: #fafafa;
+  --color-gray-10: #f5f5f5;
+  --color-gray-50: #e0e0e0;
+  --color-gray-100: #9e9e9e;
+  --color-gray-110: #8a8a8a;
+  --color-gray-130: #616161;
+  --color-gray-140: #424242;
+  --color-gray-160: #212121;
+  --color-gray-180: #121212;
+  
+  /* Text Colors */
+  --text-primary: var(--color-gray-160);
+  --text-secondary: var(--color-gray-130);
+  --text-muted: var(--color-gray-100);
+  --text-on-primary: white;
+  --text-on-secondary: var(--color-gray-160);
+  
+  /* Background Colors */
+  --bg-primary: white;
+  --bg-secondary: var(--color-gray-5);
+  --bg-tertiary: var(--color-gray-10);
+  
+  /* Border Colors */
+  --border-light: var(--color-gray-10);
+  --border-default: var(--color-gray-50);
+  --border-focus: var(--brand-primary-100);
+}
+
+/* ==========================================================================
+   Brand-Specific Themes
+   These classes can be applied to html or body for static theme switching
+   ========================================================================== */
+
+/* HTT Theme - Head-To-Toe */
+[data-theme="htt"],
+.theme-htt {
+  --brand-primary: #500711;
+  --brand-primary-5: #fdf2f4;
+  --brand-primary-10: #f9e5e8;
+  --brand-primary-50: #b88c95;
+  --brand-primary-100: #500711;
+  --brand-primary-110: #48060f;
+  --brand-primary-130: #38050c;
+  --brand-primary-140: #2c0409;
+  --brand-primary-160: #1d0306;
+  --brand-primary-180: #0f0103;
+  
+  --brand-secondary: #d1bdbf;
+  --brand-secondary-5: #faf6f6;
+  --brand-secondary-10: #f5eeef;
+  --brand-secondary-50: #e8dedf;
+  --brand-secondary-100: #d1bdbf;
+  --brand-secondary-110: #bcaaac;
+  --brand-secondary-130: #928586;
+  --brand-secondary-140: #7a6f70;
+  --brand-secondary-160: #514a4a;
+  --brand-secondary-180: #292525;
+  
+  --brand-accent: #ffc957;
+  --brand-accent-5: #fffbf0;
+  --brand-accent-10: #fff5d6;
+  --brand-accent-50: #ffe49e;
+  --brand-accent-100: #ffc957;
+  --brand-accent-110: #e6b54e;
+  --brand-accent-130: #b38d3c;
+  --brand-accent-140: #997533;
+  --brand-accent-160: #664e22;
+  --brand-accent-180: #332711;
+  
+  --color-success: #2a8703;
+  --color-warning: #ffc957;
+  --color-danger: #ea1100;
+  --color-info: #500711;
+}
+
+/* Frenchies Theme */
+[data-theme="frenchies"],
+.theme-frenchies {
+  --brand-primary: #052b48;
+  --brand-primary-5: #f2f6f9;
+  --brand-primary-10: #e5edf2;
+  --brand-primary-50: #7a95a8;
+  --brand-primary-100: #052b48;
+  --brand-primary-110: #052741;
+  --brand-primary-130: #041f33;
+  --brand-primary-140: #031929;
+  --brand-primary-160: #02101b;
+  --brand-primary-180: #01080e;
+  
+  --brand-secondary: #faaca8;
+  --brand-secondary-5: #fff5f5;
+  --brand-secondary-10: #feeceb;
+  --brand-secondary-50: #fdd6d3;
+  --brand-secondary-100: #faaca8;
+  --brand-secondary-110: #e19b97;
+  --brand-secondary-130: #af827e;
+  --brand-secondary-140: #966e6b;
+  --brand-secondary-160: #644947;
+  --brand-secondary-180: #322524;
+  
+  --brand-accent: #ffc957;
+  --brand-accent-5: #fffbf0;
+  --brand-accent-10: #fff5d6;
+  --brand-accent-50: #ffe49e;
+  --brand-accent-100: #ffc957;
+  --brand-accent-110: #e6b54e;
+  --brand-accent-130: #b38d3c;
+  --brand-accent-140: #997533;
+  --brand-accent-160: #664e22;
+  --brand-accent-180: #332711;
+  
+  --color-success: #2a8703;
+  --color-warning: #ffc957;
+  --color-danger: #ea1100;
+  --color-info: #052b48;
+}
+
+/* Bishops Theme */
+[data-theme="bishops"],
+.theme-bishops {
+  --brand-primary: #eb631b;
+  --brand-primary-5: #fef5ef;
+  --brand-primary-10: #fdeade;
+  --brand-primary-50: #f5b28d;
+  --brand-primary-100: #eb631b;
+  --brand-primary-110: #d45918;
+  --brand-primary-130: #a54613;
+  --brand-primary-140: #8c3b10;
+  --brand-primary-160: #5d270b;
+  --brand-primary-180: #2f1405;
+  
+  --brand-secondary: #ce9f7c;
+  --brand-secondary-5: #faf6f3;
+  --brand-secondary-10: #f5ede7;
+  --brand-secondary-50: #e6d4c7;
+  --brand-secondary-100: #ce9f7c;
+  --brand-secondary-110: #b98f70;
+  --brand-secondary-130: #8f6f57;
+  --brand-secondary-140: #775e49;
+  --brand-secondary-160: #4f3f31;
+  --brand-secondary-180: #282018;
+  
+  --brand-accent: #ffc957;
+  --brand-accent-5: #fffbf0;
+  --brand-accent-10: #fff5d6;
+  --brand-accent-50: #ffe49e;
+  --brand-accent-100: #ffc957;
+  --brand-accent-110: #e6b54e;
+  --brand-accent-130: #b38d3c;
+  --brand-accent-140: #997533;
+  --brand-accent-160: #664e22;
+  --brand-accent-180: #332711;
+  
+  --color-success: #2a8703;
+  --color-warning: #ffc957;
+  --color-danger: #ea1100;
+  --color-info: #eb631b;
+}
+
+/* Lash Lounge Theme */
+[data-theme="lash-lounge"],
+.theme-lash-lounge {
+  --brand-primary: #513550;
+  --brand-primary-5: #f5f3f5;
+  --brand-primary-10: #ebe7eb;
+  --brand-primary-50: #a89aa7;
+  --brand-primary-100: #513550;
+  --brand-primary-110: #493048;
+  --brand-primary-130: #392638;
+  --brand-primary-140: #2e1f2d;
+  --brand-primary-160: #1e151e;
+  --brand-primary-180: #0f0a0f;
+  
+  --brand-secondary: #d3bcc5;
+  --brand-secondary-5: #fbf8f9;
+  --brand-secondary-10: #f7f2f4;
+  --brand-secondary-50: #e9dfe3;
+  --brand-secondary-100: #d3bcc5;
+  --brand-secondary-110: #bea9b1;
+  --brand-secondary-130: #94838a;
+  --brand-secondary-140: #7c6e73;
+  --brand-secondary-160: #53494d;
+  --brand-secondary-180: #292526;
+  
+  --brand-accent: #ffc957;
+  --brand-accent-5: #fffbf0;
+  --brand-accent-10: #fff5d6;
+  --brand-accent-50: #ffe49e;
+  --brand-accent-100: #ffc957;
+  --brand-accent-110: #e6b54e;
+  --brand-accent-130: #b38d3c;
+  --brand-accent-140: #997533;
+  --brand-accent-160: #664e22;
+  --brand-accent-180: #332711;
+  
+  --color-success: #2a8703;
+  --color-warning: #ffc957;
+  --color-danger: #ea1100;
+  --color-info: #513550;
+}
+
+/* ==========================================================================
+   Tailwind v4 Theme Configuration
+   ========================================================================== */
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-5: var(--brand-primary-5);
+  --color-brand-primary-10: var(--brand-primary-10);
+  --color-brand-primary-50: var(--brand-primary-50);
+  --color-brand-primary-100: var(--brand-primary-100);
+  --color-brand-primary-110: var(--brand-primary-110);
+  --color-brand-primary-130: var(--brand-primary-130);
+  --color-brand-primary-140: var(--brand-primary-140);
+  --color-brand-primary-160: var(--brand-primary-160);
+  --color-brand-primary-180: var(--brand-primary-180);
+  
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-5: var(--brand-secondary-5);
+  --color-brand-secondary-10: var(--brand-secondary-10);
+  --color-brand-secondary-50: var(--brand-secondary-50);
+  --color-brand-secondary-100: var(--brand-secondary-100);
+  --color-brand-secondary-110: var(--brand-secondary-110);
+  --color-brand-secondary-130: var(--brand-secondary-130);
+  --color-brand-secondary-140: var(--brand-secondary-140);
+  --color-brand-secondary-160: var(--brand-secondary-160);
+  --color-brand-secondary-180: var(--brand-secondary-180);
+  
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-5: var(--brand-accent-5);
+  --color-brand-accent-10: var(--brand-accent-10);
+  --color-brand-accent-50: var(--brand-accent-50);
+  --color-brand-accent-100: var(--brand-accent-100);
+  --color-brand-accent-110: var(--brand-accent-110);
+  --color-brand-accent-130: var(--brand-accent-130);
+  --color-brand-accent-140: var(--brand-accent-140);
+  --color-brand-accent-160: var(--brand-accent-160);
+  --color-brand-accent-180: var(--brand-accent-180);
+  
+  /* Semantic Colors */
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+  
+  /* Gray Scale */
+  --color-gray-5: var(--color-gray-5);
+  --color-gray-10: var(--color-gray-10);
+  --color-gray-50: var(--color-gray-50);
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-110: var(--color-gray-110);
+  --color-gray-130: var(--color-gray-130);
+  --color-gray-140: var(--color-gray-140);
+  --color-gray-160: var(--color-gray-160);
+  --color-gray-180: var(--color-gray-180);
+  
+  /* Text Colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-secondary: var(--text-on-secondary);
+  
+  /* Background Colors */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  
+  /* Border Colors */
+  --color-border-light: var(--border-light);
+  --color-border-default: var(--border-default);
+  --color-border-focus: var(--border-focus);
+}
+
+/* ==========================================================================
+   Utility Classes
+   These provide Tailwind-like utility classes using CSS custom properties
+   ========================================================================== */
+
+/* Brand Background Colors */
+.bg-brand-primary { background-color: var(--brand-primary); }
+.bg-brand-primary-5 { background-color: var(--brand-primary-5); }
+.bg-brand-primary-10 { background-color: var(--brand-primary-10); }
+.bg-brand-primary-50 { background-color: var(--brand-primary-50); }
+.bg-brand-primary-100 { background-color: var(--brand-primary-100); }
+.bg-brand-secondary { background-color: var(--brand-secondary); }
+.bg-brand-secondary-5 { background-color: var(--brand-secondary-5); }
+.bg-brand-secondary-10 { background-color: var(--brand-secondary-10); }
+.bg-brand-accent { background-color: var(--brand-accent); }
+.bg-brand-accent-5 { background-color: var(--brand-accent-5); }
+.bg-brand-accent-10 { background-color: var(--brand-accent-10); }
+
+/* Brand Text Colors */
+.text-brand-primary { color: var(--brand-primary); }
+.text-brand-primary-50 { color: var(--brand-primary-50); }
+.text-brand-primary-100 { color: var(--brand-primary-100); }
+.text-brand-primary-130 { color: var(--brand-primary-130); }
+.text-brand-secondary { color: var(--brand-secondary); }
+.text-brand-secondary-130 { color: var(--brand-secondary-130); }
+.text-brand-accent { color: var(--brand-accent); }
+
+/* Brand Border Colors */
+.border-brand-primary { border-color: var(--brand-primary); }
+.border-brand-primary-50 { border-color: var(--brand-primary-50); }
+.border-brand-primary-100 { border-color: var(--brand-primary-100); }
+.border-brand-secondary { border-color: var(--brand-secondary); }
+
+/* Brand Ring Colors */
+.ring-brand-primary { --tw-ring-color: var(--brand-primary); }
+.ring-brand-primary-50 { --tw-ring-color: var(--brand-primary-50); }
+
+/* Semantic Backgrounds */
+.bg-success { background-color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-danger { background-color: var(--color-danger); }
+.bg-info { background-color: var(--color-info); }
+
+/* Semantic Text */
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+.text-info { color: var(--color-info); }
+
+/* Gray Backgrounds */
+.bg-gray-5 { background-color: var(--color-gray-5); }
+.bg-gray-10 { background-color: var(--color-gray-10); }
+.bg-gray-50 { background-color: var(--color-gray-50); }
+.bg-gray-100 { background-color: var(--color-gray-100); }
+.bg-gray-130 { background-color: var(--color-gray-130); }
+.bg-gray-160 { background-color: var(--color-gray-160); }
+
+/* Gray Text */
+.text-gray-5 { color: var(--color-gray-5); }
+.text-gray-10 { color: var(--color-gray-10); }
+.text-gray-50 { color: var(--color-gray-50); }
+.text-gray-100 { color: var(--color-gray-100); }
+.text-gray-130 { color: var(--color-gray-130); }
+.text-gray-160 { color: var(--color-gray-160); }
+
+/* ==========================================================================
+   Component Styles
+   Reusable component styles that use CSS custom properties
+   ========================================================================== */
+
+/* Brand Button */
+.btn-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-on-primary);
+  background-color: var(--brand-primary-100);
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+}
+
+.btn-brand:hover {
+  background-color: var(--brand-primary-110);
+}
+
+.btn-brand:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-primary-50);
+}
+
+.btn-brand-secondary {
+  color: var(--brand-primary-100);
+  background-color: var(--brand-primary-5);
+  border-color: var(--brand-primary-50);
+}
+
+.btn-brand-secondary:hover {
+  background-color: var(--brand-primary-10);
+}
+
+/* Brand Card */
+.card-brand {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--brand-primary-100);
+  transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
+}
+
+.card-brand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Brand Navigation */
+.nav-brand {
+  background-color: var(--brand-primary-100);
+  color: white;
+}
+
+.nav-brand a:hover {
+  background-color: var(--brand-primary-110);
+}
+
+/* Brand Progress Bar */
+.progress-brand {
+  height: 0.75rem;
+  background-color: var(--brand-primary-5);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-brand-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-primary-130) 0%, var(--brand-primary-100) 50%, var(--brand-primary-50) 100%);
+  border-radius: 9999px;
+  transition: width 500ms ease-in-out;
+}
+
+/* Brand Badge */
+.badge-brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: var(--brand-primary-5);
+  color: var(--brand-primary-100);
+}
+
+.badge-brand-accent {
+  background-color: var(--brand-accent-5);
+  color: var(--brand-accent-130);
+}
+
+/* ==========================================================================
+   Animation Utilities
+   ========================================================================== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 300ms ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 300ms ease-out;
+}
+
+/* HTMX Indicator Styles */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline-block;
+}
+
+[x-cloak] {
+  display: none !important;
+}
