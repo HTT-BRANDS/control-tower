@@ -29,12 +29,6 @@ from azure.mgmt.costmanagement.models import QueryDefinition, TimeframeType
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.security import SecurityCenter
 
-# ManagedServicesClient is optional - only needed for advanced delegation validation
-try:
-    from azure.mgmt.managedservices import ManagedServicesClient
-except ImportError:
-    ManagedServicesClient = None  # type: ignore
-
 from app.core.resilience import (
     ResilientAzureClient,
     ResilienceConfig,
@@ -134,7 +128,7 @@ class LighthouseAzureClient:
             if subscription:
                 logger.info(f"Delegation verified for {subscription_id}: {subscription.get('display_name')}")
                 return {
-                    "success": True,
+                    "is_delegated": True,
                     "subscription_id": subscription_id,
                     "display_name": subscription.get("display_name"),
                     "state": subscription.get("state"),
@@ -144,7 +138,7 @@ class LighthouseAzureClient:
             else:
                 logger.warning(f"Subscription {subscription_id} not found via Lighthouse")
                 return {
-                    "success": False,
+                    "is_delegated": False,
                     "subscription_id": subscription_id,
                     "display_name": None,
                     "state": None,
@@ -155,7 +149,7 @@ class LighthouseAzureClient:
         except Exception as e:
             logger.error(f"Delegation verification failed for {subscription_id}: {e}")
             return {
-                "success": False,
+                "is_delegated": False,
                 "subscription_id": subscription_id,
                 "display_name": None,
                 "state": None,
@@ -217,7 +211,7 @@ class LighthouseAzureClient:
 
         # Verify delegation first
         delegation_check = await self.verify_delegation(subscription_id)
-        if not delegation_check["success"]:
+        if not delegation_check["is_delegated"]:
             raise LighthouseDelegationError(
                 subscription_id,
                 delegation_check.get("error", "Delegation not verified")
@@ -614,10 +608,10 @@ class LighthouseAzureClient:
         # Step 1: Verify delegation
         try:
             delegation = await self.verify_delegation(subscription_id)
-            result["delegation_verified"] = delegation["success"]
+            result["delegation_verified"] = delegation["is_delegated"]
             result["details"]["subscription"] = delegation
 
-            if not delegation["success"]:
+            if not delegation["is_delegated"]:
                 result["errors"].append(f"Delegation verification failed: {delegation.get('error')}")
                 return result
 
