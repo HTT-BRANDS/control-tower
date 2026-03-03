@@ -9,6 +9,22 @@ from app.core.cache import (
     invalidate_on_sync_completion,
     set_cached,
 )
+from app.core.circuit_breaker import (
+    COST_SYNC_BREAKER,
+    COMPLIANCE_SYNC_BREAKER,
+    RESOURCE_SYNC_BREAKER,
+    IDENTITY_SYNC_BREAKER,
+    GRAPH_API_BREAKER,
+    RIVERSIDE_SYNC_BREAKER,
+    DMARC_SYNC_BREAKER,
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerError,
+    CircuitBreakerRegistry,
+    CircuitState,
+    circuit_breaker,
+    circuit_breaker_registry,
+)
 from app.core.config import Settings, get_settings
 from app.core.database import (
     Base,
@@ -46,10 +62,27 @@ from app.core.notifications import (
     should_notify,
 )
 from app.core.rate_limit import (
+    AZURE_API_RATE_LIMITS,
+    DEFAULT_LIMITS,
+    MultiApiRateLimiter,
     RateLimitConfig,
     RateLimitStrategy,
+    TokenBucketRateLimiter,
+    calculate_backoff,
+    extract_retry_after,
+    multi_api_limiter,
     rate_limit,
     rate_limiter,
+)
+from app.core.resilience import (
+    ResilientAzureClient,
+    ResilienceConfig,
+    ResilienceError,
+    get_arm_client,
+    get_cost_client,
+    get_graph_client,
+    get_security_client,
+    resilient_api_call,
 )
 from app.core.scheduler import get_scheduler, init_scheduler, trigger_manual_sync
 from app.core.tenant_context import (
@@ -103,6 +136,38 @@ __all__ = [
     "RateLimitStrategy",
     "rate_limit",
     "rate_limiter",
+    # Token Bucket Rate Limiting
+    "TokenBucketRateLimiter",
+    "MultiApiRateLimiter",
+    "multi_api_limiter",
+    "AZURE_API_RATE_LIMITS",
+    "DEFAULT_LIMITS",
+    "calculate_backoff",
+    "extract_retry_after",
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitBreakerError",
+    "CircuitBreakerRegistry",
+    "CircuitState",
+    "circuit_breaker",
+    "circuit_breaker_registry",
+    "COST_SYNC_BREAKER",
+    "COMPLIANCE_SYNC_BREAKER",
+    "RESOURCE_SYNC_BREAKER",
+    "IDENTITY_SYNC_BREAKER",
+    "GRAPH_API_BREAKER",
+    "RIVERSIDE_SYNC_BREAKER",
+    "DMARC_SYNC_BREAKER",
+    # Resilience
+    "ResilientAzureClient",
+    "ResilienceConfig",
+    "ResilienceError",
+    "resilient_api_call",
+    "get_arm_client",
+    "get_graph_client",
+    "get_cost_client",
+    "get_security_client",
     # Scheduler
     "get_scheduler",
     "init_scheduler",

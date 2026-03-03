@@ -277,6 +277,156 @@ def circuit_breaker(
     return decorator
 
 
+class CircuitBreakerRegistry:
+    """Registry for managing multiple circuit breakers.
+
+    Provides centralized management of circuit breakers for different
+    services and APIs. Thread-safe for concurrent access.
+
+    Example:
+        registry = CircuitBreakerRegistry()
+        registry.register("cost_sync", CircuitBreaker(name="cost_sync"))
+        breaker = registry.get("cost_sync")
+        breaker = registry.get_or_create("identity_sync", CircuitBreakerConfig(...))
+    """
+
+    def __init__(self) -> None:
+        """Initialize the registry."""
+        self._breakers: dict[str, CircuitBreaker] = {}
+        self._lock = threading.Lock()
+
+    def register(self, name: str, breaker: CircuitBreaker) -> None:
+        """Register a circuit breaker.
+
+        Args:
+            name: Unique name for the circuit breaker
+            breaker: CircuitBreaker instance to register
+
+        Raises:
+            ValueError: If a breaker with the same name already exists
+        """
+        with self._lock:
+            if name in self._breakers:
+                raise ValueError(f"Circuit breaker '{name}' already registered")
+            self._breakers[name] = breaker
+            logger.debug(f"Registered circuit breaker: {name}")
+
+    def get(self, name: str) -> CircuitBreaker:
+        """Get a circuit breaker by name.
+
+        Args:
+            name: Name of the circuit breaker
+
+        Returns:
+            CircuitBreaker instance
+
+        Raises:
+            KeyError: If no breaker with the given name exists
+        """
+        with self._lock:
+            if name not in self._breakers:
+                raise KeyError(f"Circuit breaker '{name}' not found")
+            return self._breakers[name]
+
+    def get_or_create(
+        self, name: str, config: CircuitBreakerConfig | None = None
+    ) -> CircuitBreaker:
+        """Get a circuit breaker or create one if it doesn't exist.
+
+        Args:
+            name: Name of the circuit breaker
+            config: Configuration for new circuit breaker (if created)
+
+        Returns:
+            CircuitBreaker instance (existing or newly created)
+        """
+        with self._lock:
+            if name not in self._breakers:
+                self._breakers[name] = CircuitBreaker(name=name, config=config)
+                logger.debug(f"Created new circuit breaker: {name}")
+            return self._breakers[name]
+
+    def unregister(self, name: str) -> bool:
+        """Unregister a circuit breaker.
+
+        Args:
+            name: Name of the circuit breaker to unregister
+
+        Returns:
+            True if the breaker was found and removed, False otherwise
+        """
+        with self._lock:
+            if name in self._breakers:
+                del self._breakers[name]
+                logger.debug(f"Unregistered circuit breaker: {name}")
+                return True
+            return False
+
+    def get_all_states(self) -> dict[str, CircuitState]:
+        """Get states of all registered circuit breakers.
+
+        Returns:
+            Dictionary mapping breaker names to their current states
+        """
+        with self._lock:
+            return {name: breaker.state for name, breaker in self._breakers.items()}
+
+    def reset_all(self) -> None:
+        """Reset all circuit breakers to CLOSED state."""
+        with self._lock:
+            for name, breaker in self._breakers.items():
+                # Reset internal state
+                with breaker._lock:
+                    breaker._state = CircuitState.CLOSED
+                    breaker._failure_count = 0
+                    breaker._success_count = 0
+                    breaker._last_failure_time = None
+                logger.info(f"Reset circuit breaker: {name}")
+
+    def reset(self, name: str) -> bool:
+        """Reset a specific circuit breaker to CLOSED state.
+
+        Args:
+            name: Name of the circuit breaker to reset
+
+        Returns:
+            True if the breaker was found and reset, False otherwise
+        """
+        with self._lock:
+            if name not in self._breakers:
+                return False
+
+            breaker = self._breakers[name]
+            with breaker._lock:
+                breaker._state = CircuitState.CLOSED
+                breaker._failure_count = 0
+                breaker._success_count = 0
+                breaker._last_failure_time = None
+            logger.info(f"Reset circuit breaker: {name}")
+            return True
+
+    def list_breakers(self) -> list[str]:
+        """List all registered circuit breaker names.
+
+        Returns:
+            List of registered breaker names
+        """
+        with self._lock:
+            return list(self._breakers.keys())
+
+    def is_registered(self, name: str) -> bool:
+        """Check if a circuit breaker is registered.
+
+        Args:
+            name: Name of the circuit breaker
+
+        Returns:
+            True if registered, False otherwise
+        """
+        with self._lock:
+            return name in self._breakers
+
+
 # Pre-configured circuit breakers for Azure services
 COST_SYNC_BREAKER = CircuitBreaker(
     name="cost_sync",
@@ -347,3 +497,15 @@ DMARC_SYNC_BREAKER = CircuitBreaker(
         expected_exception=(HttpResponseError, ConnectionError, TimeoutError),
     ),
 )
+
+# Global registry instance
+circuit_breaker_registry = CircuitBreakerRegistry()
+
+# Register pre-configured breakers
+circuit_breaker_registry.register("cost_sync", COST_SYNC_BREAKER)
+circuit_breaker_registry.register("compliance_sync", COMPLIANCE_SYNC_BREAKER)
+circuit_breaker_registry.register("resource_sync", RESOURCE_SYNC_BREAKER)
+circuit_breaker_registry.register("identity_sync", IDENTITY_SYNC_BREAKER)
+circuit_breaker_registry.register("graph_api", GRAPH_API_BREAKER)
+circuit_breaker_registry.register("riverside_sync", RIVERSIDE_SYNC_BREAKER)
+circuit_breaker_registry.register("dmarc_sync", DMARC_SYNC_BREAKER)
