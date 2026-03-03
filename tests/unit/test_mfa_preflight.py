@@ -36,7 +36,7 @@ class TestMFATenantDataCheck:
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = None
             mock_db.query.return_value.filter.return_value.count.return_value = 0
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "no mfa data found" in result.message.lower()
@@ -58,7 +58,7 @@ class TestMFATenantDataCheck:
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = stale_mfa
             mock_db.query.return_value.filter.return_value.count.return_value = 1
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.WARNING
             assert "stale" in result.message.lower()
@@ -77,7 +77,7 @@ class TestMFATenantDataCheck:
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = fresh_mfa
             mock_db.query.return_value.filter.return_value.count.return_value = 5
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.PASS
             assert "available" in result.message.lower()
@@ -108,7 +108,7 @@ class TestMFAAdminEnrollmentCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = None
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "no mfa data available" in result.message.lower()
@@ -126,7 +126,7 @@ class TestMFAAdminEnrollmentCheck:
             mfa_record.admin_mfa_percentage = 0.0
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.WARNING
             assert "no admin accounts" in result.message.lower()
@@ -144,7 +144,7 @@ class TestMFAAdminEnrollmentCheck:
             mfa_record.admin_mfa_percentage = 100.0
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.PASS
             assert "100.0%" in result.message
@@ -165,7 +165,7 @@ class TestMFAAdminEnrollmentCheck:
             mfa_record.admin_mfa_percentage = 80.0
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "critical" in result.message.lower()
@@ -200,7 +200,7 @@ class TestMFAUserEnrollmentCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = None
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.FAIL
 
@@ -218,7 +218,7 @@ class TestMFAUserEnrollmentCheck:
             mfa_record.unprotected_users = 0
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.WARNING
             assert "no users" in result.message.lower()
@@ -237,7 +237,7 @@ class TestMFAUserEnrollmentCheck:
             mfa_record.unprotected_users = 5
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.PASS
             assert "95.0%" in result.message
@@ -257,7 +257,7 @@ class TestMFAUserEnrollmentCheck:
             mfa_record.unprotected_users = 8
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.WARNING
             assert "below target" in result.message.lower()
@@ -277,7 +277,7 @@ class TestMFAUserEnrollmentCheck:
             mfa_record.unprotected_users = 15
             mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = mfa_record
 
-            result = await check.run(tenant_id="test-tenant")
+            result = await check.run(tenant_id="test-tenant", force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "significantly below target" in result.message.lower()
@@ -316,7 +316,7 @@ class TestMFAGapReportCheck:
             mock_db.query.return_value.group_by.return_value.subquery.return_value = mock_subquery
             mock_db.query.return_value.join.return_value.all.return_value = []
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "no mfa data available" in result.message.lower()
@@ -347,7 +347,7 @@ class TestMFAGapReportCheck:
             mock_db.query.return_value.group_by.return_value.subquery.return_value = mock_subquery
             mock_db.query.return_value.join.return_value.all.return_value = [compliant_record]
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.PASS
             assert "compliant" in result.message.lower()
@@ -377,7 +377,7 @@ class TestMFAGapReportCheck:
             mock_db.query.return_value.group_by.return_value.subquery.return_value = mock_subquery
             mock_db.query.return_value.join.return_value.all.return_value = [non_compliant]
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "critical" in result.message.lower()
@@ -392,6 +392,8 @@ class TestMFACheckFunctions:
     async def test_run_all_mfa_checks(self):
         """Test run_all_mfa_checks runs all checks."""
         from app.preflight.mfa_checks import run_all_mfa_checks
+        from app.preflight.base import BasePreflightCheck
+        BasePreflightCheck.clear_cache()
 
         with patch("app.preflight.mfa_checks.SessionLocal") as mock_session:
             mock_db = MagicMock()
@@ -462,6 +464,9 @@ class TestCheckResultStructure:
     @pytest.mark.asyncio
     async def test_all_checks_return_valid_results(self):
         """Verify all MFA checks return properly structured results."""
+        from app.preflight.base import BasePreflightCheck
+        BasePreflightCheck.clear_cache()
+
         from app.preflight.mfa_checks import (
             MFATenantDataCheck,
             MFAAdminEnrollmentCheck,
@@ -493,7 +498,7 @@ class TestCheckResultStructure:
             mock_db.query.return_value.filter.return_value.count.return_value = 1
 
             for check in checks:
-                result = await check.run(tenant_id="test-tenant")
+                result = await check.run(tenant_id="test-tenant", force=True)
 
                 # Verify result structure
                 assert result.check_id

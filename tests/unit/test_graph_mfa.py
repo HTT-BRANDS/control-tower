@@ -287,7 +287,8 @@ class TestGraphClientMFA:
             )
 
             call_args = mock_request.call_args
-            assert call_args[1]["params"]["$filter"] == "isMfaRegistered eq false"
+            params = call_args[0][2]  # 3rd positional arg (method, endpoint, params)
+            assert params["$filter"] == "isMfaRegistered eq false"
 
     @pytest.mark.asyncio
     async def test_get_mfa_registration_details_paginated(self, mock_graph_client):
@@ -356,7 +357,8 @@ class TestGraphClientMFA:
             {"userPrincipalName": "user3@example.com", "isMfaRegistered": False, "methodsRegistered": []},
         ]
 
-        with patch.object(mock_graph_client, 'get_users_paginated') as mock_get_users, \
+        with patch.object(mock_graph_client, '_get_token', return_value="mock-token"), \
+             patch.object(mock_graph_client, 'get_users') as mock_get_users, \
              patch.object(mock_graph_client, 'get_directory_roles') as mock_get_roles, \
              patch.object(mock_graph_client, 'get_mfa_registration_details_paginated') as mock_get_mfa:
 
@@ -381,7 +383,8 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_tenant_mfa_summary_empty_tenant(self, mock_graph_client):
         """Test MFA summary for empty tenant."""
-        with patch.object(mock_graph_client, 'get_users_paginated') as mock_get_users, \
+        with patch.object(mock_graph_client, '_get_token', return_value="mock-token"), \
+             patch.object(mock_graph_client, 'get_users') as mock_get_users, \
              patch.object(mock_graph_client, 'get_directory_roles') as mock_get_roles, \
              patch.object(mock_graph_client, 'get_mfa_registration_details_paginated') as mock_get_mfa:
 
@@ -432,7 +435,8 @@ class TestGraphClientMFA:
             )
 
             call_args = mock_request.call_args
-            assert call_args[1]["params"]["$filter"] == "userType eq 'Member'"
+            params = call_args[0][2]  # 3rd positional arg (method, endpoint, params)
+            assert params["$filter"] == "userType eq 'Member'"
 
     @pytest.mark.asyncio
     async def test_get_conditional_access_policies_with_details(self, mock_graph_client):
@@ -467,7 +471,8 @@ class TestGraphClientMFA:
 
             assert len(result) == 1
             call_args = mock_request.call_args
-            assert call_args[1]["params"]["$top"] == 50
+            params = call_args[0][2]  # 3rd positional arg (method, endpoint, params)
+            assert params["$top"] == 50
 
     @pytest.mark.asyncio
     async def test_get_sign_in_logs_with_filter(self, mock_graph_client):
@@ -481,7 +486,8 @@ class TestGraphClientMFA:
             )
 
             call_args = mock_request.call_args
-            assert call_args[1]["params"]["$filter"] == "userPrincipalName eq 'user1@example.com'"
+            params = call_args[0][2]  # 3rd positional arg (method, endpoint, params)
+            assert params["$filter"] == "userPrincipalName eq 'user1@example.com'"
 
 
 class TestMFAError:

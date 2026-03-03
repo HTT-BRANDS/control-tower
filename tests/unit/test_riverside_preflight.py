@@ -38,7 +38,7 @@ class TestRiversideDatabaseCheck:
             # Mock query counts
             mock_db.query.return_value.count.return_value = 5
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.PASS
             assert "accessible" in result.message.lower()
@@ -51,7 +51,7 @@ class TestRiversideDatabaseCheck:
         with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
             mock_session.side_effect = Exception("Connection failed")
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "severity" in result.details
@@ -87,7 +87,7 @@ class TestRiversideAPIEndpointCheck:
             with patch("app.preflight.riverside_checks.get_settings") as mock_settings:
                 mock_settings.return_value.app_base_url = "http://localhost:8000"
 
-                result = await check.run()
+                result = await check.run(force=True)
 
                 # Should fail or warning when endpoints return errors
                 assert result.status in [CheckStatus.FAIL, CheckStatus.WARNING]
@@ -112,10 +112,10 @@ class TestRiversideSchedulerCheck:
     @pytest.mark.asyncio
     async def test_check_scheduler_not_initialized(self, check):
         """Test check handles uninitialized scheduler."""
-        with patch("app.preflight.riverside_checks.get_scheduler") as mock_get_scheduler:
+        with patch("app.core.scheduler.get_scheduler") as mock_get_scheduler:
             mock_get_scheduler.return_value = None
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.WARNING
             assert "not initialized" in result.message.lower()
@@ -123,12 +123,12 @@ class TestRiversideSchedulerCheck:
     @pytest.mark.asyncio
     async def test_check_job_not_found(self, check):
         """Test check handles missing Riverside job."""
-        with patch("app.preflight.riverside_checks.get_scheduler") as mock_get_scheduler:
+        with patch("app.core.scheduler.get_scheduler") as mock_get_scheduler:
             mock_scheduler = MagicMock()
             mock_scheduler.get_jobs.return_value = []  # No jobs
             mock_get_scheduler.return_value = mock_scheduler
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "not found" in result.message.lower() or "job" in result.message.lower()
@@ -155,7 +155,7 @@ class TestRiversideAzureADPermissionsCheck:
         with patch("app.preflight.riverside_checks.get_settings") as mock_settings:
             mock_settings.return_value.azure_tenant_id = None
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "tenant" in result.message.lower()
@@ -182,7 +182,7 @@ class TestRiversideMFADataSourceCheck:
         with patch("app.preflight.riverside_checks.get_settings") as mock_settings:
             mock_settings.return_value.azure_tenant_id = None
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert "tenant" in result.message.lower()
@@ -254,7 +254,7 @@ class TestRiversideEvidenceCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.all.return_value = []
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.PASS
             assert "no completed requirements" in result.message.lower()
@@ -283,7 +283,7 @@ class TestRiversideEvidenceCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.PASS
             assert result.details["completed_count"] == 1
@@ -313,7 +313,7 @@ class TestRiversideEvidenceCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.FAIL
             assert result.details["p0_missing"] == 1
@@ -343,7 +343,7 @@ class TestRiversideEvidenceCheck:
             mock_session.return_value = mock_db
             mock_db.query.return_value.filter.return_value.all.return_value = [mock_req]
 
-            result = await check.run()
+            result = await check.run(force=True)
 
             assert result.status == CheckStatus.WARNING
             assert result.details["p1_missing"] == 1
@@ -360,7 +360,7 @@ class TestRiversideEvidenceCheck:
             mock_query.filter.return_value = mock_query
             mock_query.all.return_value = []
 
-            result = await check.run(tenant_id="test-tenant-123")
+            result = await check.run(tenant_id="test-tenant-123", force=True)
 
             # Verify tenant filter was applied
             mock_query.filter.assert_called()
@@ -374,6 +374,8 @@ class TestRiversideCheckFunctions:
     async def test_run_all_riverside_checks(self):
         """Test run_all_riverside_checks runs all checks."""
         from app.preflight.riverside_checks import run_all_riverside_checks
+        from app.preflight.base import BasePreflightCheck
+        BasePreflightCheck.clear_cache()
 
         with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
             mock_db = MagicMock()
@@ -382,7 +384,7 @@ class TestRiversideCheckFunctions:
 
             # Mock all the checks to avoid external dependencies
             with patch("app.preflight.riverside_checks.httpx.AsyncClient"):
-                with patch("app.preflight.riverside_checks.get_scheduler") as mock_scheduler:
+                with patch("app.core.scheduler.get_scheduler") as mock_scheduler:
                     mock_scheduler.return_value = None
 
                     with patch("app.preflight.riverside_checks.get_settings") as mock_settings:
@@ -417,6 +419,9 @@ class TestCheckResultStructure:
     @pytest.mark.asyncio
     async def test_check_result_structure(self):
         """Verify all checks return properly structured results."""
+        from app.preflight.base import BasePreflightCheck
+        BasePreflightCheck.clear_cache()
+
         from app.preflight.riverside_checks import (
             RiversideDatabaseCheck,
             RiversideAPIEndpointCheck,
@@ -436,13 +441,13 @@ class TestCheckResultStructure:
                 mock_session.return_value = mock_db
                 mock_db.query.return_value.count.return_value = 0
 
-                with patch("app.preflight.riverside_checks.get_scheduler") as mock_scheduler:
+                with patch("app.core.scheduler.get_scheduler") as mock_scheduler:
                     mock_scheduler.return_value = None
 
                     with patch("app.preflight.riverside_checks.get_settings") as mock_settings:
                         mock_settings.return_value.azure_tenant_id = None
 
-                        result = await check.run()
+                        result = await check.run(force=True)
 
             # Verify result structure
             assert result.check_id
