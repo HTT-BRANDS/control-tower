@@ -39,28 +39,32 @@ fi
 
 echo "📋 Uploading tenant secrets..."
 
-# Tenant secrets mapping: secret-name -> env-var
-declare -A SECRETS=(
-    ["htt-client-secret"]="HTT_CLIENT_SECRET"
-    ["htt-client-id"]="HTT_CLIENT_ID"
-    ["bcc-client-secret"]="BCC_CLIENT_SECRET"
-    ["bcc-client-id"]="BCC_CLIENT_ID"
-    ["fn-client-secret"]="FN_CLIENT_SECRET"
-    ["fn-client-id"]="FN_CLIENT_ID"
-    ["tll-client-secret"]="TLL_CLIENT_SECRET"
-    ["tll-client-id"]="TLL_CLIENT_ID"
-    ["dce-client-secret"]="DCE_CLIENT_SECRET"
-    ["dce-client-id"]="DCE_CLIENT_ID"
-    ["primary-client-secret"]="AZURE_CLIENT_SECRET"
-    ["primary-client-id"]="AZURE_CLIENT_ID"
-    ["jwt-secret-key"]="JWT_SECRET_KEY"
+# Tenant secrets mapping: secret-name -> env-var (bash 3.2 compatible)
+SECRET_NAMES=(
+    htt-client-secret htt-client-id
+    bcc-client-secret bcc-client-id
+    fn-client-secret fn-client-id
+    tll-client-secret tll-client-id
+    dce-client-secret dce-client-id
+    primary-client-secret primary-client-id
+    jwt-secret-key
+)
+ENV_VARS=(
+    HTT_CLIENT_SECRET HTT_CLIENT_ID
+    BCC_CLIENT_SECRET BCC_CLIENT_ID
+    FN_CLIENT_SECRET FN_CLIENT_ID
+    TLL_CLIENT_SECRET TLL_CLIENT_ID
+    DCE_CLIENT_SECRET DCE_CLIENT_ID
+    AZURE_CLIENT_SECRET AZURE_CLIENT_ID
+    JWT_SECRET_KEY
 )
 
 SUCCESS=0
 FAILED=0
 
-for secret_name in "${!SECRETS[@]}"; do
-    env_var="${SECRETS[$secret_name]}"
+for i in "${!SECRET_NAMES[@]}"; do
+    secret_name="${SECRET_NAMES[$i]}"
+    env_var="${ENV_VARS[$i]}"
     value="${!env_var:-}"
     
     if [[ -z "$value" ]]; then

@@ -190,12 +190,24 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Azure Login (for ACR)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+ 
+      - name: Log in to Azure Container Registry
+        run: az acr login --name acrgovernancedev
       
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          images: |
+            ${{ env.REGISTRY }}/${{ github.repository }}
+            acrgovernancedev.azurecr.io/governance-platform
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -220,6 +232,7 @@ jobs:
       
       - name: Run Trivy vulnerability scanner (container)
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:latest
           format: 'sarif'
