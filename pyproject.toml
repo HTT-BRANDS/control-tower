@@ -40,9 +40,10 @@ dependencies = [
     "azure-mgmt-security>=5.0.0",
     "azure-mgmt-authorization>=4.0.0",
     "azure-mgmt-subscription>=3.1.1",
-    # "azure-keyvault-secrets>=4.7.0",  # Uncomment for production
+    "azure-keyvault-secrets>=4.7.0",  # Key Vault secret storage
     "six>=1.17.0",
     "alembic>=1.18.4",
+    "prometheus-fastapi-instrumentator>=7.1.0",
 ]
 
 [project.optional-dependencies]
