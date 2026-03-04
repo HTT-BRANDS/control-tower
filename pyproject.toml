@@ -58,8 +58,8 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/your-org/azure-governance-platform"
-"Bug Tracker" = "https://github.com/your-org/azure-governance-platform/issues"
+"Homepage" = "https://github.com/tygranlund/azure-governance-platform"
+"Bug Tracker" = "https://github.com/tygranlund/azure-governance-platform/issues"
 
 [project.scripts]
 govern = "app.main:app"

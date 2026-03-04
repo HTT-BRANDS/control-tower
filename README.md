@@ -33,7 +33,7 @@ A lightweight, cost-effective platform for managing Azure/M365 governance across
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/azure-governance-platform.git
+git clone https://github.com/tygranlund/azure-governance-platform.git
 cd azure-governance-platform
 
 # Create virtual environment
@@ -81,6 +81,23 @@ open http://localhost:8000/docs
 2. Grant required permissions (see docs/PERMISSIONS.md)
 3. Store credentials in Azure Key Vault
 4. Configure `KEY_VAULT_URL` in `.env`
+
+## Live Environments
+
+| Environment | URL | Status |
+|-------------|-----|--------|
+| **Dev** | https://app-governance-dev-001.azurewebsites.net | 🟢 Live |
+| **Staging** | _Not yet deployed_ | ⬜ Planned |
+| **Production** | _Not yet deployed_ | ⬜ Planned |
+
+### Dev Environment Resources (westus2)
+| Resource | Name |
+|----------|------|
+| Resource Group | `rg-governance-dev` |
+| App Service | `app-governance-dev-001` |
+| Container Registry | `acrgovernancedev` |
+| Key Vault | `kv-gov-dev-001` |
+| App Insights | `ai-governance-dev-001` |
 
 ## Documentation
 
@@ -165,7 +182,7 @@ See `.env.example` for all configuration options.
 
 ```bash
 # Install dev dependencies
-uv pip install -e ".[dev]" --index-url https://pypi.ci.artifacts.walmart.com/artifactory/api/pypi/external-pypi/simple --allow-insecure-host pypi.ci.artifacts.walmart.com
+uv pip install -e ".[dev]"
 
 # Run linting
 ruff check .
@@ -182,16 +199,23 @@ pytest --cov=app --cov-report=html
 
 ## Deployment
 
-### Azure App Service (Minimal Cost)
+### Azure App Service via Bicep + ACR (Current)
 
 ```bash
-# Build and deploy
-az webapp up --name governance-platform --sku B1 --runtime "PYTHON:3.11"
+# Deploy infrastructure
+cd infrastructure
+./deploy.sh development westus2
+
+# Build and push container image
+az acr build --registry acrgovernancedev --image governance-platform:dev .
+
+# Restart app service to pull new image
+az webapp restart --name app-governance-dev-001 -g rg-governance-dev
 ```
 
-Estimated cost: ~$13/month
+Estimated cost: ~$25/month (App Service B1 + Key Vault + Storage + App Insights)
 
-### Docker
+### Docker (Local Development)
 
 ```bash
 docker build -t governance-platform .
@@ -200,11 +224,14 @@ docker run -p 8000:8000 --env-file .env governance-platform
 
 ## Cost Estimates
 
-| Deployment | Monthly Cost |
-|------------|-------------|
-| App Service B1 | ~$13 |
-| Key Vault (optional) | ~$1 |
-| **Total MVP** | **~$15-20** |
+| Resource | Monthly Cost |
+|----------|-------------|
+| App Service Plan (B1) | ~$13 |
+| Key Vault | ~$1 |
+| Storage Account | ~$5 |
+| Application Insights | ~$5 |
+| Container Registry (Basic) | ~$5 |
+| **Total Dev Environment** | **~$25-30** |
 
 ## Riverside Compliance Tracking
 
@@ -303,16 +330,22 @@ For comprehensive Riverside compliance documentation, see:
 - [x] Dark mode
 - [x] App Insights telemetry
 - [x] Data retention service
+- [x] Azure Dev Deployment (Bicep IaC, ACR, App Service, Key Vault)
+- [x] Security audit — 5/5 findings resolved
+- [x] E2E test suite (47 Playwright + httpx tests)
+- [x] Documentation consolidation (13 → 7 root docs)
 
 ### In Progress
 
+- [ ] Connect real Azure tenant credentials via Key Vault
+- [ ] CI/CD OIDC federation (passwordless GitHub → Azure)
+- [ ] Staging environment deployment
 - [ ] Replace backfill placeholder data with real Azure API calls
 - [ ] Production hardening (CORS, token blacklist, rate limits)
 
 ### Planned
 
 - [ ] Custom compliance frameworks
-- [ ] Power BI embedding
 - [ ] Teams bot integration
 - [ ] Access review workflows
 - [ ] Advanced cost forecasting with ML

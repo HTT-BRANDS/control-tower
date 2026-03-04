@@ -45,6 +45,37 @@ This enables **passwordless authentication** between GitHub Actions and Azure AD
 
 📖 **Full documentation:** [docs/OIDC_SETUP.md](../docs/OIDC_SETUP.md)
 
+## 🌍 Current Deployments
+
+### Dev Environment (westus2)
+| Resource | Name | Status |
+|----------|------|--------|
+| Resource Group | `rg-governance-dev` | 🟢 Active |
+| App Service Plan | `asp-governance-dev-001` (B1 Linux) | 🟢 Running |
+| App Service | `app-governance-dev-001` | 🟢 Healthy |
+| Container Registry | `acrgovernancedev` (Basic) | 🟢 Available |
+| Key Vault | `kv-gov-dev-001` | 🟢 2 secrets |
+| Storage Account | `stgovdev001` | 🟢 Azure Files |
+| App Insights | `ai-governance-dev-001` | 🟢 Connected |
+| Log Analytics | `log-governance-dev-001` | 🟢 Connected |
+
+**Live URL:** https://app-governance-dev-001.azurewebsites.net
+
+### Deploying a New Container Image
+```bash
+# Build image in ACR (from project root)
+az acr build --registry acrgovernancedev --image governance-platform:dev .
+
+# Restart to pick up new image
+az webapp restart --name app-governance-dev-001 -g rg-governance-dev
+
+# Verify
+curl -sf https://app-governance-dev-001.azurewebsites.net/health
+```
+
+### Staging & Production
+Not yet deployed. Use `parameters.staging.json` and `parameters.json` respectively.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -65,8 +96,8 @@ This enables **passwordless authentication** between GitHub Actions and Azure AD
 # Deploy to development
 ./deploy.sh development
 
-# Deploy to specific region
-./deploy.sh production westus2
+# Deploy to specific region (dev is westus2)
+./deploy.sh development westus2
 ```
 
 ## 📦 Resources Deployed
