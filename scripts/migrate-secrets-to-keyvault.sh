@@ -13,14 +13,23 @@ KV_NAME="${1:?Usage: $0 <key-vault-name>}"
 
 echo "🔐 Migrating secrets to Key Vault: $KV_NAME"
 
-# Source .env for secret values
+# Load .env for secret values (safe parsing, no execution)
 if [[ ! -f .env ]]; then
     echo "❌ .env file not found. Run from project root."
     exit 1
 fi
 
-# shellcheck disable=SC1091
-set -a; source .env; set +a
+# SECURITY: Read .env safely without executing (no source/eval)
+while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ -z "$key" || "$key" =~ ^# ]] && continue
+    # Strip quotes from value
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+    export "$key=$value"
+done < <(grep -E '^[A-Z_][A-Z0-9_]*=' .env 2>/dev/null || true)
 
 # Verify Key Vault exists
 if ! az keyvault show --name "$KV_NAME" &>/dev/null; then
