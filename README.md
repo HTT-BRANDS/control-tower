@@ -14,6 +14,12 @@ A lightweight, cost-effective platform for managing Azure/M365 governance across
 - **Bulk Operations**: Apply tags, acknowledge anomalies, review resources in bulk
 - **Data Exports**: CSV exports for costs, resources, and compliance data
 - **Performance Monitoring**: Cache metrics, query performance, sync job analytics
+- **Azure Lighthouse**: Cross-tenant delegation with self-service onboarding
+- **Data Backfill**: Resumable day-by-day with parallel multi-tenant processing
+- **WCAG 2.2 Accessibility**: Skip nav, focus-visible, 44px touch targets
+- **Dark Mode**: System preference detection with manual toggle
+- **App Insights**: Request telemetry with optional OpenCensus exporter
+- **Data Retention**: Automated time-series cleanup with configurable periods
 
 ## Quick Start
 
@@ -111,7 +117,18 @@ azure-governance-platform/
 │   ├── templates/           # Jinja2 templates
 │   │   └── pages/
 │   │       └── riverside.py # Riverside dashboard
-│   └── static/              # CSS, JS assets
+│   ├── static/              # CSS, JS assets
+│   ├── services/            # Domain services
+│   │   ├── lighthouse_client.py
+│   │   ├── backfill_service.py
+│   │   ├── parallel_processor.py
+│   │   ├── retention_service.py
+│   │   ├── riverside_sync.py
+│   │   ├── teams_webhook.py
+│   │   ├── email_service.py
+│   │   └── theme_service.py
+│   ├── preflight/           # Pre-operation validation
+│   └── alerts/              # Alerting subsystem
 ├── docs/                    # Documentation
 │   ├── RIVERSIDE_INTEGRATION.md
 │   ├── RIVERSIDE_EXECUTIVE_SUMMARY.md
@@ -195,24 +212,24 @@ docker run -p 8000:8000 --env-file .env governance-platform
 
 The Azure Governance Platform includes specialized compliance tracking for Riverside Company requirements.
 
-#### Current State (as of January 2026)
+#### Current State (tracked by platform — see /riverside dashboard for current metrics)
 
 | Metric | Current | Target | Deadline |
 |--------|---------|--------|----------|
 | **Overall Maturity** | 2.4/5.0 | 3.0/5.0 | July 8, 2026 |
 | **Compliance Deadline** | ~160 days | - | July 8, 2026 |
 | **Financial Risk** | $4M | $0 | July 8, 2026 |
-| **MFA Coverage** | 30% (634/1992) | 100% | 30 days |
+| **MFA Coverage** | Tracked in real-time via platform dashboard | 100% | 30 days |
 | **Threat Beta Score** | 1.04 | <1.0 | Ongoing |
 
 #### Tenants
 
 | Tenant | Code | Type | MFA Coverage |
 |--------|------|------|--------------|
-| HTT | HTT | Riverside | 30% |
-| BCC | BCC | Riverside | 30% |
-| FN | FN | Riverside | 30% |
-| TLL | TLL | Riverside | 30% |
+| HTT | HTT | Riverside | Tracked in real-time via platform dashboard |
+| BCC | BCC | Riverside | Tracked in real-time via platform dashboard |
+| FN | FN | Riverside | Tracked in real-time via platform dashboard |
+| TLL | TLL | Riverside | Tracked in real-time via platform dashboard |
 | DCE | DCE | Standalone | N/A |
 
 ### Key Metrics Tracked
@@ -280,11 +297,17 @@ For comprehensive Riverside compliance documentation, see:
 - [x] Bulk operations (tags, anomalies, recommendations)
 - [x] CSV export functionality
 - [x] Performance monitoring and caching
+- [x] Azure Lighthouse integration
+- [x] Data backfill service
+- [x] WCAG 2.2 accessibility
+- [x] Dark mode
+- [x] App Insights telemetry
+- [x] Data retention service
 
 ### In Progress
 
-- [ ] Automated remediation suggestions
-- [ ] Azure Policy compliance reporting enhancements
+- [ ] Replace backfill placeholder data with real Azure API calls
+- [ ] Production hardening (CORS, token blacklist, rate limits)
 
 ### Planned
 

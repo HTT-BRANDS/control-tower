@@ -1,7 +1,7 @@
 # Azure Governance Platform - Developer Guide
 
 > **Version:** 1.0  
-> **Last Updated:** February 2025  
+> **Last Updated:** July 2025  
 > **Audience:** Developers contributing to the platform
 
 ---
@@ -91,9 +91,29 @@ app/
 │   ├── config.py
 │   ├── database.py
 │   └── scheduler.py
+├── services/                 # Service integrations
+│   ├── lighthouse_client.py  # Lighthouse API client
+│   ├── backfill_service.py   # Data backfill operations
+│   ├── parallel_processor.py # Parallel task processing
+│   ├── retention_service.py  # Data retention policies
+│   ├── riverside_sync.py     # Riverside data sync
+│   ├── teams_webhook.py      # Teams webhook notifications
+│   ├── email_service.py      # Email notifications
+│   └── theme_service.py      # Theme management
+├── preflight/                # Preflight check system
+├── alerts/                   # Alert management
 ├── models/                   # SQLAlchemy models
 ├── schemas/                  # Pydantic schemas
 ├── templates/                # Jinja2 templates
+├── static/
+│   ├── css/
+│   │   ├── accessibility.css # Accessibility styles
+│   │   ├── dark-mode.css     # Dark mode theme
+│   │   ├── theme.css         # Base theme styles
+│   │   └── riverside.css     # Riverside-specific styles
+│   └── js/
+│       ├── darkMode.js       # Dark mode toggle logic
+│       └── navigation/       # Navigation components
 └── main.py                   # Application entry point
 ```
 

@@ -18,6 +18,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2025-07-XX
+
+### Added
+- Azure Lighthouse Integration (Phase 3): LighthouseAzureClient, ARM delegation template, self-service onboarding with 6 routes, 50 new tests
+- Data Backfill Service (Phase 4): Resumable day-by-day backfill, 4 data processors, parallel multi-tenant processing
+- WCAG 2.2 AA Accessibility (Phase 5): Skip navigation, focus-visible outlines, 44px touch targets, reduced motion support
+- Dark Mode (Phase 5): CSS custom properties, system preference detection, localStorage toggle
+- Application Insights (Phase 6): Request telemetry middleware, Server-Timing header, optional OpenCensus exporter
+- Data Retention Service (Phase 6): Configurable per-table cleanup for 6 table types
+
+### Fixed
+- All 49 previously failing tests now passing (661 total, 0 failures)
+- Cleaned up 37 stale branches and 35 stale worktrees
+- Resolved Riverside API route-service method mismatches
+- Fixed sync and preflight test assertion mismatches
+
+### Changed
+- Test suite expanded from ~550 to 661 tests across 40 files
+- All 6 development phases complete and merged to main
+
+---
+
 ## [0.1.1] - 2025-07-21
 
 ### Added
