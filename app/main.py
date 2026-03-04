@@ -140,6 +140,41 @@ async def rate_limit_middleware(request: Request, call_next):
         logger.error(f"Rate limiting error: {e}")
         return await call_next(request)
 
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Add security response headers to all responses.
+
+    SECURITY: Protects against clickjacking, XSS, MIME sniffing,
+    and enforces HTTPS via HSTS.
+    """
+    response = await call_next(request)
+    # Prevent clickjacking
+    response.headers["X-Frame-Options"] = "DENY"
+    # Prevent XSS via MIME type sniffing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # XSS Protection (legacy browsers)
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # Referrer policy
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Permissions policy (restrict browser features)
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # Content Security Policy
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'"
+    )
+    # HSTS (only in production to avoid dev issues)
+    if not settings.is_development:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
 # Prometheus metrics
 Instrumentator(
     should_group_status_codes=False,
