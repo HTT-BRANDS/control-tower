@@ -16,6 +16,10 @@
     
     <!-- Riverside Custom Styles (kept for compatibility) -->
     <link rel="stylesheet" href="/static/css/riverside.css">
+    <link rel="stylesheet" href="/static/css/accessibility.css">
+    <link rel="stylesheet" href="/static/css/dark-mode.css">
+    <link rel="stylesheet" href="/static/css/accessibility.css">
+    <link rel="stylesheet" href="/static/css/dark-mode.css">
     
     <!-- Brand Color Injection -->
     {% if brand %}
@@ -94,6 +98,8 @@
 </head>
 <body class="bg-gray-5 text-gray-160 min-h-screen" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
     <!-- HTMX Progress Bar -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="htmx-progress-bar" aria-hidden="true"></div>
     
     <!-- Screen Reader Announcer -->
@@ -173,14 +179,16 @@
                         </svg>
                         <span class="sr-only">Loading</span>
                     </div>
+                    <button onclick="toggleTheme()" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     <span class="text-sm text-brand-primary-50" aria-label="4 tenants connected">4 Tenants Connected</span>
+                    <button onclick="toggleTheme()" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode">D</button>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main id="main-content" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {% block content %}{% endblock %}
     </main>
 
@@ -205,5 +213,6 @@
     
     <!-- Include Loading Component Templates -->
     {% include 'components/loading.html' %}
+    <script src="/static/js/darkMode.js"></script>
 </body>
 </html>

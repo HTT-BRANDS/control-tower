@@ -1,0 +1,10 @@
+/* Dark Mode Support (P5: cje) */
+[data-theme="dark"] { --bg-primary:#1a1a2e; --bg-secondary:#16213e; --bg-card:#0f3460; --text-primary:#e0e0e0; --text-secondary:#a0a0b0; --border-color:#2a2a4a; }
+[data-theme="dark"] body { background-color:var(--bg-primary); color:var(--text-primary); }
+[data-theme="dark"] .bg-gray-5 { background-color:var(--bg-primary); }
+[data-theme="dark"] .bg-white { background-color:var(--bg-secondary); }
+[data-theme="dark"] .text-gray-160 { color:var(--text-primary); }
+[data-theme="dark"] .border-gray-50 { border-color:var(--border-color); }
+[data-theme="dark"] .bg-gray-10 { background-color:var(--bg-secondary); }
+[data-theme="dark"] .shadow-lg { box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); }
+@media (prefers-color-scheme:dark) { html:not([data-theme="light"]) { --bg-primary:#1a1a2e; --bg-secondary:#16213e; --text-primary:#e0e0e0; } }
