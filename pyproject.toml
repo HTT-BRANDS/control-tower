@@ -102,6 +102,11 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+markers = [
+    "azure_creds_required: marks tests requiring Azure credentials",
+    "auth_required: marks tests requiring authentication",
+    "slow: marks tests as slow",
+]
 
 [dependency-groups]
 dev = [

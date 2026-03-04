@@ -62,9 +62,9 @@ async def preflight_page(
         results = latest.results
 
     return templates.TemplateResponse(
+        request,
         "pages/preflight.html",
         {
-            "request": request,
             "report": latest,
             "category_summaries": category_summaries,
             "tenant_summaries": tenant_summaries,

@@ -151,11 +151,19 @@ class Settings(BaseSettings):
     # Caching Configuration
     cache_enabled: bool = Field(default=True, alias="CACHE_ENABLED")
     redis_url: str | None = Field(default=None, alias="REDIS_URL")
+    cache_default_ttl_seconds: int = Field(default=300, alias="CACHE_DEFAULT_TTL_SECONDS")  # 5 min
+    cache_max_ttl_seconds: int = Field(default=86400, alias="CACHE_MAX_TTL_SECONDS")  # 24 hours
     cache_ttl_cost_summary: int = Field(default=3600, alias="CACHE_TTL_COST_SUMMARY")  # 1 hour
     cache_ttl_compliance_summary: int = Field(default=1800, alias="CACHE_TTL_COMPLIANCE_SUMMARY")  # 30 min
     cache_ttl_resource_inventory: int = Field(default=900, alias="CACHE_TTL_RESOURCE_INVENTORY")  # 15 min
     cache_ttl_identity_summary: int = Field(default=3600, alias="CACHE_TTL_IDENTITY_SUMMARY")  # 1 hour
     cache_ttl_riverside_summary: int = Field(default=900, alias="CACHE_TTL_RIVERSIDE_SUMMARY")  # 15 min
+
+    # Production Hardening Defaults
+    cache_default_ttl: int = 300
+    cache_max_ttl: int = 3600
+    cors_allowed_origins: str = ""
+    rate_limit_default: int = 100
 
     # Database Configuration
     database_pool_size: int = Field(default=5, alias="DB_POOL_SIZE")
@@ -243,6 +251,14 @@ class Settings(BaseSettings):
 
         return self
 
+    @field_validator("managed_tenant_ids", mode="before")
+    @classmethod
+    def parse_managed_tenant_ids(cls, v: str | list[str]) -> list[str]:
+        """Parse managed tenant IDs from comma-separated string or list."""
+        if isinstance(v, str):
+            return [tid.strip() for tid in v.split(",") if tid.strip()]
+        return v
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
@@ -311,7 +327,7 @@ class Settings(BaseSettings):
         return bool(os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"))
 
     def get_cache_ttl(self, data_type: str) -> int:
-        """Get TTL for a specific data type."""
+        """Get TTL for a specific data type, clamped to max."""
         ttl_map = {
             "cost_summary": self.cache_ttl_cost_summary,
             "compliance_summary": self.cache_ttl_compliance_summary,
@@ -319,7 +335,8 @@ class Settings(BaseSettings):
             "identity_summary": self.cache_ttl_identity_summary,
             "riverside_summary": self.cache_ttl_riverside_summary,
         }
-        return ttl_map.get(data_type, 300)
+        ttl = ttl_map.get(data_type, self.cache_default_ttl_seconds)
+        return min(ttl, self.cache_max_ttl_seconds)
 
 
 @lru_cache

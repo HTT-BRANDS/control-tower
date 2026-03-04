@@ -90,6 +90,20 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
+# Additional configurable CORS origins (comma-separated string)
+if settings.cors_allowed_origins:
+    _extra_origins = [
+        o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()
+    ]
+    if _extra_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_extra_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):

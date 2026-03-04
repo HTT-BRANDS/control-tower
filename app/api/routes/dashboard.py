@@ -82,9 +82,9 @@ async def dashboard(
     brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
+        request,
         "pages/dashboard.html",
         {
-            "request": request,
             **data,
             **brand_context,
         },
@@ -102,9 +102,9 @@ async def dashboard_page(
     brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
+        request,
         "pages/dashboard.html",
         {
-            "request": request,
             **data,
             **brand_context,
         },
@@ -118,8 +118,9 @@ async def cost_summary_card(request: Request, db: Session = Depends(get_db)):
     summary = cost_svc.get_cost_summary()
 
     return templates.TemplateResponse(
+        request,
         "components/cost_summary_card.html",
-      {"request": request, "summary": summary},
+        {"summary": summary},
     )
 
 
@@ -130,8 +131,9 @@ async def compliance_gauge(request: Request, db: Session = Depends(get_db)):
     summary = compliance_svc.get_compliance_summary()
 
     return templates.TemplateResponse(
+        request,
         "components/compliance_gauge.html",
-        {"request": request, "summary": summary},
+        {"summary": summary},
     )
 
 
@@ -142,8 +144,9 @@ async def resource_stats(request: Request, db: Session = Depends(get_db)):
     inventory = resource_svc.get_resource_inventory()
 
     return templates.TemplateResponse(
+        request,
         "components/resource_stats.html",
-        {"request": request, "inventory": inventory},
+        {"inventory": inventory},
     )
 
 
@@ -154,8 +157,9 @@ async def identity_stats(request: Request, db: Session = Depends(get_db)):
     summary = identity_svc.get_identity_summary()
 
     return templates.TemplateResponse(
+        request,
         "components/identity_stats.html",
-        {"request": request, "summary": summary},
+        {"summary": summary},
     )
 
 
@@ -191,9 +195,9 @@ async def sync_dashboard(
     metrics = monitoring.get_metrics()
 
     return templates.TemplateResponse(
+        request,
         "pages/sync_dashboard.html",
         {
-            "request": request,
             "overall_status": overall_status,
             "recent_logs": recent_logs,
             "active_alerts": active_alerts,
@@ -300,9 +304,9 @@ async def sync_status_card_partial(request: Request, db: Session = Depends(get_d
     metrics = monitoring.get_metrics()
 
     return templates.TemplateResponse(
+        request,
         "components/sync/sync_status_card.html",
         {
-            "request": request,
             "status": overall_status,
             "metrics": metrics,
             "last_refresh": datetime.utcnow(),
@@ -319,9 +323,9 @@ async def sync_history_table_partial(
     recent_logs = monitoring.get_recent_logs(limit=limit, include_running=True)
 
     return templates.TemplateResponse(
+        request,
         "components/sync/sync_history_table.html",
         {
-            "request": request,
             "logs": recent_logs,
             "last_refresh": datetime.utcnow(),
         },
@@ -336,9 +340,9 @@ async def active_alerts_partial(request: Request, db: Session = Depends(get_db))
     alert_stats = monitoring.get_alert_stats()
 
     return templates.TemplateResponse(
+        request,
         "components/sync/active_alerts.html",
         {
-            "request": request,
             "alerts": active_alerts,
             "stats": alert_stats,
             "last_refresh": datetime.utcnow(),
@@ -353,9 +357,9 @@ async def tenant_sync_status_partial(request: Request, db: Session = Depends(get
     tenant_status = await _get_tenant_sync_status(db, monitoring)
 
     return templates.TemplateResponse(
+        request,
         "components/sync/tenant_sync_grid.html",
         {
-            "request": request,
             "tenant_status": tenant_status,
             "last_refresh": datetime.utcnow(),
         },
@@ -375,12 +379,12 @@ async def dmarc_dashboard(
 ):
     """DMARC/DKIM security dashboard page."""
     return templates.TemplateResponse(
+        request,
         "pages/dmarc_dashboard.html",
-        {"request": request},
     )
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Login page."""
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")

@@ -1,9 +1,10 @@
 # Next Steps Action Plan
 
 ## Immediate (Today)
-1. [ ] Run `./scripts/fix-dev-runtime.sh` to fix 503 errors
-2. [ ] Verify with `./scripts/verify-dev-deployment.sh`
-3. [ ] Monitor with `./scripts/monitor-dev.sh`
+1. [x] Run `./scripts/fix-dev-runtime.sh` to fix 503 errors - **SKIPPED** (Azure App Service not deployed; running locally instead)
+2. [x] Run local dev server with `uv run uvicorn app.main:app --reload`
+3. [ ] Verify with `./scripts/verify-dev-deployment.sh` (or manual health check)
+4. [ ] Monitor with `./scripts/monitor-dev.sh`
 
 ## This Week
 4. [ ] Complete pre-staging QA checklist

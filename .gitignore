@@ -66,6 +66,11 @@ temp/
 secrets.json
 credentials.json
 
+# Explicit secret protection (defense in depth)
+.sp-secrets.env
+**/sp-secrets*
+*.secrets.env
+
 # Node (if using any JS build tools)
 node_modules/
 

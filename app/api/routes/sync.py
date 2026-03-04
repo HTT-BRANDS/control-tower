@@ -267,9 +267,9 @@ async def sync_status_partial(
     brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
+        request,
         "components/sync_status.html",
         {
-            "request": request,
             "status": status,
             "metrics": metrics,
             **brand_context,
@@ -290,9 +290,9 @@ async def sync_alerts_partial(
     brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
+        request,
         "components/sync_alerts.html",
         {
-            "request": request,
             "alerts": alerts,
             "stats": stats,
             **brand_context,

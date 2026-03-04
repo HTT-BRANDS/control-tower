@@ -34,8 +34,9 @@ async def riverside_dashboard(
     """Riverside compliance dashboard page."""
     brand_context = get_brand_context_for_request(request)
     return templates.TemplateResponse(
+        request,
         "pages/riverside_dashboard.html",
-        {"request": request, **brand_context},
+        {**brand_context},
     )
 
 
@@ -52,9 +53,9 @@ async def riverside_badge(
     brand_context = get_brand_context_for_request(request)
 
     return templates.TemplateResponse(
+        request,
         "components/riverside_badge.html",
         {
-            "request": request,
             "total_critical_gaps": summary.get("total_critical_gaps", 0),
             **brand_context,
         },

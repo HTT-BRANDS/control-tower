@@ -16,6 +16,7 @@ import functools
 import hashlib
 import json
 import logging
+import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -280,18 +281,37 @@ class RedisCache:
 class CacheManager:
     """Unified cache manager with fallback support."""
 
-    # Default TTLs by data type (in seconds)
-    DEFAULT_TTLS = {
-        "cost_summary": 3600,          # 1 hour
-        "compliance_summary": 1800,    # 30 minutes
-        "resource_inventory": 900,     # 15 minutes
-        "identity_summary": 3600,      # 1 hour
-        "riverside_summary": 900,      # 15 minutes
-        "tenant_list": 300,            # 5 minutes
-        "anomaly_list": 600,           # 10 minutes
-        "recommendation_list": 600,    # 10 minutes
-        "dashboard_data": 300,         # 5 minutes
+    # Hardcoded fallback TTLs for data types not covered by settings.
+    # Settings-based TTLs (via CACHE_TTL_* env vars) take precedence.
+    _FALLBACK_TTLS: dict[str, int] = {
+        "tenant_list": int(os.environ.get("CACHE_TTL_TENANT_LIST", "300")),
+        "anomaly_list": int(os.environ.get("CACHE_TTL_ANOMALY_LIST", "600")),
+        "recommendation_list": int(os.environ.get("CACHE_TTL_RECOMMENDATION_LIST", "600")),
+        "dashboard_data": int(os.environ.get("CACHE_TTL_DASHBOARD_DATA", "300")),
     }
+
+    @staticmethod
+    def _resolve_ttl(data_type: str) -> int:
+        """Resolve TTL for a data type from settings, with fallbacks.
+
+        Lookup order:
+        1. Settings per-type TTL (CACHE_TTL_* env vars) via settings.get_cache_ttl()
+        2. _FALLBACK_TTLS for types not in settings
+        3. settings.cache_default_ttl_seconds (CACHE_DEFAULT_TTL_SECONDS)
+
+        The result is always clamped to settings.cache_max_ttl_seconds.
+        """
+        settings = get_settings()
+        # settings.get_cache_ttl already returns default & clamps to max
+        # for types it knows about. For unknown types it returns the default.
+        ttl = settings.get_cache_ttl(data_type)
+
+        # If settings returned the default, check our local fallback table
+        # in case we have a more specific value for this data type.
+        if ttl == settings.cache_default_ttl_seconds and data_type in CacheManager._FALLBACK_TTLS:
+            ttl = CacheManager._FALLBACK_TTLS[data_type]
+
+        return min(ttl, settings.cache_max_ttl_seconds)
 
     def __init__(self):
         self._cache: InMemoryCache | RedisCache | None = None
@@ -384,7 +404,12 @@ class CacheManager:
             return
 
         if ttl_seconds is None and data_type:
-            ttl_seconds = self.DEFAULT_TTLS.get(data_type)
+            ttl_seconds = self._resolve_ttl(data_type)
+
+        # Clamp explicit TTL to configured maximum
+        if ttl_seconds is not None:
+            max_ttl = get_settings().cache_max_ttl_seconds
+            ttl_seconds = min(ttl_seconds, max_ttl)
 
         await self._get_cache().set(key, value, ttl_seconds)
 
@@ -440,8 +465,8 @@ cache_manager = CacheManager()
 
 # Default TTL values for easy import
 def get_cache_ttl(data_type: str) -> int:
-    """Get default TTL for a data type."""
-    return CacheManager.DEFAULT_TTLS.get(data_type, 300)
+    """Get TTL for a data type from settings."""
+    return CacheManager._resolve_ttl(data_type)
 
 
 def cached(

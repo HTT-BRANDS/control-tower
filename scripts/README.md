@@ -46,6 +46,27 @@ Get up and running with GitHub CLI automation in 4 steps:
 
 ---
 
+## 📋 Azure App Registration Scripts
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `setup-riverside-apps.py` | Manage app registrations across tenants | `python setup-riverside-apps.py --check-only` |
+| `verify-azure-apps.sh` | Quick verification of all apps | `./verify-azure-apps.sh` |
+
+### Setup Script Features
+- ✅ Check existing app registrations
+- ✅ Verify Microsoft Graph permissions
+- ✅ Verify Azure Management permissions
+- ✅ Generate new client secrets
+- ✅ Output credentials to `.env.azure`
+- ✅ Support for all 5 Riverside tenants
+
+### Verify Script Features
+- ✅ Check app exists and is enabled
+- ✅ Verify admin consent status
+- ✅ JSON output support
+- ✅ Per-tenant or all-tenants mode
+
 ## 📋 Other Scripts
 
 | Script | Purpose |
