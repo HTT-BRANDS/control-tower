@@ -144,8 +144,8 @@ class Settings(BaseSettings):
 
     # CORS (RESTRICTED in production - no wildcards allowed)
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
-    cors_allow_methods: list[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "PATCH"])
-    cors_allow_headers: list[str] = Field(default_factory=lambda: ["*"])
+    cors_allow_methods: list[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
+    cors_allow_headers: list[str] = Field(default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"])
     cors_allow_credentials: bool = True
 
     # Caching Configuration

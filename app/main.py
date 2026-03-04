@@ -84,29 +84,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS with security restrictions in production
-# SECURITY: No wildcards allowed in production - explicit origins only
+# Configure CORS — single middleware, no wildcards, no duplicates
+# SECURITY: Explicit origins, methods, and headers only (P1 fix)
+_cors_origins = list(settings.cors_origins)
+if settings.cors_allowed_origins:
+    _cors_origins.extend(
+        o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()
+    )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=_cors_origins,
     allow_credentials=settings.cors_allow_credentials,
     allow_methods=settings.cors_allow_methods,
     allow_headers=settings.cors_allow_headers,
 )
-
-# Additional configurable CORS origins (comma-separated string)
-if settings.cors_allowed_origins:
-    _extra_origins = [
-        o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()
-    ]
-    if _extra_origins:
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=_extra_origins,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
 
 
 @app.middleware("http")
