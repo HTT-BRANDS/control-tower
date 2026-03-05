@@ -51,6 +51,7 @@ class PolicyStatus(BaseModel):
     non_compliant_count: int
     tenant_id: str
     subscription_id: str
+    severity: str = "Medium"  # Low, Medium, High, Critical
     recommendation: str | None = None
 
 

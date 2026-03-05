@@ -45,7 +45,7 @@ async def get_compliance_summary(
 
     service = ComplianceService(db)
     # TODO: Filter by accessible tenants
-    return service.get_compliance_summary()
+    return await service.get_compliance_summary()
 
 
 @router.get("/scores", response_model=list[ComplianceScore])
@@ -74,14 +74,19 @@ async def get_compliance_scores(
     filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
 
     service = ComplianceService(db)
-    scores = service.get_scores_by_tenant(tenant_id=tenant_id)
+    scores = await service.get_scores_by_tenant(tenant_id=tenant_id)
 
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
-    scores = [
-        s for s in scores
-        if s.tenant_id in accessible_tenants and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
-    ]
+    # Empty accessible_tenants means admin can see all
+    if accessible_tenants:
+        scores = [
+            s for s in scores
+            if s.tenant_id in accessible_tenants and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
+        ]
+    elif filtered_tenant_ids:
+        # Admin with specific filter
+        scores = [s for s in scores if s.tenant_id in filtered_tenant_ids]
 
     return scores[offset : offset + limit]
 
@@ -122,10 +127,15 @@ async def get_non_compliant_policies(
 
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
-    policies = [
-        p for p in policies
-        if p.tenant_id in accessible_tenants and (not filtered_tenant_ids or p.tenant_id in filtered_tenant_ids)
-    ]
+    # Empty accessible_tenants means admin can see all
+    if accessible_tenants:
+        policies = [
+            p for p in policies
+            if p.tenant_id in accessible_tenants and (not filtered_tenant_ids or p.tenant_id in filtered_tenant_ids)
+        ]
+    elif filtered_tenant_ids:
+        # Admin with specific filter
+        policies = [p for p in policies if p.tenant_id in filtered_tenant_ids]
 
     if severity:
         policies = [p for p in policies if p.severity == severity]
@@ -152,7 +162,7 @@ async def get_compliance_trends(
     filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
 
     service = ComplianceService(db)
-    return service.get_compliance_trends(tenant_ids=filtered_tenant_ids, days=days)
+    return await service.get_compliance_trends(tenant_ids=filtered_tenant_ids, days=days)
 
 
 @router.get("/status")

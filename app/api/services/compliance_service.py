@@ -225,6 +225,7 @@ class ComplianceService:
                 non_compliant_count=p.non_compliant_count,
                 tenant_id=p.tenant_id,
                 subscription_id=p.subscription_id,
+                severity=self._map_severity(p.policy_name, p.policy_category),
                 recommendation=p.recommendation,
             )
             for p in policies
