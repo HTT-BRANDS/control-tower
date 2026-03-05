@@ -505,8 +505,10 @@ def cached(
 
                 # Build args/kwargs for key hashing (exclude self and db)
                 key_args = args[2:] if len(args) > 2 else ()
+                # Exclude tenant_id from kwargs to avoid duplicate parameter
+                key_kwargs = {k: v for k, v in kwargs.items() if k != "tenant_id"}
                 cache_key = cache_manager.generate_key(
-                    data_type, tenant_id, *key_args, **kwargs
+                    data_type, tenant_id, *key_args, **key_kwargs
                 )
 
             # Try to get from cache

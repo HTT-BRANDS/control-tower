@@ -131,7 +131,7 @@ async def get_resources(
         return ResourceInventory(resources=[], total_resources=0, total_cost=0.0)
 
     service = ResourceService(db)
-    inventory = service.get_resource_inventory(
+    inventory = await service.get_resource_inventory(
         tenant_id=tenant_id,
         resource_type=resource_type,
         limit=limit,
@@ -172,7 +172,7 @@ async def get_orphaned_resources(
     filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
 
     service = ResourceService(db)
-    orphaned = service.get_orphaned_resources()
+    orphaned = await service.get_orphaned_resources()
 
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
@@ -241,7 +241,7 @@ async def get_idle_resources_summary(
     authz.ensure_at_least_one_tenant()
     service = ResourceService(db)
     # TODO: Filter summary by accessible tenants
-    return service.get_idle_resources_summary()
+    return await service.get_idle_resources_summary()
 
 
 @router.post(
@@ -265,7 +265,7 @@ async def tag_idle_resource(
     """
     # TODO: Validate user has access to the resource's tenant
     service = ResourceService(db)
-    return service.tag_idle_resource_as_reviewed(
+    return await service.tag_idle_resource_as_reviewed(
         idle_resource_id=idle_resource_id,
         user=current_user.id,
         notes=request_data.notes if request_data else None,
@@ -295,4 +295,4 @@ async def get_tagging_compliance(
     filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
 
     service = ResourceService(db)
-    return service.get_tagging_compliance(required_tags=required_tags)
+    return await service.get_tagging_compliance(required_tags=required_tags)
