@@ -9,6 +9,7 @@ from functools import wraps
 from typing import TypeVar
 
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
+from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ NON_RETRYABLE_EXCEPTIONS = (
     ValueError,
     TypeError,
     KeyError,
+    SQLAlchemyError,
 )
 
 
