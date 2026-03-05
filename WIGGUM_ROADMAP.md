@@ -895,11 +895,11 @@ A task is considered complete if ANY of the following are true:
 
 > Unblock staging deployment and prepare for UAT.
 
-- [ ] **Task 7.1**: Fix Log Analytics retention parameter in Bicep (BD issue `uh2`)
+- [x] **Task 7.1**: Fix Log Analytics retention parameter in Bicep (BD issue `uh2`)
   - **Files**: `infrastructure/modules/log-analytics.bicep` (modify or create), `infrastructure/main.bicep` (modify)
   - **Agent**: `code-puppy`
   - **Details**: Either remove `retentionInDays` or add SKU parameter for pay-per-GB tier
-  - **Validation**: `az deployment group validate --resource-group rg-governance-staging --template-file infrastructure/main.bicep --parameters @infrastructure/parameters.staging.json` exits 0
+  - **Validation**: `az deployment sub validate --location eastus --template-file infrastructure/main.bicep --parameters @infrastructure/parameters.staging.json` exits 0
 
 - [ ] **Task 7.2**: Replace backfill `fetch_data()` placeholders with real Azure API calls (BD issue `0p7`)
   - **Files**: `app/services/backfill_service.py` (modify)

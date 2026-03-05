@@ -4,14 +4,24 @@ param name string
 @description('Location for the resource')
 param location string
 
-@description('Log retention in days')
+@description('Log retention in days - only used for Standalone/PerNode tiers')
 param retentionInDays int = 30
 
 @description('SKU for the workspace')
+@allowed([
+  'PerGB2018'
+  'Free'
+  'Standalone'
+  'PerNode'
+])
 param sku string = 'PerGB2018'
 
 @description('Tags to apply')
 param tags object = {}
+
+// Only apply retentionInDays for supported SKUs (Standalone, PerNode)
+// PerGB2018 and Free tiers don't support direct retention setting
+var supportedSkuForRetention = sku == 'Standalone' || sku == 'PerNode'
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: name
@@ -21,7 +31,7 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
     sku: {
       name: sku
     }
-    retentionInDays: retentionInDays
+    retentionInDays: supportedSkuForRetention ? retentionInDays : null
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }
