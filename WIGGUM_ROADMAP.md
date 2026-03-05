@@ -15,7 +15,7 @@ last_updated: 2026-03-05
 loop_status: IN_PROGRESS  # NOT_STARTED | IN_PROGRESS | COMPLETED | BLOCKED
 current_phase: 7
 total_phases: 7
-completed_tasks: 67
+completed_tasks: 68
 total_tasks: 89
 stop_condition: "All checkboxes marked [x] AND all quality gates pass"
 ```
@@ -910,7 +910,7 @@ A task is considered complete if ANY of the following are true:
   - **Agent**: `code-puppy`
   - **Validation**: `az acr show --name acrgov10188` returns "not found"
 
-- [ ] **Task 7.4**: Flesh out `deploy-staging.yml` GitHub Actions workflow
+- [x] **Task 7.4**: Flesh out `deploy-staging.yml` GitHub Actions workflow
   - **Files**: `.github/workflows/deploy-staging.yml` (modify)
   - **Agent**: `code-puppy`
   - **Details**: Add proper QA gate (run tests), Docker build, Trivy scan, deploy steps

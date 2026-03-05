@@ -1,3 +1,24 @@
+# =============================================================================
+# Azure Governance Platform - Staging Deployment Pipeline
+# =============================================================================
+# This workflow handles staging deployments with comprehensive CI/CD gates:
+#   1. QA Gate: Linting and testing
+#   2. Security scanning (filesystem and dependencies)
+#   3. Building Docker image with staging tag
+#   4. Container security scanning
+#   5. Deploying to Azure App Service (staging)
+#   6. Running smoke tests
+#
+# Trigger: Pushes to 'staging' branch or manual workflow dispatch
+#
+# Required Secrets (OIDC - no client secrets!):
+#   - AZURE_CLIENT_ID: Azure AD App Registration Client ID
+#   - AZURE_TENANT_ID: Azure AD Tenant ID
+#   - AZURE_SUBSCRIPTION_ID: Azure Subscription ID
+#
+# 🔐 Uses OIDC federation for secure, credential-less authentication
+# =============================================================================
+
 name: Deploy to Staging
 
 on:
@@ -5,35 +26,308 @@ on:
     branches: [staging]
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: '0.5.x'
+  REGISTRY: ghcr.io
+  IMAGE_TAG: staging
+  AZURE_APP_NAME: app-governance-staging-001
+  AZURE_RESOURCE_GROUP: rg-governance-staging
+
 permissions:
-  id-token: write
-  contents: read
+  id-token: write      # Required for OIDC authentication
+  contents: read       # Required for checkout
+  packages: write      # Required for pushing to GHCR
+  security-events: write  # Required for uploading security scan results
 
 jobs:
+  # ===========================================================================
+  # Job 1: QA Gate - Linting and Testing
+  # ===========================================================================
   qa-gate:
+    name: QA Gate
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: QA Gate
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ env.UV_VERSION }}
+      
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+      
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev]"
+      
+      - name: Run Ruff linting
+        run: ruff check .
+      
+      - name: Run Ruff format check
+        run: ruff format --check .
+      
+      - name: Run tests
+        run: pytest tests/unit/ tests/integration/ -v --tb=short
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      
+      - name: QA Gate Summary
+        if: success()
         run: |
-          echo "Checking dev environment health..."
-          # Add health check logic here
-          
-  deploy:
-    needs: qa-gate
+          echo "✅ QA Gate passed successfully!"
+          echo "   - Linting: PASSED"
+          echo "   - Formatting: PASSED"
+          echo "   - Tests: PASSED"
+
+  # ===========================================================================
+  # Job 2: Security Scan - Filesystem and Dependencies
+  # ===========================================================================
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
-    environment: staging
+    needs: qa-gate
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Azure Login
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy filesystem scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'  # Don't fail on vulnerabilities in staging
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-filesystem-staging'
+      
+      - name: Set up Python for pip-audit
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Run pip-audit for dependency vulnerabilities
+        run: |
+          pip install pip-audit
+          pip-audit --desc --format=json --output=pip-audit-results.json || true
+      
+      - name: Upload pip-audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results-staging
+          path: pip-audit-results.json
+      
+      - name: Security Scan Summary
+        if: success()
+        run: |
+          echo "🔒 Security scans completed!"
+          echo "   - Trivy filesystem scan: COMPLETE"
+          echo "   - pip-audit dependency scan: COMPLETE"
+
+  # ===========================================================================
+  # Job 3: Build Docker Image for Staging
+  # ===========================================================================
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [qa-gate, security-scan]
+    
+    outputs:
+      image_full: ${{ steps.image-info.outputs.image_full }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ github.repository }}:staging-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+      
+      - name: Set image info for next jobs
+        id: image-info
+        run: |
+          IMAGE_FULL="${{ env.REGISTRY }}/${{ github.repository }}:${{ env.IMAGE_TAG }}"
+          echo "image_full=${IMAGE_FULL}" >> $GITHUB_OUTPUT
+          echo "Built image: ${IMAGE_FULL}"
+      
+      - name: Build Summary
+        run: |
+          echo "🐳 Docker image built and pushed!"
+          echo "   - Registry: ${{ env.REGISTRY }}"
+          echo "   - Repository: ${{ github.repository }}"
+          echo "   - Tag: ${{ env.IMAGE_TAG }}"
+          echo "   - SHA Tag: staging-${{ github.sha }}"
+
+  # ===========================================================================
+  # Job 4: Trivy Container Scan
+  # ===========================================================================
+  scan-container:
+    name: Scan Container
+    runs-on: ubuntu-latest
+    needs: build-image
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run Trivy container scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build-image.outputs.image_full }}
+          format: 'sarif'
+          output: 'trivy-container-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'  # Don't fail on vulnerabilities in staging
+      
+      - name: Upload Trivy container scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-container-results.sarif'
+          category: 'trivy-container-staging'
+      
+      - name: Container Scan Summary
+        if: success()
+        run: |
+          echo "🔍 Container security scan completed!"
+          echo "   - Image: ${{ needs.build-image.outputs.image_full }}"
+          echo "   - Results uploaded to GitHub Security tab"
+
+  # ===========================================================================
+  # Job 5: Deploy to Azure App Service (Staging)
+  # ===========================================================================
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-image, scan-container]
+    environment:
+      name: staging
+      url: https://${{ env.AZURE_APP_NAME }}.azurewebsites.net
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Azure Login (OIDC)
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Deploy to Staging
+      
+      - name: Deploy container to Azure App Service
         run: |
+          echo "Deploying to Azure App Service: ${{ env.AZURE_APP_NAME }}"
           az webapp config container set \
-            --name app-governance-staging-001 \
-            --resource-group rg-governance-staging \
-            --docker-custom-image-name "ghcr.io/${{ github.repository }}:staging"
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --docker-custom-image-name "${{ needs.build-image.outputs.image_full }}" \
+            --docker-registry-server-url "https://${{ env.REGISTRY }}"
+          
+          echo "Restarting app service to apply changes..."
+          az webapp restart \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+      
+      - name: Wait for deployment to stabilize
+        run: |
+          echo "Waiting 45 seconds for deployment to stabilize..."
+          sleep 45
+      
+      - name: Run smoke tests
+        run: |
+          STAGING_URL="https://${{ env.AZURE_APP_NAME }}.azurewebsites.net"
+          echo "Running smoke tests against: ${STAGING_URL}"
+          
+          # Test 1: Health check endpoint
+          echo "Test 1: Health check endpoint (/health)"
+          HEALTH_STATUS=$(curl -sf "${STAGING_URL}/health" -w "\n%{http_code}" || echo "FAILED")
+          if echo "${HEALTH_STATUS}" | grep -q "200"; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed: ${HEALTH_STATUS}"
+            exit 1
+          fi
+          
+          # Test 2: API status endpoint
+          echo "Test 2: API status endpoint (/api/v1/status)"
+          API_STATUS=$(curl -sf "${STAGING_URL}/api/v1/status" -w "\n%{http_code}" || echo "FAILED")
+          if echo "${API_STATUS}" | grep -q "200"; then
+            echo "✅ API status check passed"
+          else
+            echo "❌ API status check failed: ${API_STATUS}"
+            exit 1
+          fi
+          
+          echo ""
+          echo "🎉 All smoke tests passed!"
+      
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "🚀 Staging deployment completed successfully!"
+          echo ""
+          echo "Environment: staging"
+          echo "App Service: ${{ env.AZURE_APP_NAME }}"
+          echo "Resource Group: ${{ env.AZURE_RESOURCE_GROUP }}"
+          echo "Image: ${{ needs.build-image.outputs.image_full }}"
+          echo "URL: https://${{ env.AZURE_APP_NAME }}.azurewebsites.net"
+          echo ""
+          echo "✅ Health check: PASSED"
+          echo "✅ API status: PASSED"
+      
+      - name: Deployment Failed Notification
+        if: failure()
+        run: |
+          echo "❌ Staging deployment failed!"
+          echo "Check the logs above for details."
+          echo "You may need to manually rollback if the app is in a broken state."
