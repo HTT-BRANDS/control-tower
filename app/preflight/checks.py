@@ -112,10 +112,12 @@ class AzureAuthCheck(BasePreflightCheck):
             )
 
         try:
-            # Attempt to get a token
-            from app.api.services.azure_client import get_token
+            # Attempt to get a token via AzureClientManager
+            from app.api.services.azure_client import AzureClientManager
 
-            token = await get_token(settings.azure_tenant_id)
+            manager = AzureClientManager()
+            credential = manager.get_credential(settings.azure_tenant_id)
+            token = credential.get_token("https://management.azure.com/.default")
 
             if token:
                 return CheckResult(
@@ -171,10 +173,10 @@ class AzureSubscriptionsCheck(BasePreflightCheck):
         settings = get_settings()
 
         try:
-            from app.api.services.resource_service import ResourceService
+            from app.api.services.azure_client import AzureClientManager
 
-            service = ResourceService(tenant_id or settings.azure_tenant_id)
-            subscriptions = await service.get_subscriptions()
+            manager = AzureClientManager()
+            subscriptions = await manager.list_subscriptions(tenant_id or settings.azure_tenant_id)
 
             if subscriptions:
                 enabled_count = sum(1 for s in subscriptions if s.get("state") == "Enabled")
@@ -451,10 +453,12 @@ class AzureSecurityCheck(BasePreflightCheck):
             settings_obj = get_settings()
             token = None
 
-            # Try to get a token
+            # Try to get a token via AzureClientManager
             try:
-                from app.api.services.azure_client import get_token
-                token = await get_token(tenant_id or settings_obj.azure_tenant_id)
+                from app.api.services.azure_client import AzureClientManager
+                manager = AzureClientManager()
+                credential = manager.get_credential(tenant_id or settings_obj.azure_tenant_id)
+                token = credential.get_token("https://management.azure.com/.default")
             except Exception:
                 pass
 
