@@ -77,3 +77,6 @@ node_modules/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# OIDC configuration backups
+infrastructure/.oidc-config-*.json
