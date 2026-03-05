@@ -398,7 +398,7 @@ class AzureGraphCheck(BasePreflightCheck):
             name="Microsoft Graph API",
             category=CheckCategory.AZURE_GRAPH,
             description="Verify access to Microsoft Graph API",
-            timeout_seconds=30.0,
+            timeout_seconds=60.0,
         )
 
     async def _execute_check(

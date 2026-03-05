@@ -396,7 +396,7 @@ class AzureClientManager:
                 subscriptions.append({
                     "subscription_id": sub.subscription_id,
                     "display_name": sub.display_name,
-                    "state": sub.state.value if sub.state else "Unknown",
+                    "state": str(sub.state) if sub.state else "Unknown",
                 })
             return subscriptions
         except Exception as e:
