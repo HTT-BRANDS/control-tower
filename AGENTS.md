@@ -12,6 +12,23 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## /wiggum ralph Protocol
+
+When executing the autonomous roadmap loop:
+
+1. **Before starting**: Run `python scripts/sync_roadmap.py --verify --json`
+2. **Trust the roadmap**: If task is marked [x], it's done - move on
+3. **Execute next task**: Follow task instructions in WIGGUM_ROADMAP.md
+4. **After completion**: 
+   - Run the task's validation command (must pass)
+   - Run `python scripts/sync_roadmap.py --update --task X.Y.Z`
+   - Commit immediately: `git add WIGGUM_ROADMAP.md && git commit -m "ralph: complete task X.Y.Z"`
+5. **Continue**: Repeat from step 1
+
+This protocol eliminates redundant re-verification by making the roadmap the single source of truth.
+
+---
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
