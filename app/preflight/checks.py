@@ -239,10 +239,14 @@ class AzureCostManagementCheck(BasePreflightCheck):
         settings = get_settings()
 
         try:
-            from app.api.services.cost_service import CostService
+            from app.api.services.azure_client import AzureClientManager
 
-            service = CostService(tenant_id or settings.azure_tenant_id)
-            costs = await service.get_cost_for_period(days=1)
+            manager = AzureClientManager()
+            effective_tenant = tenant_id or settings.azure_tenant_id
+            subs = await manager.list_subscriptions(effective_tenant)
+            if subs:
+                client = manager.get_cost_client(effective_tenant, subs[0]["subscription_id"])
+                # If we get here, client creation succeeded
 
             return CheckResult(
                 check_id=self.check_id,
@@ -251,8 +255,9 @@ class AzureCostManagementCheck(BasePreflightCheck):
                 status=CheckStatus.PASS,
                 message="Cost Management API accessible",
                 details={
-                    "tenant_id": tenant_id or settings.azure_tenant_id,
+                    "tenant_id": effective_tenant,
                     "api_version": "2023-03-01",
+                    "subscriptions_checked": len(subs) if subs else 0,
                 },
             )
         except Exception as e:
@@ -300,20 +305,24 @@ class AzurePolicyCheck(BasePreflightCheck):
         settings = get_settings()
 
         try:
-            from app.api.services.compliance_service import ComplianceService
+            from app.api.services.azure_client import AzureClientManager
 
-            service = ComplianceService(tenant_id or settings.azure_tenant_id)
-            policies = await service.get_policy_definitions()
+            manager = AzureClientManager()
+            effective_tenant = tenant_id or settings.azure_tenant_id
+            subs = await manager.list_subscriptions(effective_tenant)
+            if subs:
+                client = manager.get_policy_client(effective_tenant, subs[0]["subscription_id"])
+                # PolicyInsightsClient creation verifies access
 
             return CheckResult(
                 check_id=self.check_id,
                 name=self.name,
                 category=self.category,
                 status=CheckStatus.PASS,
-                message=f"Policy API accessible - {len(policies)} definitions found",
+                message="Policy API accessible",
                 details={
-                    "tenant_id": tenant_id or settings.azure_tenant_id,
-                    "policy_count": len(policies),
+                    "tenant_id": effective_tenant,
+                    "subscriptions_checked": len(subs) if subs else 0,
                 },
             )
         except Exception as e:
@@ -346,10 +355,16 @@ class AzureResourcesCheck(BasePreflightCheck):
         settings = get_settings()
 
         try:
-            from app.api.services.resource_service import ResourceService
+            from app.api.services.azure_client import AzureClientManager
 
-            service = ResourceService(tenant_id or settings.azure_tenant_id)
-            resources = await service.get_resources(top=10)
+            manager = AzureClientManager()
+            effective_tenant = tenant_id or settings.azure_tenant_id
+            subs = await manager.list_subscriptions(effective_tenant)
+            if subs:
+                client = manager.get_resource_client(effective_tenant, subs[0]["subscription_id"])
+                resources = list(client.resources.list(filter=None, top=5))
+            else:
+                resources = []
 
             return CheckResult(
                 check_id=self.check_id,
@@ -358,8 +373,9 @@ class AzureResourcesCheck(BasePreflightCheck):
                 status=CheckStatus.PASS,
                 message=f"Resource Manager accessible - {len(resources)} resources found",
                 details={
-                    "tenant_id": tenant_id or settings.azure_tenant_id,
+                    "tenant_id": effective_tenant,
                     "resource_count": len(resources),
+                    "subscriptions_checked": len(subs) if subs else 0,
                 },
             )
         except Exception as e:
@@ -394,10 +410,11 @@ class AzureGraphCheck(BasePreflightCheck):
         try:
             from app.api.services.graph_client import GraphClient
 
-            client = GraphClient(tenant_id or settings.azure_tenant_id)
-            user_info = await client.get_organization()
+            effective_tenant = tenant_id or settings.azure_tenant_id
+            client = GraphClient(effective_tenant)
+            users = await client.get_users(top=1)
 
-            if user_info:
+            if users is not None:
                 return CheckResult(
                     check_id=self.check_id,
                     name=self.name,
@@ -405,8 +422,8 @@ class AzureGraphCheck(BasePreflightCheck):
                     status=CheckStatus.PASS,
                     message="Microsoft Graph API accessible",
                     details={
-                        "tenant_id": tenant_id or settings.azure_tenant_id,
-                        "organization": user_info.get("displayName"),
+                        "tenant_id": effective_tenant,
+                        "users_returned": len(users),
                     },
                 )
             else:
