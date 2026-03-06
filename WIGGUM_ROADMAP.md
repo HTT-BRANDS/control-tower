@@ -76,7 +76,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Solutions Architect 🏛️
   - Signed off by: Planning Agent 📋
 
-- [ ] 2.1.2 YOLO_MODE audit (Security Auditor 🛡️)
+- [x] 2.1.2 YOLO_MODE audit (Security Auditor 🛡️)
   - Validation: Config confirms default=false; risk documented
   - Reviewed by: Code Reviewer 🛡️
   - Signed off by: Pack Leader 🐺
@@ -92,7 +92,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Code Reviewer 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 2.1.5 GPC compliance validation (Experience Architect 🎨)
+- [x] 2.1.5 GPC compliance validation (Experience Architect 🎨)
   - Validation: Sec-GPC:1 documented as P0 legal requirement
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
@@ -104,19 +104,19 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
 
-- [ ] 2.2.2 Implement Spectral API governance (Solutions Architect 🏛️)
+- [x] 2.2.2 Implement Spectral API governance (Solutions Architect 🏛️)
   - File: .spectral.yaml
   - Validation: Spectral lints pass; integrated in pre-commit
   - Reviewed by: Code Reviewer 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 2.2.3 Create architecture fitness functions (Solutions Architect 🏛️ + Python Programmer 🐍)
+- [x] 2.2.3 Create architecture fitness functions (Solutions Architect 🏛️ + Python Programmer 🐍)
   - Directory: tests/architecture/
   - Validation: `pytest tests/architecture/ -v` passes with 3+ tests
   - Reviewed by: Python Reviewer 🐍
   - Signed off by: Watchdog 🐕‍🦺
 
-- [ ] 2.2.4 Document research-first protocol (Solutions Architect 🏛️)
+- [x] 2.2.4 Document research-first protocol (Solutions Architect 🏛️)
   - Validation: Protocol documented; web-puppy invoked before every ADR
   - Signed off by: Planning Agent 📋
 
@@ -137,7 +137,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
 
-- [ ] 2.3.4 Accessibility API metadata contract (Experience Architect 🎨)
+- [x] 2.3.4 Accessibility API metadata contract (Experience Architect 🎨)
   - Output: docs/contracts/accessibility-api.md + JSON schema
   - Validation: ARIA-compatible error response schema; integration guide
   - Reviewed by: Solutions Architect 🏛️ + Code Reviewer 🛡️
@@ -216,10 +216,10 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase | Total Tasks | Completed | Remaining | Status |
 |-------|-----------|-----------|-----------|--------|
 | Phase 1: Foundation | 7 | 7 | 0 | ✅ Complete |
-| Phase 2: Governance | 13 | 5 | 8 | 🔄 In Progress |
+| Phase 2: Governance | 13 | 11 | 2 | 🔄 In Progress |
 | Phase 3: Process | 7 | 0 | 7 | ⬜ Not Started |
 | Phase 4: Validation | 5 | 0 | 5 | ⬜ Not Started |
-| **TOTAL** | **32** | **12** | **20** | **🔄 In Progress** |
+| **TOTAL** | **32** | **18** | **14** | **🔄 In Progress** |
 
 ---
 

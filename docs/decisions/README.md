@@ -154,6 +154,7 @@ adr-NNNN-short-title-with-dashes.md
 | [0001](adr-0001-multi-agent-architecture.md) | Use multi-agent architecture for Code Puppy | accepted | 2026-03-06 |
 | [0002](adr-0002-per-agent-tool-filtering.md) | Implement per-agent tool filtering | accepted | 2026-03-06 |
 | [0003](adr-0003-local-first-issue-tracking.md) | Use bd for local-first issue tracking | accepted | 2026-03-06 |
+| [0004](adr-0004-research-first-protocol.md) | Mandate research-first protocol for all ADRs | accepted | 2026-03-06 |
 
 ## References
 

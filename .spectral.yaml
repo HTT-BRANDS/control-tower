@@ -1,0 +1,233 @@
+# Spectral API Governance Ruleset
+# Version: 6.15.0
+# Purpose: Enforce API design standards for Azure Governance Platform
+#
+# This ruleset extends the standard OpenAPI Specification (OAS) rules
+# with custom rules specific to this multi-tenant governance platform.
+
+extends: ["spectral:oas"]
+
+rules:
+  # ============================================================================
+  # DOCUMENTATION RULES (Warnings)
+  # ============================================================================
+  
+  operation-description:
+    description: Every operation must have a description
+    severity: warn
+    given: "$.paths.*.*"
+    then:
+      field: description
+      function: truthy
+  
+  operation-tag:
+    description: Every operation must have at least one tag
+    severity: warn
+    given: "$.paths.*.*"
+    then:
+      field: tags
+      function: truthy
+  
+  info-contact:
+    description: API info must include contact information
+    severity: error
+    given: "$.info"
+    then:
+      field: contact
+      function: truthy
+  
+  info-description:
+    description: API must have a description
+    severity: warn
+    given: "$.info"
+    then:
+      field: description
+      function: truthy
+  
+  # ============================================================================
+  # SCHEMA VALIDATION RULES (Errors)
+  # ============================================================================
+  
+  oas3-valid-schema-example:
+    description: Schema examples must be valid against their schema
+    severity: error
+    recommended: true
+    given: "$.components.schemas.*"
+    then:
+      field: example
+      function: schema
+  
+  no-$ref-siblings:
+    description: $ref cannot have siblings (OpenAPI 3.0 restriction)
+    severity: error
+    recommended: true
+    given: "$..[?(@.$ref)]"
+    then:
+      function: refSiblings
+  
+  typed-enum:
+    description: Enums must have a type defined
+    severity: error
+    given: "$..[?(@.enum)]"
+    then:
+      field: type
+      function: truthy
+  
+  # ============================================================================
+  # SECURITY RULES (Errors)
+  # ============================================================================
+  
+  security-must-be-defined:
+    description: API must define security schemes
+    severity: error
+    given: "$.components"
+    then:
+      field: securitySchemes
+      function: truthy
+  
+  operation-security:
+    description: Operations should specify security requirements
+    severity: warn
+    given: "$.paths.*.*"
+    then:
+      field: security
+      function: defined
+  
+  # ============================================================================
+  # CUSTOM RULES FOR AZURE GOVERNANCE PLATFORM
+  # ============================================================================
+  
+  response-must-have-error-schema:
+    description: All 4xx/5xx responses must reference an error schema
+    severity: error
+    message: "{{property}} response must include a schema with error details"
+    given: "$.paths.*.*.responses[?(@property.match(/^[45]/))]" 
+    then:
+      field: content
+      function: truthy
+  
+  response-error-schema-structure:
+    description: Error responses should have consistent structure
+    severity: warn
+    message: "Error response should include 'application/json' content type"
+    given: "$.paths.*.*.responses[?(@property.match(/^[45]/))].content"
+    then:
+      field: "application/json"
+      function: truthy
+  
+  path-must-include-version:
+    description: API paths should include version prefix /api/v{n}/
+    severity: warn
+    message: "Path should follow pattern /api/v{version}/ for consistency"
+    given: "$.paths"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^/api/v[0-9]+/"
+  
+  operation-operationId-required:
+    description: Every operation must have a unique operationId
+    severity: error
+    given: "$.paths.*.*"
+    then:
+      field: operationId
+      function: truthy
+  
+  operation-summary-required:
+    description: Every operation should have a summary
+    severity: warn
+    given: "$.paths.*.*"
+    then:
+      field: summary
+      function: truthy
+  
+  # ============================================================================
+  # MULTI-TENANT PATTERN RULES
+  # ============================================================================
+  
+  tenant-scoped-operations:
+    description: Tenant-scoped endpoints should include tenantId parameter or path segment
+    severity: warn
+    message: "Multi-tenant operations should include 'tenant' in path or parameters for isolation"
+    given: "$.paths[?(@property.match(/\/(costs|compliance|resources|identity)/))].*"
+    then:
+      - field: parameters
+        function: schema
+        functionOptions:
+          schema:
+            type: array
+            contains:
+              properties:
+                name:
+                  pattern: "(?i)tenant"
+  
+  # ============================================================================
+  # RESPONSE STANDARDS
+  # ============================================================================
+  
+  success-response-required:
+    description: Operations must define at least one success response (2xx)
+    severity: error
+    given: "$.paths.*.*.responses"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          propertyNames:
+            pattern: "^2[0-9]{2}$"
+          minProperties: 1
+  
+  response-examples-recommended:
+    description: Response schemas should include examples
+    severity: info
+    given: "$.paths.*.*.responses.*.content.application/json.schema"
+    then:
+      field: example
+      function: defined
+  
+  # ============================================================================
+  # NAMING CONVENTIONS
+  # ============================================================================
+  
+  operationId-naming-convention:
+    description: Operation IDs should use camelCase
+    severity: warn
+    message: "OperationId should be camelCase (e.g., getTenantCosts)"
+    given: "$.paths.*.*.operationId"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z][a-zA-Z0-9]*$"
+  
+  path-no-trailing-slash:
+    description: Paths should not end with a trailing slash
+    severity: error
+    given: "$.paths"
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: "/$"
+  
+  # ============================================================================
+  # PAGINATION STANDARDS
+  # ============================================================================
+  
+  list-operations-pagination:
+    description: List operations should support pagination parameters
+    severity: warn
+    message: "List operations should accept 'limit' and 'offset' or 'page' parameters"
+    given: "$.paths[?(@property.match(/\/(costs|resources|compliance|identity)$/))]get.parameters"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: array
+          contains:
+            anyOf:
+              - properties:
+                  name:
+                    enum: ["limit", "page_size", "top"]
+              - properties:
+                  name:
+                    enum: ["offset", "page", "skip"]

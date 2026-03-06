@@ -1,0 +1,461 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://azure-governance-platform.example.com/schemas/accessibility-error-response.json",
+  "title": "Accessibility Error Response",
+  "description": "Standardized error response format with ARIA accessibility metadata for the Azure Governance Platform API",
+  "type": "object",
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "description": "Error information with accessibility metadata",
+      "required": ["code", "message", "aria"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Machine-readable error code (e.g., VALIDATION_ERROR, UNAUTHORIZED)",
+          "pattern": "^[A-Z_]+$",
+          "examples": [
+            "VALIDATION_ERROR",
+            "UNAUTHORIZED",
+            "NOT_FOUND",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message suitable for display to end users",
+          "minLength": 1,
+          "examples": [
+            "Please check your input and try again.",
+            "Authentication is required to access this resource.",
+            "The requested resource was not found."
+          ]
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional context or technical details about the error",
+          "examples": [
+            "The form contains 3 fields with validation errors.",
+            "Your session has expired. Please log in again."
+          ]
+        },
+        "aria": {
+          "type": "object",
+          "description": "ARIA accessibility metadata for screen readers and assistive technologies",
+          "required": ["live"],
+          "properties": {
+            "live": {
+              "type": "string",
+              "description": "ARIA live region politeness setting",
+              "enum": ["off", "polite", "assertive"],
+              "default": "assertive",
+              "examples": ["assertive"]
+            },
+            "atomic": {
+              "type": "boolean",
+              "description": "Whether assistive technologies should announce the entire region when changes occur",
+              "default": true
+            },
+            "relevant": {
+              "type": "string",
+              "description": "What types of changes should be announced",
+              "default": "additions text",
+              "examples": ["additions text", "all"]
+            },
+            "role": {
+              "type": "string",
+              "description": "ARIA role for the error container",
+              "enum": ["alert", "status", "log"],
+              "examples": ["alert"]
+            },
+            "label": {
+              "type": "string",
+              "description": "Accessible label for the error region",
+              "examples": ["Error notification", "Validation errors"]
+            }
+          }
+        },
+        "fields": {
+          "type": "array",
+          "description": "Field-level validation errors for form submissions",
+          "items": {
+            "$ref": "#/definitions/FieldError"
+          },
+          "examples": [
+            [
+              {
+                "id": "email",
+                "name": "email",
+                "message": "Email format is invalid",
+                "aria": {
+                  "describedBy": "email-hint",
+                  "errormessage": "email-error",
+                  "invalid": true
+                }
+              }
+            ]
+          ]
+        },
+        "focus": {
+          "type": "object",
+          "description": "Focus management instructions for error recovery",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "CSS selector or element ID to focus",
+              "examples": ["#email", ".error-summary"]
+            },
+            "action": {
+              "type": "string",
+              "description": "Focus management action",
+              "enum": ["set", "trap", "release"],
+              "examples": ["set"]
+            }
+          }
+        },
+        "suggestions": {
+          "type": "array",
+          "description": "Suggested actions to resolve the error or provide alternatives",
+          "items": {
+            "$ref": "#/definitions/Suggestion"
+          },
+          "examples": [
+            [
+              {
+                "action": "retry",
+                "label": "Try again",
+                "href": "/api/v1/resource",
+                "method": "GET"
+              }
+            ]
+          ]
+        },
+        "help_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to documentation explaining this error and how to resolve it",
+          "examples": [
+            "/docs/errors/VALIDATION_ERROR",
+            "https://docs.example.com/errors/UNAUTHORIZED"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Unique identifier for this request, useful for support and debugging",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "examples": ["req_abc123xyz", "01HN3Q4R5S6T7U8V9W"]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the error occurred",
+          "examples": ["2026-03-06T10:30:00Z"]
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID for correlating logs",
+          "examples": ["00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"]
+        }
+      }
+    }
+  },
+  "definitions": {
+    "FieldError": {
+      "type": "object",
+      "description": "Validation error for a specific form field",
+      "required": ["id", "message"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Field identifier (matches HTML element id attribute)",
+          "examples": ["email", "password", "tenant_id"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Field name attribute",
+          "examples": ["email", "password", "tenant_id"]
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable field label",
+          "examples": ["Email Address", "Password", "Tenant ID"]
+        },
+        "message": {
+          "type": "string",
+          "description": "User-friendly error message for this field",
+          "minLength": 1,
+          "examples": [
+            "Email format is invalid",
+            "Password must be at least 8 characters",
+            "This field is required"
+          ]
+        },
+        "aria": {
+          "type": "object",
+          "description": "ARIA attributes for this field",
+          "properties": {
+            "describedBy": {
+              "type": "string",
+              "description": "ID of element providing additional description",
+              "examples": ["email-hint", "password-requirements"]
+            },
+            "errormessage": {
+              "type": "string",
+              "description": "ID of element containing the error message",
+              "examples": ["email-error", "password-error"]
+            },
+            "invalid": {
+              "type": "boolean",
+              "description": "Whether the field value is invalid",
+              "default": true
+            }
+          }
+        },
+        "value": {
+          "type": "string",
+          "description": "Submitted value (sanitized for security)",
+          "examples": ["invalid-email", "short"]
+        },
+        "constraints": {
+          "type": "object",
+          "description": "Validation constraints that were violated",
+          "properties": {
+            "required": {
+              "type": "boolean",
+              "description": "Whether the field is required"
+            },
+            "min_length": {
+              "type": "integer",
+              "description": "Minimum allowed length",
+              "minimum": 0
+            },
+            "max_length": {
+              "type": "integer",
+              "description": "Maximum allowed length",
+              "minimum": 1
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Regex pattern the value must match",
+              "examples": ["^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"]
+            },
+            "min": {
+              "type": "number",
+              "description": "Minimum numeric value"
+            },
+            "max": {
+              "type": "number",
+              "description": "Maximum numeric value"
+            },
+            "format": {
+              "type": "string",
+              "description": "Expected format (e.g., email, url, uuid)",
+              "examples": ["email", "url", "uuid", "date-time"]
+            }
+          }
+        }
+      }
+    },
+    "Suggestion": {
+      "type": "object",
+      "description": "Suggested action to help the user resolve the error",
+      "required": ["action", "label"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Machine-readable action identifier",
+          "examples": ["retry", "login", "reset", "support", "navigate"]
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable action label",
+          "examples": [
+            "Try again",
+            "Log in",
+            "Reset form",
+            "Contact support",
+            "Go to dashboard"
+          ]
+        },
+        "href": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for navigation-based actions",
+          "examples": ["/login", "/dashboard", "/support"]
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP method for API-based actions",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+          "default": "GET"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Optional payload for POST/PUT/PATCH actions"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "description": "Validation error with field-level errors",
+      "value": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Please check your input and try again.",
+          "details": "The form contains 2 fields with validation errors.",
+          "aria": {
+            "live": "assertive",
+            "atomic": true,
+            "relevant": "additions text",
+            "role": "alert",
+            "label": "Validation errors"
+          },
+          "fields": [
+            {
+              "id": "email",
+              "name": "email",
+              "label": "Email Address",
+              "message": "Email format is invalid",
+              "value": "not-an-email",
+              "aria": {
+                "describedBy": "email-hint",
+                "errormessage": "email-error",
+                "invalid": true
+              },
+              "constraints": {
+                "required": true,
+                "format": "email"
+              }
+            },
+            {
+              "id": "password",
+              "name": "password",
+              "label": "Password",
+              "message": "Password must be at least 8 characters",
+              "aria": {
+                "describedBy": "password-requirements",
+                "errormessage": "password-error",
+                "invalid": true
+              },
+              "constraints": {
+                "required": true,
+                "min_length": 8
+              }
+            }
+          ],
+          "focus": {
+            "target": "#email",
+            "action": "set"
+          },
+          "suggestions": [
+            {
+              "action": "reset",
+              "label": "Clear form and start over",
+              "href": "/register"
+            }
+          ],
+          "help_url": "/docs/errors/VALIDATION_ERROR",
+          "request_id": "req_abc123xyz",
+          "timestamp": "2026-03-06T10:30:00Z"
+        }
+      }
+    },
+    {
+      "description": "Authentication error",
+      "value": {
+        "error": {
+          "code": "UNAUTHORIZED",
+          "message": "Authentication is required to access this resource.",
+          "details": "Your session has expired. Please log in again.",
+          "aria": {
+            "live": "assertive",
+            "atomic": true,
+            "role": "alert",
+            "label": "Authentication error"
+          },
+          "suggestions": [
+            {
+              "action": "login",
+              "label": "Log in",
+              "href": "/login"
+            },
+            {
+              "action": "register",
+              "label": "Create an account",
+              "href": "/register"
+            }
+          ],
+          "help_url": "/docs/errors/UNAUTHORIZED",
+          "request_id": "req_def456uvw",
+          "timestamp": "2026-03-06T10:31:00Z"
+        }
+      }
+    },
+    {
+      "description": "Resource not found",
+      "value": {
+        "error": {
+          "code": "NOT_FOUND",
+          "message": "The requested resource was not found.",
+          "details": "Tenant ID 'abc123' does not exist or you don't have access.",
+          "aria": {
+            "live": "polite",
+            "atomic": true,
+            "role": "status",
+            "label": "Resource not found"
+          },
+          "suggestions": [
+            {
+              "action": "navigate",
+              "label": "Go to dashboard",
+              "href": "/dashboard"
+            },
+            {
+              "action": "search",
+              "label": "Search for resources",
+              "href": "/resources"
+            }
+          ],
+          "help_url": "/docs/errors/NOT_FOUND",
+          "request_id": "req_ghi789rst",
+          "timestamp": "2026-03-06T10:32:00Z"
+        }
+      }
+    },
+    {
+      "description": "Server error",
+      "value": {
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error occurred. Please try again later.",
+          "details": "The service encountered an internal error processing your request.",
+          "aria": {
+            "live": "assertive",
+            "atomic": true,
+            "role": "alert",
+            "label": "Server error"
+          },
+          "suggestions": [
+            {
+              "action": "retry",
+              "label": "Try again",
+              "href": "/api/v1/resource",
+              "method": "GET"
+            },
+            {
+              "action": "support",
+              "label": "Contact support",
+              "href": "/support"
+            }
+          ],
+          "help_url": "/docs/errors/INTERNAL_ERROR",
+          "request_id": "req_jkl012mno",
+          "timestamp": "2026-03-06T10:33:00Z",
+          "trace_id": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+        }
+      }
+    }
+  ]
+}
