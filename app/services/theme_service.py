@@ -9,6 +9,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.css_generator import generate_brand_css_variables
+from app.core.design_tokens import BrandConfigFull, get_brand, load_brands
 from app.models.brand_config import BrandConfig
 
 logger = logging.getLogger(__name__)
@@ -55,6 +57,20 @@ class ThemeService:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def get_brand_config(self, brand_key: str) -> BrandConfigFull:
+        """Get brand config from YAML registry."""
+        return get_brand(brand_key)
+
+    def get_full_css_variables(self, brand_key: str) -> dict[str, str]:
+        """Generate full 47+ CSS variables for a brand using design tokens."""
+        brand = get_brand(brand_key)
+        return generate_brand_css_variables(brand)
+
+    def get_all_brands(self) -> dict[str, BrandConfigFull]:
+        """Load all brands from YAML registry."""
+        registry = load_brands()
+        return dict(registry.brands)
 
     def get_theme_for_tenant(self, tenant_id: str) -> dict[str, Any]:
         """Get brand theme configuration for a tenant.

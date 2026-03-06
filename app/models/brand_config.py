@@ -41,6 +41,19 @@ class BrandConfig(Base):
     secondary_color: Mapped[str] = Column(String(7), nullable=False)  # Hex format: #RRGGBB
     accent_color: Mapped[str | None] = Column(String(7))  # Optional accent color
 
+    # Design token extension columns (Phase 5, nullable for backward compat)
+    brand_key: Mapped[str | None] = Column(String(50), nullable=True, index=True)
+    heading_font: Mapped[str | None] = Column(String(100), nullable=True)
+    body_font: Mapped[str | None] = Column(String(100), nullable=True)
+    background_color: Mapped[str | None] = Column(String(7), nullable=True)
+    text_color: Mapped[str | None] = Column(String(7), nullable=True)
+    border_radius: Mapped[str | None] = Column(String(20), nullable=True)
+    shadow_style: Mapped[str | None] = Column(String(20), nullable=True)  # soft|sharp|none
+    logo_primary: Mapped[str | None] = Column(String(255), nullable=True)
+    logo_white: Mapped[str | None] = Column(String(255), nullable=True)
+    logo_icon: Mapped[str | None] = Column(String(255), nullable=True)
+    gradient: Mapped[str | None] = Column(String(255), nullable=True)
+
     # Metadata
     created_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = Column(
@@ -62,6 +75,17 @@ class BrandConfig(Base):
             "primary_color": self.primary_color,
             "secondary_color": self.secondary_color,
             "accent_color": self.accent_color,
+            "brand_key": self.brand_key,
+            "heading_font": self.heading_font,
+            "body_font": self.body_font,
+            "background_color": self.background_color,
+            "text_color": self.text_color,
+            "border_radius": self.border_radius,
+            "shadow_style": self.shadow_style,
+            "logo_primary": self.logo_primary,
+            "logo_white": self.logo_white,
+            "logo_icon": self.logo_icon,
+            "gradient": self.gradient,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -94,177 +94,29 @@
 }
 
 /* ==========================================================================
-   Brand-Specific Themes
-   These classes can be applied to html or body for static theme switching
+   Brand-Specific Theme Tokens
+   
+   Brand-specific CSS custom properties (e.g. [data-brand="htt"], 
+   [data-brand="frenchies"], etc.) are generated server-side by 
+   css_generator.py and injected into the page via <style> tags.
+   
+   The :root block above provides sensible defaults/fallbacks.
+   If no [data-brand] attribute is present, the :root defaults apply.
    ========================================================================== */
 
-/* HTT Theme - Head-To-Toe */
-[data-theme="htt"],
-.theme-htt {
-  --brand-primary: #500711;
-  --brand-primary-5: #fdf2f4;
-  --brand-primary-10: #f9e5e8;
-  --brand-primary-50: #b88c95;
-  --brand-primary-100: #500711;
-  --brand-primary-110: #48060f;
-  --brand-primary-130: #38050c;
-  --brand-primary-140: #2c0409;
-  --brand-primary-160: #1d0306;
-  --brand-primary-180: #0f0103;
-  
-  --brand-secondary: #d1bdbf;
-  --brand-secondary-5: #faf6f6;
-  --brand-secondary-10: #f5eeef;
-  --brand-secondary-50: #e8dedf;
-  --brand-secondary-100: #d1bdbf;
-  --brand-secondary-110: #bcaaac;
-  --brand-secondary-130: #928586;
-  --brand-secondary-140: #7a6f70;
-  --brand-secondary-160: #514a4a;
-  --brand-secondary-180: #292525;
-  
-  --brand-accent: #ffc957;
-  --brand-accent-5: #fffbf0;
-  --brand-accent-10: #fff5d6;
-  --brand-accent-50: #ffe49e;
-  --brand-accent-100: #ffc957;
-  --brand-accent-110: #e6b54e;
-  --brand-accent-130: #b38d3c;
-  --brand-accent-140: #997533;
-  --brand-accent-160: #664e22;
-  --brand-accent-180: #332711;
-  
-  --color-success: #2a8703;
-  --color-warning: #ffc957;
-  --color-danger: #ea1100;
-  --color-info: #500711;
+/* Fallback: ensure [data-brand] selector structure exists for specificity */
+[data-brand] {
+  /* Brand-specific variables are injected dynamically.
+     This selector ensures proper specificity for overrides.
+     See: app/services/css_generator.py */
 }
 
-/* Frenchies Theme */
-[data-theme="frenchies"],
-.theme-frenchies {
-  --brand-primary: #052b48;
-  --brand-primary-5: #f2f6f9;
-  --brand-primary-10: #e5edf2;
-  --brand-primary-50: #7a95a8;
-  --brand-primary-100: #052b48;
-  --brand-primary-110: #052741;
-  --brand-primary-130: #041f33;
-  --brand-primary-140: #031929;
-  --brand-primary-160: #02101b;
-  --brand-primary-180: #01080e;
-  
-  --brand-secondary: #faaca8;
-  --brand-secondary-5: #fff5f5;
-  --brand-secondary-10: #feeceb;
-  --brand-secondary-50: #fdd6d3;
-  --brand-secondary-100: #faaca8;
-  --brand-secondary-110: #e19b97;
-  --brand-secondary-130: #af827e;
-  --brand-secondary-140: #966e6b;
-  --brand-secondary-160: #644947;
-  --brand-secondary-180: #322524;
-  
-  --brand-accent: #ffc957;
-  --brand-accent-5: #fffbf0;
-  --brand-accent-10: #fff5d6;
-  --brand-accent-50: #ffe49e;
-  --brand-accent-100: #ffc957;
-  --brand-accent-110: #e6b54e;
-  --brand-accent-130: #b38d3c;
-  --brand-accent-140: #997533;
-  --brand-accent-160: #664e22;
-  --brand-accent-180: #332711;
-  
-  --color-success: #2a8703;
-  --color-warning: #ffc957;
-  --color-danger: #ea1100;
-  --color-info: #052b48;
-}
-
-/* Bishops Theme */
-[data-theme="bishops"],
-.theme-bishops {
-  --brand-primary: #eb631b;
-  --brand-primary-5: #fef5ef;
-  --brand-primary-10: #fdeade;
-  --brand-primary-50: #f5b28d;
-  --brand-primary-100: #eb631b;
-  --brand-primary-110: #d45918;
-  --brand-primary-130: #a54613;
-  --brand-primary-140: #8c3b10;
-  --brand-primary-160: #5d270b;
-  --brand-primary-180: #2f1405;
-  
-  --brand-secondary: #ce9f7c;
-  --brand-secondary-5: #faf6f3;
-  --brand-secondary-10: #f5ede7;
-  --brand-secondary-50: #e6d4c7;
-  --brand-secondary-100: #ce9f7c;
-  --brand-secondary-110: #b98f70;
-  --brand-secondary-130: #8f6f57;
-  --brand-secondary-140: #775e49;
-  --brand-secondary-160: #4f3f31;
-  --brand-secondary-180: #282018;
-  
-  --brand-accent: #ffc957;
-  --brand-accent-5: #fffbf0;
-  --brand-accent-10: #fff5d6;
-  --brand-accent-50: #ffe49e;
-  --brand-accent-100: #ffc957;
-  --brand-accent-110: #e6b54e;
-  --brand-accent-130: #b38d3c;
-  --brand-accent-140: #997533;
-  --brand-accent-160: #664e22;
-  --brand-accent-180: #332711;
-  
-  --color-success: #2a8703;
-  --color-warning: #ffc957;
-  --color-danger: #ea1100;
-  --color-info: #eb631b;
-}
-
-/* Lash Lounge Theme */
-[data-theme="lash-lounge"],
-.theme-lash-lounge {
-  --brand-primary: #513550;
-  --brand-primary-5: #f5f3f5;
-  --brand-primary-10: #ebe7eb;
-  --brand-primary-50: #a89aa7;
-  --brand-primary-100: #513550;
-  --brand-primary-110: #493048;
-  --brand-primary-130: #392638;
-  --brand-primary-140: #2e1f2d;
-  --brand-primary-160: #1e151e;
-  --brand-primary-180: #0f0a0f;
-  
-  --brand-secondary: #d3bcc5;
-  --brand-secondary-5: #fbf8f9;
-  --brand-secondary-10: #f7f2f4;
-  --brand-secondary-50: #e9dfe3;
-  --brand-secondary-100: #d3bcc5;
-  --brand-secondary-110: #bea9b1;
-  --brand-secondary-130: #94838a;
-  --brand-secondary-140: #7c6e73;
-  --brand-secondary-160: #53494d;
-  --brand-secondary-180: #292526;
-  
-  --brand-accent: #ffc957;
-  --brand-accent-5: #fffbf0;
-  --brand-accent-10: #fff5d6;
-  --brand-accent-50: #ffe49e;
-  --brand-accent-100: #ffc957;
-  --brand-accent-110: #e6b54e;
-  --brand-accent-130: #b38d3c;
-  --brand-accent-140: #997533;
-  --brand-accent-160: #664e22;
-  --brand-accent-180: #332711;
-  
-  --color-success: #2a8703;
-  --color-warning: #ffc957;
-  --color-danger: #ea1100;
-  --color-info: #513550;
-}
+/* ==========================================================================
+   Brand-Specific Themes — Server-Side Injection
+   Brand CSS variables are now generated by app/core/css_generator.py
+   and injected via [data-brand="..."] selectors in base.html.
+   See: config/brands.yaml for brand definitions.
+   ========================================================================== */
 
 /* ==========================================================================
    Tailwind v4 Theme Configuration

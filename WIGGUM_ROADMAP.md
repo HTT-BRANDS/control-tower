@@ -241,26 +241,26 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Signed off by: Pack Leader 🐺
 
 ### 5.2 Asset Migration & CSS Integration
-- [ ] 5.2.1 Copy brand logo assets (Code-Puppy 🐶)
+- [x] 5.2.1 Copy brand logo assets (Code-Puppy 🐶)
   - Directory: app/static/assets/brands/
   - Source: ~/dev/DNS-Domain-Management/public/assets/brands/ + HTT-Brands-Logo/
   - Validation: All 5 brand directories contain logo-primary, logo-white, icon files
   - Signed off by: Planning Agent 📋
 
-- [ ] 5.2.2 Rewrite theme.css with design token architecture (Experience Architect 🎨)
+- [x] 5.2.2 Rewrite theme.css with design token architecture (Experience Architect 🎨)
   - File: app/static/css/theme.css
   - Source: ~/dev/DNS-Domain-Management/app/globals.css + tailwind.config.ts
   - Validation: `uv run pytest tests/architecture/test_fitness_functions.py -v`
   - Reviewed by: Solutions Architect 🏛️ + Security Auditor 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 5.2.3 Rewrite theme_service.py (Python Programmer 🐍)
+- [x] 5.2.3 Rewrite theme_service.py (Python Programmer 🐍)
   - File: app/services/theme_service.py
   - Validation: `uv run pytest tests/unit/test_theme_service.py -v`
   - Reviewed by: Python Reviewer 🐍
   - Signed off by: Planning Agent 📋
 
-- [ ] 5.2.4 Extend BrandConfig SQLAlchemy model + migration (Python Programmer 🐍)
+- [x] 5.2.4 Extend BrandConfig SQLAlchemy model + migration (Python Programmer 🐍)
   - Files: app/models/brand_config.py, alembic/versions/002_extend_brand_config.py
   - Validation: `uv run alembic upgrade head`
   - Reviewed by: Python Reviewer 🐍
@@ -362,8 +362,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
-| Phase 5: Design System Migration | 24 | 4 | 20 | 🔄 In Progress |
-| **TOTAL** | **56** | **36** | **20** | **🔄 In Progress** |
+| Phase 5: Design System Migration | 24 | 8 | 16 | 🔄 In Progress |
+| **TOTAL** | **56** | **40** | **16** | **🔄 In Progress** |
 
 ---
 
