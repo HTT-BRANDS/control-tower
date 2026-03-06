@@ -267,25 +267,25 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Signed off by: Pack Leader 🐺
 
 ### 5.3 Template System Overhaul
-- [ ] 5.3.1 Create theme middleware (Python Programmer 🐍)
+- [x] 5.3.1 Create theme middleware (Python Programmer 🐍)
   - File: app/core/theme_middleware.py
   - Validation: `uv run pytest tests/unit/test_theme_middleware.py -v`
   - Reviewed by: Python Reviewer 🐍 + Solutions Architect 🏛️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 5.3.2 Rewrite base.html with structured theme injection (Experience Architect 🎨)
+- [x] 5.3.2 Rewrite base.html with structured theme injection (Experience Architect 🎨)
   - File: app/templates/base.html
   - Validation: No duplicate CSS imports; brand logo renders; skip-link present
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
 
-- [ ] 5.3.3 Create Jinja2 UI macro library (Experience Architect 🎨)
+- [x] 5.3.3 Create Jinja2 UI macro library (Experience Architect 🎨)
   - File: app/templates/macros/ui.html
   - Validation: All macros produce valid ARIA attributes
   - Reviewed by: QA Expert 🐾 + Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
 
-- [ ] 5.3.4 Update dashboard templates to use new design system (Code-Puppy 🐶)
+- [x] 5.3.4 Update dashboard templates to use new design system (Code-Puppy 🐶)
   - Files: app/templates/pages/*.html
   - Validation: No hardcoded hex colors in template files
   - Reviewed by: Experience Architect 🎨
@@ -362,8 +362,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
-| Phase 5: Design System Migration | 24 | 8 | 16 | 🔄 In Progress |
-| **TOTAL** | **56** | **40** | **16** | **🔄 In Progress** |
+| Phase 5: Design System Migration | 24 | 12 | 12 | 🔄 In Progress |
+| **TOTAL** | **56** | **44** | **12** | **🔄 In Progress** |
 
 ---
 

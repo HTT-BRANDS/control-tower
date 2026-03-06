@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="{{ brand.theme_name if brand else 'default' }}" style="{{ brand.inline_style if brand else '' }}">
+<html lang="en" data-brand="{{ brand.key if brand else 'httbrands' }}" style="{{ brand.inline_style if brand else '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Azure Governance Platform{% endblock %}</title>
+    
+    <!-- Google Fonts for brand typography -->
+    {% if brand and brand.google_fonts_url %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ brand.google_fonts_url }}">
+    {% endif %}
     
     <!-- CSS-First Tailwind v4 -->
     <link rel="stylesheet" href="/static/css/theme.css">
@@ -18,16 +25,11 @@
     <link rel="stylesheet" href="/static/css/riverside.css">
     <link rel="stylesheet" href="/static/css/accessibility.css">
     <link rel="stylesheet" href="/static/css/dark-mode.css">
-    <link rel="stylesheet" href="/static/css/accessibility.css">
-    <link rel="stylesheet" href="/static/css/dark-mode.css">
     
-    <!-- Brand Color Injection -->
-    {% if brand %}
+    <!-- Brand Design Token Injection (47+ CSS variables via css_generator.py) -->
+    {% if brand and brand.css_variables %}
     <style>
         :root {
-            --brand-primary: {{ brand.primary }};
-            --brand-secondary: {{ brand.secondary }};
-            --brand-accent: {{ brand.accent }};
             {% for var_name, value in brand.css_variables.items() %}
             {{ var_name }}: {{ value }};
             {% endfor %}
@@ -98,7 +100,6 @@
 </head>
 <body class="bg-gray-5 text-gray-160 min-h-screen" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
     <!-- HTMX Progress Bar -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="htmx-progress-bar" aria-hidden="true"></div>
     
@@ -181,7 +182,7 @@
                     </div>
                     <button onclick="toggleTheme()" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     <span class="text-sm text-brand-primary-50" aria-label="4 tenants connected">4 Tenants Connected</span>
-                    <button onclick="toggleTheme()" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode">D</button>
+
                 </div>
             </div>
         </div>

@@ -208,7 +208,7 @@
             datasets: [{
                 label: 'Daily Cost ($)',
                 data: [1200, 1350, 1100, 1450, 1300, 1400],
-                borderColor: '#0053e2',
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || '#0053e2',
                 backgroundColor: 'rgba(0, 83, 226, 0.1)',
                 fill: true,
                 tension: 0.4
@@ -243,10 +243,10 @@
                 label: 'Compliance %',
                 data: [92, 87, 78, 95],
                 backgroundColor: [
-                    '#2a8703',
-                    '#2a8703',
-                    '#ea1100',
-                    '#2a8703'
+                    getComputedStyle(document.documentElement).getPropertyValue('--color-success').trim() || '#2a8703',
+                    getComputedStyle(document.documentElement).getPropertyValue('--color-success').trim() || '#2a8703',
+                    getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim() || '#ea1100',
+                    getComputedStyle(document.documentElement).getPropertyValue('--color-success').trim() || '#2a8703'
                 ],
                 borderRadius: 4
             }]
