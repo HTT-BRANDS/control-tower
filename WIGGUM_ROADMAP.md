@@ -125,13 +125,13 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: System prompt mandates WCAG 2.2 AA; 7 manual criteria listed
   - Signed off by: Planning Agent 📋
 
-- [ ] 2.3.2 axe-core 4.11.1 + Pa11y 9.1.1 CI integration (Experience Architect 🎨 + Python Programmer 🐍)
+- [x] 2.3.2 axe-core 4.11.1 + Pa11y 9.1.1 CI integration (Experience Architect 🎨 + Python Programmer 🐍)
   - Files: CI config, package.json or equivalent
   - Validation: Both tools run in CI; coverage report generated
   - Reviewed by: QA Expert 🐾
   - Signed off by: Watchdog 🐕‍🦺
 
-- [ ] 2.3.3 Privacy-by-design pattern library (Experience Architect 🎨 → Web Puppy 🕵️‍♂️)
+- [x] 2.3.3 Privacy-by-design pattern library (Experience Architect 🎨 → Web Puppy 🕵️‍♂️)
   - Output: docs/patterns/privacy-by-design.md
   - Validation: Layered consent, JIT consent, progressive profiling, consent receipts, GPC documented
   - Reviewed by: Security Auditor 🛡️
@@ -216,10 +216,10 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase | Total Tasks | Completed | Remaining | Status |
 |-------|-----------|-----------|-----------|--------|
 | Phase 1: Foundation | 7 | 7 | 0 | ✅ Complete |
-| Phase 2: Governance | 13 | 11 | 2 | 🔄 In Progress |
+| Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 0 | 7 | ⬜ Not Started |
 | Phase 4: Validation | 5 | 0 | 5 | ⬜ Not Started |
-| **TOTAL** | **32** | **18** | **14** | **🔄 In Progress** |
+| **TOTAL** | **32** | **20** | **12** | **🔄 In Progress** |
 
 ---
 
