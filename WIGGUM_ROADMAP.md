@@ -148,7 +148,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 ## Phase 3: Process Integration (Testing + Requirements + Dual-Scale)
 
 ### 3.1 13-Step Testing Methodology (Epic 3)
-- [ ] 3.1.1 Document testing methodology with agent assignments (QA Expert 🐾)
+- [x] 3.1.1 Document testing methodology with agent assignments (QA Expert 🐾)
   - Output: docs/testing/13-step-methodology.md
   - Validation: All 13 steps have named agent owners
   - Signed off by: Pack Leader 🐺
@@ -158,7 +158,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Signed off by: Planning Agent 📋
 
 ### 3.2 Requirements Flow (Epic 4)
-- [ ] 3.2.1 Document 9-role-to-agent mapping (Planning Agent 📋)
+- [x] 3.2.1 Document 9-role-to-agent mapping (Planning Agent 📋)
   - Output: docs/process/requirements-flow.md
   - Validation: All 9 Granlund roles mapped to specific agents
   - Signed off by: Pack Leader 🐺
@@ -168,12 +168,12 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Signed off by: Planning Agent 📋
 
 ### 3.3 Dual-Scale Project Management (Epic 5)
-- [ ] 3.3.1 Sprint-scale track protocol (Pack Leader 🐺)
+- [x] 3.3.1 Sprint-scale track protocol (Pack Leader 🐺)
   - Output: docs/process/sprint-track.md
   - Validation: bd sprint labels, worktree-per-task, shepherd+watchdog gates documented
   - Signed off by: Planning Agent 📋
 
-- [ ] 3.3.2 Large-scale track protocol (Planning Agent 📋)
+- [x] 3.3.2 Large-scale track protocol (Planning Agent 📋)
   - Output: docs/process/large-scale-track.md
   - Validation: Dedicated bd issue trees, isolated from sprints, WIGGUM_ROADMAP integration
   - Signed off by: Pack Leader 🐺
@@ -217,9 +217,9 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 |-------|-----------|-----------|-----------|--------|
 | Phase 1: Foundation | 7 | 7 | 0 | ✅ Complete |
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
-| Phase 3: Process | 7 | 0 | 7 | ⬜ Not Started |
+| Phase 3: Process | 7 | 4 | 3 | 🔄 In Progress |
 | Phase 4: Validation | 5 | 0 | 5 | ⬜ Not Started |
-| **TOTAL** | **32** | **20** | **12** | **🔄 In Progress** |
+| **TOTAL** | **32** | **24** | **8** | **🔄 In Progress** |
 
 ---
 
