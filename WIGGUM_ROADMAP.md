@@ -87,7 +87,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Solutions Architect 🏛️
   - Signed off by: Planning Agent 📋
 
-- [ ] 2.1.4 Self-modification protections audit (Security Auditor 🛡️)
+- [x] 2.1.4 Self-modification protections audit (Security Auditor 🛡️)
   - Validation: Only agent-creator sanctioned for agents dir writes
   - Reviewed by: Code Reviewer 🛡️
   - Signed off by: Pack Leader 🐺
@@ -216,10 +216,10 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase | Total Tasks | Completed | Remaining | Status |
 |-------|-----------|-----------|-----------|--------|
 | Phase 1: Foundation | 7 | 7 | 0 | ✅ Complete |
-| Phase 2: Governance | 13 | 1 | 12 | 🔄 In Progress |
+| Phase 2: Governance | 13 | 2 | 11 | 🔄 In Progress |
 | Phase 3: Process | 7 | 0 | 7 | ⬜ Not Started |
 | Phase 4: Validation | 5 | 0 | 5 | ⬜ Not Started |
-| **TOTAL** | **32** | **8** | **24** | **🔄 In Progress** |
+| **TOTAL** | **32** | **9** | **23** | **🔄 In Progress** |
 
 ---
 
