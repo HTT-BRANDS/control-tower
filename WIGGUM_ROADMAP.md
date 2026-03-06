@@ -59,7 +59,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Python Reviewer 🐍
   - Signed off by: Pack Leader 🐺
 
-- [ ] 1.2.4 Wire callback hooks for audit trail (Husky 🐺)
+- [x] 1.2.4 Wire callback hooks for audit trail (Husky 🐺)
   - Files: code_puppy/tools/ (callback integration)
   - Validation: Agent actions logged to bd issues
   - Reviewed by: Shepherd 🐕 + Code Reviewer 🛡️
@@ -215,11 +215,11 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 
 | Phase | Total Tasks | Completed | Remaining | Status |
 |-------|-----------|-----------|-----------|--------|
-| Phase 1: Foundation | 7 | 5 | 2 | 🔄 In Progress |
+| Phase 1: Foundation | 7 | 6 | 1 | 🔄 In Progress |
 | Phase 2: Governance | 13 | 1 | 12 | 🔄 In Progress |
 | Phase 3: Process | 7 | 0 | 7 | ⬜ Not Started |
 | Phase 4: Validation | 5 | 0 | 5 | ⬜ Not Started |
-| **TOTAL** | **32** | **6** | **26** | **🔄 In Progress** |
+| **TOTAL** | **32** | **7** | **25** | **🔄 In Progress** |
 
 ---
 
