@@ -75,6 +75,9 @@ credentials.json
 # Node (if using any JS build tools)
 node_modules/
 
+# E2E test screenshots
+tests/e2e/screenshots/
+
 # Jupyter
 .ipynb_checkpoints/
 
