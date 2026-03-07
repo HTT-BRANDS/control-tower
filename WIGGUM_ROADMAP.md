@@ -318,7 +318,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Reviewed by: Code Reviewer 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 5.5.2 Performance validation (QA Expert 🐾)
+- [x] 5.5.2 Performance validation (QA Expert 🐾)
   - Validation: CSS generation < 10ms; no FOUC; fonts use display=swap
   - Signed off by: Planning Agent 📋
 
@@ -362,8 +362,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
-| Phase 5: Design System Migration | 24 | 15 | 9 | 🔄 In Progress |
-| **TOTAL** | **56** | **47** | **9** | **🔄 In Progress** |
+| Phase 5: Design System Migration | 24 | 18 | 6 | 🔄 In Progress |
+| **TOTAL** | **56** | **50** | **6** | **🔄 In Progress** |
 
 ---
 
