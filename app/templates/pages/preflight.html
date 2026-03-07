@@ -166,7 +166,7 @@
                             {% if result.recommendations and result.status == 'fail' %}
                             <button 
                                 class="text-wm-blue-100 hover:text-wm-blue-130"
-                                onclick="toggleRecommendations('{{ result.check_id }}')"
+                                data-toggle-rec="{{ result.check_id }}"
                             >
                                 View Fixes
                             </button>
@@ -316,13 +316,18 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
 function toggleRecommendations(checkId) {
     const row = document.getElementById('rec-' + checkId);
     if (row) {
         row.classList.toggle('hidden');
     }
 }
+// CSP-safe: event delegation for toggle buttons
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-toggle-rec]');
+    if (btn) toggleRecommendations(btn.getAttribute('data-toggle-rec'));
+});
 
 // Auto-refresh status every 30 seconds
 setInterval(function() {
@@ -332,7 +337,7 @@ setInterval(function() {
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     // Handle HTMX responses
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'overall-status') {

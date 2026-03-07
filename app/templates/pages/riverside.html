@@ -250,7 +250,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     // Countdown Timer
     function updateCountdown() {
         const deadline = new Date('2026-07-08T00:00:00');

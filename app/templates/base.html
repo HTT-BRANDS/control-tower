@@ -16,10 +16,10 @@
     <link rel="stylesheet" href="/static/css/theme.css">
     
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret #}
     
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret #}
     
     <!-- Riverside Custom Styles (kept for compatibility) -->
     <link rel="stylesheet" href="/static/css/riverside.css">
@@ -180,7 +180,7 @@
                         </svg>
                         <span class="sr-only">Loading</span>
                     </div>
-                    <button onclick="toggleTheme()" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
+                    <button id="theme-toggle-btn" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     <span class="text-sm text-brand-primary-50" aria-label="4 tenants connected">4 Tenants Connected</span>
 
                 </div>
@@ -206,14 +206,14 @@
     {% block extra_scripts %}{% endblock %}
     
     <!-- HTMX Navigation Enhancement - Modular -->
-    <script src="/static/js/navigation/progressBar.js"></script>
-    <script src="/static/js/navigation/toast.js"></script>
-    <script src="/static/js/navigation/navHighlight.js"></script>
-    <script src="/static/js/navigation/confirmDialog.js"></script>
-    <script src="/static/js/navigation/index.js"></script>
+    <script src="/static/js/navigation/progressBar.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="/static/js/navigation/toast.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="/static/js/navigation/navHighlight.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="/static/js/navigation/confirmDialog.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="/static/js/navigation/index.js" nonce="{{ request.state.csp_nonce }}"></script>
     
     <!-- Include Loading Component Templates -->
     {% include 'components/loading.html' %}
-    <script src="/static/js/darkMode.js"></script>
+    <script src="/static/js/darkMode.js" nonce="{{ request.state.csp_nonce }}"></script>
 </body>
 </html>

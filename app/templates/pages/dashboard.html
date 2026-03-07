@@ -198,7 +198,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     // Cost Trend Chart
     const costCtx = document.getElementById('costTrendChart').getContext('2d');
     new Chart(costCtx, {

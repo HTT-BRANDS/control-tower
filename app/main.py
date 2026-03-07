@@ -1,6 +1,7 @@
 """Azure Multi-Tenant Governance Platform - Main Application."""
 
 import logging
+import secrets
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -152,7 +153,15 @@ async def security_headers_middleware(request: Request, call_next):
 
     SECURITY: Protects against clickjacking, XSS, MIME sniffing,
     and enforces HTTPS via HSTS.
+
+    CSP nonce is generated per-request and stored on request.state so
+    Jinja2 templates can render it via request.state.csp_nonce.
     """
+    # Generate a cryptographic nonce for CSP -- available to templates
+    # via request.state before the response is rendered.
+    nonce = secrets.token_urlsafe(32)
+    request.state.csp_nonce = nonce
+
     response = await call_next(request)
     # Prevent clickjacking
     response.headers["X-Frame-Options"] = "DENY"
@@ -164,10 +173,11 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     # Permissions policy (restrict browser features)
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    # Content Security Policy
+    # Content Security Policy -- nonce replaces 'unsafe-inline' for script-src.
+    # 'unsafe-inline' is kept ONLY for style-src (brand CSS variables).
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; "
+        f"script-src 'self' 'nonce-{nonce}' https://unpkg.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com; "
         "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data:; "

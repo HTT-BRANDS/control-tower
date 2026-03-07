@@ -11,4 +11,6 @@
   apply(getTheme());
   window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){if(getTheme()==='system')apply('system');});
   window.toggleTheme=function(){const c=document.documentElement.getAttribute('data-theme');apply(c==='dark'?'light':'dark');};
+  // CSP-safe: bind click via addEventListener instead of inline onclick
+  var btn=document.getElementById('theme-toggle-btn');if(btn)btn.addEventListener('click',window.toggleTheme);
 })();

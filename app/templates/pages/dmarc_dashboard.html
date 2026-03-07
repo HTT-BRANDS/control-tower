@@ -63,8 +63,8 @@
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Tenant Email Security Status</h2>
                 <div class="flex space-x-2">
-                    <button onclick="filterTenants('all')" class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800">All</button>
-                    <button onclick="filterTenants('riverside')" class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">Riverside Only</button>
+                    <button data-filter-tenant="all" class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800">All</button>
+                    <button data-filter-tenant="riverside" class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">Riverside Only</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -208,7 +208,7 @@
 
         <!-- Action Buttons -->
         <div class="flex justify-center space-x-4">
-            <button onclick="syncDMARC()" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
+            <button data-action="sync-dmarc" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
@@ -221,7 +221,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     let currentData = null;
 
     // Fetch dashboard data
@@ -488,7 +488,7 @@
                 <td class="px-6 py-4 text-sm text-gray-500 max-w-md truncate">${alert.message}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(alert.created_at).toLocaleDateString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onclick="acknowledgeAlert('${alert.id}')" class="text-blue-600 hover:text-blue-900">Acknowledge</button>
+                    <button data-action="acknowledge-alert" data-alert-id="${alert.id}" class="text-blue-600 hover:text-blue-900">Acknowledge</button>
                 </td>
             </tr>
         `).join('');
@@ -651,6 +651,25 @@
         setTimeout(() => toast.remove(), 3000);
     }
 
+
+    // CSP-safe: event delegation for buttons (replaces inline onclick handlers)
+    document.addEventListener('click', function(e) {
+        var filterBtn = e.target.closest('[data-filter-tenant]');
+        if (filterBtn) {
+            filterTenants(filterBtn.getAttribute('data-filter-tenant'));
+            return;
+        }
+        var syncBtn = e.target.closest('[data-action="sync-dmarc"]');
+        if (syncBtn) {
+            syncDMARC();
+            return;
+        }
+        var ackBtn = e.target.closest('[data-action="acknowledge-alert"]');
+        if (ackBtn) {
+            acknowledgeAlert(ackBtn.getAttribute('data-alert-id'));
+            return;
+        }
+    });
     // Initial load
     fetchDashboardData();
     // Refresh every 5 minutes

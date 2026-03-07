@@ -26,7 +26,7 @@
             </button>
             <!-- Manual Refresh -->
             <button 
-                onclick="window.location.reload()"
+                data-action="page-reload"
                 class="p-2 text-wm-gray-100 hover:text-wm-blue-100 hover:bg-wm-blue-5 rounded-lg transition-colors"
                 title="Full page refresh">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,4 +157,12 @@
 
 {% block extra_scripts %}
 <!-- Sync dashboard specific scripts -->
+<script nonce="{{ request.state.csp_nonce }}">
+// CSP-safe: event delegation for page reload button
+document.addEventListener('click', function(e) {
+    if (e.target.closest('[data-action="page-reload"]')) {
+        window.location.reload();
+    }
+});
+</script>
 {% endblock %}
