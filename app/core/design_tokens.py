@@ -21,6 +21,15 @@ __all__ = [
 ]
 
 _HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+_SAFE_FONT_RE = re.compile(r"^[a-zA-Z0-9 \-]+$")
+_SAFE_BORDER_RADIUS_RE = re.compile(r"^\d+(\.\d+)?(px|rem|em|%)$")
+_SAFE_GRADIENT_RE = re.compile(
+    r"^(linear|radial)-gradient\([^{}<>;]*\)$",
+    re.IGNORECASE,
+)
+_CSS_INJECTION_PATTERNS = [
+    "expression(", "javascript:", "@import", "url(",
+]
 _BRANDS_PATH = Path("config/brands.yaml")
 
 
@@ -36,6 +45,60 @@ def _validate_hex(v: str) -> str:
     if not _HEX_COLOR_RE.match(v):
         raise ValueError(f"Invalid hex color: {v!r} (must be #RRGGBB)")
     return v.upper()
+
+
+def _validate_gradient(v: str) -> str:
+    """Validate CSS gradient value against injection attacks.
+
+    Allows ``linear-gradient(...)`` and ``radial-gradient(...)`` with safe
+    content.  Rejects CSS metacharacters and dangerous functions that could
+    break out of a ``<style>`` block.
+    """
+    lower = v.lower()
+    for pattern in _CSS_INJECTION_PATTERNS:
+        if pattern in lower:
+            raise ValueError(
+                f"Unsafe CSS pattern {pattern!r} detected in gradient: {v!r}"
+            )
+    for char in ("{", "}", "<", ">"):
+        if char in v:
+            raise ValueError(
+                f"Forbidden character {char!r} in gradient: {v!r}"
+            )
+    if not _SAFE_GRADIENT_RE.match(v):
+        raise ValueError(
+            f"Invalid gradient syntax: {v!r}. "
+            "Must be linear-gradient(...) or radial-gradient(...)."
+        )
+    return v
+
+
+def _validate_font_name(v: str, field_name: str) -> str:
+    """Validate a CSS font-family name contains only safe characters.
+
+    Allows alphanumeric characters, spaces, and hyphens -- nothing that
+    could break out of a ``font-family`` declaration.
+    """
+    if not _SAFE_FONT_RE.match(v):
+        raise ValueError(
+            f"Unsafe font name for {field_name}: {v!r}. "
+            "Only alphanumeric characters, spaces, and hyphens are allowed."
+        )
+    return v
+
+
+def _validate_border_radius(v: str) -> str:
+    """Validate a CSS border-radius value.
+
+    Accepts values like ``4px``, ``0.5rem``, ``1em``, ``50%``.
+    Rejects anything that could inject additional CSS.
+    """
+    if not _SAFE_BORDER_RADIUS_RE.match(v):
+        raise ValueError(
+            f"Invalid borderRadius: {v!r}. "
+            "Must match pattern: <number>(px|rem|em|%), e.g. '8px', '0.5rem'."
+        )
+    return v
 
 
 class BrandLogo(BaseModel):
@@ -67,6 +130,14 @@ class BrandColors(BaseModel):
             return None
         return _validate_hex(v)
 
+    @field_validator("gradient", mode="before")
+    @classmethod
+    def validate_gradient(cls, v: str | None) -> str | None:
+        """Validate gradient against CSS injection."""
+        if v is None:
+            return None
+        return _validate_gradient(v)
+
 
 class BrandTypography(BaseModel):
     """Typography configuration."""
@@ -75,6 +146,18 @@ class BrandTypography(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+    @field_validator("headingFont", mode="before")
+    @classmethod
+    def validate_heading_font(cls, v: str) -> str:
+        """Validate heading font name is safe for CSS."""
+        return _validate_font_name(v, "headingFont")
+
+    @field_validator("bodyFont", mode="before")
+    @classmethod
+    def validate_body_font(cls, v: str) -> str:
+        """Validate body font name is safe for CSS."""
+        return _validate_font_name(v, "bodyFont")
+
 
 class BrandDesignSystem(BaseModel):
     """Design system UI tokens."""
@@ -82,6 +165,12 @@ class BrandDesignSystem(BaseModel):
     shadowStyle: ShadowStyle = Field(alias="shadowStyle")
 
     model_config = {"populate_by_name": True}
+
+    @field_validator("borderRadius", mode="before")
+    @classmethod
+    def validate_border_radius(cls, v: str) -> str:
+        """Validate border-radius is a safe CSS size value."""
+        return _validate_border_radius(v)
 
 
 class BrandPageConfig(BaseModel):
