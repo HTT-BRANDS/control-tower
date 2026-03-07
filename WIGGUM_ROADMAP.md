@@ -334,12 +334,12 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: All docs reference new design system architecture
   - Signed off by: Code Reviewer 🛡️
 
-- [ ] 5.6.2 Fix staging deployment blocker uh2 (Code-Puppy 🐶)
+- [x] 5.6.2 Fix staging deployment blocker uh2 (Code-Puppy 🐶)
   - File: infrastructure/modules/log-analytics.bicep
   - Validation: Bicep deployment to rg-governance-staging succeeds
   - Signed off by: Pack Leader 🐺
 
-- [ ] 5.6.3 Add pre-commit secrets hook fp0 (Code-Puppy 🐶)
+- [x] 5.6.3 Add pre-commit secrets hook fp0 (Code-Puppy 🐶)
   - File: .pre-commit-config.yaml
   - Validation: detect-secrets hook catches test secrets
   - Signed off by: Security Auditor 🛡️
@@ -362,8 +362,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
-| Phase 5: Design System Migration | 24 | 20 | 4 | 🔄 In Progress |
-| **TOTAL** | **56** | **52** | **4** | **🔄 In Progress** |
+| Phase 5: Design System Migration | 24 | 22 | 2 | 🔄 In Progress |
+| **TOTAL** | **56** | **54** | **2** | **🔄 In Progress** |
 
 ---
 
