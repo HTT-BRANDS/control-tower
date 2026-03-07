@@ -322,7 +322,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: CSS generation < 10ms; no FOUC; fonts use display=swap
   - Signed off by: Planning Agent 📋
 
-- [ ] 5.5.3 Defect fix and regression cycle (Python Programmer 🐍)
+- [x] 5.5.3 Defect fix and regression cycle (Python Programmer 🐍)
   - Validation: `uv run pytest tests/ -q` all pass; no regressions
   - Reviewed by: Shepherd 🐕
   - Signed off by: Watchdog 🐕‍🦺
@@ -362,8 +362,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 2: Governance | 13 | 13 | 0 | ✅ Complete |
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
-| Phase 5: Design System Migration | 24 | 18 | 6 | 🔄 In Progress |
-| **TOTAL** | **56** | **50** | **6** | **🔄 In Progress** |
+| Phase 5: Design System Migration | 24 | 19 | 5 | 🔄 In Progress |
+| **TOTAL** | **56** | **51** | **5** | **🔄 In Progress** |
 
 ---
 

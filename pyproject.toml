@@ -104,11 +104,13 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --ignore=tests/e2e --ignore=tests/smoke"
 markers = [
     "azure_creds_required: marks tests requiring Azure credentials",
     "auth_required: marks tests requiring authentication",
     "slow: marks tests as slow",
+    "e2e: marks tests as end-to-end (require Playwright and running server)",
+    "smoke: marks tests as smoke tests (require running server)",
 ]
 
 [dependency-groups]
