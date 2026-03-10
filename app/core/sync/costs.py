@@ -106,13 +106,18 @@ async def sync_costs():
                                 parameters=query,
                             )
 
-                            # Process results
-                            if result.properties and result.properties.rows:
+                            # Process results — SDK v4+ puts rows/columns
+                            # directly on QueryResult (not under .properties)
+                            rows = getattr(result, 'rows', None)
+                            if rows is None and hasattr(result, 'properties'):
+                                rows = getattr(result.properties, 'rows', None)
+
+                            if rows:
                                 rows_processed = 0
 
                                 # Column indices (based on query grouping and aggregation)
                                 # Typical order: Cost, UsageDate, Currency, ResourceGroupName, ServiceName
-                                for row in result.properties.rows:
+                                for row in rows:
                                     try:
                                         if len(row) < 3:
                                             continue

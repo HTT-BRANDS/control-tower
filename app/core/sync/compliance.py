@@ -101,9 +101,11 @@ async def sync_compliance():
                                 for state in policy_states:
                                     policy_def_id = state.policy_definition_id or "unknown"
                                     policy_name = state.policy_definition_reference_id or "Unknown Policy"
+                                    # SDK v4+ returns strings; older versions return enums
+                                    raw_state = state.compliance_state
                                     compliance_state = (
-                                        state.compliance_state.value
-                                        if state.compliance_state
+                                        raw_state.value if hasattr(raw_state, 'value')
+                                        else str(raw_state) if raw_state
                                         else "Unknown"
                                     )
                                     resource_id = state.resource_id or ""
@@ -185,7 +187,10 @@ async def sync_compliance():
                                 for score in secure_scores:
                                     # Get the overall secure score (percentage)
                                     if score.name == "ascScore":
-                                        secure_score = score.score.current
+                                        # SDK flattens properties.score.current → score.current
+                                        secure_score = getattr(score, 'current', None)
+                                        if secure_score is None and hasattr(score, 'score'):
+                                            secure_score = getattr(score.score, 'current', None)
                                         break
 
                                 if secure_score is not None:

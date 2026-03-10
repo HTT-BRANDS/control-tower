@@ -370,9 +370,14 @@ class AzureClientManager:
     def get_cost_client(
         self, tenant_id: str, subscription_id: str
     ) -> CostManagementClient:
-        """Get cost management client."""
+        """Get cost management client.
+
+        Note: CostManagementClient does NOT take subscription_id in its
+        constructor (unlike other ARM clients). The subscription scope
+        is passed to individual query calls instead.
+        """
         credential = self.get_credential(tenant_id)
-        return CostManagementClient(credential, subscription_id)
+        return CostManagementClient(credential)
 
     def get_policy_client(
         self, tenant_id: str, subscription_id: str
