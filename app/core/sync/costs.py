@@ -1,16 +1,14 @@
-"""Cost data synchronization module."""
+"""Cost data synchronization module.
+
+Uses the Azure Cost Management REST API directly (api-version 2023-11-01)
+because the azure-mgmt-costmanagement SDK v4 (api 2022-10-01) returns empty
+results for MCA (Microsoft Customer Agreement) billing accounts.
+"""
 
 import logging
 from datetime import datetime, timedelta
 
-from azure.core.exceptions import HttpResponseError
-from azure.mgmt.costmanagement.models import (
-    QueryAggregation,
-    QueryDataset,
-    QueryDefinition,
-    QueryGrouping,
-    QueryTimePeriod,
-)
+import httpx
 
 from app.api.services.azure_client import azure_client_manager
 from app.api.services.monitoring_service import MonitoringService
@@ -21,6 +19,8 @@ from app.models.cost import CostSnapshot
 from app.models.tenant import Tenant
 
 logger = logging.getLogger(__name__)
+
+COST_API_VERSION = "2023-11-01"
 
 
 @circuit_breaker(COST_SYNC_BREAKER)
@@ -74,43 +74,9 @@ async def sync_costs():
                         try:
                             logger.info(f"Querying costs for subscription: {sub_name} ({sub_id[:8]}...)")
 
-                            # Get cost client for this subscription
-                            cost_client = azure_client_manager.get_cost_client(
-                                tenant.tenant_id,
-                                sub_id
+                            rows = await _query_costs_rest(
+                                tenant.tenant_id, sub_id, from_date, to_date,
                             )
-
-                            # Build query definition with grouping by ResourceGroup and ServiceName
-                            query = QueryDefinition(
-                                type="ActualCost",
-                                timeframe="Custom",
-                                time_period=QueryTimePeriod(
-                                    from_property=from_date,
-                                    to=to_date,
-                                ),
-                                dataset=QueryDataset(
-                                    granularity="Daily",
-                                    aggregation={
-                                        "totalCost": QueryAggregation(name="Cost", function="Sum")
-                                    },
-                                    grouping=[
-                                        QueryGrouping(type="Dimension", name="ResourceGroupName"),
-                                        QueryGrouping(type="Dimension", name="ServiceName"),
-                                    ],
-                                ),
-                            )
-
-                            # Execute query
-                            result = cost_client.query.usage(
-                                scope=f"/subscriptions/{sub_id}",
-                                parameters=query,
-                            )
-
-                            # Process results — SDK v4+ puts rows/columns
-                            # directly on QueryResult (not under .properties)
-                            rows = getattr(result, 'rows', None)
-                            if rows is None and hasattr(result, 'properties'):
-                                rows = getattr(result.properties, 'rows', None)
 
                             if rows:
                                 rows_processed = 0
@@ -162,9 +128,9 @@ async def sync_costs():
                             else:
                                 logger.info(f"No cost data found for subscription {sub_name}")
 
-                        except HttpResponseError as e:
+                        except httpx.HTTPStatusError as e:
                             total_errors += 1
-                            if e.status_code == 403:
+                            if e.response.status_code == 403:
                                 logger.error(
                                     f"Access denied to cost data for subscription {sub_name}. "
                                     f"Missing Cost Management Reader role?"
@@ -172,7 +138,7 @@ async def sync_costs():
                             else:
                                 logger.error(
                                     f"HTTP error querying costs for subscription {sub_name}: "
-                                    f"{e.status_code} - {e.message}"
+                                    f"{e.response.status_code} - {e.response.text[:200]}"
                                 )
                         except Exception as e:
                             total_errors += 1
@@ -224,3 +190,56 @@ async def sync_costs():
                     },
                 )
         raise
+
+
+async def _query_costs_rest(
+    tenant_id: str,
+    subscription_id: str,
+    from_date: str,
+    to_date: str,
+) -> list:
+    """Query Cost Management REST API directly.
+
+    The azure-mgmt-costmanagement SDK v4 (api 2022-10-01) returns empty
+    results for MCA billing. The 2023-11-01 API works correctly, so we
+    call it via httpx instead.
+
+    Returns:
+        List of cost rows, each row is [cost, date, currency, rg, service].
+    """
+    credential = azure_client_manager.get_credential(tenant_id)
+    token = credential.get_token("https://management.azure.com/.default")
+
+    url = (
+        f"https://management.azure.com/subscriptions/{subscription_id}"
+        f"/providers/Microsoft.CostManagement/query"
+        f"?api-version={COST_API_VERSION}"
+    )
+    body = {
+        "type": "ActualCost",
+        "timeframe": "Custom",
+        "timePeriod": {"from": from_date, "to": to_date},
+        "dataset": {
+            "granularity": "Daily",
+            "aggregation": {
+                "totalCost": {"name": "Cost", "function": "Sum"},
+            },
+            "grouping": [
+                {"type": "Dimension", "name": "ResourceGroupName"},
+                {"type": "Dimension", "name": "ServiceName"},
+            ],
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            url,
+            json=body,
+            headers={"Authorization": f"Bearer {token.token}"},
+        )
+        resp.raise_for_status()
+
+    data = resp.json()
+    # API nests under "properties" in the REST response
+    props = data.get("properties", data)
+    return props.get("rows", [])
