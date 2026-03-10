@@ -21,7 +21,7 @@
                 {{ tenant_data.alert_count }}
             </span>
             {% endif %}
-            {% include "components/sync/status_badge.html" with status=tenant_data.overall_health size='sm' %}
+            {% set status = tenant_data.overall_health %}{% set size = 'sm' %}{% include "components/sync/status_badge.html" %}
         </div>
     </div>
 

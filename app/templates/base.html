@@ -100,7 +100,7 @@
     
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-surface-primary text-primary-theme min-h-screen" style="font-family: 'Inter', sans-serif;" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
+<body class="bg-surface-primary text-primary-theme min-h-screen" style="font-family: 'Inter', sans-serif;" >
     <!-- HTMX Progress Bar -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="htmx-progress-bar" aria-hidden="true"></div>
@@ -109,7 +109,7 @@
     <div id="page-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
     
     <!-- Navigation -->
-    <nav class="bg-brand-primary-100 text-white shadow-lg" role="navigation" aria-label="Main navigation">
+    <nav class="bg-brand-primary-100 text-white shadow-lg" role="navigation" aria-label="Main navigation" hx-boost="true" hx-select="main" hx-target="main" hx-swap="outerHTML settle:150ms">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">

@@ -194,6 +194,48 @@ body {
   --color-border-light: var(--border-light);
   --color-border-default: var(--border-default);
   --color-border-focus: var(--border-focus);
+
+  /* Riverside / Walmart Brand Colors (wm-*) */
+  --color-wm-blue-5: #f2f8ff;
+  --color-wm-blue-10: #e0edff;
+  --color-wm-blue-30: #74a8ff;
+  --color-wm-blue-50: #3d7eff;
+  --color-wm-blue-100: #0053e2;
+  --color-wm-blue-110: #004bc8;
+  --color-wm-blue-130: #003ba0;
+
+  --color-wm-gray-5: #fafafa;
+  --color-wm-gray-10: #f5f5f5;
+  --color-wm-gray-50: #e0e0e0;
+  --color-wm-gray-100: #74767c;
+  --color-wm-gray-110: #5c5e62;
+  --color-wm-gray-130: #2e2f32;
+  --color-wm-gray-160: #1a1a1a;
+
+  --color-wm-green-5: #f0fff0;
+  --color-wm-green-10: #e0ffe0;
+  --color-wm-green-50: #5cc44e;
+  --color-wm-green-100: #2a8703;
+  --color-wm-green-110: #247602;
+  --color-wm-green-130: #1a5602;
+
+  --color-wm-red-5: #fff5f5;
+  --color-wm-red-10: #ffe5e5;
+  --color-wm-red-50: #f56060;
+  --color-wm-red-100: #ea1100;
+  --color-wm-red-110: #d00f00;
+  --color-wm-red-130: #a00b00;
+
+  --color-wm-spark-5: #fffbf0;
+  --color-wm-spark-10: #fff6de;
+  --color-wm-spark-30: #ffe38a;
+  --color-wm-spark-50: #ffd554;
+  --color-wm-spark-100: #ffc220;
+  --color-wm-spark-110: #e6ae1c;
+  --color-wm-spark-130: #b38815;
+  --color-wm-spark-140: #997412;
+
+  --color-wm-orange-500: #f97316;
 }
 
 /* ==========================================================================

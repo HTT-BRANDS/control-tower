@@ -20,6 +20,23 @@ from app.models.riverside import (
 from app.models.tenant import Tenant
 
 
+
+def _resolve_tenant_code(tenant) -> str:
+    """Resolve the short code for a Tenant model.
+
+    The Tenant SQLAlchemy model doesn't have a .code column.
+    We match by tenant name against the known RIVERSIDE_TENANTS config
+    (a {code: display_name} dict).
+    """
+    # RIVERSIDE_TENANTS is {code: name}. Reverse-lookup by name.
+    for code, name in RIVERSIDE_TENANTS.items():
+        if name == tenant.name:
+            return code.upper()
+    # Fallback: use first 4 chars of tenant_id
+    return tenant.tenant_id[:4].upper()
+
+
+
 def get_riverside_summary(db) -> dict:
     """Get executive summary for Riverside compliance dashboard.
 
@@ -62,8 +79,8 @@ def get_riverside_summary(db) -> dict:
         reqs_total = compliance.requirements_total if compliance else 0
         gaps = compliance.critical_gaps_count if compliance else 0
 
-        tenant_code = tenant.code.lower() if tenant.code else tenant.tenant_id[:4]
-        tenant_name = RIVERSIDE_TENANTS.get(tenant_code, tenant.name)
+        tenant_code = _resolve_tenant_code(tenant).lower()
+        tenant_name = RIVERSIDE_TENANTS.get(tenant_code.upper(), tenant.name)
 
         tenant_summaries.append({
             "tenant_id": tenant.tenant_id,
@@ -179,7 +196,7 @@ def get_mfa_status(db) -> dict:
             total_admin_accounts += mfa.admin_accounts_total
             total_admin_mfa += mfa.admin_accounts_mfa
 
-            tenant_code = tenant.code.lower() if tenant.code else tenant.tenant_id[:4]
+            tenant_code = _resolve_tenant_code(tenant).lower()
             tenant_name = RIVERSIDE_TENANTS.get(tenant_code, tenant.name)
 
             tenant_mfa.append({
@@ -239,7 +256,7 @@ def get_maturity_scores(db) -> dict:
         ).order_by(RiversideCompliance.updated_at.desc()).first()
 
         if compliance:
-            tenant_code = tenant.code.lower() if tenant.code else tenant.tenant_id[:4]
+            tenant_code = _resolve_tenant_code(tenant).lower()
             tenant_name = RIVERSIDE_TENANTS.get(tenant_code, tenant.name)
 
             # Calculate domain scores based on requirements
@@ -329,7 +346,7 @@ def get_requirements(db, category: str | None = None, priority: str | None = Non
     results = []
     for req in requirements:
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
-        tenant_code = tenant.code.upper() if tenant and tenant.code else "N/A"
+        tenant_code = _resolve_tenant_code(tenant) if tenant else "N/A"
 
         results.append({
             "id": req.id,
@@ -448,7 +465,7 @@ def _get_critical_gaps(db) -> list[GapAnalysis]:
 
     for req in p0_requirements:
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
-        tenant_code = tenant.code.upper() if tenant and tenant.code else "N/A"
+        tenant_code = _resolve_tenant_code(tenant) if tenant else "N/A"
 
         is_overdue = False
         days_overdue = 0
@@ -480,7 +497,7 @@ def _get_critical_gaps(db) -> list[GapAnalysis]:
 
     for req in overdue_p1:
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
-        tenant_code = tenant.code.upper() if tenant and tenant.code else "N/A"
+        tenant_code = _resolve_tenant_code(tenant) if tenant else "N/A"
 
         days_overdue = (today - req.due_date).days if req.due_date else 0
 

@@ -116,7 +116,7 @@ async def dashboard_page(
 async def cost_summary_card(request: Request, db: Session = Depends(get_db)):
     """HTMX partial: Cost summary card."""
     cost_svc = CostService(db)
-    summary = cost_svc.get_cost_summary()
+    summary = await cost_svc.get_cost_summary()
 
     return templates.TemplateResponse(
         request,
@@ -129,7 +129,7 @@ async def cost_summary_card(request: Request, db: Session = Depends(get_db)):
 async def compliance_gauge(request: Request, db: Session = Depends(get_db)):
     """HTMX partial: Compliance score gauge."""
     compliance_svc = ComplianceService(db)
-    summary = compliance_svc.get_compliance_summary()
+    summary = await compliance_svc.get_compliance_summary()
 
     return templates.TemplateResponse(
         request,
@@ -142,7 +142,7 @@ async def compliance_gauge(request: Request, db: Session = Depends(get_db)):
 async def resource_stats(request: Request, db: Session = Depends(get_db)):
     """HTMX partial: Resource statistics."""
     resource_svc = ResourceService(db)
-    inventory = resource_svc.get_resource_inventory()
+    inventory = await resource_svc.get_resource_inventory()
 
     return templates.TemplateResponse(
         request,
@@ -155,7 +155,7 @@ async def resource_stats(request: Request, db: Session = Depends(get_db)):
 async def identity_stats(request: Request, db: Session = Depends(get_db)):
     """HTMX partial: Identity statistics."""
     identity_svc = IdentityService(db)
-    summary = identity_svc.get_identity_summary()
+    summary = await identity_svc.get_identity_summary()
 
     return templates.TemplateResponse(
         request,
@@ -352,10 +352,14 @@ async def active_alerts_partial(request: Request, db: Session = Depends(get_db))
 
 
 @router.get("/partials/tenant-sync-status", response_class=HTMLResponse)
-async def tenant_sync_status_partial(request: Request, db: Session = Depends(get_db)):
+async def tenant_sync_status_partial(
+    request: Request,
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
     """HTMX partial: Per-tenant sync status grid."""
     monitoring = MonitoringService(db)
-    tenant_status = await _get_tenant_sync_status(db, monitoring)
+    tenant_status = await _get_tenant_sync_status(db, monitoring, authz)
 
     return templates.TemplateResponse(
         request,
