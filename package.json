@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "css:build": "npx @tailwindcss/cli -i app/static/css/theme.src.css -o app/static/css/theme.css",
+    "css:watch": "npx @tailwindcss/cli -i app/static/css/theme.src.css -o app/static/css/theme.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "tailwindcss": "^4.2.1"
+  }
+}

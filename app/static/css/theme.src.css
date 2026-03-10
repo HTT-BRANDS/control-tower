@@ -1,0 +1,459 @@
+/**
+ * Theme Configuration - CSS-First with Brand Color Support
+ * Source: ~/dev/microsoft-group-management (hub/frontend/src/index.css)
+ *
+ * HTT Brand Primary: #500711 (burgundy)
+ * Font: Inter (all brands)
+ *
+ * Tenant Colors:
+ * - HTT: #500711 (burgundy)
+ * - Bishops: #c2410c (orange)
+ * - Lash Lounge: #7c3aed (purple)
+ * - Frenchies: #2563eb (blue)
+ * - Delta Crown: #004538 (green)
+ */
+
+/* ==========================================================================
+   Tailwind CSS v4 Import
+   ========================================================================== */
+@import "tailwindcss";
+
+/* ==========================================================================
+   CSS Custom Properties — microsoft-group-management design system
+   These are dynamically updated per tenant via inline style injection
+   ========================================================================== */
+:root {
+  /* HTT Brand Colors (defaults) */
+  --htt-primary: #500711;
+  --htt-primary-light: #6B1A24;
+  --htt-primary-dark: #3A0509;
+  --htt-secondary: #BB86FC;
+  --htt-secondary-light: #F4BCD4;
+  --htt-accent: #FFC957;
+  --htt-accent-light: #FFD97A;
+
+  /* Primary Brand Color — overridden per tenant */
+  --brand-primary: #500711;
+  --brand-primary-5: #FBE8EB;
+  --brand-primary-10: #F5D1D6;
+  --brand-primary-50: #A8394A;
+  --brand-primary-100: #500711;
+  --brand-primary-110: #45060E;
+  --brand-primary-130: #30040A;
+  --brand-primary-140: #250307;
+  --brand-primary-160: #1A0205;
+  --brand-primary-180: #0F0103;
+
+  /* Secondary Brand Color */
+  --brand-secondary: #BB86FC;
+  --brand-secondary-5: #F5EEFF;
+  --brand-secondary-10: #EBD9FF;
+  --brand-secondary-50: #D4B3FE;
+  --brand-secondary-100: #BB86FC;
+  --brand-secondary-110: #A676E3;
+  --brand-secondary-130: #7D58B5;
+  --brand-secondary-140: #654897;
+  --brand-secondary-160: #3E2D5F;
+  --brand-secondary-180: #1E1630;
+
+  /* Accent Brand Color */
+  --brand-accent: #FFC957;
+  --brand-accent-5: #FFF8E8;
+  --brand-accent-10: #FFF0CE;
+  --brand-accent-50: #FFD97A;
+  --brand-accent-100: #FFC957;
+  --brand-accent-110: #E6B44E;
+  --brand-accent-130: #B38D3D;
+  --brand-accent-140: #997831;
+  --brand-accent-160: #664F20;
+  --brand-accent-180: #332810;
+
+  /* Semantic Colors (from microsoft-group-management) */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Text Colors (light mode) */
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --text-on-primary: white;
+  --text-on-secondary: #111827;
+
+  /* Background Colors (light mode) */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F9FAFB;
+  --bg-tertiary: #F3F4F6;
+
+  /* Border Colors */
+  --border-color: #E5E7EB;
+  --border-light: #F3F4F6;
+  --border-default: #E5E7EB;
+  --border-focus: var(--brand-primary-100);
+
+  /* Sidebar */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-border: #E5E7EB;
+}
+
+/* ==========================================================================
+   Dark Mode — .dark class toggle (microsoft-group-management ThemeProvider)
+   ========================================================================== */
+.dark {
+  --bg-primary: #0F0F0F;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  --text-muted: #6B7280;
+  --border-color: #374151;
+  --sidebar-bg: #0F0F0F;
+  --sidebar-border: #262626;
+  --border-light: #262626;
+  --border-default: #374151;
+}
+
+/* Dark mode body transition */
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ==========================================================================
+   Brand-Specific Theme Tokens
+
+   Brand-specific CSS custom properties (e.g. [data-brand="httbrands"],
+   [data-brand="frenchies"], etc.) are generated server-side by
+   css_generator.py and injected into the page via <style> tags.
+
+   The :root block above provides sensible defaults/fallbacks.
+   ========================================================================== */
+[data-brand] {
+  /* Brand-specific variables are injected dynamically.
+     This selector ensures proper specificity for overrides.
+     See: app/core/css_generator.py */
+}
+
+/* ==========================================================================
+   Tailwind v4 Theme Configuration
+   ========================================================================== */
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-5: var(--brand-primary-5);
+  --color-brand-primary-10: var(--brand-primary-10);
+  --color-brand-primary-50: var(--brand-primary-50);
+  --color-brand-primary-100: var(--brand-primary-100);
+  --color-brand-primary-110: var(--brand-primary-110);
+  --color-brand-primary-130: var(--brand-primary-130);
+  --color-brand-primary-140: var(--brand-primary-140);
+  --color-brand-primary-160: var(--brand-primary-160);
+  --color-brand-primary-180: var(--brand-primary-180);
+
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-5: var(--brand-secondary-5);
+  --color-brand-secondary-10: var(--brand-secondary-10);
+  --color-brand-secondary-50: var(--brand-secondary-50);
+  --color-brand-secondary-100: var(--brand-secondary-100);
+  --color-brand-secondary-110: var(--brand-secondary-110);
+  --color-brand-secondary-130: var(--brand-secondary-130);
+  --color-brand-secondary-140: var(--brand-secondary-140);
+  --color-brand-secondary-160: var(--brand-secondary-160);
+  --color-brand-secondary-180: var(--brand-secondary-180);
+
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-5: var(--brand-accent-5);
+  --color-brand-accent-10: var(--brand-accent-10);
+  --color-brand-accent-50: var(--brand-accent-50);
+  --color-brand-accent-100: var(--brand-accent-100);
+  --color-brand-accent-110: var(--brand-accent-110);
+  --color-brand-accent-130: var(--brand-accent-130);
+  --color-brand-accent-140: var(--brand-accent-140);
+  --color-brand-accent-160: var(--brand-accent-160);
+  --color-brand-accent-180: var(--brand-accent-180);
+
+  /* Semantic Colors */
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+
+  /* Text Colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-secondary: var(--text-on-secondary);
+
+  /* Background Colors */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+
+  /* Border Colors */
+  --color-border-light: var(--border-light);
+  --color-border-default: var(--border-default);
+  --color-border-focus: var(--border-focus);
+}
+
+/* ==========================================================================
+   WCAG Focus Indicators
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--brand-primary, #500711);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Scrollbar Styles
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary, #F9FAFB);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted, #9CA3AF);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #4B5563);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--bg-secondary, #171717);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--text-muted, #6B7280);
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+/* Brand Background Colors */
+.bg-brand-primary { background-color: var(--brand-primary); }
+.bg-brand-primary-5 { background-color: var(--brand-primary-5); }
+.bg-brand-primary-10 { background-color: var(--brand-primary-10); }
+.bg-brand-primary-50 { background-color: var(--brand-primary-50); }
+.bg-brand-primary-100 { background-color: var(--brand-primary-100); }
+.bg-brand-secondary { background-color: var(--brand-secondary); }
+.bg-brand-secondary-5 { background-color: var(--brand-secondary-5); }
+.bg-brand-secondary-10 { background-color: var(--brand-secondary-10); }
+.bg-brand-accent { background-color: var(--brand-accent); }
+.bg-brand-accent-5 { background-color: var(--brand-accent-5); }
+.bg-brand-accent-10 { background-color: var(--brand-accent-10); }
+
+/* Brand Text Colors */
+.text-brand-primary { color: var(--brand-primary); }
+.text-brand-primary-50 { color: var(--brand-primary-50); }
+.text-brand-primary-100 { color: var(--brand-primary-100); }
+.text-brand-primary-130 { color: var(--brand-primary-130); }
+.text-brand-secondary { color: var(--brand-secondary); }
+.text-brand-secondary-130 { color: var(--brand-secondary-130); }
+.text-brand-accent { color: var(--brand-accent); }
+
+/* Brand Border Colors */
+.border-brand-primary { border-color: var(--brand-primary); }
+.border-brand-primary-50 { border-color: var(--brand-primary-50); }
+.border-brand-primary-100 { border-color: var(--brand-primary-100); }
+.border-brand-secondary { border-color: var(--brand-secondary); }
+
+/* Brand Ring Colors */
+.ring-brand-primary { --tw-ring-color: var(--brand-primary); }
+.ring-brand-primary-50 { --tw-ring-color: var(--brand-primary-50); }
+
+/* Semantic Backgrounds */
+.bg-success { background-color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-danger { background-color: var(--color-error); }
+.bg-info { background-color: var(--color-info); }
+
+/* Semantic Text */
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-error); }
+.text-info { color: var(--color-info); }
+
+/* Surface Backgrounds */
+.bg-surface-primary { background-color: var(--bg-primary); }
+.bg-surface-secondary { background-color: var(--bg-secondary); }
+.bg-surface-tertiary { background-color: var(--bg-tertiary); }
+
+/* Text Hierarchy */
+.text-primary-theme { color: var(--text-primary); }
+.text-secondary-theme { color: var(--text-secondary); }
+.text-muted-theme { color: var(--text-muted); }
+
+/* ==========================================================================
+   HTT Primary Button (from microsoft-group-management)
+   ========================================================================== */
+.btn-htt-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: white;
+  background-color: var(--htt-primary, #500711);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+}
+
+.btn-htt-primary:hover {
+  background-color: var(--htt-primary-light, #6B1A24);
+}
+
+.btn-htt-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(80, 7, 17, 0.3);
+}
+
+.btn-htt-primary:active {
+  background-color: var(--htt-primary-dark, #3A0509);
+}
+
+/* ==========================================================================
+   Component Styles — Brand Button
+   ========================================================================== */
+.btn-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-on-primary);
+  background-color: var(--brand-primary-100);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+}
+
+.btn-brand:hover {
+  background-color: var(--brand-primary-110);
+}
+
+.btn-brand:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-primary-50);
+}
+
+.btn-brand-secondary {
+  color: var(--brand-primary-100);
+  background-color: var(--brand-primary-5);
+  border-color: var(--brand-primary-50);
+}
+
+.btn-brand-secondary:hover {
+  background-color: var(--brand-primary-10);
+}
+
+/* Brand Card */
+.card-brand {
+  background-color: var(--bg-primary);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--brand-primary-100);
+  transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
+}
+
+.card-brand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Brand Navigation */
+.nav-brand {
+  background-color: var(--brand-primary-100);
+  color: white;
+}
+
+.nav-brand a:hover {
+  background-color: var(--brand-primary-110);
+}
+
+/* Brand Progress Bar */
+.progress-brand {
+  height: 0.75rem;
+  background-color: var(--brand-primary-5);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-brand-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-primary-130) 0%, var(--brand-primary-100) 50%, var(--brand-primary-50) 100%);
+  border-radius: 9999px;
+  transition: width 500ms ease-in-out;
+}
+
+/* Brand Badge */
+.badge-brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background-color: var(--brand-primary-5);
+  color: var(--brand-primary-100);
+}
+
+.badge-brand-accent {
+  background-color: var(--brand-accent-5);
+  color: var(--brand-accent-130);
+}
+
+/* ==========================================================================
+   Animation Utilities
+   ========================================================================== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 300ms ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 300ms ease-out;
+}
+
+/* HTMX Indicator Styles */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline-block;
+}
+
+[x-cloak] {
+  display: none !important;
+}
