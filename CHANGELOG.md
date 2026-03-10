@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+- Connect real Azure tenant credentials (HTT, BCC, FN, TLL, DCE)
+- CI/CD OIDC federation for passwordless GitHub → Azure deploys
+- Staging environment deployment
+- Replace backfill fetch_data() placeholders with real Azure API calls
+- Token blacklist (Redis) for production JWT revocation
+- Rate limiting for production traffic
+- Custom compliance frameworks
+- Teams bot integration
+
+---
+
+## [1.1.0] - 2026-03-07
+
 ### Added — Design System Migration (Phase 5)
 - **Design Token System**: Pydantic models for brand colors, typography, and design system tokens (`app/core/design_tokens.py`)
 - **Color Utilities**: WCAG-compliant color manipulation with hex/RGB/HSL conversion, contrast validation, 10-shade scale generation (`app/core/color_utils.py`)
@@ -24,16 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - WCAG AA compliance: Fixed 2 brand accent colors (#00d084→#008754) for 4.5:1 contrast ratio
 - Event loop contamination from e2e conftest — excluded e2e/smoke from default pytest run (1591 tests pass cleanly)
-
-### Planned
-- Connect real Azure tenant credentials (HTT, BCC, FN, TLL, DCE)
-- CI/CD OIDC federation for passwordless GitHub → Azure deploys
-- Staging environment deployment
-- Replace backfill fetch_data() placeholders with real Azure API calls
-- Token blacklist (Redis) for production JWT revocation
-- Rate limiting for production traffic
-- Custom compliance frameworks
-- Teams bot integration
 
 ---
 

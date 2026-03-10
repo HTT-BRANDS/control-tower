@@ -374,7 +374,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: `grep "Development Status :: 4 - Beta" pyproject.toml`
   - Signed off by: Planning Agent 📋
 
-- [ ] 6.1.4 Cut CHANGELOG v1.1.0 release for design system work (Code-Puppy 🐶)
+- [x] 6.1.4 Cut CHANGELOG v1.1.0 release for design system work (Code-Puppy 🐶)
   - File: CHANGELOG.md
   - Action: Move Unreleased design system items to v1.1.0 section
   - Validation: `grep "\[1.1.0\]" CHANGELOG.md`
@@ -539,9 +539,9 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
 | Phase 5: Design System Migration | 24 | 24 | 0 | ✅ Complete |
-| Phase 6: Cleanup & Consolidation | 10 | 3 | 7 | 🔄 In Progress |
+| Phase 6: Cleanup & Consolidation | 10 | 4 | 6 | 🔄 In Progress |
 | Phase 7: Production Hardening | 20 | 0 | 20 | ⬜ Not Started |
-| **TOTAL** | **86** | **59** | **27** | **🔄 In Progress** |
+| **TOTAL** | **86** | **60** | **26** | **🔄 In Progress** |
 
 ---
 
