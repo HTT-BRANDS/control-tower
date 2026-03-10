@@ -385,7 +385,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: `ls data/ | grep -v sp-audit` shows no orphan files
   - Signed off by: Planning Agent 📋
 
-- [ ] 6.1.6 Archive outdated PRE_STAGING_QA report (Code-Puppy 🐶)
+- [x] 6.1.6 Archive outdated PRE_STAGING_QA report (Code-Puppy 🐶)
   - Action: `mv docs/PRE_STAGING_QA.md docs/archive/PRE_STAGING_QA.md`
   - Validation: `test -f docs/archive/PRE_STAGING_QA.md && test ! -f docs/PRE_STAGING_QA.md`
   - Signed off by: Planning Agent 📋
@@ -539,9 +539,9 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 3: Process | 7 | 7 | 0 | ✅ Complete |
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
 | Phase 5: Design System Migration | 24 | 24 | 0 | ✅ Complete |
-| Phase 6: Cleanup & Consolidation | 10 | 5 | 5 | 🔄 In Progress |
+| Phase 6: Cleanup & Consolidation | 10 | 6 | 4 | 🔄 In Progress |
 | Phase 7: Production Hardening | 20 | 0 | 20 | ⬜ Not Started |
-| **TOTAL** | **86** | **61** | **25** | **🔄 In Progress** |
+| **TOTAL** | **86** | **62** | **24** | **🔄 In Progress** |
 
 ---
 
