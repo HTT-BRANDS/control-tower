@@ -17,7 +17,8 @@
     <!-- CSS-First Tailwind v4 -->
     <link rel="stylesheet" href="/static/css/theme.css">
     
-    <!-- HTMX -->
+    <!-- HTMX + CSP nonce for hx-boost inline script execution -->
+    <meta name="htmx-config" content='{"inlineScriptNonce":"{{ request.state.csp_nonce }}"}'>
     <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret #}
     
     <!-- Chart.js -->

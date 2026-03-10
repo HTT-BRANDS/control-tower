@@ -334,9 +334,7 @@ setInterval(function() {
     htmx.trigger('#overall-status', 'refresh');
 }, 30000);
 </script>
-{% endblock %}
 
-{% block extra_scripts %}
 <script nonce="{{ request.state.csp_nonce }}">
     // Handle HTMX responses
     document.body.addEventListener('htmx:afterSwap', function(event) {

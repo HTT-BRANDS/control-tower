@@ -117,9 +117,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
 <script nonce="{{ request.state.csp_nonce }}">
 async function fetchJSON(url) {
     const resp = await fetch(url, { credentials: 'same-origin' });
@@ -183,6 +181,12 @@ async function loadAllData() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadAllData);
+// Works on both full page load and HTMX navigation swap
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadAllData);
+} else {
+    loadAllData();
+}
 </script>
 {% endblock %}
+
