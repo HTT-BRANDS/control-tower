@@ -176,7 +176,7 @@ class ComplianceService:
 
         return sorted(violations, key=lambda x: x.violation_count, reverse=True)[:limit]
 
-    @cached("compliance_summary")
+    @cached("compliance_scores")
     async def get_scores_by_tenant(self, tenant_id: str | None = None) -> list[ComplianceScore]:
         """Get compliance scores, optionally filtered by tenant."""
         query = self.db.query(Tenant).filter(Tenant.is_active)
@@ -240,7 +240,7 @@ class ComplianceService:
             for p in policies
         ]
 
-    @cached("compliance_summary")
+    @cached("compliance_trends")
     async def get_compliance_trends(
         self, tenant_ids: list[str] | None = None, days: int = 30
     ) -> list[dict]:

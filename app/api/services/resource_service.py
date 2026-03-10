@@ -124,7 +124,7 @@ class ResourceService:
             resources=items,
         )
 
-    @cached("resource_inventory")
+    @cached("resource_orphaned")
     async def get_orphaned_resources(self) -> list[OrphanedResource]:
         """Get list of orphaned resources."""
         resources = (
@@ -176,7 +176,7 @@ class ResourceService:
             for r in resources
         ]
 
-    @cached("resource_inventory")
+    @cached("resource_tagging")
     async def get_tagging_compliance(
         self, required_tags: list[str] | None = None
     ) -> TaggingCompliance:
@@ -293,7 +293,7 @@ class ResourceService:
             for r in idle_resources
         ]
 
-    @cached("resource_inventory")
+    @cached("resource_idle_summary")
     async def get_idle_resources_summary(
         self, tenant_ids: list[str] | None = None
     ) -> IdleResourceSummary:

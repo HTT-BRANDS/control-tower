@@ -106,7 +106,7 @@ class IdentityService:
             by_tenant=tenant_summaries,
         )
 
-    @cached("identity_summary")
+    @cached("identity_privileged")
     async def get_privileged_accounts(
         self, tenant_id: str | None = None
     ) -> list[PrivilegedAccount]:
@@ -184,7 +184,7 @@ class IdentityService:
         # comparing last sign-in dates
         return []
 
-    @cached("identity_summary")
+    @cached("identity_trends")
     async def get_identity_trends(
         self, tenant_ids: list[str] | None = None, days: int = 30
     ) -> list[dict[str, Any]]:

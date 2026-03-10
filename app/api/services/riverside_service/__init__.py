@@ -172,7 +172,7 @@ class RiversideService:
         """
         return get_riverside_summary(self.db)
 
-    @cached("riverside_summary")
+    @cached("riverside_mfa_status")
     async def get_mfa_status(self) -> dict:
         """Get detailed MFA status for all tenants.
 
@@ -181,7 +181,7 @@ class RiversideService:
         """
         return get_mfa_status(self.db)
 
-    @cached("riverside_summary")
+    @cached("riverside_maturity_scores")
     async def get_maturity_scores(self) -> dict:
         """Get maturity scores for all domains and tenants.
 
@@ -208,7 +208,7 @@ class RiversideService:
         """
         return get_requirements(self.db, category, priority, status)
 
-    @cached("riverside_summary")
+    @cached("riverside_gaps")
     async def get_gaps(self) -> dict:
         """Get critical gaps analysis.
 

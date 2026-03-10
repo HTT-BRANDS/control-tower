@@ -3,7 +3,7 @@
     <div>
         <p class="text-sm font-medium text-wm-gray-100">Total Resources</p>
         <p class="text-3xl font-bold text-wm-gray-160">
-            {{ "{:,}".format(inventory.total_resources) }}
+            {{ "{:,}".format(inventory.total_resources|default(0)) }}
         </p>
     </div>
     <div class="p-3 bg-wm-spark-10 rounded-full">
@@ -13,6 +13,6 @@
     </div>
 </div>
 <div class="mt-2 text-sm">
-    <span class="text-wm-red-100">{{ inventory.orphaned_resources }} orphaned</span>
-    <span class="text-wm-gray-100"> (~${{ "{:,.0f}".format(inventory.orphaned_estimated_cost) }}/mo)</span>
+    <span class="text-wm-red-100">{{ inventory.orphaned_resources|default(0) }} orphaned</span>
+    <span class="text-wm-gray-100"> (~${{ "{:,.0f}".format(inventory.orphaned_estimated_cost|default(0)) }}/mo)</span>
 </div>

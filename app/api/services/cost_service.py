@@ -103,7 +103,7 @@ class CostService:
             top_services=top_services,
         )
 
-    @cached("cost_summary")
+    @cached("cost_by_tenant")
     async def get_costs_by_tenant(self, period_days: int = 30) -> list[CostByTenant]:
         """Get cost breakdown by tenant."""
         end_date = date.today()
@@ -134,7 +134,7 @@ class CostService:
 
         return sorted(result, key=lambda x: x.total_cost, reverse=True)
 
-    @cached("cost_summary")
+    @cached("cost_trends")
     async def get_cost_trends(
         self, days: int = 30, tenant_ids: list[str] | None = None
     ) -> list[CostTrend]:
@@ -208,7 +208,7 @@ class CostService:
             acknowledged_at=datetime.utcnow(),
         )
 
-    @cached("cost_summary")
+    @cached("cost_anomaly_trends")
     async def get_anomaly_trends(
         self, months: int = 6, tenant_ids: list[str] | None = None
     ) -> list[AnomalyTrend]:
@@ -255,7 +255,7 @@ class CostService:
             for month, data in sorted(by_month.items())
         ]
 
-    @cached("cost_summary")
+    @cached("cost_anomalies_by_service")
     async def get_anomalies_by_service(
         self, limit: int = 20, tenant_ids: list[str] | None = None
     ) -> list[AnomaliesByService]:
@@ -371,7 +371,7 @@ class CostService:
             acknowledged_at=anomaly.acknowledged_at,
         )
 
-    @cached("cost_summary")
+    @cached("cost_forecast")
     async def get_cost_forecast(
         self, days: int = 30, tenant_ids: list[str] | None = None
     ) -> list[CostForecast]:
