@@ -87,6 +87,7 @@ def test_is_production_returns_true_for_production(monkeypatch):
     """Test is_production returns True when environment='production'."""
     # Set environment variable so the validator picks it up
     monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-long-enough-for-production-use")
 
     # Pass values directly to avoid list parsing issues
     settings = Settings(
@@ -121,6 +122,7 @@ def test_is_development_returns_true_for_development(monkeypatch):
 def test_is_development_returns_false_for_production(monkeypatch):
     """Test is_development returns False for non-development."""
     monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-long-enough-for-production-use")
 
     settings = Settings(
         debug=False,
@@ -246,6 +248,7 @@ def test_validate_cors_origins_prevents_default_localhost_in_production(monkeypa
 def test_validate_cors_origins_allows_explicit_origins_in_production(monkeypatch):
     """Test validate_cors_origins allows explicit origins in production."""
     monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-long-enough-for-production-use")
 
     settings = Settings(
         debug=False,
@@ -310,6 +313,51 @@ def test_parse_cors_origins_from_comma_separated_string(monkeypatch):
 
     assert "http://localhost:3000" in settings.cors_origins
     assert "http://localhost:8080" in settings.cors_origins
+
+
+# ============================================================================
+# JWT Production Validation Tests
+# ============================================================================
+
+
+def test_jwt_secret_required_in_production(monkeypatch):
+    """JWT_SECRET_KEY must be explicitly set in production."""
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("DEBUG", "false")
+
+    with pytest.raises(ValueError, match="JWT_SECRET_KEY must be explicitly set"):
+        Settings(
+            cors_origins=["https://app.example.com"],
+            _env_file=None,
+        )
+
+
+def test_jwt_secret_accepted_when_set_in_production(monkeypatch):
+    """JWT_SECRET_KEY should be accepted when explicitly set in production."""
+    monkeypatch.setenv("JWT_SECRET_KEY", "a-very-secure-production-secret-key-here")
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("DEBUG", "false")
+
+    settings = Settings(
+        cors_origins=["https://app.example.com"],
+        _env_file=None,
+    )
+
+    assert settings.jwt_secret_key == "a-very-secure-production-secret-key-here"  # pragma: allowlist secret
+    assert settings.environment == "production"
+
+
+def test_jwt_secret_not_required_in_development(monkeypatch):
+    """JWT_SECRET_KEY should not be required in development."""
+    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ENVIRONMENT", "development")
+
+    # Should not raise - auto-generated key is fine in development
+    settings = Settings(_env_file=None)
+
+    assert settings.jwt_secret_key is not None
+    assert len(settings.jwt_secret_key) >= 32
 
 
 # ============================================================================

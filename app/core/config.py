@@ -252,6 +252,26 @@ class Settings(BaseSettings):
 
         return self
 
+    @model_validator(mode="after")
+    def validate_jwt_secret_production(self):
+        """CRITICAL: Require explicit JWT_SECRET_KEY in production."""
+        if self.environment == "production":
+            # Check if the key was auto-generated (not explicitly set)
+            # A production deployment MUST have a stable, explicitly-set key
+            # so tokens survive restarts and work across multiple instances
+            explicit_key = os.getenv("JWT_SECRET_KEY")
+            if not explicit_key:
+                logger.error(
+                    "CRITICAL SECURITY ERROR: JWT_SECRET_KEY must be explicitly set "
+                    "in production! Auto-generated keys change on restart and break "
+                    "existing tokens. Set JWT_SECRET_KEY in your environment."
+                )
+                raise ValueError(
+                    "JWT_SECRET_KEY must be explicitly set in production environment. "
+                    'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+                )
+        return self
+
     @field_validator("managed_tenant_ids", mode="before")
     @classmethod
     def parse_managed_tenant_ids(cls, v: str | list[str]) -> list[str]:
