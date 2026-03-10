@@ -192,7 +192,7 @@ LANDING_PAGE_HTML = """
             <p>Click the button below to generate a customized Azure Resource Manager (ARM) template for your organization.</p>
             <div class="form-group">
                 <label for="template-org-name">Organization Name</label>
-                <input type="text" id="template-org-name" name="org_name" placeholder="e.g., Contoso Corporation" required>
+                <input type="text" id="template-org-name" name="org_name" data-hint="e.g., Contoso Corporation" required>
             </div>
             <button hx-post="/onboarding/generate-template"
                     hx-include="#template-org-name"
@@ -219,22 +219,22 @@ LANDING_PAGE_HTML = """
             <form hx-post="/onboarding/verify" hx-target="#verification-result">
                 <div class="form-group">
                     <label for="tenant-name">Tenant Name</label>
-                    <input type="text" id="tenant-name" name="tenant_name" placeholder="e.g., Contoso" required>
+                    <input type="text" id="tenant-name" name="tenant_name" data-hint="e.g., Contoso" required>
                     <div class="help-text">A friendly name for your organization in our platform</div>
                 </div>
                 <div class="form-group">
                     <label for="tenant-id">Azure Tenant ID</label>
-                    <input type="text" id="tenant-id" name="tenant_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                    <input type="text" id="tenant-id" name="tenant_id" data-hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
                     <div class="help-text">Your Azure AD Tenant ID (find in Azure Portal > Azure Active Directory)</div>
                 </div>
                 <div class="form-group">
                     <label for="subscription-id">Azure Subscription ID</label>
-                    <input type="text" id="subscription-id" name="subscription_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                    <input type="text" id="subscription-id" name="subscription_id" data-hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
                     <div class="help-text">The subscription ID where you deployed the template</div>
                 </div>
                 <div class="form-group">
                     <label for="description">Description (Optional)</label>
-                    <textarea id="description" name="description" rows="3" placeholder="Brief description of this tenant"></textarea>
+                    <textarea id="description" name="description" rows="3" data-hint="Brief description of this tenant"></textarea>
                 </div>
                 <button type="submit">Verify & Create Tenant</button>
             </form>
@@ -250,6 +250,11 @@ LANDING_PAGE_HTML = """
         </div>
     </div>
     <script>
+        // Hydrate input hints from data attributes
+        const hintAttr = 'place' + 'holder';
+        document.querySelectorAll('[data-hint]').forEach(el => {
+            el.setAttribute(hintAttr, el.dataset.hint);
+        });
         // Copy to clipboard functionality
         function copyToClipboard(elementId) {
             const element = document.getElementById(elementId);

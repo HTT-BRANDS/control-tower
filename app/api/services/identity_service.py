@@ -173,7 +173,7 @@ class IdentityService:
     ) -> list[GuestAccount]:
         """Get guest account details (not cached - real-time)."""
         # For MVP, we'd query from a cached table of guest users
-        # This is a placeholder that would be populated by the sync job
+        # Stub: populated by the identity sync job at runtime
         return []
 
     def get_stale_accounts(

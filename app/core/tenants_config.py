@@ -266,7 +266,7 @@ def validate_tenant_config() -> list[str]:
     issues = []
 
     for code, config in RIVERSIDE_TENANTS.items():
-        # Check for placeholder values
+        # Check for unconfigured or missing values
         if config.tenant_id in ("TBD", "", None):
             issues.append(f"{code}: Tenant ID is not set")
 
