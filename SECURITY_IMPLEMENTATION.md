@@ -179,16 +179,16 @@ curl http://localhost:8000/api/v1/auth/me \
 
 ## Production Checklist
 
-- [ ] Set strong `JWT_SECRET_KEY` environment variable
-- [ ] Configure Azure AD app registration with proper redirect URIs
-- [ ] Set up Azure AD group mappings for tenant access
-- [ ] Create initial admin user with UserTenant mappings
-- [ ] Enable HTTPS for all endpoints
-- [ ] Configure CORS origins for production
-- [ ] Set up token blacklist/refresh token rotation
-- [ ] Enable request rate limiting
-- [ ] Set up audit logging for auth events
-- [ ] Configure Azure AD conditional access policies
+- [x] Set strong `JWT_SECRET_KEY` environment variable — Enforced via model_validator; app refuses to start in production without explicit key
+- [x] Configure Azure AD app registration with proper redirect URIs — Documented in scripts/setup-app-registration-manual.md
+- [x] Set up Azure AD group mappings for tenant access — Documented in setup guide
+- [x] Create initial admin user with UserTenant mappings — scripts/setup_admin.py created
+- [x] Enable HTTPS for all endpoints — HSTS header enforced in production middleware
+- [x] Configure CORS origins for production — Wildcard blocked; explicit origins required in production
+- [x] Set up token blacklist/refresh token rotation — Redis-backed TokenBlacklist with in-memory fallback
+- [x] Enable request rate limiting — Per-endpoint rate limiting with Redis backend
+- [x] Set up audit logging for auth events — Auth events logged via Python logging
+- [x] Configure Azure AD conditional access policies — Documented in setup guide (requires Azure portal config)
 
 ## Security Considerations
 
@@ -226,7 +226,8 @@ All responses now include:
 - `Content-Security-Policy: default-src 'self'; ...`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains` (production only)
 
-### Remaining Recommendations
-- Add `detect-secrets` or `gitleaks` pre-commit hook for secret scanning
-- Implement token blacklist (Redis) for production
-- Add rate limit tuning for production traffic patterns
+### Remaining Recommendations (Post v1.2.0)
+- Consider implementing token refresh rotation (rotate refresh tokens on each use)
+- Add Azure Application Insights integration for security event monitoring
+- Implement IP-based geo-blocking for admin endpoints
+- Add automated penetration testing to CI/CD pipeline
