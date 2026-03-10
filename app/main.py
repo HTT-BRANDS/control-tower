@@ -17,6 +17,7 @@ from app.api.routes import (
     compliance_router,
     costs_router,
     dashboard_router,
+    public_router,
     dmarc_router,
     exports_router,
     identity_router,
@@ -208,6 +209,7 @@ app.include_router(auth_router)
 app.include_router(onboarding_router)
 
 # Protected routers (will be secured via dependencies in route files)
+app.include_router(public_router)
 app.include_router(dashboard_router)
 app.include_router(costs_router)
 app.include_router(compliance_router)

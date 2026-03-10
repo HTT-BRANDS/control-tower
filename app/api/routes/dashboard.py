@@ -385,7 +385,11 @@ async def dmarc_dashboard(
     )
 
 
-@router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    """Login page."""
+# Public routes (no auth required)
+public_router = APIRouter(tags=["public"])
+
+
+@public_router.get("/login", response_class=HTMLResponse)
+async def login_page_public(request: Request):
+    """Login page — publicly accessible."""
     return templates.TemplateResponse(request, "login.html")
