@@ -485,7 +485,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Validation: Smoke test script supports --url parameter for staging
   - Signed off by: Watchdog 🐕‍🦺
 
-- [ ] 7.3.4 Configure CI/CD OIDC federation (Code-Puppy 🐶)
+- [x] 7.3.4 Configure CI/CD OIDC federation (Code-Puppy 🐶)
   - Files: infrastructure/github-oidc.bicep, scripts/gh-oidc-setup.sh
   - Validation: OIDC setup documented with step-by-step instructions
   - Signed off by: Security Auditor 🛡️
@@ -540,8 +540,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
 | Phase 5: Design System Migration | 24 | 24 | 0 | ✅ Complete |
 | Phase 6: Cleanup & Consolidation | 10 | 10 | 0 | ✅ Complete |
-| Phase 7: Production Hardening | 20 | 12 | 8 | 🔄 In Progress |
-| **TOTAL** | **86** | **78** | **8** | **🔄 In Progress** |
+| Phase 7: Production Hardening | 20 | 13 | 7 | 🔄 In Progress |
+| **TOTAL** | **86** | **79** | **7** | **🔄 In Progress** |
 
 ---
 
