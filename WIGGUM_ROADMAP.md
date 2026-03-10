@@ -470,7 +470,7 @@ python scripts/sync_roadmap.py --update --task 1.1.1
   - Signed off by: Planning Agent 📋
 
 ### 7.3 Staging Deployment
-- [ ] 7.3.1 Deploy staging infrastructure via Bicep (Code-Puppy 🐶)
+- [x] 7.3.1 Deploy staging infrastructure via Bicep (Code-Puppy 🐶)
   - Files: infrastructure/parameters.staging.json, infrastructure/deploy.sh
   - Validation: Staging deployment documented in docs/STAGING_DEPLOYMENT_CHECKLIST.md
   - Signed off by: Solutions Architect 🏛️
@@ -540,8 +540,8 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 | Phase 4: Validation | 5 | 5 | 0 | ✅ Complete |
 | Phase 5: Design System Migration | 24 | 24 | 0 | ✅ Complete |
 | Phase 6: Cleanup & Consolidation | 10 | 10 | 0 | ✅ Complete |
-| Phase 7: Production Hardening | 20 | 9 | 11 | 🔄 In Progress |
-| **TOTAL** | **86** | **75** | **11** | **🔄 In Progress** |
+| Phase 7: Production Hardening | 20 | 10 | 10 | 🔄 In Progress |
+| **TOTAL** | **86** | **76** | **10** | **🔄 In Progress** |
 
 ---
 
