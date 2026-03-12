@@ -66,6 +66,15 @@ Performed by planning-agent-679a3d:
 - [x] RIVERSIDE_EXECUTIVE_SUMMARY.md — Updated stale dates, added dashboard references
 - [x] SESSION_HANDOFF.md — Updated for current session
 
+### Documentation & Code Quality Cleanup (March 2026)
+Performed by planning-agent-679a3d + python-programmer:
+- [x] CHANGELOG.md — Removed stale Unreleased item (backfill placeholders)
+- [x] README.md — Moved completed roadmap item, added baseline notes
+- [x] RIVERSIDE_EXECUTIVE_SUMMARY.md — Updated stale dates, added dashboard references
+- [x] Fixed 49 ruff linting errors across 14 Python files (E402, E702, F841, I001, UP017)
+- [x] Reorganized imports in azure_client.py, fixed unused variables in tests
+- [x] All 1843 tests pass, ruff clean, committed and pushed to origin/dev
+
 ---
 
 *This handoff is the human-readable summary. The machine-readable source of truth is WIGGUM_ROADMAP.md, validated by scripts/sync_roadmap.py.*
