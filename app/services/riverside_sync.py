@@ -125,7 +125,7 @@ async def sync_all_tenants(
     db: Session | None = None,
     skip_failed: bool = True,
     include_mfa: bool = True,
-    include_devices: bool = True,
+    include_devices: bool = False,  # Disabled by default - Sui Generis integration coming in Phase 2
     include_requirements: bool = True,
     include_maturity: bool = True,
 ) -> dict:
@@ -199,17 +199,18 @@ async def sync_all_tenants(
                                 raise
 
                     # Sync device compliance
+                    # NOTE: Device sync disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)
                     if include_devices:
-                        try:
-                            device_result = await sync_tenant_devices(tenant.tenant_id, session)
-                            tenant_results["devices"] = device_result
-                            results["devices"][tenant.tenant_id] = device_result
-                        except Exception as e:
-                            logger.error(f"Device sync failed for {tenant.name}: {e}")
-                            tenant_results["devices"] = {"status": "error", "error": str(e)}
-                            results["devices"][tenant.tenant_id] = tenant_results["devices"]
-                            if not skip_failed:
-                                raise
+                        logger.info(
+                            f"Device sync skipped for {tenant.name}: "
+                            "Sui Generis MSP integration coming in Phase 2 (Q3 2025)"
+                        )
+                        skipped_result = {
+                            "status": "skipped",
+                            "message": "Device sync disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)",
+                        }
+                        tenant_results["devices"] = skipped_result
+                        results["devices"][tenant.tenant_id] = skipped_result
 
                     # Sync requirement status
                     if include_requirements:

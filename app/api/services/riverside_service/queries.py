@@ -75,13 +75,14 @@ def get_riverside_summary(db) -> dict:
             RiversideMFA.tenant_id == tenant.tenant_id
         ).order_by(RiversideMFA.snapshot_date.desc()).first()
 
-        device = db.query(RiversideDeviceCompliance).filter(
-            RiversideDeviceCompliance.tenant_id == tenant.tenant_id
-        ).order_by(RiversideDeviceCompliance.snapshot_date.desc()).first()
+        # NOTE: Device compliance disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)
+        # device = db.query(RiversideDeviceCompliance).filter(
+        #     RiversideDeviceCompliance.tenant_id == tenant.tenant_id
+        # ).order_by(RiversideDeviceCompliance.snapshot_date.desc()).first()
 
         maturity_score = compliance.overall_maturity_score if compliance else 0.0
         mfa_coverage = mfa.mfa_coverage_percentage if mfa else 0.0
-        device_compliance = device.compliance_percentage if device else 0.0
+        # device_compliance = device.compliance_percentage if device else 0.0
         reqs_completed = compliance.requirements_completed if compliance else 0
         reqs_total = compliance.requirements_total if compliance else 0
         gaps = compliance.critical_gaps_count if compliance else 0
@@ -96,7 +97,11 @@ def get_riverside_summary(db) -> dict:
             "maturity_score": maturity_score,
             "mfa_coverage": mfa_coverage,
             "admin_mfa_pct": mfa.admin_mfa_percentage if mfa else 0.0,
-            "device_compliance": device_compliance,
+            "device_compliance": {
+                "status": "coming_soon",
+                "message": "Device compliance via Sui Generis MSP (Phase 2, Q3 2025)",
+                "enabled": False,
+            },
             "requirements_completed": reqs_completed,
             "requirements_total": reqs_total,
             "critical_gaps": gaps,
@@ -104,7 +109,7 @@ def get_riverside_summary(db) -> dict:
 
         total_maturity += maturity_score
         total_mfa += mfa_coverage
-        total_device += device_compliance
+        # total_device += device_compliance  # Disabled - Sui Generis Phase 2
         total_requirements_completed += reqs_completed
         total_requirements += reqs_total
         total_critical_gaps += gaps
@@ -158,7 +163,11 @@ def get_riverside_summary(db) -> dict:
         "target_maturity": 3.0,
         "overall_maturity": round(total_maturity / num_tenants, 2),
         "overall_mfa_coverage": round(total_mfa / num_tenants, 1),
-        "overall_device_compliance": round(total_device / num_tenants, 1),
+        "overall_device_compliance": {
+            "status": "coming_soon",
+            "message": "Device compliance monitoring via Sui Generis MSP integration (Phase 2, Q3 2025)",
+            "enabled": False,
+        },
         "total_requirements_completed": total_requirements_completed,
         "total_requirements": total_requirements,
         "overall_completion_pct": round(

@@ -588,20 +588,22 @@ class TestSyncAllTenants:
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
 
-            with patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa, \
-                 patch("app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock) as mock_devices:
+            with patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa:
 
                 mock_mfa.return_value = {"status": "success"}
-                mock_devices.return_value = {"status": "success"}
 
                 result = await sync_all_tenants(
                     mock_session,
                     include_mfa=True,
-                    include_devices=True,
+                    include_devices=True,  # Will be skipped - Sui Generis Phase 2
                     include_requirements=False,
                     include_maturity=False,
                 )
 
                 assert result["status"] == "success"
                 mock_mfa.assert_called()
-                mock_devices.assert_called()
+                # Device sync is disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)
+                # Verify skipped status is returned instead
+                for tenant_id, device_result in result["results"]["devices"].items():
+                    assert device_result["status"] == "skipped"
+                    assert "Sui Generis" in device_result["message"]

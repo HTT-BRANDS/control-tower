@@ -1059,6 +1059,8 @@ class GraphClient:
         """Get all users with pagination support.
 
         Handles large user bases by paginating through results.
+        Gracefully degrades by stripping signInActivity if the tenant
+        lacks Azure AD Premium (returns 403 for that property).
 
         Args:
             batch_size: Number of users per page (max 999)
@@ -1086,20 +1088,36 @@ class GraphClient:
         if filter_param:
             params["$filter"] = filter_param
 
-        while endpoint:
+        # First request — may fail with 403 if signInActivity needs
+        # Azure AD Premium which the tenant lacks.
+        try:
             data = await self._request("GET", endpoint, params)
-            users = data.get("value", [])
-            all_users.extend(users)
-
-            # Handle pagination
-            next_link = data.get("@odata.nextLink")
-            if next_link:
-                endpoint = next_link.replace(GRAPH_API_BASE, "")
-                params = None
-                # Rate limiting compliance
-                await asyncio.sleep(0.1)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 403 and "signInActivity" in (params or {}).get("$select", ""):
+                logger.warning(
+                    "signInActivity requires Azure AD Premium for tenant "
+                    "%s — retrying without it",
+                    self.tenant_id[:8],
+                )
+                fields_without_sign_in = [
+                    f for f in select_fields if f != "signInActivity"
+                ]
+                params["$select"] = ",".join(fields_without_sign_in)
+                data = await self._request("GET", endpoint, params)
             else:
-                endpoint = None
+                raise
+
+        users = data.get("value", [])
+        all_users.extend(users)
+
+        # Handle remaining pages
+        next_link = data.get("@odata.nextLink")
+        while next_link:
+            endpoint = next_link.replace(GRAPH_API_BASE, "")
+            data = await self._request("GET", endpoint)
+            all_users.extend(data.get("value", []))
+            next_link = data.get("@odata.nextLink")
+            await asyncio.sleep(0.1)
 
         return all_users
 
