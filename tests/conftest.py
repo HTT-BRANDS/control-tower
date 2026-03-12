@@ -1,6 +1,5 @@
 """Test configuration and fixtures."""
 
-import uuid
 from unittest.mock import MagicMock
 
 import pytest

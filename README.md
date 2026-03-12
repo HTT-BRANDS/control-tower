@@ -294,6 +294,8 @@ http://localhost:8000/api/v1/riverside/maturity-scores
 
 ### Critical Gaps Dashboard
 
+> **Note:** The values below reflect the initial baseline assessment. See the live [`/riverside`](http://localhost:8000/riverside) dashboard for current real-time metrics.
+
 | Requirement | Status | Current | Target | Deadline | Risk |
 |-------------|--------|---------|--------|----------|------|
 | IAM-12: Universal MFA | In Progress | 30% | 100% | Immediate | Critical ($4M) |
@@ -346,12 +348,12 @@ For comprehensive Riverside compliance documentation, see:
 - [x] CI/CD OIDC federation documented
 - [x] Staging deployment checklist documented
 - [x] Version 1.2.0 production hardening release
+- [x] Replace backfill placeholder data with real Azure API calls (v1.2.0)
 
 ### Planned
 
 - [ ] Connect real Azure tenant credentials via Key Vault
 - [ ] Staging environment deployment
-- [ ] Replace backfill placeholder data with real Azure API calls
 - [ ] Custom compliance frameworks
 - [ ] Teams bot integration
 - [ ] Access review workflows

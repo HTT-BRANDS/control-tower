@@ -12,7 +12,6 @@ import json
 import pytest
 from playwright.sync_api import BrowserContext, Page, expect
 
-
 # ---------------------------------------------------------------------------
 # Cookie-authenticated browser context
 # ---------------------------------------------------------------------------
@@ -64,14 +63,16 @@ class TestLoginFlow:
         assert resp.status == 200
         expect(pg.locator("form")).to_be_visible()
         expect(pg.locator('input[type="password"]')).to_be_visible()
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_unauthenticated_redirect_to_login(self, browser, base_url: str):
         ctx = browser.new_context()
         pg = ctx.new_page()
         pg.goto(f"{base_url}/dashboard")
         assert "/login" in pg.url
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_login_sets_cookie_and_redirects(self, browser, base_url: str):
         ctx = browser.new_context()
@@ -82,7 +83,8 @@ class TestLoginFlow:
         pg.click('button[type="submit"]')
         pg.wait_for_url("**/dashboard**", timeout=10_000)
         assert any(c["name"] == "access_token" for c in ctx.cookies())
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_bad_credentials_show_error(self, browser, base_url: str):
         ctx = browser.new_context()
@@ -93,7 +95,8 @@ class TestLoginFlow:
         pg.click('button[type="submit"]')
         pg.wait_for_timeout(1000)
         assert "/dashboard" not in pg.url
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
 
 # ===========================================================================
@@ -318,14 +321,16 @@ class TestPublicEndpoints:
         assert resp.status == 200
         body = json.loads(pg.evaluate("() => document.body.innerText"))
         assert body["status"] == "healthy"
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_detailed_health_check(self, browser, base_url: str):
         ctx = browser.new_context()
         pg = ctx.new_page()
         resp = pg.goto(f"{base_url}/health/detailed")
         assert resp.status == 200
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_login_page_accessible(self, browser, base_url: str):
         ctx = browser.new_context()
@@ -333,14 +338,16 @@ class TestPublicEndpoints:
         resp = pg.goto(f"{base_url}/login")
         assert resp.status == 200
         expect(pg.locator("form")).to_be_visible()
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
     def test_metrics_endpoint(self, browser, base_url: str):
         ctx = browser.new_context()
         pg = ctx.new_page()
         resp = pg.goto(f"{base_url}/metrics")
         assert resp.status == 200
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
 
 # ===========================================================================
@@ -440,7 +447,7 @@ class TestExportDownloads:
         )
         assert result["status"] == 200, f"{path} returned {result['status']}"
         assert "text/csv" in result["ct"], f"Not CSV: {result['ct']}"
-        assert ".csv" in result["cd"], f"No .csv in Content-Disposition"
+        assert ".csv" in result["cd"], "No .csv in Content-Disposition"
 
 
 # ===========================================================================
@@ -458,7 +465,8 @@ class TestAuthProtection:
         pg = ctx.new_page()
         pg.goto(f"{base_url}{path}")
         assert "/login" in pg.url, f"{path} didn't redirect to login"
-        pg.close(); ctx.close()
+        pg.close()
+        ctx.close()
 
 
 # ===========================================================================

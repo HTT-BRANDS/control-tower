@@ -7,7 +7,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.sync.costs import sync_costs
 
-
 # Shared patch target for the REST helper
 _QUERY_COSTS_REST = "app.core.sync.costs._query_costs_rest"
 

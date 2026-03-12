@@ -1,8 +1,8 @@
 # Session Handoff — Azure Governance Platform
 
-**Last Updated:** March 9, 2026
+**Last Updated:** March 2026
 **Version:** 1.2.0
-**Agent:** Code Puppy 🐶 (code-puppy-4be208) — final landing verification
+**Agent:** Planning Agent 📋 (planning-agent-679a3d) — documentation cleanup
 
 ---
 
@@ -41,21 +41,30 @@
 
 ## 🚀 Next Steps (Post v1.2.0)
 
-1. Merge `feature/agile-sdlc` to `main`
+1. ~~Merge `feature/agile-sdlc` to `main`~~ — Verify branch state
 2. Execute staging deployment using docs/STAGING_DEPLOYMENT_CHECKLIST.md
 3. Configure Azure AD app registration using scripts/setup-app-registration-manual.md
 4. Create admin user using scripts/setup_admin.py
 5. Run staging smoke tests using scripts/smoke_test.py --url <staging-url>
+6. Connect real Azure tenant credentials (HTT, BCC, FN, TLL, DCE) via Key Vault
 
 ---
 
-## ✅ Final Landing Verification
+## ✅ Session History
 
-All steps verified by code-puppy-4be208 on final landing:
+### v1.2.0 Landing (March 9, 2026)
+Verified by code-puppy-4be208:
 - [x] `sync_roadmap.py --verify --json` → 86/86 complete, 0 remaining
 - [x] `pytest tests/` → 1,984 collected, 0 failures
 - [x] `ruff check .` → All checks passed
 - [x] Git commit, pull --rebase, bd sync, push → clean
+
+### Documentation Cleanup (March 2026)
+Performed by planning-agent-679a3d:
+- [x] CHANGELOG.md — Removed stale Unreleased item (backfill placeholders)
+- [x] README.md — Moved completed roadmap item, added baseline notes
+- [x] RIVERSIDE_EXECUTIVE_SUMMARY.md — Updated stale dates, added dashboard references
+- [x] SESSION_HANDOFF.md — Updated for current session
 
 ---
 

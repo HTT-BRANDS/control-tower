@@ -10,8 +10,6 @@ a potential security vulnerability in the tenant isolation layer.
 from unittest.mock import MagicMock
 
 import pytest
-
-pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=False)
 from fastapi.testclient import TestClient
 
 from app.core.authorization import TenantAuthorization
@@ -19,6 +17,7 @@ from app.core.database import get_db
 from app.main import app
 
 # Mark all tests in this module as xfail - integration test fixtures need refinement
+pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=False)
 
 # ============================================================================
 # Fixtures

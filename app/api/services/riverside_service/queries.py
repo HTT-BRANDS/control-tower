@@ -20,7 +20,6 @@ from app.models.riverside import (
 from app.models.tenant import Tenant
 
 
-
 def _resolve_tenant_code(tenant) -> str:
     """Resolve the short code for a Tenant model.
 

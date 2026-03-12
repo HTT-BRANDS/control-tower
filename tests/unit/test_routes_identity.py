@@ -13,14 +13,11 @@ Tests all identity endpoints with FastAPI TestClient:
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.schemas.identity import (
     IdentitySummary,
     PrivilegedAccount,
     StaleAccount,
 )
-
 
 # ============================================================================
 # GET /api/v1/identity/summary Tests

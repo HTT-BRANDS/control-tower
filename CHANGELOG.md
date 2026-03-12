@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Connect real Azure tenant credentials (HTT, BCC, FN, TLL, DCE)
 - Staging environment deployment
-- Replace backfill fetch_data() placeholders with real Azure API calls
 - Custom compliance frameworks
 - Teams bot integration
 

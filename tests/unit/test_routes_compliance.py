@@ -8,13 +8,10 @@ Tests all compliance endpoints with FastAPI TestClient:
 - GET /api/v1/compliance/status
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.schemas.compliance import ComplianceScore, ComplianceSummary, PolicyStatus
-
 
 # ============================================================================
 # GET /api/v1/compliance/summary Tests
@@ -72,7 +69,7 @@ class TestComplianceScoresEndpoint:
                     compliant_resources=85,
                     non_compliant_resources=15,
                     exempt_resources=0,
-                    last_updated=datetime.now(timezone.utc),
+                    last_updated=datetime.now(UTC),
                 ),
             ]
         )

@@ -2,7 +2,7 @@
 
 **Document Purpose**: One-page overview for executive stakeholders
 
-**Last Updated**: January 2026
+**Last Updated**: March 2026
 
 ---
 
@@ -16,26 +16,19 @@
 | **Financial Risk** | $4M | $0 | 🔴 Critical |
 | **Critical Gaps** | 8 | 0 | 🔴 Critical |
 
+> **Note:** The metrics above are initial baseline values from January 2026. For current real-time data, see the platform's `/riverside` dashboard.
+
 ---
 
 ## Timeline to Deadline
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           COUNTDOWN TO JULY 8, 2026                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   ████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │
-│   0%                                           100%                        │
-│                                                                              │
-│   Today: January 8, 2026                                                    │
-│   Deadline: July 8, 2026                                                    │
-│   Remaining: 160 days                                                       │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+> Timeline data is tracked in real-time on the platform's `/riverside` dashboard.
+> Original baseline: January 8, 2026 (160 days remaining).
+> Deadline: July 8, 2026.
 
 ### Key Milestones
+
+> **Note:** Milestone statuses below are from the original January 2026 baseline plan. Current progress is tracked on the live dashboard.
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|

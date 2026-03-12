@@ -11,10 +11,7 @@ Tests all cost endpoints with FastAPI TestClient:
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.schemas.cost import CostByTenant, CostSummary, CostTrend
-
 
 # ============================================================================
 # GET /api/v1/costs/summary Tests

@@ -4,7 +4,8 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.bulk import router as bulk_router
 from app.api.routes.compliance import router as compliance_router
 from app.api.routes.costs import router as costs_router
-from app.api.routes.dashboard import public_router, router as dashboard_router
+from app.api.routes.dashboard import public_router
+from app.api.routes.dashboard import router as dashboard_router
 from app.api.routes.dmarc import router as dmarc_router
 from app.api.routes.exports import router as exports_router
 from app.api.routes.identity import router as identity_router

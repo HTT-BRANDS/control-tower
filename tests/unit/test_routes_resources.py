@@ -9,10 +9,8 @@ Tests all resource endpoints with FastAPI TestClient:
 - GET /api/v1/resources/tagging
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from app.schemas.resource import (
     IdleResourceSummary,
@@ -22,7 +20,6 @@ from app.schemas.resource import (
     TaggingCompliance,
     TagResourceResponse,
 )
-
 
 # ============================================================================
 # GET /api/v1/resources Tests
@@ -35,7 +32,7 @@ class TestResourcesEndpoint:
     @patch("app.api.routes.resources.ResourceService")
     def test_get_resources_success(self, mock_service_cls, authed_client):
         """Resources endpoint returns inventory data."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         mock_svc = MagicMock()
         mock_svc.get_resource_inventory = AsyncMock(
             return_value=ResourceInventory(
@@ -222,7 +219,7 @@ class TestTagIdleResourceEndpoint:
             return_value=TagResourceResponse(
                 success=True,
                 resource_id="resource-123",
-                tagged_at=datetime.now(timezone.utc),
+                tagged_at=datetime.now(UTC),
             )
         )
         mock_service_cls.return_value = mock_svc

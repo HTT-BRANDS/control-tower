@@ -15,8 +15,6 @@ Covered endpoints:
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=False)
 from fastapi.testclient import TestClient
 
 from app.core.auth import User
@@ -26,6 +24,7 @@ from app.models.riverside import RequirementStatus
 from tests.fixtures.riverside_fixtures import create_riverside_test_data
 
 # Mark all tests in this module as xfail - integration test fixtures need refinement
+pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=False)
 
 # ============================================================================
 # Fixtures
@@ -666,16 +665,17 @@ class TestRiversideDataConsistency:
         summary = riverside_client.get("/api/v1/riverside/summary").json()
         mfa = riverside_client.get("/api/v1/riverside/mfa-status").json()
         maturity = riverside_client.get("/api/v1/riverside/maturity-scores").json()
-        gaps = riverside_client.get("/api/v1/riverside/gaps").json()
+        gaps_data = riverside_client.get("/api/v1/riverside/gaps").json()
 
         # Extract tenant IDs from each endpoint
         summary_tenants = {t["tenant_id"] for t in summary.get("tenant_summaries", [])}
         mfa_tenants = {t["tenant_id"] for t in mfa.get("tenants", [])}
-        {t["tenant_id"] for t in maturity.get("tenants", [])}
-        # Gaps endpoint doesn't have tenant-level breakdown
+        maturity_tenants = {t["tenant_id"] for t in maturity.get("tenants", [])}
+        # Gaps endpoint doesn't have tenant-level breakdown, but we verify it has summary
+        assert "summary" in gaps_data
 
         # All endpoints should have data for the same tenants
         # (Note: this assumes user has access to same tenants across endpoints)
-        if summary_tenants and mfa_tenants:
+        if summary_tenants and mfa_tenants and maturity_tenants:
             # At minimum, there should be overlap
             assert len(summary_tenants & mfa_tenants) > 0
