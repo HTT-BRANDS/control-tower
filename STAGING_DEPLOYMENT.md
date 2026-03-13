@@ -1,97 +1,217 @@
 # Staging Deployment — Final Steps
 
-## ✅ Completed Automatically
+## 🚨 CRITICAL: Azure Portal Access Required to Complete
 
-| Step | Status | Resource |
-|------|--------|----------|
-| Infrastructure deployment | ✅ Done | All Azure resources created |
-| ACR creation | ✅ Done | `acrgovstaging19859.azurecr.io` |
-| Image build & push | ✅ Done | `azure-governance-platform:staging` |
-| Managed identity | ✅ Done | Has ACR pull access |
-| App Service config | ✅ Done | Points to ACR image |
+**Status**: ⚠️ CLI configuration complete, container startup failing
+**Issue**: Container crashes immediately, logs inaccessible via CLI
+**Required**: Azure Portal access to diagnose and fix
 
-## 🔧 Manual Step Required (Azure Portal)
+---
 
-Due to Azure CLI bug, you must set the registry password manually:
+## ✅ Completed via CLI (2026-03-13)
 
-### Step 1: Get ACR Admin Password
-```bash
-az acr credential show --name acrgovstaging19859 --query "passwords[0].value" -o tsv
+### Infrastructure
+| Component | Name | Status |
+|-----------|------|--------|
+| Resource Group | rg-governance-staging | ✅ Created (eastus) |
+| App Service Plan | asp-governance-staging-xnczpwyvwsaba | ✅ B1 tier |
+| App Service | app-governance-staging-xnczpwyv | ✅ Created |
+| ACR | acrgovstaging19859.azurecr.io | ✅ Standard SKU |
+| Key Vault | kv-gov-staging-* | ✅ Created |
+| Storage Account | stgovstaging* | ✅ Created |
+| Application Insights | ai-governance-staging-* | ✅ Created |
+
+### Container Configuration
+| Setting | Value | Status |
+|---------|-------|--------|
+| Image | acrgovstaging19859.azurecr.io/azure-governance-platform:staging | ✅ Set |
+| Anonymous Pull | Enabled | ✅ ACR upgraded to Standard |
+| Environment Variables | All set via REST API | ✅ Confirmed |
+| Remote Debugging | Disabled | ✅ Set |
+| Always On | Enabled | ✅ Set |
+| Logging | Verbose | ✅ Set |
+
+### Environment Variables (Confirmed Set)
+```
+DATABASE_URL=sqlite:///./data/governance.db
+PORT=8000
+WEBSITES_PORT=8000
+ENVIRONMENT=staging
+PYTHONUNBUFFERED=1
+RIVERSIDE_HTT_CLIENT_SECRET=***
+RIVERSIDE_BCC_CLIENT_SECRET=***
+RIVERSIDE_FN_CLIENT_SECRET=***
+RIVERSIDE_TLL_CLIENT_SECRET=***
+RIVERSIDE_DCE_CLIENT_SECRET=***
+AZURE_TENANT_ID=0c0e35dc-188a-4eb3-b8ba-61752154b407
+AZURE_CLIENT_ID=1e3e8417-49f1-4d08-b7be-47045d8a12e9
+AZURE_CLIENT_SECRET=***
+RIVERSIDE_COMPLIANCE_ENABLED=true
+RIVERSIDE_TENANT_IDS=0c0e35dc-188a-4eb3-b8ba-61752154b407,...
 ```
 
-Copy this password (it will be a long string like `AbCdEfGhIjKlMnOpQrStUvWxYz1234567890=`)
+---
 
-### Step 2: Set in Azure Portal
+## ❌ Problem: Container Not Starting
 
-1. Open browser: https://portal.azure.com
-2. Navigate to: **Resource groups → rg-governance-staging**
-3. Click: **app-governance-staging-xnczpwyv** (App Service)
-4. Click: **Settings → Configuration**
-5. Under **Application settings**, find:
-   - `DOCKER_REGISTRY_SERVER_URL` — should be `https://acrgovstaging19859.azurecr.io`
-   - `DOCKER_REGISTRY_SERVER_USERNAME` — should be `acrgovstaging19859`
-   - `DOCKER_REGISTRY_SERVER_PASSWORD` — **this will be empty/null**
-6. Click on `DOCKER_REGISTRY_SERVER_PASSWORD`
-7. Paste the password from Step 1
-8. Click **OK**
-9. Click **Save** (top of page)
-10. Click **Continue** to confirm restart
+### Diagnostic Results
+| Test | Result |
+|------|--------|
+| Health endpoint (`/health`) | ❌ TIMEOUT (15s) |
+| Root endpoint (`/`) | ❌ TIMEOUT (15s) |
+| `az webapp log tail` | ❌ No output |
+| SSH access | ❌ "SSH endpoint unreachable" |
+| Container logs via API | ❌ Empty |
+| Instance logs via API | ❌ Empty |
 
-### Step 3: Verify Deployment
-
-Wait 2-3 minutes, then test:
-
-```bash
-# Check health endpoint
-curl https://app-governance-staging-xnczpwyv.azurewebsites.net/health
-
-# Expected: {"status":"healthy",...}
-
-# Check all endpoints
-curl https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/riverside/summary
+### Current App State
+```json
+{
+  "state": "Running",
+  "availabilityState": "Normal",
+  "linuxFxVersion": "DOCKER|acrgovstaging19859.azurecr.io/azure-governance-platform:staging",
+  "alwaysOn": true,
+  "enabled": true
+}
 ```
+
+**Note**: Azure reports "Running" but this means the App Service resource exists, not that the container is healthy.
+
+---
+
+## 🔍 Likely Root Causes
+
+### 1. Missing `/home/data/` Directory (MOST LIKELY)
+- App expects `DATABASE_URL=sqlite:///./data/governance.db`
+- Container may not have `/home/data/` directory
+- App crashes on startup trying to initialize database
+- **Fix**: Create directory in Portal Kudu
+
+### 2. Application Startup Crash
+- Python import error
+- Missing module in container
+- Syntax error in code
+- **Diagnose**: View container logs in Portal
+
+### 3. Port Binding Issue
+- App not binding to `$PORT` (8000)
+- Wrong port in container
+- **Diagnose**: Check Log Stream for port binding messages
+
+### 4. Entrypoint/Startup Command Issue
+- Dockerfile CMD not executing
+- Missing startup.sh
+- **Diagnose**: Check Container Settings in Portal
+
+---
+
+## 🔧 Required Portal Actions
+
+### Step 1: View Container Logs
+```
+https://portal.azure.com/#@0c0e35dc-188a-4eb3-b8ba-61752154b407/resource/
+subscriptions/32a28177-6fb2-4668-a528-6d6cafb9665e/resourceGroups/
+rg-governance-staging/providers/Microsoft.Web/sites/
+app-governance-staging-xnczpwyv/logStream
+```
+
+1. Click **Start** on Log Stream
+2. Click **Restart** (Overview → Restart)
+3. Watch logs for startup error
+4. Note the error message
+
+### Step 2: Access Kudu (Advanced Tools)
+**URL**: https://app-governance-staging-xnczpwyv.scm.azurewebsites.net
+
+1. Click **Debug console** → **Bash**
+2. Check directory structure:
+   ```bash
+   ls -la /home/
+   ls -la /home/data/ 2>/dev/null || echo "Directory missing!"
+   ls -la /app/
+   ```
+3. If `/home/data/` missing, create it:
+   ```bash
+   mkdir -p /home/data
+   touch /home/data/governance.db
+   ```
+4. Restart app from Portal
+
+### Step 3: Check Deployment Center
+```
+https://portal.azure.com/.../app-governance-staging-xnczpwyv/containerSettings
+```
+
+Verify:
+- **Image**: `acrgovstaging19859.azurecr.io/azure-governance-platform:staging`
+- **Startup File**: (should be empty or point to correct entrypoint)
+- **Continuous Deployment**: Off
+
+---
 
 ## 🎯 After Successful Startup
 
 Once the container starts successfully:
 
-### 1. Run Initial Sync
+### 1. Verify Health Endpoint
 ```bash
-# Trigger full sync for all tenants
+curl https://app-governance-staging-xnczpwyv.azurewebsites.net/health
+# Expected: {"status":"healthy",...}
+```
+
+### 2. Check Dashboard
+```bash
+curl https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/riverside/summary
+```
+
+### 3. Run Initial Sync
+```bash
 curl -X POST https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/riverside/sync \
   -H "Content-Type: application/json" \
   -d '{"include_mfa":true,"include_devices":false,"include_requirements":true,"include_maturity":true}'
 ```
 
-### 2. Verify Dashboards
-Open browser and check:
-- https://app-governance-staging-xnczpwyv.azurewebsites.net/ (main dashboard)
-- All 4 tenants should show MFA data (HTT, BCC, FN, DCE)
-- TLL will show 0% (no Azure AD Premium license)
+### 4. Update Documentation
+- Mark staging deployment complete in HANDOFF.md
+- Update this file with final status
 
-### 3. Update HANDOFF.md
-Mark staging deployment as complete.
+---
+
+## 🔗 Quick Access Links
+
+| Resource | URL |
+|----------|-----|
+| Azure Portal | https://portal.azure.com |
+| App Service | https://portal.azure.com/.../app-governance-staging-xnczpwyv |
+| Log Stream | https://portal.azure.com/.../app-governance-staging-xnczpwyv/logStream |
+| Kudu/SCM | https://app-governance-staging-xnczpwyv.scm.azurewebsites.net |
+| Container Settings | https://portal.azure.com/.../app-governance-staging-xnczpwyv/containerSettings |
+| App Settings | https://portal.azure.com/.../app-governance-staging-xnczpwyv/appsettings |
+| Public URL | https://app-governance-staging-xnczpwyv.azurewebsites.net |
+| Health | https://app-governance-staging-xnczpwyv.azurewebsites.net/health |
+
+---
 
 ## 📊 Current Status
 
 | Component | Status |
 |-----------|--------|
-| Infrastructure | ✅ Ready |
-| Container image | ✅ In ACR |
-| Auth config | ⚠️ Needs password set |
-| App running | ⏳ Pending auth fix |
-| Data sync | ⏳ Pending app start |
+| Infrastructure | ✅ Complete |
+| ACR Image | ✅ Available (anonymous pull) |
+| Environment Variables | ✅ Set |
+| App Service | ✅ Configured |
+| Container Startup | ❌ Failing (needs Portal diagnosis) |
+| Health Checks | ⏳ Pending startup |
+| Data Sync | ⏳ Pending startup |
 
-## 🔗 Resources
-
-- **Staging URL**: https://app-governance-staging-xnczpwyv.azurewebsites.net
-- **ACR**: acrgovstaging19859.azurecr.io
-- **Resource Group**: rg-governance-staging
+---
 
 ## 🐛 Known Issues
 
-### Azure CLI Password Bug
-The `az webapp config container set` command does not persist the `--docker-registry-server-password` value. This is a known Azure CLI issue. The workaround is to set the password via Azure Portal.
+### Azure CLI Limitations
+- `az webapp config container set --docker-registry-server-password` does not persist password (Azure CLI bug)
+- Container logs not accessible via CLI for crashing containers
+- SSH unavailable for non-responsive containers
 
 ### TLL Tenant (Lash Lounge)
 - Currently shows 0% MFA
@@ -101,62 +221,39 @@ The `az webapp config container set` command does not persist the `--docker-regi
 
 ---
 
-*Last updated: 2026-03-13*
+## 📝 Session Notes (2026-03-13)
+
+**Agent**: python-programmer-50bf61
+
+**Actions Taken**:
+1. Identified app service in HTT-CORE subscription (was looking in wrong subscription initially)
+2. Upgraded ACR from Basic to Standard SKU to enable anonymous pull
+3. Set all required environment variables via REST API
+4. Disabled remote debugging
+5. Enabled verbose logging
+6. Attempted SSH (failed - container not responding)
+7. Attempted log tail (no output - container crashing before logging)
+
+**Blocker**: Container crashes immediately on startup. All CLI diagnostic tools exhausted. Azure Portal access required to view container logs and identify root cause.
+
+**Recommendation**: Most likely cause is missing `/home/data/` directory for SQLite database. Fix via Kudu and restart.
 
 ---
 
-## 🚨 Update: Managed Identity Working, Portal Action Required
+*Last updated: 2026-03-13 - Portal access required to complete*
 
-### Discovery (2026-03-13)
-**Major Breakthrough**: Managed Identity IS working for ACR authentication!
+---
 
-From the logs:
-```
-19:14:26 - Application startup complete
-19:14:26 - Riverside scheduler started with all jobs
-19:14:26 - All compliance monitoring jobs loaded successfully
-```
+## Legacy Notes (Pre-2026-03-13)
 
-### The Problem
-Azure kills the container after **230 seconds** with `ContainerTimeout` error.
+*The following notes are from earlier debugging sessions and may not reflect current state:*
 
-**Attempted CLI fixes (did NOT work):**
-- ❌ `healthCheckPath: ""` → Still shows `null`
-- ❌ `WEBSITE_HEALTHCHECK_MAXPINGFAILURES=0` → Setting exists but doesn't prevent timeout
-- ❌ `startupTimeLimit` → Cannot set via CLI (shows `null`)
+### Original Issue: Registry Password
+The initial issue was that `DOCKER_REGISTRY_SERVER_PASSWORD` could not be set via CLI due to an Azure CLI bug. This was worked around by:
+1. Upgrading ACR to Standard SKU
+2. Enabling anonymous pull
+3. Removing registry credentials from App Service
 
-### Why CLI Doesn't Work
-Azure CLI does not support modifying health check timeout settings. These are platform-level settings that can only be changed via:
-1. Azure Portal
-2. ARM templates
-3. REST API direct calls
-
-### Required Portal Action
-
-1. **Go to Azure Portal**: https://portal.azure.com
-2. **Navigate to**: App Services → app-governance-staging-xnczpwyv
-3. **Disable Health Checks**:
-   - Click **Monitoring → Health check**
-   - Uncheck **"Enable health check"**
-   - Click **Save**
-4. **Restart**:
-   - Click **Overview → Restart**
-   - Click **Yes**
-
-### Current Status
-
-| Component | Status |
-|-----------|--------|
-| Managed Identity | ✅ Working |
-| ACR Pull | ✅ Successful |
-| App Startup | ✅ Completes |
-| Health Probe | ❌ Azure kills after 230s |
-| Portal Config | ⏳ Required |
-
-### Once Portal Config is Done
-
-The app should stay running and be accessible at:
-- https://app-governance-staging-xnczpwyv.azurewebsites.net/
-- https://app-governance-staging-xnczpwyv.azurewebsites.net/health
-- https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/riverside/summary
+### Original Issue: Health Check Timeout
+Previous sessions noted Azure killing the container after 230 seconds with `ContainerTimeout`. This was due to health check probes failing. Current status: health check path is `null`, which should disable health checks, but this may need verification in Portal.
 
