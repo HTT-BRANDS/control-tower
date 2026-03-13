@@ -102,3 +102,61 @@ The `az webapp config container set` command does not persist the `--docker-regi
 ---
 
 *Last updated: 2026-03-13*
+
+---
+
+## 🚨 Update: Managed Identity Working, Portal Action Required
+
+### Discovery (2026-03-13)
+**Major Breakthrough**: Managed Identity IS working for ACR authentication!
+
+From the logs:
+```
+19:14:26 - Application startup complete
+19:14:26 - Riverside scheduler started with all jobs
+19:14:26 - All compliance monitoring jobs loaded successfully
+```
+
+### The Problem
+Azure kills the container after **230 seconds** with `ContainerTimeout` error.
+
+**Attempted CLI fixes (did NOT work):**
+- ❌ `healthCheckPath: ""` → Still shows `null`
+- ❌ `WEBSITE_HEALTHCHECK_MAXPINGFAILURES=0` → Setting exists but doesn't prevent timeout
+- ❌ `startupTimeLimit` → Cannot set via CLI (shows `null`)
+
+### Why CLI Doesn't Work
+Azure CLI does not support modifying health check timeout settings. These are platform-level settings that can only be changed via:
+1. Azure Portal
+2. ARM templates
+3. REST API direct calls
+
+### Required Portal Action
+
+1. **Go to Azure Portal**: https://portal.azure.com
+2. **Navigate to**: App Services → app-governance-staging-xnczpwyv
+3. **Disable Health Checks**:
+   - Click **Monitoring → Health check**
+   - Uncheck **"Enable health check"**
+   - Click **Save**
+4. **Restart**:
+   - Click **Overview → Restart**
+   - Click **Yes**
+
+### Current Status
+
+| Component | Status |
+|-----------|--------|
+| Managed Identity | ✅ Working |
+| ACR Pull | ✅ Successful |
+| App Startup | ✅ Completes |
+| Health Probe | ❌ Azure kills after 230s |
+| Portal Config | ⏳ Required |
+
+### Once Portal Config is Done
+
+The app should stay running and be accessible at:
+- https://app-governance-staging-xnczpwyv.azurewebsites.net/
+- https://app-governance-staging-xnczpwyv.azurewebsites.net/health
+- https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/riverside/summary
+
