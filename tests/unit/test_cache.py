@@ -340,8 +340,10 @@ async def test_cached_decorator_caches_function_result():
     # Create fresh cache manager for this test
     test_manager = CacheManager()
 
-    with patch("app.core.cache.get_settings") as mock_settings, \
-         patch("app.core.cache.cache_manager", test_manager):
+    with (
+        patch("app.core.cache.get_settings") as mock_settings,
+        patch("app.core.cache.cache_manager", test_manager),
+    ):
         settings = MagicMock()
         settings.cache_enabled = True
         settings.cache_default_ttl_seconds = 300
@@ -413,8 +415,10 @@ async def test_cached_decorator_with_tenant_id_kwarg():
     # Create fresh cache manager for this test
     test_manager = CacheManager()
 
-    with patch("app.core.cache.get_settings") as mock_settings, \
-         patch("app.core.cache.cache_manager", test_manager):
+    with (
+        patch("app.core.cache.get_settings") as mock_settings,
+        patch("app.core.cache.cache_manager", test_manager),
+    ):
         settings = MagicMock()
         settings.cache_enabled = True
         settings.cache_default_ttl_seconds = 300
@@ -456,8 +460,10 @@ async def test_cached_decorator_does_not_cache_none_results():
     # Create fresh cache manager for this test
     test_manager = CacheManager()
 
-    with patch("app.core.cache.get_settings") as mock_settings, \
-         patch("app.core.cache.cache_manager", test_manager):
+    with (
+        patch("app.core.cache.get_settings") as mock_settings,
+        patch("app.core.cache.cache_manager", test_manager),
+    ):
         settings = MagicMock()
         settings.cache_enabled = True
         settings.cache_default_ttl_seconds = 300

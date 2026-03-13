@@ -499,6 +499,7 @@ def admin_client(seeded_db, admin_user, mock_authz_admin):
 @pytest.fixture
 def unauthenticated_client(seeded_db):
     """Test client without authentication (for testing 401s)."""
+
     def override_get_db():
         try:
             yield seeded_db

@@ -55,6 +55,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -84,8 +85,7 @@ def mock_user():
 def test_export_costs_success(client_with_db, mock_user):
     """Test successful cost export to CSV."""
     mock_trends = [
-        MagicMock(date=date.today() - timedelta(days=i), cost=1000 + i * 100)
-        for i in range(5)
+        MagicMock(date=date.today() - timedelta(days=i), cost=1000 + i * 100) for i in range(5)
     ]
 
     mock_tenant_costs = [
@@ -272,9 +272,7 @@ def test_export_compliance_exclude_non_compliant(client_with_db, mock_user):
             mock_service = MockComplianceService.return_value
             mock_service.get_compliance_summary.return_value = mock_summary
 
-            response = client_with_db.get(
-                "/api/v1/exports/compliance?include_non_compliant=false"
-            )
+            response = client_with_db.get("/api/v1/exports/compliance?include_non_compliant=false")
 
     assert response.status_code == 200
     # Should only call get_compliance_summary, not get_non_compliant_policies

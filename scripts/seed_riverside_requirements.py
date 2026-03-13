@@ -77,7 +77,9 @@ def seed_requirements() -> dict[str, int]:
         for t in tenants:
             print(f"  {t.name} → {t.tenant_id}")
         print(f"Source requirements: {len(REQUIREMENTS)}")
-        print(f"Expected rows: {len(tenants)} × {len(REQUIREMENTS)} = {len(tenants) * len(REQUIREMENTS)}")
+        print(
+            f"Expected rows: {len(tenants)} × {len(REQUIREMENTS)} = {len(tenants) * len(REQUIREMENTS)}"
+        )
         print()
 
         # Build set of existing (tenant_id, requirement_id) pairs for dedup
@@ -125,9 +127,9 @@ def seed_requirements() -> dict[str, int]:
         # Verify final count
         total = db.query(RiversideRequirement).count()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("RESULTS")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"  Inserted: {inserted}")
         print(f"  Skipped (already existed): {skipped}")
         print(f"  Total rows in DB now: {total}")
@@ -135,33 +137,41 @@ def seed_requirements() -> dict[str, int]:
 
         print("By tenant:")
         for tenant in tenants:
-            count = db.query(RiversideRequirement).filter(
-                RiversideRequirement.tenant_id == tenant.tenant_id
-            ).count()
+            count = (
+                db.query(RiversideRequirement)
+                .filter(RiversideRequirement.tenant_id == tenant.tenant_id)
+                .count()
+            )
             print(f"  {tenant.name}: {count}")
         print()
 
         print("By category:")
         for cat in RequirementCategory:
-            count = db.query(RiversideRequirement).filter(
-                RiversideRequirement.category == cat.value
-            ).count()
+            count = (
+                db.query(RiversideRequirement)
+                .filter(RiversideRequirement.category == cat.value)
+                .count()
+            )
             print(f"  {cat.value}: {count}")
         print()
 
         print("By priority:")
         for pri in RequirementPriority:
-            count = db.query(RiversideRequirement).filter(
-                RiversideRequirement.priority == pri.value
-            ).count()
+            count = (
+                db.query(RiversideRequirement)
+                .filter(RiversideRequirement.priority == pri.value)
+                .count()
+            )
             print(f"  {pri.value}: {count}")
         print()
 
         print("By status:")
         for st in RequirementStatus:
-            count = db.query(RiversideRequirement).filter(
-                RiversideRequirement.status == st.value
-            ).count()
+            count = (
+                db.query(RiversideRequirement)
+                .filter(RiversideRequirement.status == st.value)
+                .count()
+            )
             print(f"  {st.value}: {count}")
 
     return dict(stats)

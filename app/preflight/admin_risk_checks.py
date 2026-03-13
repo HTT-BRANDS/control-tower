@@ -77,9 +77,7 @@ class AdminMfaCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute MFA check for privileged accounts."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -88,9 +86,7 @@ class AdminMfaCheck(BasePreflightCheck):
             db = SessionLocal()
 
             # Query privileged users without MFA
-            query = db.query(PrivilegedUser).filter(
-                PrivilegedUser.mfa_enabled == 0
-            )
+            query = db.query(PrivilegedUser).filter(PrivilegedUser.mfa_enabled == 0)
 
             if tenant_id:
                 query = query.filter(PrivilegedUser.tenant_id == tenant_id)
@@ -106,18 +102,14 @@ class AdminMfaCheck(BasePreflightCheck):
                         "roles": [],
                         "is_critical": False,
                     }
-                unique_users[user.user_principal_name]["roles"].append(
-                    user.role_name
-                )
+                unique_users[user.user_principal_name]["roles"].append(user.role_name)
                 if user.role_name in CRITICAL_ROLES:
                     unique_users[user.user_principal_name]["is_critical"] = True
 
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             if unique_users:
-                critical_count = sum(
-                    1 for u in unique_users.values() if u["is_critical"]
-                )
+                critical_count = sum(1 for u in unique_users.values() if u["is_critical"])
 
                 if critical_count > 0:
                     status = CheckStatus.FAIL
@@ -129,9 +121,7 @@ class AdminMfaCheck(BasePreflightCheck):
                 else:
                     status = CheckStatus.WARNING
                     severity = AdminRiskSeverity.HIGH
-                    message = (
-                        f"{len(unique_users)} privileged accounts without MFA"
-                    )
+                    message = f"{len(unique_users)} privileged accounts without MFA"
 
                 return CheckResult(
                     check_id=self.check_id,
@@ -172,11 +162,7 @@ class AdminMfaCheck(BasePreflightCheck):
                 message="All privileged accounts have MFA enabled",
                 details={
                     "accounts_checked": db.query(PrivilegedUser)
-                    .filter(
-                        PrivilegedUser.tenant_id == tenant_id
-                        if tenant_id
-                        else True
-                    )
+                    .filter(PrivilegedUser.tenant_id == tenant_id if tenant_id else True)
                     .distinct(PrivilegedUser.user_principal_name)
                     .count(),
                     "severity": AdminRiskSeverity.INFO,
@@ -226,9 +212,7 @@ class OverprivilegedAccountCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute overprivileged account check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -255,21 +239,15 @@ class OverprivilegedAccountCheck(BasePreflightCheck):
                         "is_permanent": bool(user.is_permanent),
                     }
                 )
-                user_roles[user.user_principal_name]["display_name"] = (
-                    user.display_name
-                )
-                user_roles[user.user_principal_name]["tenant_id"] = (
-                    user.tenant_id
-                )
+                user_roles[user.user_principal_name]["display_name"] = user.display_name
+                user_roles[user.user_principal_name]["tenant_id"] = user.tenant_id
 
             # Find overprivileged users
             overprivileged = []
             for upn, data in user_roles.items():
                 role_count = len(data["roles"])
                 if role_count > OVERPRIVILEGED_ROLE_THRESHOLD:
-                    has_critical = any(
-                        r["name"] in CRITICAL_ROLES for r in data["roles"]
-                    )
+                    has_critical = any(r["name"] in CRITICAL_ROLES for r in data["roles"])
                     overprivileged.append(
                         {
                             "user_principal_name": upn,
@@ -284,9 +262,7 @@ class OverprivilegedAccountCheck(BasePreflightCheck):
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             if overprivileged:
-                critical_count = sum(
-                    1 for u in overprivileged if u["has_critical_role"]
-                )
+                critical_count = sum(1 for u in overprivileged if u["has_critical_role"])
 
                 if critical_count > 0:
                     status = CheckStatus.FAIL
@@ -380,9 +356,7 @@ class InactiveAdminCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute inactive admin check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -391,14 +365,10 @@ class InactiveAdminCheck(BasePreflightCheck):
             db = SessionLocal()
 
             # Calculate the threshold date
-            threshold_date = datetime.utcnow() - timedelta(
-                days=INACTIVE_ADMIN_DAYS
-            )
+            threshold_date = datetime.utcnow() - timedelta(days=INACTIVE_ADMIN_DAYS)
 
             # Find inactive admins
-            query = db.query(PrivilegedUser).filter(
-                PrivilegedUser.last_sign_in < threshold_date
-            )
+            query = db.query(PrivilegedUser).filter(PrivilegedUser.last_sign_in < threshold_date)
 
             if tenant_id:
                 query = query.filter(PrivilegedUser.tenant_id == tenant_id)
@@ -410,15 +380,13 @@ class InactiveAdminCheck(BasePreflightCheck):
             for user in inactive_users:
                 if user.user_principal_name not in unique_users:
                     days_inactive = (
-                        datetime.utcnow() - user.last_sign_in
-                    ).days if user.last_sign_in else None
+                        (datetime.utcnow() - user.last_sign_in).days if user.last_sign_in else None
+                    )
 
                     unique_users[user.user_principal_name] = {
                         "display_name": user.display_name,
                         "last_sign_in": (
-                            user.last_sign_in.isoformat()
-                            if user.last_sign_in
-                            else None
+                            user.last_sign_in.isoformat() if user.last_sign_in else None
                         ),
                         "days_inactive": days_inactive,
                         "roles": [],
@@ -426,23 +394,15 @@ class InactiveAdminCheck(BasePreflightCheck):
                         "mfa_enabled": bool(user.mfa_enabled),
                     }
 
-                unique_users[user.user_principal_name]["roles"].append(
-                    user.role_name
-                )
+                unique_users[user.user_principal_name]["roles"].append(user.role_name)
                 if user.role_name in CRITICAL_ROLES:
-                    unique_users[user.user_principal_name][
-                        "has_critical_role"
-                    ] = True
+                    unique_users[user.user_principal_name]["has_critical_role"] = True
 
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             if unique_users:
-                critical_count = sum(
-                    1 for u in unique_users.values() if u["has_critical_role"]
-                )
-                without_mfa = sum(
-                    1 for u in unique_users.values() if not u["mfa_enabled"]
-                )
+                critical_count = sum(1 for u in unique_users.values() if u["has_critical_role"])
+                without_mfa = sum(1 for u in unique_users.values() if not u["mfa_enabled"])
 
                 # Determine severity based on critical roles
                 if critical_count > 0:
@@ -458,8 +418,7 @@ class InactiveAdminCheck(BasePreflightCheck):
                     category=self.category,
                     status=status,
                     message=(
-                        f"{len(unique_users)} inactive admin accounts "
-                        f"(>{INACTIVE_ADMIN_DAYS} days)"
+                        f"{len(unique_users)} inactive admin accounts (>{INACTIVE_ADMIN_DAYS} days)"
                     ),
                     details={
                         "inactive_count": len(unique_users),
@@ -548,9 +507,7 @@ class SharedAdminCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute shared admin account check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -578,28 +535,20 @@ class SharedAdminCheck(BasePreflightCheck):
                 seen_users.add(user.user_principal_name)
 
                 # Check for shared account indicators
-                is_shared = any(
-                    indicator in upn_lower
-                    for indicator in SHARED_ACCOUNT_INDICATORS
-                )
+                is_shared = any(indicator in upn_lower for indicator in SHARED_ACCOUNT_INDICATORS)
 
                 # Check if it looks like a service account
                 is_service = (
-                    "svc" in upn_lower
-                    or "service" in upn_lower
-                    or upn_lower.startswith("sa-")
+                    "svc" in upn_lower or "service" in upn_lower or upn_lower.startswith("sa-")
                 )
 
                 if is_shared or is_service:
                     # Get all roles for this user
                     user_query = db.query(PrivilegedUser).filter(
-                        PrivilegedUser.user_principal_name
-                        == user.user_principal_name
+                        PrivilegedUser.user_principal_name == user.user_principal_name
                     )
                     if tenant_id:
-                        user_query = user_query.filter(
-                            PrivilegedUser.tenant_id == tenant_id
-                        )
+                        user_query = user_query.filter(PrivilegedUser.tenant_id == tenant_id)
 
                     user_roles = user_query.all()
                     roles = [r.role_name for r in user_roles]
@@ -609,17 +558,13 @@ class SharedAdminCheck(BasePreflightCheck):
                         {
                             "user_principal_name": user.user_principal_name,
                             "display_name": user.display_name,
-                            "account_type": (
-                                "service" if is_service else "shared"
-                            ),
+                            "account_type": ("service" if is_service else "shared"),
                             "roles": roles,
                             "role_count": len(roles),
                             "has_critical_role": has_critical,
                             "mfa_enabled": bool(user.mfa_enabled),
                             "last_sign_in": (
-                                user.last_sign_in.isoformat()
-                                if user.last_sign_in
-                                else None
+                                user.last_sign_in.isoformat() if user.last_sign_in else None
                             ),
                             "match_reason": (
                                 "contains_shared_indicator"
@@ -632,12 +577,8 @@ class SharedAdminCheck(BasePreflightCheck):
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             if shared_accounts:
-                critical_count = sum(
-                    1 for a in shared_accounts if a["has_critical_role"]
-                )
-                without_mfa = sum(
-                    1 for a in shared_accounts if not a["mfa_enabled"]
-                )
+                critical_count = sum(1 for a in shared_accounts if a["has_critical_role"])
+                without_mfa = sum(1 for a in shared_accounts if not a["mfa_enabled"])
 
                 if critical_count > 0:
                     status = CheckStatus.FAIL
@@ -651,9 +592,7 @@ class SharedAdminCheck(BasePreflightCheck):
                     name=self.name,
                     category=self.category,
                     status=status,
-                    message=(
-                        f"{len(shared_accounts)} shared/service admin accounts detected"
-                    ),
+                    message=(f"{len(shared_accounts)} shared/service admin accounts detected"),
                     details={
                         "shared_account_count": len(shared_accounts),
                         "with_critical_roles": critical_count,
@@ -731,9 +670,7 @@ class AdminComplianceGapCheck(BasePreflightCheck):
             timeout_seconds=20.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute compliance gap assessment."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -770,9 +707,7 @@ class AdminComplianceGapCheck(BasePreflightCheck):
                 )
 
             # Calculate compliance metrics
-            total_unique_users = len(
-                {u.user_principal_name for u in users}
-            )
+            total_unique_users = len({u.user_principal_name for u in users})
 
             # MFA compliance
             users_without_mfa = set()
@@ -781,19 +716,13 @@ class AdminComplianceGapCheck(BasePreflightCheck):
                     users_without_mfa.add(user.user_principal_name)
 
             mfa_compliance_rate = (
-                (
-                    (total_unique_users - len(users_without_mfa))
-                    / total_unique_users
-                )
-                * 100
+                ((total_unique_users - len(users_without_mfa)) / total_unique_users) * 100
                 if total_unique_users > 0
                 else 0
             )
 
             # Inactive accounts
-            threshold_date = datetime.utcnow() - timedelta(
-                days=INACTIVE_ADMIN_DAYS
-            )
+            threshold_date = datetime.utcnow() - timedelta(days=INACTIVE_ADMIN_DAYS)
             inactive_users = set()
             for user in users:
                 if user.last_sign_in and user.last_sign_in < threshold_date:
@@ -819,17 +748,11 @@ class AdminComplianceGapCheck(BasePreflightCheck):
                         shared_accounts.append(user.user_principal_name)
 
             # Calculate overall compliance score
-            compliance_issues = len(users_without_mfa) + len(
-                inactive_users
-            ) + len(overprivileged)
+            compliance_issues = len(users_without_mfa) + len(inactive_users) + len(overprivileged)
             compliance_score = max(
                 0,
                 100
-                - (
-                    compliance_issues / total_unique_users * 100
-                    if total_unique_users > 0
-                    else 0
-                ),
+                - (compliance_issues / total_unique_users * 100 if total_unique_users > 0 else 0),
             )
 
             # Determine status based on compliance score
@@ -854,8 +777,7 @@ class AdminComplianceGapCheck(BasePreflightCheck):
                 category=self.category,
                 status=status,
                 message=(
-                    f"Compliance score: {compliance_score:.1f}% "
-                    f"({compliance_issues} issues found)"
+                    f"Compliance score: {compliance_score:.1f}% ({compliance_issues} issues found)"
                 ),
                 details={
                     "compliance_score": round(compliance_score, 1),
@@ -926,14 +848,10 @@ class AdminComplianceGapCheck(BasePreflightCheck):
             )
 
         if without_mfa > 0:
-            recommendations.append(
-                f"Enable MFA for {without_mfa} privileged accounts immediately"
-            )
+            recommendations.append(f"Enable MFA for {without_mfa} privileged accounts immediately")
 
         if inactive > 0:
-            recommendations.append(
-                f"Review and disable {inactive} inactive admin accounts"
-            )
+            recommendations.append(f"Review and disable {inactive} inactive admin accounts")
 
         if overprivileged > 0:
             recommendations.append(
@@ -941,18 +859,18 @@ class AdminComplianceGapCheck(BasePreflightCheck):
             )
 
         if shared > 0:
-            recommendations.append(
-                f"Eliminate {shared} shared admin accounts"
-            )
+            recommendations.append(f"Eliminate {shared} shared admin accounts")
 
         # General recommendations
-        recommendations.extend([
-            "Implement regular access reviews for privileged roles",
-            "Use Azure AD PIM for just-in-time privileged access",
-            "Enable Conditional Access policies for admin accounts",
-            "Document and regularly audit all privileged access",
-            "Consider implementing privileged access workstations (PAW)",
-        ])
+        recommendations.extend(
+            [
+                "Implement regular access reviews for privileged roles",
+                "Use Azure AD PIM for just-in-time privileged access",
+                "Enable Conditional Access policies for admin accounts",
+                "Document and regularly audit all privileged access",
+                "Consider implementing privileged access workstations (PAW)",
+            ]
+        )
 
         return recommendations
 

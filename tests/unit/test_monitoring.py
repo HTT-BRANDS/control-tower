@@ -18,8 +18,9 @@ mock_cache_manager.get_metrics.return_value = {
 }
 
 # Patch at module level before importing monitoring
-with patch("app.core.monitoring.get_settings", return_value=mock_settings), patch(
-    "app.core.monitoring.cache_manager", mock_cache_manager
+with (
+    patch("app.core.monitoring.get_settings", return_value=mock_settings),
+    patch("app.core.monitoring.cache_manager", mock_cache_manager),
 ):
     from app.core.monitoring import (
         PerformanceMonitor,

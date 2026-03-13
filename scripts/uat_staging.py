@@ -40,6 +40,7 @@ def colorize(text: str, color: str) -> str:
 @dataclass
 class TestResult:
     """Result of a single test."""
+
     name: str
     url: str
     expected: int
@@ -53,6 +54,7 @@ class TestResult:
 @dataclass
 class TestSuite:
     """Collection of test results."""
+
     results: list[TestResult] = field(default_factory=list)
 
     @property
@@ -82,11 +84,7 @@ class UATClient:
         self.client = httpx.Client(timeout=timeout, follow_redirects=True)
 
     def test_endpoint(
-        self,
-        name: str,
-        path: str,
-        expected_status: int = 200,
-        requires_auth: bool = False
+        self, name: str, path: str, expected_status: int = 200, requires_auth: bool = False
     ) -> TestResult:
         """Test a single endpoint."""
         url = urljoin(f"{self.base_url}/", path.lstrip("/"))
@@ -106,7 +104,9 @@ class UATClient:
 
             if self.verbose:
                 status_color = Colors.GREEN if passed else Colors.RED
-                print(f"  {colorize(name, Colors.BLUE)}: {colorize(message, status_color)} ({duration:.0f}ms)")
+                print(
+                    f"  {colorize(name, Colors.BLUE)}: {colorize(message, status_color)} ({duration:.0f}ms)"
+                )
 
             return TestResult(
                 name=name,
@@ -116,7 +116,7 @@ class UATClient:
                 passed=passed,
                 duration_ms=duration,
                 message=message,
-                requires_auth=requires_auth
+                requires_auth=requires_auth,
             )
 
         except httpx.TimeoutException:
@@ -129,7 +129,7 @@ class UATClient:
                 passed=False,
                 duration_ms=duration,
                 message="TIMEOUT",
-                requires_auth=requires_auth
+                requires_auth=requires_auth,
             )
         except Exception as e:
             duration = (time.time() - start) * 1000
@@ -141,7 +141,7 @@ class UATClient:
                 passed=False,
                 duration_ms=duration,
                 message=str(e)[:50],
-                requires_auth=requires_auth
+                requires_auth=requires_auth,
             )
 
     def close(self):
@@ -218,7 +218,7 @@ def print_summary(suites: list[TestSuite], verbose: bool = False) -> bool:
     """Print test summary and return overall pass/fail."""
     print(f"\n{colorize('=' * 60, Colors.BLUE)}")
     print(colorize("UAT TEST SUMMARY", Colors.BLUE).center(60))
-    print(colorize('=' * 60, Colors.BLUE))
+    print(colorize("=" * 60, Colors.BLUE))
 
     total_passed = 0
     total_failed = 0
@@ -237,7 +237,9 @@ def print_summary(suites: list[TestSuite], verbose: bool = False) -> bool:
     print(f"\n{colorize('TOTAL:', Colors.BLUE)}  {total_passed + total_failed}")
 
     # Show failed tests if any
-    failed_results = [r for suite in suites for r in suite.results if not r.passed and not r.requires_auth]
+    failed_results = [
+        r for suite in suites for r in suite.results if not r.passed and not r.requires_auth
+    ]
     if failed_results:
         print(f"\n{colorize('FAILED TESTS:', Colors.RED)}")
         for result in failed_results:
@@ -261,19 +263,12 @@ def main():
     parser.add_argument(
         "--url",
         default="https://app-governance-staging-001.azurewebsites.net",
-        help="Base URL of the staging environment"
+        help="Base URL of the staging environment",
     )
     parser.add_argument(
-        "--timeout",
-        type=float,
-        default=30.0,
-        help="Request timeout in seconds (default: 30)"
+        "--timeout", type=float, default=30.0, help="Request timeout in seconds (default: 30)"
     )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
 

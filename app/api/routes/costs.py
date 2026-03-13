@@ -51,10 +51,10 @@ async def get_cost_summary(
 
     service = CostService(db)
     # Use filtered tenant IDs if specified, otherwise use all accessible tenants
-    effective_tenant_ids = filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
-    return await service.get_cost_summary(
-        period_days=period_days, tenant_ids=effective_tenant_ids
+    effective_tenant_ids = (
+        filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
     )
+    return await service.get_cost_summary(period_days=period_days, tenant_ids=effective_tenant_ids)
 
 
 @router.get("/by-tenant", response_model=list[CostByTenant])
@@ -80,8 +80,10 @@ async def get_costs_by_tenant(
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     costs = [
-        c for c in costs
-        if c.tenant_id in accessible_tenants and (not filtered_tenant_ids or c.tenant_id in filtered_tenant_ids)
+        c
+        for c in costs
+        if c.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or c.tenant_id in filtered_tenant_ids)
     ]
 
     return costs
@@ -111,7 +113,9 @@ async def get_cost_trends(
 
     service = CostService(db)
     # Use filtered tenant IDs if specified, otherwise use all accessible tenants
-    effective_tenant_ids = filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
+    effective_tenant_ids = (
+        filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
+    )
     return await service.get_cost_trends(days=days, tenant_ids=effective_tenant_ids)
 
 
@@ -129,9 +133,7 @@ async def get_cost_forecast(
     authz.ensure_at_least_one_tenant()
     service = CostService(db)
     # Filter forecast to only accessible tenants
-    return await service.get_cost_forecast(
-        days=days, tenant_ids=authz.accessible_tenant_ids
-    )
+    return await service.get_cost_forecast(days=days, tenant_ids=authz.accessible_tenant_ids)
 
 
 @router.get("/anomalies")
@@ -165,8 +167,10 @@ async def get_cost_anomalies(
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     anomalies = [
-        a for a in anomalies
-        if a.tenant_id in accessible_tenants and (not filtered_tenant_ids or a.tenant_id in filtered_tenant_ids)
+        a
+        for a in anomalies
+        if a.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or a.tenant_id in filtered_tenant_ids)
     ]
 
     return anomalies[offset : offset + limit]
@@ -186,9 +190,7 @@ async def get_anomaly_trends(
     authz.ensure_at_least_one_tenant()
     service = CostService(db)
     # Filter trends to only accessible tenants
-    return await service.get_anomaly_trends(
-        months=months, tenant_ids=authz.accessible_tenant_ids
-    )
+    return await service.get_anomaly_trends(months=months, tenant_ids=authz.accessible_tenant_ids)
 
 
 @router.get("/anomalies/by-service")
@@ -278,9 +280,7 @@ async def bulk_acknowledge_anomalies(
     from app.models.cost import CostAnomaly
 
     # Validate user has access to all anomaly tenants
-    anomalies = (
-        db.query(CostAnomaly).filter(CostAnomaly.id.in_(request.anomaly_ids)).all()
-    )
+    anomalies = db.query(CostAnomaly).filter(CostAnomaly.id.in_(request.anomaly_ids)).all()
 
     # Check if all anomalies were found
     if len(anomalies) != len(request.anomaly_ids):

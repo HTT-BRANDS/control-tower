@@ -116,15 +116,9 @@ def mock_dmarc_service():
     ack_result.acknowledged_at = datetime.utcnow()
     service.acknowledge_alert = AsyncMock(return_value=ack_result)
 
-    service.sync_dmarc_records = AsyncMock(
-        return_value=[{"domain": "example.com"}]
-    )
-    service.sync_dkim_records = AsyncMock(
-        return_value=[{"domain": "example.com"}]
-    )
-    service.sync_dmarc_reports = AsyncMock(
-        return_value=[{"report_id": "rep-123"}]
-    )
+    service.sync_dmarc_records = AsyncMock(return_value=[{"domain": "example.com"}])
+    service.sync_dkim_records = AsyncMock(return_value=[{"domain": "example.com"}])
+    service.sync_dmarc_reports = AsyncMock(return_value=[{"report_id": "rep-123"}])
     service.invalidate_cache = AsyncMock(return_value=None)
     return service
 
@@ -175,9 +169,7 @@ class TestDMARCRecordsEndpoint:
 
     def test_records_returns_dmarc_configs(self, client_with_db):
         """Records endpoint returns DMARC DNS records for tenant."""
-        response = client_with_db.get(
-            "/api/v1/dmarc/records?tenant_id=dmarc-tenant-123"
-        )
+        response = client_with_db.get("/api/v1/dmarc/records?tenant_id=dmarc-tenant-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -208,9 +200,7 @@ class TestDKIMRecordsEndpoint:
 
     def test_dkim_returns_signing_configs(self, client_with_db):
         """DKIM endpoint returns DKIM signing configurations."""
-        response = client_with_db.get(
-            "/api/v1/dmarc/dkim?tenant_id=dmarc-tenant-123"
-        )
+        response = client_with_db.get("/api/v1/dmarc/dkim?tenant_id=dmarc-tenant-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -221,9 +211,7 @@ class TestDKIMRecordsEndpoint:
 
     def test_dkim_includes_rotation_info(self, client_with_db):
         """DKIM endpoint includes key rotation information."""
-        response = client_with_db.get(
-            "/api/v1/dmarc/dkim?tenant_id=dmarc-tenant-123"
-        )
+        response = client_with_db.get("/api/v1/dmarc/dkim?tenant_id=dmarc-tenant-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -324,9 +312,7 @@ class TestDMARCAlertsEndpoint:
 
     def test_alerts_filters_by_tenant(self, client_with_db):
         """Alerts endpoint filters by tenant_id parameter."""
-        response = client_with_db.get(
-            "/api/v1/dmarc/alerts?tenant_id=dmarc-tenant-123"
-        )
+        response = client_with_db.get("/api/v1/dmarc/alerts?tenant_id=dmarc-tenant-123")
 
         assert response.status_code == 200
         for alert in response.json():
@@ -365,9 +351,7 @@ class TestAcknowledgeAlertEndpoint:
         assert data["is_acknowledged"] is True
 
     @patch("app.api.routes.dmarc.DMARCService")
-    def test_acknowledge_returns_404_for_nonexistent_alert(
-        self, mock_service_cls, client_with_db
-    ):
+    def test_acknowledge_returns_404_for_nonexistent_alert(self, mock_service_cls, client_with_db):
         """Acknowledge endpoint returns 404 for nonexistent alert."""
         service = MagicMock()
         service.acknowledge_alert = AsyncMock(return_value=None)
@@ -395,9 +379,7 @@ class TestDMARCSyncEndpoint:
         """Sync endpoint triggers manual data synchronization."""
         mock_service_cls.return_value = mock_dmarc_service
 
-        response = client_with_db.post(
-            "/api/v1/dmarc/sync?tenant_id=test-123&sync_type=all"
-        )
+        response = client_with_db.post("/api/v1/dmarc/sync?tenant_id=test-123&sync_type=all")
 
         assert response.status_code == 200
         data = response.json()
@@ -411,9 +393,7 @@ class TestDMARCSyncEndpoint:
         """Sync endpoint supports selective sync types (dmarc, dkim, reports)."""
         mock_service_cls.return_value = mock_dmarc_service
 
-        response = client_with_db.post(
-            "/api/v1/dmarc/sync?tenant_id=test-123&sync_type=dkim"
-        )
+        response = client_with_db.post("/api/v1/dmarc/sync?tenant_id=test-123&sync_type=dkim")
 
         assert response.status_code == 200
         mock_dmarc_service.sync_dkim_records.assert_called_once()
@@ -425,9 +405,7 @@ class TestDMARCSyncEndpoint:
         """Sync endpoint invalidates cache after successful sync."""
         mock_service_cls.return_value = mock_dmarc_service
 
-        response = client_with_db.post(
-            "/api/v1/dmarc/sync?tenant_id=test-123&sync_type=all"
-        )
+        response = client_with_db.post("/api/v1/dmarc/sync?tenant_id=test-123&sync_type=all")
 
         assert response.status_code == 200
         mock_dmarc_service.invalidate_cache.assert_called_once_with("test-123")

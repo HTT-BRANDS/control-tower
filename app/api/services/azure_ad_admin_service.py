@@ -325,13 +325,15 @@ class AzureADAdminService:
                         "pim_assignments": [],
                     }
 
-                privileged_users[principal_id]["roles"].append({
-                    "role_name": assignment.role_name,
-                    "role_template_id": assignment.role_template_id,
-                    "scope_type": assignment.scope_type,
-                    "scope_id": assignment.scope_id,
-                    "assignment_type": assignment.assignment_type,
-                })
+                privileged_users[principal_id]["roles"].append(
+                    {
+                        "role_name": assignment.role_name,
+                        "role_template_id": assignment.role_template_id,
+                        "scope_type": assignment.scope_type,
+                        "scope_id": assignment.scope_id,
+                        "assignment_type": assignment.assignment_type,
+                    }
+                )
 
             # Process PIM assignments
             for pim in pim_assignments:
@@ -349,14 +351,16 @@ class AzureADAdminService:
                         "pim_assignments": [],
                     }
 
-                privileged_users[principal_id]["pim_assignments"].append({
-                    "role_name": pim.role_name,
-                    "role_definition_id": pim.role_definition_id,
-                    "assignment_state": pim.assignment_state,
-                    "start_date_time": pim.start_date_time,
-                    "end_date_time": pim.end_date_time,
-                    "duration": pim.duration,
-                })
+                privileged_users[principal_id]["pim_assignments"].append(
+                    {
+                        "role_name": pim.role_name,
+                        "role_definition_id": pim.role_definition_id,
+                        "assignment_state": pim.assignment_state,
+                        "start_date_time": pim.start_date_time,
+                        "end_date_time": pim.end_date_time,
+                        "duration": pim.duration,
+                    }
+                )
                 privileged_users[principal_id]["is_permanent"] = False
 
             return list(privileged_users.values())
@@ -409,19 +413,19 @@ class AzureADAdminService:
                         "roles": [],
                     }
 
-                privileged_sps[principal_id]["roles"].append({
-                    "role_name": assignment.role_name,
-                    "role_template_id": assignment.role_template_id,
-                    "scope_type": assignment.scope_type,
-                    "scope_id": assignment.scope_id,
-                })
+                privileged_sps[principal_id]["roles"].append(
+                    {
+                        "role_name": assignment.role_name,
+                        "role_template_id": assignment.role_template_id,
+                        "scope_type": assignment.scope_type,
+                        "scope_id": assignment.scope_id,
+                    }
+                )
 
             return list(privileged_sps.values())
 
         except Exception as e:
-            logger.error(
-                f"Failed to get privileged service principals for tenant {tenant_id}: {e}"
-            )
+            logger.error(f"Failed to get privileged service principals for tenant {tenant_id}: {e}")
             raise AdminRoleError(
                 f"Failed to get privileged service principals: {e}",
                 tenant_id=tenant_id,

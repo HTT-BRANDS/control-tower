@@ -18,6 +18,7 @@ class TestRiversideDatabaseCheck:
     def check(self):
         """Create a RiversideDatabaseCheck instance."""
         from app.preflight.riverside_checks import RiversideDatabaseCheck
+
         return RiversideDatabaseCheck()
 
     def test_check_initialization(self, check):
@@ -66,6 +67,7 @@ class TestRiversideAPIEndpointCheck:
     def check(self):
         """Create a RiversideAPIEndpointCheck instance."""
         from app.preflight.riverside_checks import RiversideAPIEndpointCheck
+
         return RiversideAPIEndpointCheck()
 
     def test_check_initialization(self, check):
@@ -101,6 +103,7 @@ class TestRiversideSchedulerCheck:
     def check(self):
         """Create a RiversideSchedulerCheck instance."""
         from app.preflight.riverside_checks import RiversideSchedulerCheck
+
         return RiversideSchedulerCheck()
 
     def test_check_initialization(self, check):
@@ -141,6 +144,7 @@ class TestRiversideAzureADPermissionsCheck:
     def check(self):
         """Create a RiversideAzureADPermissionsCheck instance."""
         from app.preflight.riverside_checks import RiversideAzureADPermissionsCheck
+
         return RiversideAzureADPermissionsCheck()
 
     def test_check_initialization(self, check):
@@ -168,6 +172,7 @@ class TestRiversideMFADataSourceCheck:
     def check(self):
         """Create a RiversideMFADataSourceCheck instance."""
         from app.preflight.riverside_checks import RiversideMFADataSourceCheck
+
         return RiversideMFADataSourceCheck()
 
     def test_check_initialization(self, check):
@@ -195,6 +200,7 @@ class TestRiversideEvidenceCheck:
     def check(self):
         """Create a RiversideEvidenceCheck instance."""
         from app.preflight.riverside_checks import RiversideEvidenceCheck
+
         return RiversideEvidenceCheck()
 
     def test_check_initialization(self, check):
@@ -375,6 +381,7 @@ class TestRiversideCheckFunctions:
         """Test run_all_riverside_checks runs all checks."""
         from app.preflight.base import BasePreflightCheck
         from app.preflight.riverside_checks import run_all_riverside_checks
+
         BasePreflightCheck.clear_cache()
 
         with patch("app.preflight.riverside_checks.SessionLocal") as mock_session:
@@ -396,6 +403,7 @@ class TestRiversideCheckFunctions:
         assert len(results) == 6
         # All should be CheckResult instances
         from app.preflight.models import CheckResult
+
         assert all(isinstance(r, CheckResult) for r in results)
 
     def test_get_riverside_checks(self):
@@ -408,6 +416,7 @@ class TestRiversideCheckFunctions:
         assert len(checks) == 6
         # All should have the correct category
         from app.preflight.base import BasePreflightCheck
+
         assert all(isinstance(c, BasePreflightCheck) for c in checks.values())
         # Verify evidence check is included
         assert "riverside_requirement_evidence" in checks
@@ -420,6 +429,7 @@ class TestCheckResultStructure:
     async def test_check_result_structure(self):
         """Verify all checks return properly structured results."""
         from app.preflight.base import BasePreflightCheck
+
         BasePreflightCheck.clear_cache()
 
         from app.preflight.riverside_checks import (

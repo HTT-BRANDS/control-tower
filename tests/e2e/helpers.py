@@ -45,9 +45,9 @@ def assert_security_headers(response: Response) -> None:
     assert headers.get("x-frame-options") == "DENY", "Missing X-Frame-Options: DENY"
     assert headers.get("x-content-type-options") == "nosniff", "Missing X-Content-Type-Options"
     assert headers.get("x-xss-protection") == "1; mode=block", "Missing X-XSS-Protection"
-    assert (
-        headers.get("referrer-policy") == "strict-origin-when-cross-origin"
-    ), "Missing Referrer-Policy"
+    assert headers.get("referrer-policy") == "strict-origin-when-cross-origin", (
+        "Missing Referrer-Policy"
+    )
     assert "camera=()" in headers.get("permissions-policy", ""), "Missing Permissions-Policy"
     assert "default-src" in headers.get("content-security-policy", ""), "Missing CSP"
 

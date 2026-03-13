@@ -24,25 +24,42 @@ class ComplianceService:
 
     # High severity keywords for policy classification
     _HIGH_SEVERITY_KEYWORDS = [
-        "encryption", "private", "public", "tls", "ssl",
-        "password", "secret", "key", "auth", "mfa", "firewall",
-        "network", "access", "permission", "role", "identity"
+        "encryption",
+        "private",
+        "public",
+        "tls",
+        "ssl",
+        "password",
+        "secret",
+        "key",
+        "auth",
+        "mfa",
+        "firewall",
+        "network",
+        "access",
+        "permission",
+        "role",
+        "identity",
     ]
 
     # Low severity keywords for policy classification
     _LOW_SEVERITY_KEYWORDS = [
-        "tag", "naming", "diagnostic", "log", "monitor",
-        "label", "category", "cost", "billing", "audit"
+        "tag",
+        "naming",
+        "diagnostic",
+        "log",
+        "monitor",
+        "label",
+        "category",
+        "cost",
+        "billing",
+        "audit",
     ]
 
     def __init__(self, db: Session):
         self.db = db
 
-    def _map_severity(
-        self,
-        policy_name: str | None,
-        policy_category: str | None
-    ) -> str:
+    def _map_severity(self, policy_name: str | None, policy_category: str | None) -> str:
         """
         Map policy severity based on name and category keywords.
 
@@ -144,9 +161,7 @@ class ComplianceService:
         """Get top policy violations by count."""
         # Aggregate non-compliant policies
         policies = (
-            self.db.query(PolicyState)
-            .filter(PolicyState.compliance_state == "NonCompliant")
-            .all()
+            self.db.query(PolicyState).filter(PolicyState.compliance_state == "NonCompliant").all()
         )
 
         # Group by policy name
@@ -212,13 +227,9 @@ class ComplianceService:
 
         return scores
 
-    def get_non_compliant_policies(
-        self, tenant_id: str | None = None
-    ) -> list[PolicyStatus]:
+    def get_non_compliant_policies(self, tenant_id: str | None = None) -> list[PolicyStatus]:
         """Get non-compliant policy details (not cached - real-time)."""
-        query = self.db.query(PolicyState).filter(
-            PolicyState.compliance_state == "NonCompliant"
-        )
+        query = self.db.query(PolicyState).filter(PolicyState.compliance_state == "NonCompliant")
 
         if tenant_id:
             query = query.filter(PolicyState.tenant_id == tenant_id)
@@ -287,25 +298,21 @@ class ComplianceService:
         # Build trend data
         trends = []
         for date_key, data in sorted(by_date.items()):
-            avg_score = (
-                sum(data["scores"]) / len(data["scores"])
-                if data["scores"]
-                else 0.0
-            )
+            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0.0
             total = data["compliant"] + data["non_compliant"] + data["exempt"]
-            compliance_rate = (
-                (data["compliant"] / total * 100) if total > 0 else 0.0
-            )
+            compliance_rate = (data["compliant"] / total * 100) if total > 0 else 0.0
 
-            trends.append({
-                "date": date_key.isoformat(),
-                "average_compliance_score": round(avg_score, 2),
-                "compliance_rate": round(compliance_rate, 2),
-                "compliant_resources": data["compliant"],
-                "non_compliant_resources": data["non_compliant"],
-                "exempt_resources": data["exempt"],
-                "total_resources": total,
-            })
+            trends.append(
+                {
+                    "date": date_key.isoformat(),
+                    "average_compliance_score": round(avg_score, 2),
+                    "compliance_rate": round(compliance_rate, 2),
+                    "compliant_resources": data["compliant"],
+                    "non_compliant_resources": data["non_compliant"],
+                    "exempt_resources": data["exempt"],
+                    "total_resources": total,
+                }
+            )
 
         return trends
 

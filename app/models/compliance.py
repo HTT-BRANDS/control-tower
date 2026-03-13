@@ -39,7 +39,9 @@ class PolicyState(Base):
     policy_definition_id: Mapped[str] = Column(String(500), nullable=False)
     policy_name: Mapped[str] = Column(String(255), nullable=False)
     policy_category: Mapped[str | None] = Column(String(100))
-    compliance_state: Mapped[str] = Column(String(50), nullable=False)  # Compliant, NonCompliant, Exempt
+    compliance_state: Mapped[str] = Column(
+        String(50), nullable=False
+    )  # Compliant, NonCompliant, Exempt
     non_compliant_count: Mapped[int] = Column(Integer, default=0)
     resource_id: Mapped[str | None] = Column(Text)  # Affected resource
     recommendation: Mapped[str | None] = Column(Text)

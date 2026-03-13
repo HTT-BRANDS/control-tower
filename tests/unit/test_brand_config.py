@@ -293,9 +293,7 @@ class TestTenantRelationship:
         db_session.commit()
 
         # Brand config should be gone
-        deleted_config = db_session.query(BrandConfig).filter(
-            BrandConfig.id == config_id
-        ).first()
+        deleted_config = db_session.query(BrandConfig).filter(BrandConfig.id == config_id).first()
 
         assert deleted_config is None
 
@@ -349,11 +347,14 @@ class TestBrandConfigValidation:
 
         db_session.rollback()
 
-    @pytest.mark.parametrize("primary,secondary", [
-        ("#FF5733", "#33FF57"),
-        ("#000000", "#FFFFFF"),
-        ("#ABC", "#DEF"),  # Short hex
-    ])
+    @pytest.mark.parametrize(
+        "primary,secondary",
+        [
+            ("#FF5733", "#33FF57"),
+            ("#000000", "#FFFFFF"),
+            ("#ABC", "#DEF"),  # Short hex
+        ],
+    )
     def test_valid_hex_colors(self, db_session, primary, secondary):
         """Test that various hex color formats are accepted."""
         tenant = Tenant(

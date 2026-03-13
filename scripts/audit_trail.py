@@ -48,9 +48,7 @@ AUDIT_LOG_PATH = Path("data/audit_trail.jsonl")
 
 # Valid actions an agent can report
 ValidAction = Literal["completed", "failed", "reviewed", "started", "blocked"]
-VALID_ACTIONS: frozenset[str] = frozenset(
-    {"completed", "failed", "reviewed", "started", "blocked"}
-)
+VALID_ACTIONS: frozenset[str] = frozenset({"completed", "failed", "reviewed", "started", "blocked"})
 
 # ---------------------------------------------------------------------------
 # Data Model
@@ -201,10 +199,13 @@ def post_to_bd(entry: AuditEntry) -> bool:
     try:
         result = subprocess.run(
             [
-                "bd", "comments", "add",
+                "bd",
+                "comments",
+                "add",
                 entry.issue_id,
                 comment,
-                "--author", entry.agent,
+                "--author",
+                entry.agent,
             ],
             capture_output=True,
             text=True,
@@ -280,7 +281,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="bd issue ID for posting comment (e.g., 'azure-governance-platform-3gv')",
     )
     log_group.add_argument(
-        "--message", "-m",
+        "--message",
+        "-m",
         type=str,
         default="",
         help="Optional message with details",
@@ -352,7 +354,9 @@ def cmd_log(
         return 1
 
     # Auto-detect file changes from git if not explicitly provided
-    files_changed: list[str] = args.files_changed if args.files_changed is not None else detect_git_changes()
+    files_changed: list[str] = (
+        args.files_changed if args.files_changed is not None else detect_git_changes()
+    )
 
     entry = AuditEntry(
         timestamp=datetime.now(UTC).isoformat(),

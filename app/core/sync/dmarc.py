@@ -74,8 +74,7 @@ async def sync_dmarc_dkim():
                 tenant_type = "Riverside" if is_riverside else "other"
 
                 logger.info(
-                    f"Syncing DMARC/DKIM for {tenant_type} tenant: "
-                    f"{tenant.name} ({tenant.id})"
+                    f"Syncing DMARC/DKIM for {tenant_type} tenant: {tenant.name} ({tenant.id})"
                 )
 
                 try:

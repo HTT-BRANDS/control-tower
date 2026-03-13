@@ -18,10 +18,13 @@ from fastapi.testclient import TestClient
 # GET /api/v1/identity/summary Tests
 # ============================================================================
 
+
 class TestIdentitySummaryEndpoint:
     """Integration tests for GET /api/v1/identity/summary."""
 
-    @pytest.mark.xfail(reason="Integration test fixtures need refinement - tracked in follow-up issue")
+    @pytest.mark.xfail(
+        reason="Integration test fixtures need refinement - tracked in follow-up issue"
+    )
     def test_get_summary_success(self, authenticated_client: TestClient):
         """Identity summary returns aggregated data with proper structure."""
         response = authenticated_client.get("/api/v1/identity/summary")
@@ -49,11 +52,11 @@ class TestIdentitySummaryEndpoint:
         assert data["mfa_enabled_users"] >= 0
         assert data["privileged_users"] >= 0
 
-    def test_get_summary_with_tenant_filter(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_summary_with_tenant_filter(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Identity summary can be filtered by tenant_ids."""
-        response = authenticated_client.get(
-            f"/api/v1/identity/summary?tenant_ids={test_tenant_id}"
-        )
+        response = authenticated_client.get(f"/api/v1/identity/summary?tenant_ids={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -64,7 +67,9 @@ class TestIdentitySummaryEndpoint:
         response = unauthenticated_client.get("/api/v1/identity/summary")
         assert response.status_code == 401
 
-    def test_get_summary_tenant_isolation(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_summary_tenant_isolation(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Identity summary respects tenant authorization."""
         # This test ensures the authorization layer is working
         # The mock_authz fixture restricts access to test_tenant_id
@@ -77,6 +82,7 @@ class TestIdentitySummaryEndpoint:
 # ============================================================================
 # GET /api/v1/identity/privileged Tests
 # ============================================================================
+
 
 class TestPrivilegedAccountsEndpoint:
     """Integration tests for GET /api/v1/identity/privileged."""
@@ -107,16 +113,12 @@ class TestPrivilegedAccountsEndpoint:
     def test_get_privileged_accounts_pagination(self, authenticated_client: TestClient):
         """Privileged accounts supports pagination with limit and offset."""
         # Get first page
-        response_page1 = authenticated_client.get(
-            "/api/v1/identity/privileged?limit=1&offset=0"
-        )
+        response_page1 = authenticated_client.get("/api/v1/identity/privileged?limit=1&offset=0")
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
 
         # Get second page
-        response_page2 = authenticated_client.get(
-            "/api/v1/identity/privileged?limit=1&offset=1"
-        )
+        response_page2 = authenticated_client.get("/api/v1/identity/privileged?limit=1&offset=1")
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
 
@@ -138,9 +140,7 @@ class TestPrivilegedAccountsEndpoint:
     def test_get_privileged_accounts_filter_mfa(self, authenticated_client: TestClient):
         """Privileged accounts can be filtered by MFA status."""
         # Filter for MFA enabled
-        response_enabled = authenticated_client.get(
-            "/api/v1/identity/privileged?mfa_enabled=true"
-        )
+        response_enabled = authenticated_client.get("/api/v1/identity/privileged?mfa_enabled=true")
         assert response_enabled.status_code == 200
         data_enabled = response_enabled.json()
 
@@ -175,17 +175,13 @@ class TestPrivilegedAccountsEndpoint:
 
     def test_get_privileged_accounts_invalid_risk_level(self, authenticated_client: TestClient):
         """Privileged accounts validates risk_level parameter."""
-        response = authenticated_client.get(
-            "/api/v1/identity/privileged?risk_level=Invalid"
-        )
+        response = authenticated_client.get("/api/v1/identity/privileged?risk_level=Invalid")
         # Should return validation error
         assert response.status_code == 422
 
     def test_get_privileged_accounts_invalid_sort_order(self, authenticated_client: TestClient):
         """Privileged accounts validates sort_order parameter."""
-        response = authenticated_client.get(
-            "/api/v1/identity/privileged?sort_order=invalid"
-        )
+        response = authenticated_client.get("/api/v1/identity/privileged?sort_order=invalid")
         # Should return validation error
         assert response.status_code == 422
 
@@ -194,7 +190,9 @@ class TestPrivilegedAccountsEndpoint:
         response = unauthenticated_client.get("/api/v1/identity/privileged")
         assert response.status_code == 401
 
-    def test_get_privileged_accounts_tenant_isolation(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_privileged_accounts_tenant_isolation(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Privileged accounts respects tenant isolation."""
         response = authenticated_client.get("/api/v1/identity/privileged")
 
@@ -205,7 +203,9 @@ class TestPrivilegedAccountsEndpoint:
         for account in data:
             assert account["tenant_id"] == test_tenant_id
 
-    def test_get_privileged_accounts_with_tenant_filter(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_privileged_accounts_with_tenant_filter(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Privileged accounts can be filtered by tenant_ids."""
         response = authenticated_client.get(
             f"/api/v1/identity/privileged?tenant_ids={test_tenant_id}"
@@ -234,6 +234,7 @@ class TestPrivilegedAccountsEndpoint:
 # GET /api/v1/identity/guests Tests
 # ============================================================================
 
+
 class TestGuestAccountsEndpoint:
     """Integration tests for GET /api/v1/identity/guests."""
 
@@ -257,17 +258,13 @@ class TestGuestAccountsEndpoint:
     def test_get_guest_accounts_pagination(self, authenticated_client: TestClient):
         """Guest accounts supports pagination with limit and offset."""
         # Get first page
-        response_page1 = authenticated_client.get(
-            "/api/v1/identity/guests?limit=10&offset=0"
-        )
+        response_page1 = authenticated_client.get("/api/v1/identity/guests?limit=10&offset=0")
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
         assert len(page1_data) <= 10
 
         # Get second page
-        response_page2 = authenticated_client.get(
-            "/api/v1/identity/guests?limit=10&offset=10"
-        )
+        response_page2 = authenticated_client.get("/api/v1/identity/guests?limit=10&offset=10")
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
         assert len(page2_data) <= 10
@@ -287,11 +284,11 @@ class TestGuestAccountsEndpoint:
         # Stale count should be <= total count
         assert len(stale_guests) <= len(all_guests)
 
-    def test_get_guest_accounts_with_tenant_filter(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_guest_accounts_with_tenant_filter(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Guest accounts can be filtered by tenant_ids."""
-        response = authenticated_client.get(
-            f"/api/v1/identity/guests?tenant_ids={test_tenant_id}"
-        )
+        response = authenticated_client.get(f"/api/v1/identity/guests?tenant_ids={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -321,6 +318,7 @@ class TestGuestAccountsEndpoint:
 # GET /api/v1/identity/stale Tests
 # ============================================================================
 
+
 class TestStaleAccountsEndpoint:
     """Integration tests for GET /api/v1/identity/stale."""
 
@@ -345,17 +343,13 @@ class TestStaleAccountsEndpoint:
     def test_get_stale_accounts_pagination(self, authenticated_client: TestClient):
         """Stale accounts supports pagination with limit and offset."""
         # Get first page
-        response_page1 = authenticated_client.get(
-            "/api/v1/identity/stale?limit=10&offset=0"
-        )
+        response_page1 = authenticated_client.get("/api/v1/identity/stale?limit=10&offset=0")
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
         assert len(page1_data) <= 10
 
         # Get second page
-        response_page2 = authenticated_client.get(
-            "/api/v1/identity/stale?limit=10&offset=10"
-        )
+        response_page2 = authenticated_client.get("/api/v1/identity/stale?limit=10&offset=10")
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
         assert len(page2_data) <= 10
@@ -389,11 +383,11 @@ class TestStaleAccountsEndpoint:
         response_valid = authenticated_client.get("/api/v1/identity/stale?days_inactive=30")
         assert response_valid.status_code == 200
 
-    def test_get_stale_accounts_with_tenant_filter(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_stale_accounts_with_tenant_filter(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Stale accounts can be filtered by tenant_ids."""
-        response = authenticated_client.get(
-            f"/api/v1/identity/stale?tenant_ids={test_tenant_id}"
-        )
+        response = authenticated_client.get(f"/api/v1/identity/stale?tenant_ids={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -404,7 +398,9 @@ class TestStaleAccountsEndpoint:
         response = unauthenticated_client.get("/api/v1/identity/stale")
         assert response.status_code == 401
 
-    def test_get_stale_accounts_tenant_isolation(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_stale_accounts_tenant_isolation(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Stale accounts respects tenant isolation."""
         response = authenticated_client.get("/api/v1/identity/stale")
 
@@ -433,6 +429,7 @@ class TestStaleAccountsEndpoint:
 # ============================================================================
 # GET /api/v1/identity/trends Tests
 # ============================================================================
+
 
 class TestIdentityTrendsEndpoint:
     """Integration tests for GET /api/v1/identity/trends."""
@@ -483,7 +480,9 @@ class TestIdentityTrendsEndpoint:
         response_valid = authenticated_client.get("/api/v1/identity/trends?days=30")
         assert response_valid.status_code == 200
 
-    def test_get_identity_trends_with_tenant_filter(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_identity_trends_with_tenant_filter(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Identity trends can be filtered by tenant_ids."""
         response = authenticated_client.get(
             f"/api/v1/identity/trends?tenant_ids={test_tenant_id}&days=30"

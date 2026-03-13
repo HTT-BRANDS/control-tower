@@ -42,8 +42,8 @@ class TestRecommendationService:
         tenants = []
         for i in range(3):
             tenant = MagicMock(spec=Tenant)
-            tenant.id = f"tenant-{i+1}"
-            tenant.name = f"Tenant {i+1}"
+            tenant.id = f"tenant-{i + 1}"
+            tenant.name = f"Tenant {i + 1}"
             tenants.append(tenant)
         return tenants
 
@@ -84,7 +84,9 @@ class TestRecommendationService:
 
         return recommendations
 
-    def test_get_recommendations_no_filters(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_no_filters(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations returns all non-dismissed recommendations by default."""
         # Setup mock query chain
         mock_query = MagicMock()
@@ -109,11 +111,14 @@ class TestRecommendationService:
         assert all(not r.is_dismissed for r in result)
         assert all(r.tenant_name in ["Tenant 1", "Tenant 2", "Tenant 3"] for r in result)
 
-    def test_get_recommendations_filter_by_category(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_filter_by_category(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations filters by category correctly."""
         # Setup filtered recommendations (only cost optimization)
         filtered_recs = [
-            r for r in sample_recommendations
+            r
+            for r in sample_recommendations
             if r.category == RecommendationCategory.COST_OPTIMIZATION.value and r.is_dismissed == 0
         ]
 
@@ -138,12 +143,13 @@ class TestRecommendationService:
         assert all(r.category == RecommendationCategory.COST_OPTIMIZATION for r in result)
         assert len(result) == len(filtered_recs)
 
-    def test_get_recommendations_filter_by_impact(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_filter_by_impact(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations filters by impact level."""
         # Setup filtered recommendations (only high impact)
         filtered_recs = [
-            r for r in sample_recommendations
-            if r.impact == "High" and r.is_dismissed == 0
+            r for r in sample_recommendations if r.impact == "High" and r.is_dismissed == 0
         ]
 
         mock_query = MagicMock()
@@ -165,12 +171,13 @@ class TestRecommendationService:
         assert all(r.impact.value == "High" for r in result)
         assert len(result) > 0
 
-    def test_get_recommendations_filter_by_tenant_ids(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_filter_by_tenant_ids(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations filters by tenant IDs."""
         # Setup filtered recommendations (only tenant-1)
         filtered_recs = [
-            r for r in sample_recommendations
-            if r.tenant_id == "tenant-1" and r.is_dismissed == 0
+            r for r in sample_recommendations if r.tenant_id == "tenant-1" and r.is_dismissed == 0
         ]
 
         mock_query = MagicMock()
@@ -192,7 +199,9 @@ class TestRecommendationService:
         assert all(r.tenant_id == "tenant-1" for r in result)
         assert len(result) == len(filtered_recs)
 
-    def test_get_recommendations_by_category(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_by_category(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations_by_category groups and aggregates correctly."""
         # Setup non-dismissed recommendations
         active_recs = [r for r in sample_recommendations if r.is_dismissed == 0]
@@ -214,15 +223,17 @@ class TestRecommendationService:
 
         # Verify
         assert len(result) > 0
-        assert all(hasattr(r, 'category') for r in result)
-        assert all(hasattr(r, 'count') for r in result)
-        assert all(hasattr(r, 'total_potential_savings_monthly') for r in result)
+        assert all(hasattr(r, "category") for r in result)
+        assert all(hasattr(r, "count") for r in result)
+        assert all(hasattr(r, "total_potential_savings_monthly") for r in result)
 
         # Verify sorted by savings (descending)
         savings = [r.total_potential_savings_monthly for r in result]
         assert savings == sorted(savings, reverse=True)
 
-    def test_get_savings_potential(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_savings_potential(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_savings_potential calculates totals correctly."""
         # Setup non-dismissed recommendations
         active_recs = [r for r in sample_recommendations if r.is_dismissed == 0]
@@ -243,10 +254,10 @@ class TestRecommendationService:
         result = recommendation_service.get_savings_potential()
 
         # Verify structure
-        assert hasattr(result, 'total_potential_savings_monthly')
-        assert hasattr(result, 'total_potential_savings_annual')
-        assert hasattr(result, 'by_category')
-        assert hasattr(result, 'by_tenant')
+        assert hasattr(result, "total_potential_savings_monthly")
+        assert hasattr(result, "total_potential_savings_annual")
+        assert hasattr(result, "by_category")
+        assert hasattr(result, "by_tenant")
 
         # Calculate expected monthly total (sum of first 10: 100+200+...+1000 = 5500)
         expected_monthly = sum(r.potential_savings_monthly for r in active_recs)
@@ -275,9 +286,7 @@ class TestRecommendationService:
 
         # Execute
         result = recommendation_service.dismiss_recommendation(
-            recommendation_id=1,
-            user="test@example.com",
-            reason="Not applicable"
+            recommendation_id=1, user="test@example.com", reason="Not applicable"
         )
 
         # Verify
@@ -305,9 +314,7 @@ class TestRecommendationService:
 
         # Execute
         result = recommendation_service.dismiss_recommendation(
-            recommendation_id=999,
-            user="test@example.com",
-            reason="Test"
+            recommendation_id=999, user="test@example.com", reason="Test"
         )
 
         # Verify
@@ -318,7 +325,9 @@ class TestRecommendationService:
         # Verify commit was NOT called
         mock_db.commit.assert_not_called()
 
-    def test_get_recommendations_pagination(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_pagination(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations pagination parameters work correctly."""
         # Setup paginated results (offset 5, limit 3)
         paginated_recs = sample_recommendations[5:8]
@@ -336,10 +345,7 @@ class TestRecommendationService:
         mock_db.query.side_effect = [mock_query, tenant_query]
 
         # Execute
-        result = recommendation_service.get_recommendations(
-            limit=3,
-            offset=5
-        )
+        result = recommendation_service.get_recommendations(limit=3, offset=5)
 
         # Verify
         assert len(result) == 3
@@ -347,7 +353,9 @@ class TestRecommendationService:
         mock_query.offset.assert_called_once_with(5)
         mock_query.limit.assert_called_once_with(3)
 
-    def test_get_recommendations_sorting(self, recommendation_service, mock_db, sample_recommendations, sample_tenants):
+    def test_get_recommendations_sorting(
+        self, recommendation_service, mock_db, sample_recommendations, sample_tenants
+    ):
         """Test get_recommendations sorting works correctly."""
         # Setup sorted results
         sorted_recs = sorted(sample_recommendations[:10], key=lambda r: r.created_at, reverse=False)
@@ -365,10 +373,7 @@ class TestRecommendationService:
         mock_db.query.side_effect = [mock_query, tenant_query]
 
         # Execute
-        result = recommendation_service.get_recommendations(
-            sort_by="created_at",
-            sort_order="asc"
-        )
+        result = recommendation_service.get_recommendations(sort_by="created_at", sort_order="asc")
 
         # Verify
         assert len(result) > 0

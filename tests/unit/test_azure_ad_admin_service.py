@@ -11,10 +11,10 @@ import pytest
 
 # Mock Azure SDK before imports
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.identity'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.identity"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
 
 from app.api.services.azure_ad_admin_service import (  # noqa: E402
     AdminRoleError,
@@ -170,8 +170,10 @@ class TestAzureADAdminService:
             return_value=sample_directory_roles
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -183,13 +185,11 @@ class TestAzureADAdminService:
             mock_graph_client.get_directory_role_definitions.assert_called_once_with(True)
 
     @pytest.mark.asyncio
-    async def test_get_directory_roles_from_cache(
-        self, admin_service, sample_directory_roles
-    ):
+    async def test_get_directory_roles_from_cache(self, admin_service, sample_directory_roles):
         """Test retrieval of directory roles from cache."""
         cached_data = [r.__dict__ for r in sample_directory_roles]
 
-        with patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache:
             mock_cache.get = AsyncMock(return_value=cached_data)
             mock_cache.generate_key = MagicMock(return_value="cache-key")
 
@@ -205,7 +205,7 @@ class TestAzureADAdminService:
             side_effect=Exception("API Error")
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client):
+        with patch.object(admin_service, "_get_client", return_value=mock_graph_client):
             with pytest.raises(AdminRoleError) as exc_info:
                 await admin_service.get_directory_roles("tenant-123")
 
@@ -221,8 +221,10 @@ class TestAzureADAdminService:
             return_value=sample_role_assignments
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
             mock_cache.generate_key = MagicMock(return_value="cache-key")
@@ -238,12 +240,12 @@ class TestAzureADAdminService:
         self, admin_service, mock_graph_client, sample_pim_assignments
     ):
         """Test successful retrieval of PIM assignments."""
-        mock_graph_client.get_pim_role_assignments = AsyncMock(
-            return_value=sample_pim_assignments
-        )
+        mock_graph_client.get_pim_role_assignments = AsyncMock(return_value=sample_pim_assignments)
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
             mock_cache.generate_key = MagicMock(return_value="cache-key")
@@ -255,16 +257,16 @@ class TestAzureADAdminService:
             assert result[0].assignment_state == "eligible"
 
     @pytest.mark.asyncio
-    async def test_get_pim_assignments_error_returns_empty(
-        self, admin_service, mock_graph_client
-    ):
+    async def test_get_pim_assignments_error_returns_empty(self, admin_service, mock_graph_client):
         """Test PIM error handling returns empty list."""
         mock_graph_client.get_pim_role_assignments = AsyncMock(
             side_effect=Exception("PIM not enabled")
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
 
             result = await admin_service.get_pim_assignments("tenant-123")
@@ -279,12 +281,12 @@ class TestAzureADAdminService:
         mock_graph_client.get_role_assignments_paginated = AsyncMock(
             return_value=sample_role_assignments
         )
-        mock_graph_client.get_pim_role_assignments = AsyncMock(
-            return_value=sample_pim_assignments
-        )
+        mock_graph_client.get_pim_role_assignments = AsyncMock(return_value=sample_pim_assignments)
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -307,14 +309,14 @@ class TestAzureADAdminService:
             return_value=sample_role_assignments
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
-            result = await admin_service.get_privileged_users(
-                "tenant-123", include_pim=False
-            )
+            result = await admin_service.get_privileged_users("tenant-123", include_pim=False)
 
             # Should only get users, not service principals
             users = [u for u in result if u.get("user_principal_name")]
@@ -329,8 +331,10 @@ class TestAzureADAdminService:
             return_value=sample_role_assignments
         )
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -342,9 +346,7 @@ class TestAzureADAdminService:
             assert len(result[0]["roles"]) == 1
 
     @pytest.mark.asyncio
-    async def test_get_admin_role_summary(
-        self, admin_service, mock_graph_client
-    ):
+    async def test_get_admin_role_summary(self, admin_service, mock_graph_client):
         """Test admin role summary retrieval."""
         summary = AdminRoleSummary(
             tenant_id="tenant-123",
@@ -362,8 +364,10 @@ class TestAzureADAdminService:
 
         mock_graph_client.get_admin_role_summary = AsyncMock(return_value=summary)
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
             mock_cache.generate_key = MagicMock(return_value="cache-key")
@@ -376,9 +380,7 @@ class TestAzureADAdminService:
             assert result.security_admin_count == 3
 
     @pytest.mark.asyncio
-    async def test_get_admin_role_summary_from_cache(
-        self, admin_service
-    ):
+    async def test_get_admin_role_summary_from_cache(self, admin_service):
         """Test admin role summary from cache."""
         cached_summary = {
             "tenant_id": "tenant-123",
@@ -394,7 +396,7 @@ class TestAzureADAdminService:
             "other_admin_count": 10,
         }
 
-        with patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache:
             mock_cache.get = AsyncMock(return_value=cached_summary)
             mock_cache.generate_key = MagicMock(return_value="cache-key")
 
@@ -413,8 +415,10 @@ class TestAzureADAdminService:
         )
         mock_graph_client.get_pim_role_assignments = AsyncMock(return_value=[])
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -434,8 +438,10 @@ class TestAzureADAdminService:
         )
         mock_graph_client.get_pim_role_assignments = AsyncMock(return_value=[])
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -454,8 +460,10 @@ class TestAzureADAdminService:
         )
         mock_graph_client.get_pim_role_assignments = AsyncMock(return_value=[])
 
-        with patch.object(admin_service, '_get_client', return_value=mock_graph_client), \
-             patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with (
+            patch.object(admin_service, "_get_client", return_value=mock_graph_client),
+            patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache,
+        ):
             mock_cache.get = AsyncMock(return_value=None)
             mock_cache.set = AsyncMock()
 
@@ -467,7 +475,7 @@ class TestAzureADAdminService:
     @pytest.mark.asyncio
     async def test_invalidate_cache(self, admin_service):
         """Test cache invalidation."""
-        with patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache:
             mock_cache.delete_pattern = AsyncMock(return_value=5)
 
             result = await admin_service.invalidate_cache("tenant-123")
@@ -479,7 +487,7 @@ class TestAzureADAdminService:
     @pytest.mark.asyncio
     async def test_invalidate_cache_specific_type(self, admin_service):
         """Test cache invalidation for specific data type."""
-        with patch('app.api.services.azure_ad_admin_service.cache_manager') as mock_cache:
+        with patch("app.api.services.azure_ad_admin_service.cache_manager") as mock_cache:
             mock_cache.delete_pattern = AsyncMock(return_value=2)
 
             result = await admin_service.invalidate_cache("tenant-123", data_type="summary")

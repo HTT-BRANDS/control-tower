@@ -25,6 +25,7 @@ from app.models.resource import IdleResource
 # Enhanced Fixtures with Idle Resources
 # ============================================================================
 
+
 @pytest.fixture
 def seeded_resource_db(seeded_db, test_tenant_id: str, second_tenant_id: str):
     """Extend seeded_db with idle resources for testing.
@@ -109,6 +110,7 @@ def seeded_resource_db(seeded_db, test_tenant_id: str, second_tenant_id: str):
 @pytest.fixture
 def authenticated_resource_client(seeded_resource_db, test_user, mock_authz):
     """Test client with authentication and seeded resource database."""
+
     def override_get_db():
         try:
             yield seeded_resource_db
@@ -139,6 +141,7 @@ def authenticated_resource_client(seeded_resource_db, test_user, mock_authz):
 @pytest.fixture
 def unauthenticated_resource_client(seeded_resource_db):
     """Test client without authentication for testing 401s."""
+
     def override_get_db():
         try:
             yield seeded_resource_db
@@ -156,6 +159,7 @@ def unauthenticated_resource_client(seeded_resource_db):
 # ============================================================================
 # GET /api/v1/resources Tests
 # ============================================================================
+
 
 class TestGetResourcesEndpoint:
     """Integration tests for GET /api/v1/resources."""
@@ -263,6 +267,7 @@ class TestGetResourcesEndpoint:
 # GET /api/v1/resources/orphaned Tests
 # ============================================================================
 
+
 class TestGetOrphanedResourcesEndpoint:
     """Integration tests for GET /api/v1/resources/orphaned."""
 
@@ -295,12 +300,16 @@ class TestGetOrphanedResourcesEndpoint:
     def test_get_orphaned_resources_pagination(self, authenticated_resource_client: TestClient):
         """Orphaned resources supports pagination."""
         # Get first page
-        response_page1 = authenticated_resource_client.get("/api/v1/resources/orphaned?limit=2&offset=0")
+        response_page1 = authenticated_resource_client.get(
+            "/api/v1/resources/orphaned?limit=2&offset=0"
+        )
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
 
         # Get second page
-        response_page2 = authenticated_resource_client.get("/api/v1/resources/orphaned?limit=2&offset=2")
+        response_page2 = authenticated_resource_client.get(
+            "/api/v1/resources/orphaned?limit=2&offset=2"
+        )
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
 
@@ -308,12 +317,16 @@ class TestGetOrphanedResourcesEndpoint:
         assert isinstance(page1_data, list)
         assert isinstance(page2_data, list)
 
-    def test_get_orphaned_resources_requires_auth(self, unauthenticated_resource_client: TestClient):
+    def test_get_orphaned_resources_requires_auth(
+        self, unauthenticated_resource_client: TestClient
+    ):
         """Orphaned resources endpoint requires authentication."""
         response = unauthenticated_resource_client.get("/api/v1/resources/orphaned")
         assert response.status_code == 401
 
-    def test_get_orphaned_resources_validates_limit(self, authenticated_resource_client: TestClient):
+    def test_get_orphaned_resources_validates_limit(
+        self, authenticated_resource_client: TestClient
+    ):
         """Orphaned resources validates limit parameter."""
         # Test limit too large
         response = authenticated_resource_client.get("/api/v1/resources/orphaned?limit=1000")
@@ -327,6 +340,7 @@ class TestGetOrphanedResourcesEndpoint:
 # ============================================================================
 # GET /api/v1/resources/idle Tests
 # ============================================================================
+
 
 class TestGetIdleResourcesEndpoint:
     """Integration tests for GET /api/v1/resources/idle."""
@@ -374,15 +388,21 @@ class TestGetIdleResourcesEndpoint:
         for idle in data:
             assert idle["idle_type"] == "low_cpu"
 
-    def test_get_idle_resources_filter_by_reviewed_status(self, authenticated_resource_client: TestClient):
+    def test_get_idle_resources_filter_by_reviewed_status(
+        self, authenticated_resource_client: TestClient
+    ):
         """Idle resources can be filtered by review status."""
         # Get unreviewed
-        response_unreviewed = authenticated_resource_client.get("/api/v1/resources/idle?is_reviewed=false")
+        response_unreviewed = authenticated_resource_client.get(
+            "/api/v1/resources/idle?is_reviewed=false"
+        )
         assert response_unreviewed.status_code == 200
         unreviewed_data = response_unreviewed.json()
 
         # Get reviewed
-        response_reviewed = authenticated_resource_client.get("/api/v1/resources/idle?is_reviewed=true")
+        response_reviewed = authenticated_resource_client.get(
+            "/api/v1/resources/idle?is_reviewed=true"
+        )
         assert response_reviewed.status_code == 200
         reviewed_data = response_reviewed.json()
 
@@ -396,13 +416,17 @@ class TestGetIdleResourcesEndpoint:
     def test_get_idle_resources_pagination(self, authenticated_resource_client: TestClient):
         """Idle resources supports pagination with limit and offset."""
         # Get first page
-        response_page1 = authenticated_resource_client.get("/api/v1/resources/idle?limit=2&offset=0")
+        response_page1 = authenticated_resource_client.get(
+            "/api/v1/resources/idle?limit=2&offset=0"
+        )
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
         assert len(page1_data) <= 2
 
         # Get second page
-        response_page2 = authenticated_resource_client.get("/api/v1/resources/idle?limit=2&offset=2")
+        response_page2 = authenticated_resource_client.get(
+            "/api/v1/resources/idle?limit=2&offset=2"
+        )
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
         assert len(page2_data) <= 2
@@ -425,7 +449,11 @@ class TestGetIdleResourcesEndpoint:
 
         # Verify sorting (if we have multiple resources)
         if len(data) >= 2:
-            savings = [r["estimated_monthly_savings"] for r in data if r["estimated_monthly_savings"] is not None]
+            savings = [
+                r["estimated_monthly_savings"]
+                for r in data
+                if r["estimated_monthly_savings"] is not None
+            ]
             if len(savings) >= 2:
                 # Check that they're in descending order
                 assert savings == sorted(savings, reverse=True)
@@ -435,7 +463,9 @@ class TestGetIdleResourcesEndpoint:
         response = unauthenticated_resource_client.get("/api/v1/resources/idle")
         assert response.status_code == 401
 
-    def test_get_idle_resources_validates_parameters(self, authenticated_resource_client: TestClient):
+    def test_get_idle_resources_validates_parameters(
+        self, authenticated_resource_client: TestClient
+    ):
         """Idle resources validates query parameters."""
         # Test invalid limit
         response = authenticated_resource_client.get("/api/v1/resources/idle?limit=1000")
@@ -449,6 +479,7 @@ class TestGetIdleResourcesEndpoint:
 # ============================================================================
 # GET /api/v1/resources/idle/summary Tests
 # ============================================================================
+
 
 class TestGetIdleResourcesSummaryEndpoint:
     """Integration tests for GET /api/v1/resources/idle/summary."""
@@ -480,7 +511,9 @@ class TestGetIdleResourcesSummaryEndpoint:
             expected_annual = data["total_potential_savings_monthly"] * 12
             assert abs(data["total_potential_savings_annual"] - expected_annual) < 0.01
 
-    def test_get_idle_resources_summary_aggregations(self, authenticated_resource_client: TestClient):
+    def test_get_idle_resources_summary_aggregations(
+        self, authenticated_resource_client: TestClient
+    ):
         """Idle resources summary includes proper aggregations."""
         response = authenticated_resource_client.get("/api/v1/resources/idle/summary")
 
@@ -500,7 +533,9 @@ class TestGetIdleResourcesSummaryEndpoint:
                 assert isinstance(count, int)
                 assert count > 0
 
-    def test_get_idle_resources_summary_requires_auth(self, unauthenticated_resource_client: TestClient):
+    def test_get_idle_resources_summary_requires_auth(
+        self, unauthenticated_resource_client: TestClient
+    ):
         """Idle resources summary endpoint requires authentication."""
         response = unauthenticated_resource_client.get("/api/v1/resources/idle/summary")
         assert response.status_code == 401
@@ -510,13 +545,18 @@ class TestGetIdleResourcesSummaryEndpoint:
 # POST /api/v1/resources/idle/{id}/tag Tests
 # ============================================================================
 
+
 class TestTagIdleResourceEndpoint:
     """Integration tests for POST /api/v1/resources/idle/{id}/tag."""
 
-    def test_tag_idle_resource_success(self, authenticated_resource_client: TestClient, seeded_resource_db):
+    def test_tag_idle_resource_success(
+        self, authenticated_resource_client: TestClient, seeded_resource_db
+    ):
         """Tagging an idle resource updates the database."""
         # Get an unreviewed idle resource
-        response_idle = authenticated_resource_client.get("/api/v1/resources/idle?is_reviewed=false")
+        response_idle = authenticated_resource_client.get(
+            "/api/v1/resources/idle?is_reviewed=false"
+        )
         idle_resources = response_idle.json()
         assert len(idle_resources) > 0
 
@@ -525,7 +565,7 @@ class TestTagIdleResourceEndpoint:
         # Tag it
         response = authenticated_resource_client.post(
             f"/api/v1/resources/idle/{idle_id}/tag",
-            json={"notes": "Reviewed and keeping for backup"}
+            json={"notes": "Reviewed and keeping for backup"},
         )
 
         assert response.status_code == 200
@@ -538,17 +578,23 @@ class TestTagIdleResourceEndpoint:
         assert data["success"] is True
 
         # Verify database state changed
-        idle_in_db = seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        idle_in_db = (
+            seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        )
         assert idle_in_db is not None
         assert idle_in_db.is_reviewed == 1
         assert idle_in_db.reviewed_by == "user-123"
         assert idle_in_db.reviewed_at is not None
         assert idle_in_db.review_notes == "Reviewed and keeping for backup"
 
-    def test_tag_idle_resource_without_notes(self, authenticated_resource_client: TestClient, seeded_resource_db):
+    def test_tag_idle_resource_without_notes(
+        self, authenticated_resource_client: TestClient, seeded_resource_db
+    ):
         """Tagging an idle resource works without notes."""
         # Get an unreviewed idle resource
-        response_idle = authenticated_resource_client.get("/api/v1/resources/idle?is_reviewed=false")
+        response_idle = authenticated_resource_client.get(
+            "/api/v1/resources/idle?is_reviewed=false"
+        )
         idle_resources = response_idle.json()
         assert len(idle_resources) > 0
 
@@ -562,15 +608,16 @@ class TestTagIdleResourceEndpoint:
         assert data["success"] is True
 
         # Verify database state
-        idle_in_db = seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        idle_in_db = (
+            seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        )
         assert idle_in_db.is_reviewed == 1
         assert idle_in_db.review_notes is None
 
     def test_tag_nonexistent_idle_resource(self, authenticated_resource_client: TestClient):
         """Tagging a non-existent idle resource returns success=false."""
         response = authenticated_resource_client.post(
-            "/api/v1/resources/idle/99999/tag",
-            json={"notes": "This should fail"}
+            "/api/v1/resources/idle/99999/tag", json={"notes": "This should fail"}
         )
 
         assert response.status_code == 200
@@ -592,7 +639,9 @@ class TestTagIdleResourceEndpoint:
         response = authenticated_resource_client.post("/api/v1/resources/idle/0/tag")
         assert response.status_code == 422
 
-    def test_tag_idle_resource_already_reviewed(self, authenticated_resource_client: TestClient, seeded_resource_db):
+    def test_tag_idle_resource_already_reviewed(
+        self, authenticated_resource_client: TestClient, seeded_resource_db
+    ):
         """Tagging an already reviewed idle resource works (re-review)."""
         # Get a reviewed idle resource
         response_idle = authenticated_resource_client.get("/api/v1/resources/idle?is_reviewed=true")
@@ -603,8 +652,7 @@ class TestTagIdleResourceEndpoint:
 
         # Tag it again
         response = authenticated_resource_client.post(
-            f"/api/v1/resources/idle/{idle_id}/tag",
-            json={"notes": "Re-reviewed"}
+            f"/api/v1/resources/idle/{idle_id}/tag", json={"notes": "Re-reviewed"}
         )
 
         assert response.status_code == 200
@@ -612,13 +660,16 @@ class TestTagIdleResourceEndpoint:
         assert data["success"] is True
 
         # Verify notes updated
-        idle_in_db = seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        idle_in_db = (
+            seeded_resource_db.query(IdleResource).filter(IdleResource.id == idle_id).first()
+        )
         assert idle_in_db.review_notes == "Re-reviewed"
 
 
 # ============================================================================
 # GET /api/v1/resources/tagging Tests
 # ============================================================================
+
 
 class TestGetTaggingComplianceEndpoint:
     """Integration tests for GET /api/v1/resources/tagging."""
@@ -655,7 +706,9 @@ class TestGetTaggingComplianceEndpoint:
         # Compliance percent should be 0-100
         assert 0 <= data["compliance_percent"] <= 100
 
-    def test_get_tagging_compliance_with_custom_tags(self, authenticated_resource_client: TestClient):
+    def test_get_tagging_compliance_with_custom_tags(
+        self, authenticated_resource_client: TestClient
+    ):
         """Tagging compliance accepts custom required tags."""
         response = authenticated_resource_client.get(
             "/api/v1/resources/tagging?required_tags=Environment&required_tags=Owner"
@@ -668,7 +721,9 @@ class TestGetTaggingComplianceEndpoint:
         assert "Environment" in data["required_tags"]
         assert "Owner" in data["required_tags"]
 
-    def test_get_tagging_compliance_missing_tags_structure(self, authenticated_resource_client: TestClient):
+    def test_get_tagging_compliance_missing_tags_structure(
+        self, authenticated_resource_client: TestClient
+    ):
         """Tagging compliance returns properly structured missing tags."""
         response = authenticated_resource_client.get("/api/v1/resources/tagging")
 
@@ -684,7 +739,9 @@ class TestGetTaggingComplianceEndpoint:
             assert "missing_tags" in missing
             assert isinstance(missing["missing_tags"], list)
 
-    def test_get_tagging_compliance_requires_auth(self, unauthenticated_resource_client: TestClient):
+    def test_get_tagging_compliance_requires_auth(
+        self, unauthenticated_resource_client: TestClient
+    ):
         """Tagging compliance endpoint requires authentication."""
         response = unauthenticated_resource_client.get("/api/v1/resources/tagging")
         assert response.status_code == 401

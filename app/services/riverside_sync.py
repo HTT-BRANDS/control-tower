@@ -40,18 +40,23 @@ from app.api.services.graph_client import ADMIN_ROLE_TEMPLATE_IDS
 _graph_client = None
 _monitoring_service = None
 
+
 def _get_graph_client(tenant_id: str):
     """Get GraphClient instance lazily to avoid circular imports."""
     global _graph_client
     if _graph_client is None:
         from app.api.services.graph_client import GraphClient
+
         _graph_client = GraphClient
     return _graph_client(tenant_id)
+
 
 def _get_monitoring_service(db):
     """Get MonitoringService instance lazily to avoid circular imports."""
     from app.api.services.monitoring_service import MonitoringService
+
     return MonitoringService(db)
+
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +226,9 @@ async def sync_all_tenants(
                         except Exception as e:
                             logger.error(f"Requirement sync failed for {tenant.name}: {e}")
                             tenant_results["requirements"] = {"status": "error", "error": str(e)}
-                            results["requirements"][tenant.tenant_id] = tenant_results["requirements"]
+                            results["requirements"][tenant.tenant_id] = tenant_results[
+                                "requirements"
+                            ]
                             if not skip_failed:
                                 raise
 
@@ -335,7 +342,9 @@ async def sync_tenant_mfa(
     """
     snapshot_date = snapshot_date or datetime.utcnow()
 
-    logger.info(f"Syncing MFA data for tenant: {tenant_id} (include_details={include_method_details})")
+    logger.info(
+        f"Syncing MFA data for tenant: {tenant_id} (include_details={include_method_details})"
+    )
 
     async def _do_sync(session: Session) -> dict:
         # Get tenant
@@ -369,15 +378,11 @@ async def sync_tenant_mfa(
                             admin_user_ids.add(user_id)
 
             # Build user lookup by UPN
-            {
-                u.get("userPrincipalName", "").lower(): u
-                for u in users
-            }
+            {u.get("userPrincipalName", "").lower(): u for u in users}
 
             # Build registration lookup by UPN
             registration_lookup: dict[str, dict] = {
-                reg.get("userPrincipalName", "").lower(): reg
-                for reg in registrations
+                reg.get("userPrincipalName", "").lower(): reg for reg in registrations
             }
 
             # Calculate MFA metrics
@@ -407,17 +412,21 @@ async def sync_tenant_mfa(
                         method_breakdown[method_type] = method_breakdown.get(method_type, 0) + 1
                 else:
                     if include_method_details or is_admin:
-                        users_without_mfa.append({
-                            "user_id": user_id,
-                            "user_principal_name": upn,
-                            "display_name": user.get("displayName", ""),
-                            "is_admin": is_admin,
-                        })
+                        users_without_mfa.append(
+                            {
+                                "user_id": user_id,
+                                "user_principal_name": upn,
+                                "display_name": user.get("displayName", ""),
+                                "is_admin": is_admin,
+                            }
+                        )
 
             # Calculate percentages
             mfa_coverage_pct = (mfa_enrolled / total_users * 100) if total_users > 0 else 0.0
             admin_mfa_pct = (
-                (admin_accounts_mfa / admin_accounts_total * 100) if admin_accounts_total > 0 else 0.0
+                (admin_accounts_mfa / admin_accounts_total * 100)
+                if admin_accounts_total > 0
+                else 0.0
             )
             unprotected_users = total_users - mfa_enrolled
 
@@ -582,9 +591,7 @@ async def sync_tenant_devices(
             edr_covered = compliant_devices
 
             # Calculate compliance percentage
-            compliance_pct = (
-                (compliant_devices / total_devices * 100) if total_devices > 0 else 0.0
-            )
+            compliance_pct = (compliant_devices / total_devices * 100) if total_devices > 0 else 0.0
 
             # Check for existing record for today
             existing = (
@@ -734,12 +741,14 @@ async def sync_requirement_status(
                     req.status = new_status
                     req.updated_at = datetime.utcnow()
                     requirements_updated += 1
-                    updates.append({
-                        "requirement_id": req.requirement_id,
-                        "title": req.title,
-                        "old_status": old_status.value,
-                        "new_status": new_status.value,
-                    })
+                    updates.append(
+                        {
+                            "requirement_id": req.requirement_id,
+                            "title": req.title,
+                            "old_status": old_status.value,
+                            "new_status": new_status.value,
+                        }
+                    )
 
             session.commit()
 

@@ -267,7 +267,9 @@ class WorkerPool:
                 except TimeoutError:
                     duration = time.monotonic() - start_time
                     if retries < self.config.max_retries and self.config.retry_failed_tasks:
-                        logger.warning(f"Task {task_id} timed out, retrying ({retries + 1}/{self.config.max_retries})")
+                        logger.warning(
+                            f"Task {task_id} timed out, retrying ({retries + 1}/{self.config.max_retries})"
+                        )
                         retries += 1
                         continue
                     return TaskResult(
@@ -281,7 +283,9 @@ class WorkerPool:
                 except Exception as e:
                     duration = time.monotonic() - start_time
                     if retries < self.config.max_retries and self.config.retry_failed_tasks:
-                        logger.warning(f"Task {task_id} failed: {e}, retrying ({retries + 1}/{self.config.max_retries})")
+                        logger.warning(
+                            f"Task {task_id} failed: {e}, retrying ({retries + 1}/{self.config.max_retries})"
+                        )
                         retries += 1
                         await asyncio.sleep(0.1 * (retries + 1))  # Exponential backoff
                         continue

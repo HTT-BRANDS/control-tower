@@ -94,7 +94,9 @@ class TestTokenBlacklistInMemory:
         assert bl.contains("tok-abc") is True
 
     @patch("app.core.token_blacklist.get_settings")
-    def test_contains_returns_false_for_unknown_token(self, mock_get_settings, mock_settings_no_redis):
+    def test_contains_returns_false_for_unknown_token(
+        self, mock_get_settings, mock_settings_no_redis
+    ):
         """contains() returns False for tokens never added."""
         mock_get_settings.return_value = mock_settings_no_redis
         bl = TokenBlacklist()
@@ -162,9 +164,7 @@ class TestTokenBlacklistRedis:
 
         bl.add("tok-redis", ttl_seconds=3600)
 
-        bl._redis.setex.assert_called_once_with(
-            "blacklist:tok-redis", 3600, "1"
-        )
+        bl._redis.setex.assert_called_once_with("blacklist:tok-redis", 3600, "1")
 
     def test_contains_checks_redis_exists(self):
         """contains() queries Redis exists when Redis is available."""
@@ -205,11 +205,13 @@ class TestTokenBlacklistRedis:
     def test_size_with_redis_scans_keys(self):
         """size() scans Redis keys when Redis is available."""
         mock_redis = MagicMock()
-        mock_redis.scan_iter.return_value = iter([
-            "blacklist:tok-1",
-            "blacklist:tok-2",
-            "blacklist:tok-3",
-        ])
+        mock_redis.scan_iter.return_value = iter(
+            [
+                "blacklist:tok-1",
+                "blacklist:tok-2",
+                "blacklist:tok-3",
+            ]
+        )
         bl = self._make_bl_with_mock_redis(mock_redis)
 
         assert bl.size() == 3

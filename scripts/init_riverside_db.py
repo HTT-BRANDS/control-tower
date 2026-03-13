@@ -32,9 +32,7 @@ RIVERSIDE_TABLES = [
 def get_existing_tables() -> set[str]:
     """Query sqlite_master to get existing tables."""
     with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table'")
-        )
+        result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
         return {row[0] for row in result}
 
 

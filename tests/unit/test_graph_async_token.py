@@ -16,10 +16,10 @@ import pytest
 
 # Mock Azure SDK before imports
 azure_mock = MagicMock()
-sys.modules.setdefault('azure', azure_mock)
-sys.modules.setdefault('azure.identity', azure_mock)
-sys.modules.setdefault('azure.core', azure_mock)
-sys.modules.setdefault('azure.core.exceptions', azure_mock)
+sys.modules.setdefault("azure", azure_mock)
+sys.modules.setdefault("azure.identity", azure_mock)
+sys.modules.setdefault("azure.core", azure_mock)
+sys.modules.setdefault("azure.core.exceptions", azure_mock)
 
 
 class TestGraphClientAsyncToken:
@@ -33,8 +33,9 @@ class TestGraphClientAsyncToken:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
 
-        with patch('app.api.services.graph_client.settings', self.mock_settings):
+        with patch("app.api.services.graph_client.settings", self.mock_settings):
             from app.api.services.graph_client import GraphClient
+
             self.GraphClient = GraphClient
             yield
 
@@ -56,8 +57,11 @@ class TestGraphClientAsyncToken:
         mock_credential.get_token.return_value = mock_token
         client._credential = mock_credential
 
-        with patch('app.api.services.graph_client.asyncio.to_thread',
-                   new_callable=AsyncMock, return_value=mock_token) as mock_to_thread:
+        with patch(
+            "app.api.services.graph_client.asyncio.to_thread",
+            new_callable=AsyncMock,
+            return_value=mock_token,
+        ) as mock_to_thread:
             token = await client._get_token()
 
             # Verify to_thread was called with the sync get_token
@@ -77,9 +81,11 @@ class TestGraphClientAsyncToken:
         mock_token.token = "slow-token"
 
         mock_credential = MagicMock()
+
         def slow_get_token(*args):
             time.sleep(0.1)  # 100ms blocking call
             return mock_token
+
         mock_credential.get_token.side_effect = slow_get_token
         client._credential = mock_credential
 
@@ -117,7 +123,9 @@ class TestGraphClientAsyncToken:
         client = self.GraphClient("test-tenant-id")
 
         mock_credential = MagicMock()
-        mock_credential.get_token.side_effect = Exception("Authentication failed: invalid client secret")
+        mock_credential.get_token.side_effect = Exception(
+            "Authentication failed: invalid client secret"
+        )
         client._credential = mock_credential
 
         with pytest.raises(Exception, match="Authentication failed"):
@@ -147,16 +155,22 @@ class TestGraphClientCredentialConfig:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
 
-        with patch('app.api.services.graph_client.settings', self.mock_settings):
+        with patch("app.api.services.graph_client.settings", self.mock_settings):
             from app.api.services.graph_client import GraphClient
+
             self.GraphClient = GraphClient
             yield
 
     def test_credential_uses_connection_timeout(self):
         """Verify ClientSecretCredential is created with connection_timeout=10."""
-        with patch('app.api.services.graph_client.ClientSecretCredential') as mock_csc,              patch('app.api.services.azure_client.AzureClientManager') as mock_mgr:
+        with (
+            patch("app.api.services.graph_client.ClientSecretCredential") as mock_csc,
+            patch("app.api.services.azure_client.AzureClientManager") as mock_mgr,
+        ):
             mock_mgr.return_value._resolve_credentials.return_value = (
-                "test-client-id", "test-client-secret", None
+                "test-client-id",
+                "test-client-secret",
+                None,
             )
             client = self.GraphClient("test-tenant-id")
             client._get_credential()
@@ -170,9 +184,14 @@ class TestGraphClientCredentialConfig:
 
     def test_credential_is_cached(self):
         """Verify credential is created once and reused."""
-        with patch('app.api.services.graph_client.ClientSecretCredential') as mock_csc,              patch('app.api.services.azure_client.AzureClientManager') as mock_mgr:
+        with (
+            patch("app.api.services.graph_client.ClientSecretCredential") as mock_csc,
+            patch("app.api.services.azure_client.AzureClientManager") as mock_mgr,
+        ):
             mock_mgr.return_value._resolve_credentials.return_value = (
-                "test-client-id", "test-client-secret", None
+                "test-client-id",
+                "test-client-secret",
+                None,
             )
             client = self.GraphClient("test-tenant-id")
             cred1 = client._get_credential()
@@ -183,12 +202,12 @@ class TestGraphClientCredentialConfig:
 
     def test_credential_uses_correct_tenant(self):
         """Verify credential uses the tenant_id passed to GraphClient."""
-        with patch('app.api.services.graph_client.ClientSecretCredential') as mock_csc:
+        with patch("app.api.services.graph_client.ClientSecretCredential") as mock_csc:
             client = self.GraphClient("custom-tenant-abc")
             client._get_credential()
 
             call_kwargs = mock_csc.call_args[1]
-            assert call_kwargs['tenant_id'] == "custom-tenant-abc"
+            assert call_kwargs["tenant_id"] == "custom-tenant-abc"
 
 
 class TestGraphClientRequestIntegration:
@@ -202,8 +221,9 @@ class TestGraphClientRequestIntegration:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
 
-        with patch('app.api.services.graph_client.settings', self.mock_settings):
+        with patch("app.api.services.graph_client.settings", self.mock_settings):
             from app.api.services.graph_client import GraphClient
+
             self.GraphClient = GraphClient
             yield
 
@@ -225,7 +245,9 @@ class TestGraphClientRequestIntegration:
         mock_http_client.__aenter__ = AsyncMock(return_value=mock_http_client)
         mock_http_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('app.api.services.graph_client.httpx.AsyncClient', return_value=mock_http_client):
+        with patch(
+            "app.api.services.graph_client.httpx.AsyncClient", return_value=mock_http_client
+        ):
             result = await client._request("GET", "/users")
 
         # Token was awaited
@@ -233,7 +255,7 @@ class TestGraphClientRequestIntegration:
 
         # HTTP request used the token
         http_call = mock_http_client.request.call_args
-        assert http_call[1]['headers']['Authorization'] == 'Bearer mock-bearer-token'
+        assert http_call[1]["headers"]["Authorization"] == "Bearer mock-bearer-token"
 
         assert result == {"value": [{"id": "user1"}]}
 
@@ -260,8 +282,9 @@ class TestAzureGraphPreflightCheck:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
 
-        with patch('app.preflight.checks.get_settings', return_value=self.mock_settings):
+        with patch("app.preflight.checks.get_settings", return_value=self.mock_settings):
             from app.preflight.checks import AzureGraphCheck
+
             self.GraphCheck = AzureGraphCheck
             yield
 
@@ -280,8 +303,10 @@ class TestAzureGraphPreflightCheck:
         mock_http.__aenter__ = AsyncMock(return_value=mock_http)
         mock_http.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('app.api.services.graph_client.GraphClient') as mock_gc_class, \
-             patch('httpx.AsyncClient', return_value=mock_http):
+        with (
+            patch("app.api.services.graph_client.GraphClient") as mock_gc_class,
+            patch("httpx.AsyncClient", return_value=mock_http),
+        ):
             mock_gc = MagicMock()
             mock_gc._get_token = AsyncMock(return_value=mock_token)
             mock_gc_class.return_value = mock_gc
@@ -296,6 +321,7 @@ class TestAzureGraphPreflightCheck:
     async def test_graph_check_fails_on_timeout(self):
         """Verify Graph check returns descriptive failure on timeout."""
         import httpx as httpx_mod
+
         check = self.GraphCheck()
 
         mock_http = AsyncMock()
@@ -303,8 +329,10 @@ class TestAzureGraphPreflightCheck:
         mock_http.__aenter__ = AsyncMock(return_value=mock_http)
         mock_http.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('app.api.services.graph_client.GraphClient') as mock_gc_class, \
-             patch('httpx.AsyncClient', return_value=mock_http):
+        with (
+            patch("app.api.services.graph_client.GraphClient") as mock_gc_class,
+            patch("httpx.AsyncClient", return_value=mock_http),
+        ):
             mock_gc = MagicMock()
             mock_gc._get_token = AsyncMock(return_value="test-token")
             mock_gc_class.return_value = mock_gc
@@ -320,7 +348,7 @@ class TestAzureGraphPreflightCheck:
         """Verify Graph check fails gracefully when token acquisition fails."""
         check = self.GraphCheck()
 
-        with patch('app.api.services.graph_client.GraphClient') as mock_gc_class:
+        with patch("app.api.services.graph_client.GraphClient") as mock_gc_class:
             mock_gc = MagicMock()
             mock_gc._get_token = AsyncMock(side_effect=Exception("Auth failed"))
             mock_gc_class.return_value = mock_gc
@@ -335,8 +363,9 @@ class TestAzureGraphPreflightCheck:
         """Verify Graph check fails when no tenant ID is configured."""
         self.mock_settings.azure_tenant_id = None
 
-        with patch('app.preflight.checks.get_settings', return_value=self.mock_settings):
+        with patch("app.preflight.checks.get_settings", return_value=self.mock_settings):
             from app.preflight.checks import AzureGraphCheck
+
             check = AzureGraphCheck()
             result = await check._execute_check()
 
@@ -347,6 +376,7 @@ class TestAzureGraphPreflightCheck:
     async def test_graph_check_handles_http_error(self):
         """Verify Graph check reports HTTP status errors clearly."""
         import httpx as httpx_mod
+
         check = self.GraphCheck()
 
         mock_response = MagicMock()
@@ -360,8 +390,10 @@ class TestAzureGraphPreflightCheck:
         mock_http.__aenter__ = AsyncMock(return_value=mock_http)
         mock_http.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('app.api.services.graph_client.GraphClient') as mock_gc_class, \
-             patch('httpx.AsyncClient', return_value=mock_http):
+        with (
+            patch("app.api.services.graph_client.GraphClient") as mock_gc_class,
+            patch("httpx.AsyncClient", return_value=mock_http),
+        ):
             mock_gc = MagicMock()
             mock_gc._get_token = AsyncMock(return_value="test-token")
             mock_gc_class.return_value = mock_gc
@@ -382,10 +414,11 @@ class TestAzureClientConnectionTimeout:
 
     def test_azure_client_credential_uses_connection_timeout(self):
         """Verify AzureClientManager creates credentials with connection_timeout=10."""
-        with patch('app.api.services.azure_client.ClientSecretCredential') as mock_csc, \
-             patch('app.api.services.azure_client.settings') as mock_settings, \
-             patch('app.api.services.azure_client.SessionLocal') as mock_db:
-
+        with (
+            patch("app.api.services.azure_client.ClientSecretCredential") as mock_csc,
+            patch("app.api.services.azure_client.settings") as mock_settings,
+            patch("app.api.services.azure_client.SessionLocal") as mock_db,
+        ):
             mock_settings.azure_client_id = "test-id"
             mock_settings.azure_client_secret = "test-secret"
             mock_settings.key_vault_url = None
@@ -396,19 +429,24 @@ class TestAzureClientConnectionTimeout:
             mock_tenant.client_id = None
             mock_tenant.client_secret_ref = None
             # SessionLocal() is used as context manager: with SessionLocal() as db:
-            mock_db.return_value.__enter__ = MagicMock(return_value=MagicMock(
-                query=MagicMock(return_value=MagicMock(
-                    filter=MagicMock(return_value=MagicMock(
-                        first=MagicMock(return_value=mock_tenant)
-                    ))
-                ))
-            ))
+            mock_db.return_value.__enter__ = MagicMock(
+                return_value=MagicMock(
+                    query=MagicMock(
+                        return_value=MagicMock(
+                            filter=MagicMock(
+                                return_value=MagicMock(first=MagicMock(return_value=mock_tenant))
+                            )
+                        )
+                    )
+                )
+            )
             mock_db.return_value.__exit__ = MagicMock(return_value=False)
 
             from app.api.services.azure_client import AzureClientManager
+
             manager = AzureClientManager()
             manager.get_credential("test-tenant-id", force_refresh=True)
 
             # Verify connection_timeout is passed
             call_kwargs = mock_csc.call_args[1]
-            assert call_kwargs.get('connection_timeout') == 10
+            assert call_kwargs.get("connection_timeout") == 10

@@ -138,17 +138,13 @@ class TestNonCompliantEndpoint:
         assert response.status_code == 401
 
     @patch("app.api.routes.compliance.ComplianceService")
-    def test_get_non_compliant_filters_by_severity(
-        self, mock_service_cls, authed_client
-    ):
+    def test_get_non_compliant_filters_by_severity(self, mock_service_cls, authed_client):
         """Non-compliant endpoint filters by severity."""
         mock_svc = MagicMock()
         mock_svc.get_non_compliant_policies.return_value = []  # sync in route
         mock_service_cls.return_value = mock_svc
 
-        response = authed_client.get(
-            "/api/v1/compliance/non-compliant?severity=High"
-        )
+        response = authed_client.get("/api/v1/compliance/non-compliant?severity=High")
         assert response.status_code == 200
 
 

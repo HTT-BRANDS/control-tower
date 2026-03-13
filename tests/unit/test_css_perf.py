@@ -39,6 +39,7 @@ ALL_BRAND_KEYS = ["httbrands", "frenchies", "bishops", "lashlounge", "deltacrown
 def clear_brand_cache():
     """Clear the module-level registry cache."""
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None
@@ -69,9 +70,7 @@ def test_css_variable_generation_speed(registry, brand_key: str):
     median = statistics.median(timings)
 
     # Sanity: must produce at least 40 CSS variables
-    assert len(variables) >= 40, (
-        f"{brand_key}: expected >=40 CSS variables, got {len(variables)}"
-    )
+    assert len(variables) >= 40, f"{brand_key}: expected >=40 CSS variables, got {len(variables)}"
     assert p95 < MAX_MS_PER_BRAND, (
         f"{brand_key}: CSS generation p95={p95:.2f}ms exceeds {MAX_MS_PER_BRAND}ms "
         f"(median={median:.2f}ms)"
@@ -146,8 +145,7 @@ def test_all_brands_css_generation_speed(registry):
         assert f'[data-brand="{key}"]' in css
 
     assert p95 < MAX_MS_ALL_BRANDS, (
-        f"All-brands CSS p95={p95:.2f}ms exceeds {MAX_MS_ALL_BRANDS}ms "
-        f"(median={median:.2f}ms)"
+        f"All-brands CSS p95={p95:.2f}ms exceeds {MAX_MS_ALL_BRANDS}ms (median={median:.2f}ms)"
     )
 
 
@@ -179,8 +177,7 @@ def test_theme_context_construction_speed(registry, brand_key: str):
     assert len(ctx.css_variables) >= 40
 
     assert p95 < MAX_MS_THEME_CTX, (
-        f"{brand_key}: ThemeContext construction p95={p95:.2f}ms exceeds "
-        f"{MAX_MS_THEME_CTX}ms"
+        f"{brand_key}: ThemeContext construction p95={p95:.2f}ms exceeds {MAX_MS_THEME_CTX}ms"
     )
 
 
@@ -216,6 +213,4 @@ def test_middleware_cache_speed():
         timings.append(elapsed_ms)
 
     p95 = sorted(timings)[int(len(timings) * 0.95)]
-    assert p95 < 0.1, (
-        f"Cached theme context lookup p95={p95:.4f}ms — should be < 0.1 ms"
-    )
+    assert p95 < 0.1, f"Cached theme context lookup p95={p95:.4f}ms — should be < 0.1 ms"

@@ -1,4 +1,5 @@
 """Shared pytest fixtures for unit tests."""
+
 import pytest
 
 from app.core.circuit_breaker import circuit_breaker_registry

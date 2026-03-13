@@ -680,9 +680,7 @@ def clear_riverside_test_data(db: Session) -> None:
 
     # Delete tenants last
     tenant_ids = [t["id"] for t in RIVERSIDE_TENANTS]
-    db.query(Tenant).filter(Tenant.id.in_(tenant_ids)).delete(
-        synchronize_session=False
-    )
+    db.query(Tenant).filter(Tenant.id.in_(tenant_ids)).delete(synchronize_session=False)
 
     db.commit()
 

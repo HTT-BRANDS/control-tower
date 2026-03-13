@@ -15,9 +15,11 @@ def validate_uuid(v: str, field_name: str) -> str:
     if v is None:
         return v
 
-    uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     if not re.match(uuid_pattern, v):
-        raise ValueError(f"{field_name} must be a valid UUID (e.g., '12345678-1234-1234-1234-123456789abc')")
+        raise ValueError(
+            f"{field_name} must be a valid UUID (e.g., '12345678-1234-1234-1234-123456789abc')"
+        )
     return v.lower()  # Normalize to lowercase
 
 
@@ -32,10 +34,10 @@ class TenantCreate(BaseModel):
     SECURITY: All Azure IDs are validated as proper UUIDs.
     """
 
-    name: str = Field(..., min_length=1, max_length=255, pattern=r'^[\w\s\-_.]+$')
+    name: str = Field(..., min_length=1, max_length=255, pattern=r"^[\w\s\-_.]+$")
     tenant_id: TenantIdField
     client_id: TenantIdField | None = None
-    client_secret_ref: str | None = Field(None, max_length=500, pattern=r'^[\w\-_.]+$')
+    client_secret_ref: str | None = Field(None, max_length=500, pattern=r"^[\w\-_.]+$")
     description: str | None = Field(None, max_length=1000)
     use_lighthouse: bool = False
 
@@ -58,9 +60,9 @@ class TenantUpdate(BaseModel):
     SECURITY: All Azure IDs are validated as proper UUIDs.
     """
 
-    name: str | None = Field(None, min_length=1, max_length=255, pattern=r'^[\w\s\-_.]+$')
+    name: str | None = Field(None, min_length=1, max_length=255, pattern=r"^[\w\s\-_.]+$")
     client_id: str | None = Field(None, min_length=36, max_length=36)
-    client_secret_ref: str | None = Field(None, max_length=500, pattern=r'^[\w\-_.]+$')
+    client_secret_ref: str | None = Field(None, max_length=500, pattern=r"^[\w\-_.]+$")
     description: str | None = Field(None, max_length=1000)
     is_active: bool | None = None
     use_lighthouse: bool | None = None

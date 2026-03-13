@@ -16,8 +16,12 @@ class Recommendation(Base):
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
     tenant_id: Mapped[str | None] = Column(String(36), ForeignKey("tenants.id"), nullable=True)
     subscription_id: Mapped[str | None] = Column(String(36))
-    category: Mapped[str] = Column(String(50), nullable=False)  # cost_optimization, security, performance, reliability
-    recommendation_type: Mapped[str] = Column(String(100), nullable=False)  # e.g., "idle_vm", "unencrypted_storage"
+    category: Mapped[str] = Column(
+        String(50), nullable=False
+    )  # cost_optimization, security, performance, reliability
+    recommendation_type: Mapped[str] = Column(
+        String(100), nullable=False
+    )  # e.g., "idle_vm", "unencrypted_storage"
     title: Mapped[str] = Column(String(255), nullable=False)
     description: Mapped[str] = Column(Text, nullable=False)
     impact: Mapped[str] = Column(String(20), default="Medium")  # Low, Medium, High, Critical
@@ -34,7 +38,9 @@ class Recommendation(Base):
     dismissed_at: Mapped[datetime | None] = Column(DateTime)
     dismiss_reason: Mapped[str | None] = Column(Text)
     created_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return f"<Recommendation {self.category}/{self.recommendation_type}: {self.title}>"

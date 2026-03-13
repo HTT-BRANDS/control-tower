@@ -2,6 +2,7 @@
 
 Updated for microsoft-group-management design system.
 """
+
 import pytest
 
 from app.core.color_utils import get_contrast_ratio
@@ -12,6 +13,7 @@ from app.core.design_tokens import load_brands
 @pytest.fixture(autouse=True)
 def clear_brand_cache():
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None
@@ -32,6 +34,7 @@ def test_all_brands_generate_css(registry):
 
 def test_all_brands_valid_hex(registry):
     import re
+
     hex_re = re.compile(r"^#[0-9A-Fa-f]{6}$")
     for key in registry:
         brand = registry[key]

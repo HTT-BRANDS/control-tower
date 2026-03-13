@@ -384,9 +384,7 @@ class EmailService:
         self.from_address = from_address or getattr(
             settings, "from_email", "riverside-alerts@httbrands.com"
         )
-        self.use_tls = use_tls if use_tls is not None else getattr(
-            settings, "smtp_use_tls", True
-        )
+        self.use_tls = use_tls if use_tls is not None else getattr(settings, "smtp_use_tls", True)
         self.timeout = 30.0
 
     async def send_email(
@@ -493,15 +491,19 @@ class EmailService:
         # Build actions
         actions = []
         if notification.dashboard_url:
-            actions.append({
-                "title": "View Dashboard",
-                "url": notification.dashboard_url,
-            })
+            actions.append(
+                {
+                    "title": "View Dashboard",
+                    "url": notification.dashboard_url,
+                }
+            )
         if notification.retry_url:
-            actions.append({
-                "title": "Retry Action",
-                "url": notification.retry_url,
-            })
+            actions.append(
+                {
+                    "title": "Retry Action",
+                    "url": notification.retry_url,
+                }
+            )
 
         # Render template
         plain_text, html = render_email_template(
@@ -602,10 +604,14 @@ class EmailService:
             message = f"Requirement '{title}' is {abs(days_until)} days overdue and requires immediate attention."
         elif days_until <= 3:
             severity = Severity.ERROR
-            message = f"Requirement '{title}' is due in {days_until} days. Immediate action required."
+            message = (
+                f"Requirement '{title}' is due in {days_until} days. Immediate action required."
+            )
         elif days_until <= 7:
             severity = Severity.WARNING
-            message = f"Requirement '{title}' is due in {days_until} days. Please submit evidence soon."
+            message = (
+                f"Requirement '{title}' is due in {days_until} days. Please submit evidence soon."
+            )
         else:
             severity = Severity.WARNING
             message = f"Requirement '{title}' is due in {days_until} days. Please plan accordingly."
@@ -614,7 +620,12 @@ class EmailService:
             {"title": "Requirement", "value": requirement_id},
             {"title": "Tenant", "value": tenant_id},
             {"title": "Title", "value": title},
-            {"title": "Status", "value": f"{abs(days_until)} days overdue" if is_overdue else f"{days_until} days remaining"},
+            {
+                "title": "Status",
+                "value": f"{abs(days_until)} days overdue"
+                if is_overdue
+                else f"{days_until} days remaining",
+            },
         ]
 
         actions = []

@@ -51,9 +51,11 @@ from typing import Any
 # TENANT CONFIGURATION
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class TenantConfig:
     """Configuration for a single Azure tenant."""
+
     name: str
     code: str
     tenant_id: str
@@ -138,6 +140,7 @@ AZURE_MANAGEMENT_PERMISSIONS: dict[str, str] = {
 # UTILITY FUNCTIONS
 # =============================================================================
 
+
 def print_header(title: str) -> None:
     """Print a formatted section header."""
     print(f"\n{'=' * 70}")
@@ -172,11 +175,13 @@ def print_step(message: str) -> None:
 
 def is_valid_uuid(value: str) -> bool:
     """Check if a string is a valid UUID."""
-    pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     return bool(re.match(pattern, value, re.IGNORECASE))
 
 
-def run_az_command(args: list[str], capture_output: bool = True, check: bool = True) -> tuple[int, str, str]:
+def run_az_command(
+    args: list[str], capture_output: bool = True, check: bool = True
+) -> tuple[int, str, str]:
     """Run an Azure CLI command and return results.
 
     Args:
@@ -217,7 +222,7 @@ def check_az_cli_installed() -> bool:
     try:
         _, stdout, _ = run_az_command(["--version"], check=False)
         # Extract version from first line
-        match = re.search(r'azure-cli\s+(\d+\.\d+\.\d+)', stdout)
+        match = re.search(r"azure-cli\s+(\d+\.\d+\.\d+)", stdout)
         if match:
             print_success(f"Azure CLI installed: {match.group(1)}")
             return True
@@ -245,16 +250,16 @@ def generate_client_secret() -> str:
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
     # Ensure at least one of each type
     secret = (
-        secrets.choice(string.ascii_lowercase) +
-        secrets.choice(string.ascii_uppercase) +
-        secrets.choice(string.digits) +
-        secrets.choice("!@#$%^&*") +
-        ''.join(secrets.choice(alphabet) for _ in range(36))
+        secrets.choice(string.ascii_lowercase)
+        + secrets.choice(string.ascii_uppercase)
+        + secrets.choice(string.digits)
+        + secrets.choice("!@#$%^&*")
+        + "".join(secrets.choice(alphabet) for _ in range(36))
     )
     # Shuffle the secret
     secret_list = list(secret)
     secrets.SystemRandom().shuffle(secret_list)
-    return ''.join(secret_list)
+    return "".join(secret_list)
 
 
 def mask_secret(secret: str, visible_chars: int = 4) -> str:
@@ -267,6 +272,7 @@ def mask_secret(secret: str, visible_chars: int = 4) -> str:
 # =============================================================================
 # AZURE AD APP OPERATIONS
 # =============================================================================
+
 
 class AppRegistrationManager:
     """Manages Azure AD app registration operations."""
@@ -294,7 +300,7 @@ class AppRegistrationManager:
             try:
                 run_az_command(
                     ["login", "--tenant", self.tenant.tenant_id, "--allow-no-subscriptions"],
-                    check=False
+                    check=False,
                 )
                 return True
             except Exception as login_error:
@@ -310,10 +316,15 @@ class AppRegistrationManager:
             return False
 
         try:
-            _, stdout, _ = run_az_command([
-                "ad", "app", "show",
-                "--id", self.tenant.app_id,
-            ])
+            _, stdout, _ = run_az_command(
+                [
+                    "ad",
+                    "app",
+                    "show",
+                    "--id",
+                    self.tenant.app_id,
+                ]
+            )
 
             app_data = json.loads(stdout)
             self.results["exists"] = True
@@ -344,10 +355,16 @@ class AppRegistrationManager:
         permission_status: dict[str, bool] = {}
 
         try:
-            _, stdout, _ = run_az_command([
-                "ad", "app", "permission", "list",
-                "--id", self.tenant.app_id,
-            ])
+            _, stdout, _ = run_az_command(
+                [
+                    "ad",
+                    "app",
+                    "permission",
+                    "list",
+                    "--id",
+                    self.tenant.app_id,
+                ]
+            )
 
             permissions = json.loads(stdout)
 
@@ -364,10 +381,15 @@ class AppRegistrationManager:
 
             # Check via service principal for better accuracy
             try:
-                _, sp_stdout, _ = run_az_command([
-                    "ad", "sp", "show",
-                    "--id", self.tenant.app_id,
-                ])
+                _, sp_stdout, _ = run_az_command(
+                    [
+                        "ad",
+                        "sp",
+                        "show",
+                        "--id",
+                        self.tenant.app_id,
+                    ]
+                )
                 sp_data = json.loads(sp_stdout)
 
                 # Get app roles from service principal
@@ -405,10 +427,15 @@ class AppRegistrationManager:
 
         try:
             # Check service principal for admin consent
-            _, stdout, _ = run_az_command([
-                "ad", "sp", "show",
-                "--id", self.tenant.app_id,
-            ])
+            _, stdout, _ = run_az_command(
+                [
+                    "ad",
+                    "sp",
+                    "show",
+                    "--id",
+                    self.tenant.app_id,
+                ]
+            )
 
             json.loads(stdout)
             # If service principal exists, admin consent was likely granted
@@ -436,10 +463,16 @@ class AppRegistrationManager:
         print_step("Listing existing client secrets...")
 
         try:
-            _, stdout, _ = run_az_command([
-                "ad", "app", "credential", "list",
-                "--id", self.tenant.app_id,
-            ])
+            _, stdout, _ = run_az_command(
+                [
+                    "ad",
+                    "app",
+                    "credential",
+                    "list",
+                    "--id",
+                    self.tenant.app_id,
+                ]
+            )
 
             credentials = json.loads(stdout)
             self.results["client_secrets"] = credentials
@@ -467,12 +500,20 @@ class AppRegistrationManager:
             # Generate expiration date (2 years from now)
             expiry_date = (datetime.utcnow() + timedelta(days=730)).strftime("%Y-%m-%d")
 
-            _, stdout, _ = run_az_command([
-                "ad", "app", "credential", "reset",
-                "--id", self.tenant.app_id,
-                "--display-name", display_name,
-                "--end-date", expiry_date,
-            ])
+            _, stdout, _ = run_az_command(
+                [
+                    "ad",
+                    "app",
+                    "credential",
+                    "reset",
+                    "--id",
+                    self.tenant.app_id,
+                    "--display-name",
+                    display_name,
+                    "--end-date",
+                    expiry_date,
+                ]
+            )
 
             result = json.loads(stdout)
             secret_value = result.get("password")
@@ -510,6 +551,7 @@ class AppRegistrationManager:
 # =============================================================================
 # ENVIRONMENT FILE GENERATOR
 # =============================================================================
+
 
 def generate_env_file(results: dict[str, dict], output_path: str = ".env.azure") -> str:
     """Generate .env file with credentials.
@@ -557,34 +599,38 @@ def generate_env_file(results: dict[str, dict], output_path: str = ".env.azure")
         lines.append(f"RIVERSIDE_{code}_STATUS={status}")
         lines.append("")
 
-    lines.extend([
-        "# ============================================",
-        "# Microsoft Graph Configuration",
-        "# ============================================",
-        "",
-        "GRAPH_API_ENDPOINT=https://graph.microsoft.com/v1.0",
-        "GRAPH_API_VERSION=v1.0",
-        "",
-        "# ============================================",
-        "# Azure Management Configuration",
-        "# ============================================",
-        "",
-        "AZURE_MANAGEMENT_ENDPOINT=https://management.azure.com",
-        "",
-        "# ============================================",
-        "# Notes",
-        "# ============================================",
-        "",
-        "# Required Microsoft Graph Permissions:",
-    ])
+    lines.extend(
+        [
+            "# ============================================",
+            "# Microsoft Graph Configuration",
+            "# ============================================",
+            "",
+            "GRAPH_API_ENDPOINT=https://graph.microsoft.com/v1.0",
+            "GRAPH_API_VERSION=v1.0",
+            "",
+            "# ============================================",
+            "# Azure Management Configuration",
+            "# ============================================",
+            "",
+            "AZURE_MANAGEMENT_ENDPOINT=https://management.azure.com",
+            "",
+            "# ============================================",
+            "# Notes",
+            "# ============================================",
+            "",
+            "# Required Microsoft Graph Permissions:",
+        ]
+    )
 
     for perm, desc in MICROSOFT_GRAPH_PERMISSIONS.items():
         lines.append(f"#   - {perm}: {desc}")
 
-    lines.extend([
-        "",
-        "# Required Azure Management Permissions:",
-    ])
+    lines.extend(
+        [
+            "",
+            "# Required Azure Management Permissions:",
+        ]
+    )
 
     for perm, desc in AZURE_MANAGEMENT_PERMISSIONS.items():
         lines.append(f"#   - {perm}: {desc}")
@@ -602,17 +648,22 @@ def generate_env_file(results: dict[str, dict], output_path: str = ".env.azure")
 # SUMMARY TABLE
 # =============================================================================
 
+
 def print_summary_table(results: dict[str, dict]) -> None:
     """Print a formatted summary table of all tenants."""
     print_header("Tenant Summary")
 
     # Table header
-    print(f"  {'Code':<6} {'App Exists':<12} {'Enabled':<10} {'Consent':<10} {'Secrets':<10} {'Status':<15}")
+    print(
+        f"  {'Code':<6} {'App Exists':<12} {'Enabled':<10} {'Consent':<10} {'Secrets':<10} {'Status':<15}"
+    )
     print(f"  {'-' * 6} {'-' * 12} {'-' * 10} {'-' * 10} {'-' * 10} {'-' * 15}")
 
     for code in RIVERSIDE_TENANTS:
         if code not in results:
-            print(f"  {code:<6} {'N/A':<12} {'N/A':<10} {'N/A':<10} {'N/A':<10} {'NOT CHECKED':<15}")
+            print(
+                f"  {code:<6} {'N/A':<12} {'N/A':<10} {'N/A':<10} {'N/A':<10} {'NOT CHECKED':<15}"
+            )
             continue
 
         tenant_results = results[code]
@@ -649,7 +700,9 @@ def print_detailed_report(results: dict[str, dict]) -> None:
         print()
         print(f"    App Exists:  {'Yes' if tenant_results.get('exists') else 'No'}")
         print(f"    Enabled:     {'Yes' if tenant_results.get('enabled') else 'No'}")
-        print(f"    Admin Consent: {'Granted' if tenant_results.get('admin_consent') else 'Needed'}")
+        print(
+            f"    Admin Consent: {'Granted' if tenant_results.get('admin_consent') else 'Needed'}"
+        )
         print(f"    Secrets:     {len(tenant_results.get('client_secrets', []))}")
 
         if tenant_results.get("errors"):
@@ -667,6 +720,7 @@ def print_detailed_report(results: dict[str, dict]) -> None:
 # MAIN SCRIPT
 # =============================================================================
 
+
 def main():
     """Main entry point for the setup script."""
     parser = argparse.ArgumentParser(
@@ -677,38 +731,28 @@ Examples:
   python setup-riverside-apps.py --check-only
   python setup-riverside-apps.py --create-secrets --tenant HTT
   python setup-riverside-apps.py --full-setup
-        """
+        """,
     )
 
     parser.add_argument(
         "--check-only",
         action="store_true",
-        help="Only check existing app registrations without making changes"
+        help="Only check existing app registrations without making changes",
     )
     parser.add_argument(
-        "--create-secrets",
-        action="store_true",
-        help="Generate new client secrets for apps"
+        "--create-secrets", action="store_true", help="Generate new client secrets for apps"
     )
     parser.add_argument(
-        "--full-setup",
-        action="store_true",
-        help="Run full setup including secret generation"
+        "--full-setup", action="store_true", help="Run full setup including secret generation"
     )
     parser.add_argument(
-        "--tenant",
-        choices=list(RIVERSIDE_TENANTS.keys()),
-        help="Process only a specific tenant"
+        "--tenant", choices=list(RIVERSIDE_TENANTS.keys()), help="Process only a specific tenant"
     )
     parser.add_argument(
-        "--output",
-        default=".env.azure",
-        help="Output path for .env file (default: .env.azure)"
+        "--output", default=".env.azure", help="Output path for .env file (default: .env.azure)"
     )
     parser.add_argument(
-        "--skip-login-check",
-        action="store_true",
-        help="Skip Azure login verification"
+        "--skip-login-check", action="store_true", help="Skip Azure login verification"
     )
 
     args = parser.parse_args()

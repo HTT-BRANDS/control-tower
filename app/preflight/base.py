@@ -96,9 +96,7 @@ class BasePreflightCheck(ABC):
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}({self.check_id}, {self.category})>"
 
-    async def run(
-        self, tenant_id: str | None = None, force: bool = False
-    ) -> CheckResult:
+    async def run(self, tenant_id: str | None = None, force: bool = False) -> CheckResult:
         """Run the preflight check with caching support.
 
         Args:
@@ -176,9 +174,7 @@ class BasePreflightCheck(ABC):
             )
 
     @abstractmethod
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the actual check logic.
 
         Subclasses must implement this method to define the check logic.
@@ -238,58 +234,58 @@ class BasePreflightCheck(ABC):
         recommendations = []
 
         # Authentication-related errors
-        if any(
-            term in error_msg
-            for term in ["authentication", "unauthorized", "401", "auth"]
-        ):
-            recommendations.extend([
-                "Verify Azure credentials are correctly configured",
-                "Check that the service principal has required permissions",
-                "Ensure tenant ID is correct",
-            ])
+        if any(term in error_msg for term in ["authentication", "unauthorized", "401", "auth"]):
+            recommendations.extend(
+                [
+                    "Verify Azure credentials are correctly configured",
+                    "Check that the service principal has required permissions",
+                    "Ensure tenant ID is correct",
+                ]
+            )
 
         # Permission-related errors
-        if any(
-            term in error_msg for term in ["forbidden", "403", "permission", "access"]
-        ):
-            recommendations.extend([
-                "Verify the service principal has the necessary role assignments",
-                "Check Azure RBAC permissions for the target scope",
-                "Confirm the user has Graph API permissions",
-            ])
+        if any(term in error_msg for term in ["forbidden", "403", "permission", "access"]):
+            recommendations.extend(
+                [
+                    "Verify the service principal has the necessary role assignments",
+                    "Check Azure RBAC permissions for the target scope",
+                    "Confirm the user has Graph API permissions",
+                ]
+            )
 
         # Resource not found
         if any(term in error_msg for term in ["not found", "404", "does not exist"]):
-            recommendations.extend([
-                "Verify the resource exists in the Azure tenant",
-                "Check that the subscription is still active",
-                "Ensure the tenant is properly registered",
-            ])
+            recommendations.extend(
+                [
+                    "Verify the resource exists in the Azure tenant",
+                    "Check that the subscription is still active",
+                    "Ensure the tenant is properly registered",
+                ]
+            )
 
         # Rate limiting
         if any(term in error_msg for term in ["rate", "429", "throttle"]):
-            recommendations.extend([
-                "Azure API rate limit hit - wait before retrying",
-                "Consider implementing exponential backoff",
-                "Check if too many parallel requests are being made",
-            ])
+            recommendations.extend(
+                [
+                    "Azure API rate limit hit - wait before retrying",
+                    "Consider implementing exponential backoff",
+                    "Check if too many parallel requests are being made",
+                ]
+            )
 
         # Network errors
-        if any(
-            term in error_msg
-            for term in ["connection", "timeout", "network", "dns", "ssl"]
-        ):
-            recommendations.extend([
-                "Check network connectivity to Azure",
-                "Verify firewall rules allow outbound HTTPS",
-                "Check proxy configuration if applicable",
-            ])
+        if any(term in error_msg for term in ["connection", "timeout", "network", "dns", "ssl"]):
+            recommendations.extend(
+                [
+                    "Check network connectivity to Azure",
+                    "Verify firewall rules allow outbound HTTPS",
+                    "Check proxy configuration if applicable",
+                ]
+            )
 
         # Generic fallback
         if not recommendations:
-            recommendations.append(
-                "Check Azure service status and try again later"
-            )
+            recommendations.append("Check Azure service status and try again later")
 
         return recommendations
 

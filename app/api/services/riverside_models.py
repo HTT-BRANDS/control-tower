@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 class RequirementLevel(Enum):
     """Maturity levels for security requirements."""
+
     EMERGING = "Emerging"
     DEVELOPING = "Developing"
     MATURE = "Mature"
@@ -28,6 +29,7 @@ class RequirementLevel(Enum):
 
 class MFAStatus(Enum):
     """MFA enforcement status for users."""
+
     ENFORCED = "Enforced"
     AVAILABLE = "Available"
     PENDING = "Pending"
@@ -36,6 +38,7 @@ class MFAStatus(Enum):
 
 class RequirementStatus(Enum):
     """Implementation status of security requirements."""
+
     NOT_STARTED = "Not Started"
     IN_PROGRESS = "In Progress"
     COMPLETED = "Completed"
@@ -44,6 +47,7 @@ class RequirementStatus(Enum):
 
 class DeadlinePhase(Enum):
     """Implementation phases for Riverside requirements."""
+
     PHASE_1_Q3_2025 = "Phase 1: Q3 2025"
     PHASE_2_Q4_2025 = "Phase 2: Q4 2025"
     PHASE_3_Q1_2026 = "Phase 3: Q1 2026"
@@ -51,6 +55,7 @@ class DeadlinePhase(Enum):
 
 class RiversideRequirementCategory(Enum):
     """Categories of Riverside security requirements."""
+
     MFA_ENFORCEMENT = "MFA Enforcement"
     CONDITIONAL_ACCESS = "Conditional Access"
     PRIVILEGED_ACCESS = "Privileged Access"
@@ -67,6 +72,7 @@ class RiversideRequirementCategory(Enum):
 @dataclass
 class RiversideRequirement:
     """Individual Riverside security requirement."""
+
     id: str
     category: RiversideRequirementCategory
     title: str
@@ -84,6 +90,7 @@ class RiversideRequirement:
 @dataclass
 class TenantRequirementTracker:
     """Tracks requirement status per tenant."""
+
     tenant_id: str
     tenant_name: str
     requirement: RiversideRequirement
@@ -96,6 +103,7 @@ class TenantRequirementTracker:
 @dataclass
 class RiversideComplianceSummary:
     """Overall compliance summary across all tenants."""
+
     overall_compliance_pct: float
     target_compliance_pct: float
     completed_requirements_count: int
@@ -105,6 +113,7 @@ class RiversideComplianceSummary:
 @dataclass
 class MFAMaturityScore:
     """MFA maturity metrics."""
+
     overall_maturity: RequirementLevel
     enrollment_rate_pct: float
     admin_enforcement_pct: float
@@ -115,6 +124,7 @@ class MFAMaturityScore:
 @dataclass
 class RiversideThreatMetrics:
     """Security threat metrics and trends."""
+
     phishing_attempts_30d: int
     malware_detected_30d: int
     spam_filtered_30d: int
@@ -125,6 +135,7 @@ class RiversideThreatMetrics:
 @dataclass
 class TenantRiversideSummary:
     """Compliance summary for individual tenant."""
+
     tenant_id: str
     tenant_name: str
     overall_compliance_pct: float
@@ -139,6 +150,7 @@ class TenantRiversideSummary:
 @dataclass
 class RiversideExecutiveSummary:
     """Executive-level summary across all tenants."""
+
     overall_compliance_pct: float
     phases_complete: list[str]
     completion_by_tenant: list[TenantRiversideSummary]
@@ -151,6 +163,7 @@ class RiversideExecutiveSummary:
 @dataclass
 class AggregateMFAStatus:
     """Aggregated MFA status across environment."""
+
     total_users: int
     mfa_enforced_users: int
     mfa_available_users: int

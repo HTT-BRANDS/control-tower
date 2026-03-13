@@ -63,9 +63,7 @@ def _parse_last_sign_in(sign_in_datetime: str | None) -> datetime | None:
     if not sign_in_datetime:
         return None
     try:
-        return datetime.fromisoformat(
-            sign_in_datetime.replace("Z", "+00:00")
-        ).replace(tzinfo=None)
+        return datetime.fromisoformat(sign_in_datetime.replace("Z", "+00:00")).replace(tzinfo=None)
     except (ValueError, AttributeError):
         return None
 
@@ -139,9 +137,7 @@ async def sync_identity():
             logger.info(f"Found {len(tenants)} active tenants to sync for identity")
 
             for tenant in tenants:
-                logger.info(
-                    f"Syncing identity for tenant: {tenant.name} ({tenant.tenant_id})"
-                )
+                logger.info(f"Syncing identity for tenant: {tenant.name} ({tenant.tenant_id})")
 
                 try:
                     # Initialize GraphClient for this tenant
@@ -158,14 +154,9 @@ async def sync_identity():
                     try:
                         mfa_response = await graph_client.get_mfa_status()
                         mfa_users = mfa_response.get("value", [])
-                        mfa_data = {
-                            user.get("userPrincipalName", ""): user
-                            for user in mfa_users
-                        }
+                        mfa_data = {user.get("userPrincipalName", ""): user for user in mfa_users}
                     except Exception as e:
-                        logger.warning(
-                            f"Could not fetch MFA status for tenant {tenant.name}: {e}"
-                        )
+                        logger.warning(f"Could not fetch MFA status for tenant {tenant.name}: {e}")
 
                     # Calculate date thresholds for stale account detection
                     now = datetime.utcnow()
@@ -211,8 +202,7 @@ async def sync_identity():
 
                     # Calculate MFA statistics
                     mfa_enabled_count = sum(
-                        1 for info in mfa_data.values()
-                        if info.get("isMfaRegistered", False)
+                        1 for info in mfa_data.values() if info.get("isMfaRegistered", False)
                     )
                     mfa_disabled_count = len(mfa_data) - mfa_enabled_count
 
@@ -244,9 +234,7 @@ async def sync_identity():
                             user_info = user_lookup.get(
                                 member_id,
                                 {
-                                    "userPrincipalName": member.get(
-                                        "userPrincipalName", ""
-                                    ),
+                                    "userPrincipalName": member.get("userPrincipalName", ""),
                                     "displayName": member.get("displayName", ""),
                                     "userType": "Member",
                                     "lastSignIn": None,
@@ -265,23 +253,23 @@ async def sync_identity():
                             # Default to permanent assignment
                             is_permanent = 1
 
-                            privileged_users_data.append({
-                                "tenant_id": tenant.id,
-                                "user_principal_name": upn,
-                                "display_name": display_name,
-                                "user_type": user_type,
-                                "role_name": role_name,
-                                "role_scope": "Directory",
-                                "is_permanent": is_permanent,
-                                "mfa_enabled": mfa_enabled,
-                                "last_sign_in": last_sign_in,
-                            })
+                            privileged_users_data.append(
+                                {
+                                    "tenant_id": tenant.id,
+                                    "user_principal_name": upn,
+                                    "display_name": display_name,
+                                    "user_type": user_type,
+                                    "role_name": role_name,
+                                    "role_scope": "Directory",
+                                    "is_permanent": is_permanent,
+                                    "mfa_enabled": mfa_enabled,
+                                    "last_sign_in": last_sign_in,
+                                }
+                            )
                             privileged_user_count += 1
 
                     # Delete existing privileged user records for this tenant
-                    db.query(PrivilegedUser).filter(
-                        PrivilegedUser.tenant_id == tenant.id
-                    ).delete()
+                    db.query(PrivilegedUser).filter(PrivilegedUser.tenant_id == tenant.id).delete()
 
                     # Create new privileged user records
                     for priv_user_data in privileged_users_data:

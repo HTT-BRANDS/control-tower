@@ -31,9 +31,7 @@ class TestSyncRiverside:
             mock_db_context.return_value.__enter__.return_value = mock_db
 
             # Mock monitoring service
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
 
@@ -42,9 +40,7 @@ class TestSyncRiverside:
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
                 # Mock Riverside service
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
@@ -80,9 +76,7 @@ class TestSyncRiverside:
                     assert results["maturity_calculated"] == 2
 
                     # Verify monitoring was called
-                    mock_monitoring.start_sync_job.assert_called_once_with(
-                        job_type="riverside"
-                    )
+                    mock_monitoring.start_sync_job.assert_called_once_with(job_type="riverside")
                     mock_monitoring.complete_sync_job.assert_called_once()
 
     @pytest.mark.asyncio
@@ -92,9 +86,7 @@ class TestSyncRiverside:
             mock_db = MagicMock()
             mock_db_context.return_value.__enter__.return_value = mock_db
 
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
 
@@ -102,9 +94,7 @@ class TestSyncRiverside:
                 mock_log_entry.id = "log123"
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
@@ -147,18 +137,14 @@ class TestMFASync:
             mock_db = MagicMock()
             mock_db_context.return_value.__enter__.return_value = mock_db
 
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
                 mock_log_entry.id = "log123"
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
@@ -170,15 +156,11 @@ class TestMFASync:
                             }
                         }
                     )
-                    mock_service.sync_riverside_device_compliance = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_device_compliance = AsyncMock(return_value={})
                     mock_service.sync_riverside_requirements = AsyncMock(
                         return_value={"requirements_synced": 0}
                     )
-                    mock_service.sync_riverside_maturity_scores = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_maturity_scores = AsyncMock(return_value={})
 
                     await sync_riverside()
 
@@ -196,33 +178,25 @@ class TestDeviceComplianceSync:
             mock_db = MagicMock()
             mock_db_context.return_value.__enter__.return_value = mock_db
 
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
                 mock_log_entry.id = "log123"
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
                     mock_service.sync_riverside_mfa = AsyncMock(return_value={})
                     mock_service.sync_riverside_device_compliance = AsyncMock(
-                        return_value={
-                            "tenant1": {"status": "success", "devices_synced": 150}
-                        }
+                        return_value={"tenant1": {"status": "success", "devices_synced": 150}}
                     )
                     mock_service.sync_riverside_requirements = AsyncMock(
                         return_value={"requirements_synced": 0}
                     )
-                    mock_service.sync_riverside_maturity_scores = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_maturity_scores = AsyncMock(return_value={})
 
                     await sync_riverside()
 
@@ -240,31 +214,23 @@ class TestRequirementsSync:
             mock_db = MagicMock()
             mock_db_context.return_value.__enter__.return_value = mock_db
 
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
                 mock_log_entry.id = "log123"
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
                     mock_service.sync_riverside_mfa = AsyncMock(return_value={})
-                    mock_service.sync_riverside_device_compliance = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_device_compliance = AsyncMock(return_value={})
                     mock_service.sync_riverside_requirements = AsyncMock(
                         return_value={"requirements_synced": 12}
                     )
-                    mock_service.sync_riverside_maturity_scores = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_maturity_scores = AsyncMock(return_value={})
 
                     results = await sync_riverside()
 
@@ -283,32 +249,24 @@ class TestMaturityScoreCalculation:
             mock_db = MagicMock()
             mock_db_context.return_value.__enter__.return_value = mock_db
 
-            with patch(
-                "app.core.sync.riverside.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.riverside.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
                 mock_log_entry.id = "log123"
                 mock_monitoring.start_sync_job.return_value = mock_log_entry
 
-                with patch(
-                    "app.core.sync.riverside.RiversideService"
-                ) as mock_service_class:
+                with patch("app.core.sync.riverside.RiversideService") as mock_service_class:
                     mock_service = MagicMock()
                     mock_service_class.return_value = mock_service
 
                     mock_service.sync_riverside_mfa = AsyncMock(return_value={})
-                    mock_service.sync_riverside_device_compliance = AsyncMock(
-                        return_value={}
-                    )
+                    mock_service.sync_riverside_device_compliance = AsyncMock(return_value={})
                     mock_service.sync_riverside_requirements = AsyncMock(
                         return_value={"requirements_synced": 0}
                     )
                     mock_service.sync_riverside_maturity_scores = AsyncMock(
-                        return_value={
-                            "tenant1": {"status": "success", "maturity_score": 3.5}
-                        }
+                        return_value={"tenant1": {"status": "success", "maturity_score": 3.5}}
                     )
 
                     results = await sync_riverside()

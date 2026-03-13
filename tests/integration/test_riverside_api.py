@@ -30,6 +30,7 @@ pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=F
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def riverside_user() -> User:
     """Create a user with access to Riverside tenants."""
@@ -159,6 +160,7 @@ def riverside_admin_client(riverside_db, riverside_admin, mock_riverside_authz):
 @pytest.fixture
 def unauthenticated_riverside_client(riverside_db):
     """Test client without authentication (for testing 401s)."""
+
     def override_get_db():
         try:
             yield riverside_db
@@ -176,6 +178,7 @@ def unauthenticated_riverside_client(riverside_db):
 # ============================================================================
 # GET /api/v1/riverside/summary Tests
 # ============================================================================
+
 
 class TestRiversideSummaryEndpoint:
     """Integration tests for GET /api/v1/riverside/summary."""
@@ -232,6 +235,7 @@ class TestRiversideSummaryEndpoint:
 # GET /api/v1/riverside/mfa-status Tests
 # ============================================================================
 
+
 class TestRiversideMFAStatusEndpoint:
     """Integration tests for GET /api/v1/riverside/mfa-status."""
 
@@ -287,6 +291,7 @@ class TestRiversideMFAStatusEndpoint:
 # GET /api/v1/riverside/maturity-scores Tests
 # ============================================================================
 
+
 class TestRiversideMaturityScoresEndpoint:
     """Integration tests for GET /api/v1/riverside/maturity-scores."""
 
@@ -333,6 +338,7 @@ class TestRiversideMaturityScoresEndpoint:
 # ============================================================================
 # GET /api/v1/riverside/requirements Tests
 # ============================================================================
+
 
 class TestRiversideRequirementsEndpoint:
     """Integration tests for GET /api/v1/riverside/requirements."""
@@ -428,7 +434,9 @@ class TestRiversideRequirementsEndpoint:
                 assert "https://" in req["evidence_url"]
 
         # Test in_progress status
-        response_in_progress = riverside_client.get("/api/v1/riverside/requirements?status=in_progress")
+        response_in_progress = riverside_client.get(
+            "/api/v1/riverside/requirements?status=in_progress"
+        )
         assert response_in_progress.status_code == 200
         data_in_progress = response_in_progress.json()
 
@@ -481,6 +489,7 @@ class TestRiversideRequirementsEndpoint:
 # GET /api/v1/riverside/gaps Tests
 # ============================================================================
 
+
 class TestRiversideGapsEndpoint:
     """Integration tests for GET /api/v1/riverside/gaps."""
 
@@ -524,6 +533,7 @@ class TestRiversideGapsEndpoint:
 # ============================================================================
 # POST /api/v1/riverside/sync Tests
 # ============================================================================
+
 
 class TestRiversideSyncEndpoint:
     """Integration tests for POST /api/v1/riverside/sync."""
@@ -572,7 +582,7 @@ class TestRiversideSyncEndpoint:
         mock_requirements,
         mock_device,
         mock_mfa,
-        riverside_admin_client: TestClient
+        riverside_admin_client: TestClient,
     ):
         """Sync handles partial failures gracefully."""
         # Mock one successful and one failed sync
@@ -596,6 +606,7 @@ class TestRiversideSyncEndpoint:
 # ============================================================================
 # Cross-Endpoint Integration Tests
 # ============================================================================
+
 
 class TestRiversideDataConsistency:
     """Integration tests verifying data consistency across endpoints."""

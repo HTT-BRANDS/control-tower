@@ -9,6 +9,7 @@ Alembic migrations have run, without Base.metadata.create_all), this
 migration creates the full table.  If the table already exists (created by
 init_db), it adds only the missing design-token columns.
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -50,7 +51,9 @@ def upgrade() -> None:
         op.create_table(
             _TABLE,
             sa.Column("id", sa.String(36), primary_key=True),
-            sa.Column("tenant_id", sa.String(36), sa.ForeignKey("tenants.id"), nullable=False, unique=True),
+            sa.Column(
+                "tenant_id", sa.String(36), sa.ForeignKey("tenants.id"), nullable=False, unique=True
+            ),
             sa.Column("brand_name", sa.String(255), nullable=False),
             sa.Column("primary_color", sa.String(7), nullable=False),
             sa.Column("secondary_color", sa.String(7), nullable=False),

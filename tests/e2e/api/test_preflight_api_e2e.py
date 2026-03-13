@@ -56,9 +56,7 @@ class TestPreflightAPI:
         assert resp.status in (200, 403, 500)
 
     def test_tenant_preflight(self, api_context: APIRequestContext):
-        resp = api_context.get(
-            "/api/v1/preflight/tenants/00000000-0000-0000-0000-000000000000"
-        )
+        resp = api_context.get("/api/v1/preflight/tenants/00000000-0000-0000-0000-000000000000")
         assert resp.status in (200, 404, 403, 500)
 
     def test_github_preflight(self, api_context: APIRequestContext):

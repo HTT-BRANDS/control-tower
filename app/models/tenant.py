@@ -54,9 +54,7 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
 
     id: Mapped[str] = Column(String(36), primary_key=True)
-    tenant_ref: Mapped[str] = Column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_ref: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     subscription_id: Mapped[str] = Column(String(36), nullable=False)
     display_name: Mapped[str] = Column(String(255), nullable=False)
     state: Mapped[str] = Column(String(50), default="Enabled")
@@ -84,9 +82,7 @@ class UserTenant(Base):
 
     id: Mapped[str] = Column(String(36), primary_key=True)
     user_id: Mapped[str] = Column(String(255), nullable=False, index=True)
-    tenant_id: Mapped[str] = Column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
 
     # Permission level within this tenant
     role: Mapped[str] = Column(String(50), default="viewer")  # viewer, operator, admin

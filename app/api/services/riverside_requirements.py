@@ -16,7 +16,8 @@ from .riverside_models import (
 )
 
 # 72 Riverside Security Requirements
-REQUIREMENTS: list[RiversideRequirement] = [    RiversideRequirement(
+REQUIREMENTS: list[RiversideRequirement] = [
+    RiversideRequirement(
         id="MFA-001",
         category=RiversideRequirementCategory.MFA_ENFORCEMENT,
         title="Enforce MFA for all tenant administrators",

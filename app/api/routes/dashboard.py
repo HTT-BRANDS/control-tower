@@ -240,9 +240,7 @@ async def _get_tenant_sync_status(
 
             if last_log:
                 # Calculate staleness
-                hours_since_sync = (
-                    datetime.utcnow() - last_log.started_at
-                ).total_seconds() / 3600
+                hours_since_sync = (datetime.utcnow() - last_log.started_at).total_seconds() / 3600
                 expected_interval = 24  # hours
 
                 if last_log.status == "failed":
@@ -257,23 +255,27 @@ async def _get_tenant_sync_status(
                 else:
                     status = "healthy"
 
-                tenant_syncs.append({
-                    "sync_type": sync_type,
-                    "status": status,
-                    "last_run": last_log.started_at,
-                    "last_status": last_log.status,
-                    "records_processed": last_log.records_processed,
-                    "errors_count": last_log.errors_count,
-                })
+                tenant_syncs.append(
+                    {
+                        "sync_type": sync_type,
+                        "status": status,
+                        "last_run": last_log.started_at,
+                        "last_status": last_log.status,
+                        "records_processed": last_log.records_processed,
+                        "errors_count": last_log.errors_count,
+                    }
+                )
             else:
-                tenant_syncs.append({
-                    "sync_type": sync_type,
-                    "status": "never_run",
-                    "last_run": None,
-                    "last_status": None,
-                    "records_processed": 0,
-                    "errors_count": 0,
-                })
+                tenant_syncs.append(
+                    {
+                        "sync_type": sync_type,
+                        "status": "never_run",
+                        "last_run": None,
+                        "last_status": None,
+                        "records_processed": 0,
+                        "errors_count": 0,
+                    }
+                )
                 if overall_health == "healthy":
                     overall_health = "warning"
 
@@ -287,12 +289,14 @@ async def _get_tenant_sync_status(
             .count()
         )
 
-        tenant_status.append({
-            "tenant": tenant,
-            "syncs": tenant_syncs,
-            "overall_health": overall_health,
-            "alert_count": tenant_alerts,
-        })
+        tenant_status.append(
+            {
+                "tenant": tenant,
+                "syncs": tenant_syncs,
+                "overall_health": overall_health,
+                "alert_count": tenant_alerts,
+            }
+        )
 
     return tenant_status
 

@@ -27,6 +27,7 @@ from app.models.monitoring import Alert, SyncJobLog, SyncJobMetrics
 # Fixtures - Custom clients with sync route authentication
 # ============================================================================
 
+
 @pytest.fixture
 def sync_client(seeded_db, test_user, mock_authz):
     """Test client with authentication for sync routes."""
@@ -46,12 +47,15 @@ def sync_client(seeded_db, test_user, mock_authz):
 
     # Clear rate limiter cache and patch to always allow
     from app.core.rate_limit import rate_limiter
+
     rate_limiter._memory_cache.clear()
 
     async def mock_check_rate_limit(*args, **kwargs):
         pass  # No-op - always allow
 
-    with patch("app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit):
+    with patch(
+        "app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit
+    ):
         with TestClient(app) as client:
             yield client
 
@@ -77,12 +81,15 @@ def sync_admin_client(seeded_db, admin_user, mock_authz_admin):
 
     # Clear rate limiter cache and patch to always allow
     from app.core.rate_limit import rate_limiter
+
     rate_limiter._memory_cache.clear()
 
     async def mock_check_rate_limit(*args, **kwargs):
         pass  # No-op - always allow
 
-    with patch("app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit):
+    with patch(
+        "app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit
+    ):
         with TestClient(app) as client:
             yield client
 
@@ -92,6 +99,7 @@ def sync_admin_client(seeded_db, admin_user, mock_authz_admin):
 @pytest.fixture
 def sync_unauth_client(seeded_db):
     """Test client without authentication for sync routes."""
+
     def override_get_db():
         try:
             yield seeded_db
@@ -102,12 +110,15 @@ def sync_unauth_client(seeded_db):
 
     # Clear rate limiter cache and patch to always allow
     from app.core.rate_limit import rate_limiter
+
     rate_limiter._memory_cache.clear()
 
     async def mock_check_rate_limit(*args, **kwargs):
         pass  # No-op - always allow
 
-    with patch("app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit):
+    with patch(
+        "app.core.rate_limit.rate_limiter.check_rate_limit", side_effect=mock_check_rate_limit
+    ):
         with TestClient(app) as client:
             yield client
 
@@ -186,7 +197,7 @@ def db_with_monitoring_data(seeded_db, test_tenant_id, second_tenant_id):
             message=f"Test alert message for {job_type}",
             is_resolved=is_resolved,
             created_at=datetime.utcnow() - timedelta(days=i),
-            resolved_at=datetime.utcnow() - timedelta(days=i-1) if is_resolved else None,
+            resolved_at=datetime.utcnow() - timedelta(days=i - 1) if is_resolved else None,
             resolved_by="user-123" if is_resolved else None,
         )
         seeded_db.add(alert)
@@ -198,6 +209,7 @@ def db_with_monitoring_data(seeded_db, test_tenant_id, second_tenant_id):
 # ============================================================================
 # POST /api/v1/sync/{sync_type} Tests
 # ============================================================================
+
 
 class TestTriggerSyncEndpoint:
     """Integration tests for POST /api/v1/sync/{sync_type}."""
@@ -255,6 +267,7 @@ class TestTriggerSyncEndpoint:
 # ============================================================================
 # GET /api/v1/sync/status Tests
 # ============================================================================
+
 
 class TestSyncStatusEndpoint:
     """Integration tests for GET /api/v1/sync/status."""
@@ -327,6 +340,7 @@ class TestSyncStatusEndpoint:
 # GET /api/v1/sync/status/health Tests
 # ============================================================================
 
+
 class TestSyncHealthEndpoint:
     """Integration tests for GET /api/v1/sync/status/health."""
 
@@ -355,6 +369,7 @@ class TestSyncHealthEndpoint:
 # GET /api/v1/sync/history Tests
 # ============================================================================
 
+
 class TestSyncHistoryEndpoint:
     """Integration tests for GET /api/v1/sync/history."""
 
@@ -362,6 +377,7 @@ class TestSyncHistoryEndpoint:
         """Sync history returns list of job logs."""
         # Add a job log to the database
         from app.core.database import get_db
+
         db = next(app.dependency_overrides[get_db]())
 
         log = SyncJobLog(
@@ -453,7 +469,7 @@ class TestSyncHistoryEndpoint:
                 job_type="costs_sync",
                 tenant_id="test-tenant-123",
                 status="completed",
-                started_at=datetime.utcnow() - timedelta(hours=i+1),
+                started_at=datetime.utcnow() - timedelta(hours=i + 1),
                 ended_at=datetime.utcnow() - timedelta(hours=i),
                 duration_ms=3600000,
                 records_processed=100,
@@ -528,6 +544,7 @@ class TestSyncHistoryEndpoint:
 # GET /api/v1/sync/metrics Tests
 # ============================================================================
 
+
 class TestSyncMetricsEndpoint:
     """Integration tests for GET /api/v1/sync/metrics."""
 
@@ -590,7 +607,10 @@ class TestSyncMetricsEndpoint:
             assert isinstance(metric_entry["total_runs"], int)
             assert isinstance(metric_entry["success_rate"], (int, float))
             assert 0 <= metric_entry["success_rate"] <= 100
-            assert metric_entry["successful_runs"] + metric_entry["failed_runs"] == metric_entry["total_runs"]
+            assert (
+                metric_entry["successful_runs"] + metric_entry["failed_runs"]
+                == metric_entry["total_runs"]
+            )
 
     def test_get_metrics_job_type_filter(self, sync_client):
         """Sync metrics can be filtered by job_type."""
@@ -693,6 +713,7 @@ class TestSyncMetricsEndpoint:
 # ============================================================================
 # GET /api/v1/sync/alerts Tests
 # ============================================================================
+
 
 class TestSyncAlertsEndpoint:
     """Integration tests for GET /api/v1/sync/alerts."""
@@ -916,6 +937,7 @@ class TestSyncAlertsEndpoint:
 # POST /api/v1/sync/alerts/{alert_id}/resolve Tests
 # ============================================================================
 
+
 class TestResolveAlertEndpoint:
     """Integration tests for POST /api/v1/sync/alerts/{alert_id}/resolve."""
 
@@ -939,9 +961,7 @@ class TestResolveAlertEndpoint:
         db.refresh(alert)
         alert_id = alert.id
 
-        response = sync_client.post(
-            f"/api/v1/sync/alerts/{alert_id}/resolve?resolved_by=test-user"
-        )
+        response = sync_client.post(f"/api/v1/sync/alerts/{alert_id}/resolve?resolved_by=test-user")
 
         assert response.status_code == 200
         data = response.json()
@@ -1018,6 +1038,7 @@ class TestResolveAlertEndpoint:
 # ============================================================================
 # Tenant Isolation Tests
 # ============================================================================
+
 
 class TestSyncTenantIsolation:
     """Tests for tenant isolation across sync endpoints."""
@@ -1135,6 +1156,7 @@ class TestSyncTenantIsolation:
 # ============================================================================
 # Admin User Tests
 # ============================================================================
+
 
 class TestSyncAdminAccess:
     """Tests for admin user access across sync endpoints."""

@@ -339,21 +339,27 @@ def _get_score_recommendations(score: float) -> list[dict[str, str]]:
     recommendations = []
 
     if score < 100:
-        recommendations.append({
-            "priority": "high",
-            "message": "Consider upgrading DMARC policy to 'reject' for maximum protection",
-        })
+        recommendations.append(
+            {
+                "priority": "high",
+                "message": "Consider upgrading DMARC policy to 'reject' for maximum protection",
+            }
+        )
 
     if score < 80:
-        recommendations.append({
-            "priority": "high",
-            "message": "Enable DKIM signing for all domains",
-        })
+        recommendations.append(
+            {
+                "priority": "high",
+                "message": "Enable DKIM signing for all domains",
+            }
+        )
 
     if score < 60:
-        recommendations.append({
-            "priority": "critical",
-            "message": "DMARC policy is set to 'none' - upgrade to at least 'quarantine'",
-        })
+        recommendations.append(
+            {
+                "priority": "critical",
+                "message": "DMARC policy is set to 'none' - upgrade to at least 'quarantine'",
+            }
+        )
 
     return recommendations

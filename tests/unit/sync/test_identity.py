@@ -190,7 +190,7 @@ class TestIdentitySync:
             "userType": "Member",
             "signInActivity": {
                 "lastSignInDateTime": (datetime.utcnow() - timedelta(days=100)).isoformat() + "Z"
-            }
+            },
         }
 
         active_user = {
@@ -200,7 +200,7 @@ class TestIdentitySync:
             "userType": "Member",
             "signInActivity": {
                 "lastSignInDateTime": (datetime.utcnow() - timedelta(days=5)).isoformat() + "Z"
-            }
+            },
         }
 
         never_signed_in = {
@@ -208,7 +208,7 @@ class TestIdentitySync:
             "displayName": "Never Signed In",
             "userPrincipalName": "never@example.com",
             "userType": "Member",
-            "signInActivity": {}
+            "signInActivity": {},
         }
 
         with patch("app.core.sync.identity.GraphClient") as mock_graph_class:
@@ -247,7 +247,7 @@ class TestIdentitySync:
                         "id": "user-1",
                         "displayName": "Test User",
                     }
-                ]
+                ],
             },
             {
                 "displayName": "Security Administrator",
@@ -258,7 +258,7 @@ class TestIdentitySync:
                         "id": "user-1",
                         "displayName": "Test User",
                     }
-                ]
+                ],
             },
             {
                 "displayName": "Regular User",
@@ -269,7 +269,7 @@ class TestIdentitySync:
                         "id": "user-2",
                         "displayName": "Guest User",
                     }
-                ]
+                ],
             },
         ]
 
@@ -313,8 +313,8 @@ class TestIdentitySync:
                         "@odata.type": "#microsoft.graph.user",
                         "id": "user-1",
                         "displayName": "Test User",
-                    }
-                ]
+                    },
+                ],
             },
         ]
 

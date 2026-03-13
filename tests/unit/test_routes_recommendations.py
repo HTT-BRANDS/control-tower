@@ -59,6 +59,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -138,16 +139,16 @@ def test_get_recommendations_success(client_with_db, mock_user, mock_recommendat
 
 def test_get_recommendations_with_filters(client_with_db, mock_user, mock_recommendations):
     """Test recommendations with category and impact filters."""
-    cost_recommendations = [r for r in mock_recommendations if r.category == RecommendationCategory.COST]
+    cost_recommendations = [
+        r for r in mock_recommendations if r.category == RecommendationCategory.COST
+    ]
 
     with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
         with patch("app.api.routes.recommendations.RecommendationService") as MockService:
             mock_service = MockService.return_value
             mock_service.get_recommendations.return_value = cost_recommendations
 
-            response = client_with_db.get(
-                "/api/v1/recommendations?category=cost&impact=High"
-            )
+            response = client_with_db.get("/api/v1/recommendations?category=cost&impact=High")
 
     assert response.status_code == 200
     data = response.json()

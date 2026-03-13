@@ -39,20 +39,20 @@ ROADMAP_PATH = Path("WIGGUM_ROADMAP.md")
 #   3: description       ("Create Solutions Architect JSON agent")
 #   4: owner agent       ("Agent Creator 🏗️")
 TASK_RE = re.compile(
-    r"^- \[([ xX])\]\s+"       # checkbox
-    r"(\d+\.\d+\.\d+)\s+"      # task ID  (X.Y.Z)
-    r"(.+?)\s*"                 # description (lazy)
-    r"\(([^)]+)\)\s*$"          # (owner agent)
+    r"^- \[([ xX])\]\s+"  # checkbox
+    r"(\d+\.\d+\.\d+)\s+"  # task ID  (X.Y.Z)
+    r"(.+?)\s*"  # description (lazy)
+    r"\(([^)]+)\)\s*$"  # (owner agent)
 )
 
 # Progress Summary table row, e.g.:
 # | Phase 1: Foundation | 7 | 4 | 3 | 🔄 In Progress |
 TABLE_ROW_RE = re.compile(
     r"^\|\s*Phase\s+(\d+)\b[^|]*\|"  # phase number
-    r"\s*(\d+)\s*\|"                  # total
-    r"\s*(\d+)\s*\|"                  # completed
-    r"\s*(\d+)\s*\|"                  # remaining
-    r"\s*([^|]+?)\s*\|$"              # status emoji/text
+    r"\s*(\d+)\s*\|"  # total
+    r"\s*(\d+)\s*\|"  # completed
+    r"\s*(\d+)\s*\|"  # remaining
+    r"\s*([^|]+?)\s*\|$"  # status emoji/text
 )
 
 # TOTAL row
@@ -68,6 +68,7 @@ TABLE_TOTAL_RE = re.compile(
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True, slots=True)
 class Task:
@@ -131,6 +132,7 @@ class VerifyResult:
 # Parser
 # ---------------------------------------------------------------------------
 
+
 def parse_tasks(lines: list[str]) -> list[Task]:
     """Parse all task lines from the roadmap content.
 
@@ -173,6 +175,7 @@ def compute_phase_stats(tasks: list[Task]) -> dict[int, PhaseStats]:
 # Commands
 # ---------------------------------------------------------------------------
 
+
 def cmd_verify(
     roadmap: Path,
     as_json: bool,
@@ -193,7 +196,7 @@ def cmd_verify(
                 line_number=0,
                 line_content="",
                 message="No tasks found in roadmap. Expected lines matching "
-                        "'- [ ] X.Y.Z Description (Owner)'.",
+                "'- [ ] X.Y.Z Description (Owner)'.",
             )
         )
 
@@ -206,7 +209,7 @@ def cmd_verify(
                     line_number=t.line_number,
                     line_content=lines[t.line_number - 1].rstrip("\n"),
                     message=f"Duplicate task ID '{t.task_id}' "
-                            f"(first seen at line {seen_ids[t.task_id]}).",
+                    f"(first seen at line {seen_ids[t.task_id]}).",
                 )
             )
         else:
@@ -214,9 +217,7 @@ def cmd_verify(
 
     # Scan for lines that look like tasks but don't fully match
     # (e.g. missing owner in parens, malformed checkbox)
-    _partial_task_re = re.compile(
-        r"^- \[.?\]\s+\d+\.\d+\.\d+\s"
-    )
+    _partial_task_re = re.compile(r"^- \[.?\]\s+\d+\.\d+\.\d+\s")
     for line_num, line in enumerate(lines, start=1):
         stripped = line.rstrip("\n")
         if _partial_task_re.match(stripped) and not TASK_RE.match(stripped):
@@ -225,7 +226,7 @@ def cmd_verify(
                     line_number=line_num,
                     line_content=stripped,
                     message="Line looks like a task but doesn't match expected format. "
-                            "Expected: '- [ ] X.Y.Z Description (Owner Agent)'",
+                    "Expected: '- [ ] X.Y.Z Description (Owner Agent)'",
                 )
             )
 
@@ -262,8 +263,10 @@ def cmd_verify(
         out.write(json.dumps(asdict(result), indent=2, ensure_ascii=False) + "\n")
     else:
         if valid:
-            out.write(f"✅ Roadmap is valid. {total} tasks found "
-                      f"({completed} completed, {total - completed} remaining).\n")
+            out.write(
+                f"✅ Roadmap is valid. {total} tasks found "
+                f"({completed} completed, {total - completed} remaining).\n"
+            )
         else:
             out.write(f"❌ Roadmap has {len(issues)} issue(s):\n")
             for i in issues:
@@ -273,8 +276,7 @@ def cmd_verify(
         # Phase breakdown
         out.write("\nPhase breakdown:\n")
         for p, s in phase_stats.items():
-            out.write(f"  Phase {p}: {s.completed}/{s.total} "
-                      f"({s.status_emoji})\n")
+            out.write(f"  Phase {p}: {s.completed}/{s.total} ({s.status_emoji})\n")
 
     return 0 if valid else 1
 
@@ -359,8 +361,7 @@ def cmd_update(roadmap: Path, task_id: str) -> int:
 
     # --- Step 4: Write back ------------------------------------------------
     roadmap.write_text("".join(lines), encoding="utf-8")
-    print(f"📊 Progress Summary table updated "
-          f"({completed_all}/{total_all} tasks complete).")
+    print(f"📊 Progress Summary table updated ({completed_all}/{total_all} tasks complete).")
     return 0
 
 
@@ -394,9 +395,7 @@ def cmd_status(roadmap: Path, as_json: bool, out: TextIO = sys.stdout) -> int:
                 }
                 for p, s in phase_stats.items()
             },
-            "remaining_task_ids": [
-                t.task_id for t in tasks if not t.completed
-            ],
+            "remaining_task_ids": [t.task_id for t in tasks if not t.completed],
         }
         out.write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
     else:
@@ -412,9 +411,7 @@ def cmd_status(roadmap: Path, as_json: bool, out: TextIO = sys.stdout) -> int:
         out.write(f"{'Phase':<10} {'Done':>5} {'Total':>6} {'Status'}\n")
         out.write("-" * 40 + "\n")
         for p, s in phase_stats.items():
-            out.write(
-                f"Phase {p:<4} {s.completed:>5}/{s.total:<5} {s.status_emoji}\n"
-            )
+            out.write(f"Phase {p:<4} {s.completed:>5}/{s.total:<5} {s.status_emoji}\n")
 
         # Remaining tasks
         remaining_tasks = [t for t in tasks if not t.completed]
@@ -432,6 +429,7 @@ def cmd_status(roadmap: Path, as_json: bool, out: TextIO = sys.stdout) -> int:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _emit_error(
     message: str,
     as_json: bool,
@@ -439,9 +437,7 @@ def _emit_error(
 ) -> None:
     """Emit an error in plain text or JSON format."""
     if as_json:
-        out.write(
-            json.dumps({"valid": False, "error": message}, indent=2) + "\n"
-        )
+        out.write(json.dumps({"valid": False, "error": message}, indent=2) + "\n")
     else:
         print(f"❌ {message}", file=sys.stderr)
 
@@ -449,6 +445,7 @@ def _emit_error(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Construct the argument parser with full help text."""
@@ -523,10 +520,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--update requires --task X.Y.Z")
         # Validate task ID format
         if not re.fullmatch(r"\d+\.\d+\.\d+", args.task):
-            parser.error(
-                f"Invalid task ID '{args.task}'. Expected format: X.Y.Z "
-                f"(e.g. 1.2.3)"
-            )
+            parser.error(f"Invalid task ID '{args.task}'. Expected format: X.Y.Z (e.g. 1.2.3)")
         return cmd_update(args.roadmap, args.task)
 
     if args.status:

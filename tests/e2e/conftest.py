@@ -189,9 +189,7 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     if report.when == "call" and report.failed:
         # Try to get page from the test's fixtures
-        page = item.funcargs.get("authenticated_page") or item.funcargs.get(
-            "unauthenticated_page"
-        )
+        page = item.funcargs.get("authenticated_page") or item.funcargs.get("unauthenticated_page")
         if page and not page.is_closed():
             try:
                 screenshot_dir = "tests/e2e/screenshots"

@@ -67,6 +67,7 @@ async def riverside_badge(
 # API Routes
 # ============================================================================
 
+
 @router.get("/api/v1/riverside/summary", response_model=dict)
 async def get_riverside_summary(
     db: Session = Depends(get_db),
@@ -104,7 +105,9 @@ async def get_maturity_scores(
 async def get_requirements(
     category: str | None = Query(default=None, description="Filter by category (IAM, GS, DS)"),
     priority: str | None = Query(default=None, description="Filter by priority (P0, P1, P2)"),
-    status: str | None = Query(default=None, description="Filter by status (not_started, in_progress, completed, blocked)"),
+    status: str | None = Query(
+        default=None, description="Filter by status (not_started, in_progress, completed, blocked)"
+    ),
     db: Session = Depends(get_db),
     authz: TenantAuthorization = Depends(get_tenant_authorization),
 ):

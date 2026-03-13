@@ -104,17 +104,20 @@ class TestTemplateIntegrity:
         dash = (self.TEMPLATES_DIR / "pages" / "dashboard.html").read_text()
         assert '{% extends "base.html" %}' in dash
 
-    @pytest.mark.parametrize("template_path", [
-        "components/cost_summary_card.html",
-        "components/compliance_gauge.html",
-        "components/resource_stats.html",
-        "components/identity_stats.html",
-        "components/riverside_badge.html",
-        "components/sync/sync_status_card.html",
-        "components/sync/sync_history_table.html",
-        "components/sync/active_alerts.html",
-        "components/sync/tenant_sync_grid.html",
-    ])
+    @pytest.mark.parametrize(
+        "template_path",
+        [
+            "components/cost_summary_card.html",
+            "components/compliance_gauge.html",
+            "components/resource_stats.html",
+            "components/identity_stats.html",
+            "components/riverside_badge.html",
+            "components/sync/sync_status_card.html",
+            "components/sync/sync_history_table.html",
+            "components/sync/active_alerts.html",
+            "components/sync/tenant_sync_grid.html",
+        ],
+    )
     def test_component_templates_exist(self, template_path):
         """All component templates referenced by routes exist."""
         assert (self.TEMPLATES_DIR / template_path).exists()
@@ -418,15 +421,14 @@ class TestTailwindBuild:
     def test_package_json_has_build_script(self):
         """package.json has css:build script."""
         import json
+
         pkg = json.loads(Path("package.json").read_text())
         assert "css:build" in pkg.get("scripts", {}), "Missing css:build script"
 
     def test_compiled_css_starts_with_tailwind_header(self):
         """Compiled CSS has Tailwind header comment."""
         css = Path("app/static/css/theme.css").read_text()
-        assert css.startswith("/*! tailwindcss"), (
-            "Compiled CSS doesn't start with Tailwind header"
-        )
+        assert css.startswith("/*! tailwindcss"), "Compiled CSS doesn't start with Tailwind header"
 
     def test_source_css_has_import_directive(self):
         """Source CSS has @import 'tailwindcss' directive."""

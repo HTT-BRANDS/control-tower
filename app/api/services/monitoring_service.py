@@ -160,9 +160,7 @@ class MonitoringService:
             log_entry.records_updated = final_records.get(
                 "records_updated", log_entry.records_updated
             )
-            log_entry.errors_count = final_records.get(
-                "errors_count", log_entry.errors_count
-            )
+            log_entry.errors_count = final_records.get("errors_count", log_entry.errors_count)
 
         self.db.commit()
         self.db.refresh(log_entry)
@@ -184,9 +182,7 @@ class MonitoringService:
     def _update_metrics_for_job_type(self, job_type: str) -> SyncJobMetrics:
         """Recalculate and update metrics for a job type."""
         # Get or create metrics record
-        metrics = (
-            self.db.query(SyncJobMetrics).filter(SyncJobMetrics.job_type == job_type).first()
-        )
+        metrics = self.db.query(SyncJobMetrics).filter(SyncJobMetrics.job_type == job_type).first()
         if not metrics:
             metrics = SyncJobMetrics(job_type=job_type)
             self.db.add(metrics)
@@ -374,9 +370,7 @@ class MonitoringService:
 
         for job_type, expected_hours in EXPECTED_SYNC_INTERVALS.items():
             metrics = (
-                self.db.query(SyncJobMetrics)
-                .filter(SyncJobMetrics.job_type == job_type)
-                .first()
+                self.db.query(SyncJobMetrics).filter(SyncJobMetrics.job_type == job_type).first()
             )
 
             if not metrics or not metrics.last_run_at:
@@ -392,7 +386,9 @@ class MonitoringService:
                 continue
 
             # Check if stale
-            expected_interval = timedelta(hours=expected_hours * ALERT_THRESHOLDS["stale_sync_multiplier"])
+            expected_interval = timedelta(
+                hours=expected_hours * ALERT_THRESHOLDS["stale_sync_multiplier"]
+            )
             since_last_run = datetime.utcnow() - metrics.last_run_at
 
             if since_last_run > expected_interval:
@@ -471,9 +467,7 @@ class MonitoringService:
 
         return alert
 
-    def resolve_alert(
-        self, alert_id: int, resolved_by: str | None = None
-    ) -> Alert:
+    def resolve_alert(self, alert_id: int, resolved_by: str | None = None) -> Alert:
         """Mark an alert as resolved.
 
         Args:
@@ -584,15 +578,21 @@ class MonitoringService:
                 job_statuses[job_type] = {
                     "status": "degraded",
                     "last_run": metrics.last_run_at.isoformat() if metrics.last_run_at else None,
-                    "last_success": metrics.last_success_at.isoformat() if metrics.last_success_at else None,
-                    "last_failure": metrics.last_failure_at.isoformat() if metrics.last_failure_at else None,
+                    "last_success": metrics.last_success_at.isoformat()
+                    if metrics.last_success_at
+                    else None,
+                    "last_failure": metrics.last_failure_at.isoformat()
+                    if metrics.last_failure_at
+                    else None,
                     "success_rate": metrics.success_rate,
                 }
             else:
                 job_statuses[job_type] = {
                     "status": "healthy",
                     "last_run": metrics.last_run_at.isoformat() if metrics.last_run_at else None,
-                    "last_success": metrics.last_success_at.isoformat() if metrics.last_success_at else None,
+                    "last_success": metrics.last_success_at.isoformat()
+                    if metrics.last_success_at
+                    else None,
                     "success_rate": metrics.success_rate,
                 }
 
@@ -644,9 +644,7 @@ class MonitoringService:
 
         # Check deduplication cooldown
         if not should_notify(alert.alert_type, alert.job_type):
-            logger.debug(
-                f"Notification for {alert.alert_type}/{alert.job_type} in cooldown"
-            )
+            logger.debug(f"Notification for {alert.alert_type}/{alert.job_type} in cooldown")
             return None
 
         # Create notification log entry
@@ -660,10 +658,12 @@ class MonitoringService:
             message=alert.message,
             status="pending",
             sent_at=datetime.utcnow(),
-            metadata_json=json.dumps({
-                "alert_type": alert.alert_type,
-                "details": alert.details_json,
-            }),
+            metadata_json=json.dumps(
+                {
+                    "alert_type": alert.alert_type,
+                    "details": alert.details_json,
+                }
+            ),
         )
         self.db.add(log_entry)
         self.db.commit()
@@ -707,9 +707,7 @@ class MonitoringService:
             record_notification_sent(alert.alert_type, alert.job_type)
             logger.info(f"Notification sent for alert {alert.id}: {alert.title}")
         else:
-            logger.error(
-                f"Notification failed for alert {alert.id}: {result.get('error')}"
-            )
+            logger.error(f"Notification failed for alert {alert.id}: {result.get('error')}")
 
         self.db.commit()
         return log_entry
@@ -746,15 +744,9 @@ class MonitoringService:
             Dict with notification statistics
         """
         total = self.db.query(NotificationLog).count()
-        sent = self.db.query(NotificationLog).filter(
-            NotificationLog.status == "sent"
-        ).count()
-        failed = self.db.query(NotificationLog).filter(
-            NotificationLog.status == "failed"
-        ).count()
-        pending = self.db.query(NotificationLog).filter(
-            NotificationLog.status == "pending"
-        ).count()
+        sent = self.db.query(NotificationLog).filter(NotificationLog.status == "sent").count()
+        failed = self.db.query(NotificationLog).filter(NotificationLog.status == "failed").count()
+        pending = self.db.query(NotificationLog).filter(NotificationLog.status == "pending").count()
 
         # By channel
         channel_counts = (

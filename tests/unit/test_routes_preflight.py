@@ -59,6 +59,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -130,7 +131,9 @@ def mock_preflight_report():
 def test_get_preflight_status_with_report(client_with_db, mock_user, mock_preflight_report):
     """Test getting preflight status when report exists."""
     with patch("app.api.routes.preflight.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.preflight.get_latest_report", return_value=mock_preflight_report):
+        with patch(
+            "app.api.routes.preflight.get_latest_report", return_value=mock_preflight_report
+        ):
             with patch("app.api.routes.preflight.get_runner") as mock_runner:
                 mock_runner.return_value.is_running = False
 
@@ -241,7 +244,9 @@ def test_check_github_preflight_success(client_with_db, mock_user, mock_prefligh
 def test_get_report_json_success(client_with_db, mock_user, mock_preflight_report):
     """Test getting preflight report in JSON format."""
     with patch("app.api.routes.preflight.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.preflight.get_latest_report", return_value=mock_preflight_report):
+        with patch(
+            "app.api.routes.preflight.get_latest_report", return_value=mock_preflight_report
+        ):
             with patch("app.api.routes.preflight.ReportGenerator") as MockGenerator:
                 mock_gen = MockGenerator.return_value
                 mock_gen.to_json.return_value = '{"total_checks": 10}'

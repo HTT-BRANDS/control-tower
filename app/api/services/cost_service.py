@@ -87,9 +87,7 @@ class CostService:
                 cost=cost,
                 percentage_of_total=(cost / current_total * 100) if current_total > 0 else 0,
             )
-            for name, cost in sorted(
-                service_costs.items(), key=lambda x: x[1], reverse=True
-            )[:10]
+            for name, cost in sorted(service_costs.items(), key=lambda x: x[1], reverse=True)[:10]
         ]
 
         return CostSummary(
@@ -154,14 +152,9 @@ class CostService:
         for cost in costs:
             daily_costs[cost.date] = daily_costs.get(cost.date, 0) + cost.total_cost
 
-        return [
-            CostTrend(date=d, cost=c)
-            for d, c in sorted(daily_costs.items())
-        ]
+        return [CostTrend(date=d, cost=c) for d, c in sorted(daily_costs.items())]
 
-    def get_anomalies(
-        self, acknowledged: bool | None = None
-    ) -> list[CostAnomaly]:
+    def get_anomalies(self, acknowledged: bool | None = None) -> list[CostAnomaly]:
         """Get cost anomalies (not cached - real-time data)."""
         query = self.db.query(CostAnomaly)
 
@@ -280,9 +273,7 @@ class CostService:
             by_service[service_name]["count"] += 1
             impact = abs((anomaly.actual_cost or 0) - (anomaly.expected_cost or 0))
             by_service[service_name]["total_impact"] += impact
-            by_service[service_name]["percentage_changes"].append(
-                anomaly.percentage_change or 0
-            )
+            by_service[service_name]["percentage_changes"].append(anomaly.percentage_change or 0)
 
             if anomaly.detected_at > by_service[service_name]["latest_at"]:
                 by_service[service_name]["latest_at"] = anomaly.detected_at
@@ -308,9 +299,7 @@ class CostService:
         # Sort by total impact and limit
         return sorted(result, key=lambda x: x.total_impact, reverse=True)[:limit]
 
-    def get_top_anomalies(
-        self, n: int = 10, acknowledged: bool | None = None
-    ) -> list[TopAnomaly]:
+    def get_top_anomalies(self, n: int = 10, acknowledged: bool | None = None) -> list[TopAnomaly]:
         """Get top N anomalies by impact (not cached - real-time)."""
         query = self.db.query(CostAnomaly)
 
@@ -380,10 +369,9 @@ class CostService:
         end_date = date.today()
         start_date = end_date - timedelta(days=90)
 
-        query = (
-            self.db.query(CostSnapshot.date, func.sum(CostSnapshot.total_cost).label("daily_cost"))
-            .filter(CostSnapshot.date >= start_date, CostSnapshot.date <= end_date)
-        )
+        query = self.db.query(
+            CostSnapshot.date, func.sum(CostSnapshot.total_cost).label("daily_cost")
+        ).filter(CostSnapshot.date >= start_date, CostSnapshot.date <= end_date)
         if tenant_ids:
             query = query.filter(CostSnapshot.tenant_id.in_(tenant_ids))
         historical_costs = query.group_by(CostSnapshot.date).order_by(CostSnapshot.date).all()
@@ -405,7 +393,7 @@ class CostService:
 
         # Calculate standard deviation for confidence intervals
         variance = sum((c - y_mean) ** 2 for c in costs) / n
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
 
         # Generate forecast
         last_value = costs[-1]

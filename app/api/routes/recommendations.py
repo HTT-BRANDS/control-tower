@@ -142,7 +142,10 @@ async def dismiss_recommendation(
     authz.ensure_at_least_one_tenant()
     # Validate user has access to recommendation's tenant
     from app.models.recommendation import Recommendation as RecommendationModel
-    recommendation = db.query(RecommendationModel).filter(RecommendationModel.id == recommendation_id).first()
+
+    recommendation = (
+        db.query(RecommendationModel).filter(RecommendationModel.id == recommendation_id).first()
+    )
     if recommendation and recommendation.tenant_id:
         authz.validate_access(recommendation.tenant_id)
 

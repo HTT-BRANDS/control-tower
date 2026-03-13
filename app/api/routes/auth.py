@@ -34,6 +34,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 # Schemas
 # ============================================================================
 
+
 class TokenResponse(BaseModel):
     """OAuth2 token response."""
 
@@ -351,6 +352,7 @@ async def _handle_authorization_code(
 # Azure AD OAuth2
 # ============================================================================
 
+
 @router.get("/azure/login")
 async def azure_login_redirect() -> dict[str, str]:
     """Get Azure AD OAuth2 authorization endpoint URL.
@@ -499,6 +501,7 @@ async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> None
 # User Info & Session Management
 # ============================================================================
 
+
 @router.get("/me", response_model=UserInfoResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
@@ -515,11 +518,7 @@ async def get_current_user_info(
     accessible_tenants = []
 
     if current_user.tenant_ids:
-        tenants = (
-            db.query(Tenant)
-            .filter(Tenant.tenant_id.in_(current_user.tenant_ids))
-            .all()
-        )
+        tenants = db.query(Tenant).filter(Tenant.tenant_id.in_(current_user.tenant_ids)).all()
 
         for tenant in tenants:
             mapping = (
@@ -531,16 +530,22 @@ async def get_current_user_info(
                 .first()
             )
 
-            accessible_tenants.append({
-                "tenant_id": tenant.tenant_id,
-                "name": tenant.name,
-                "role": mapping.role if mapping else "viewer",
-                "permissions": {
-                    "can_manage_resources": mapping.can_manage_resources if mapping else False,
-                    "can_view_costs": mapping.can_view_costs if mapping else True,
-                    "can_manage_compliance": mapping.can_manage_compliance if mapping else False,
-                } if mapping else {},
-            })
+            accessible_tenants.append(
+                {
+                    "tenant_id": tenant.tenant_id,
+                    "name": tenant.name,
+                    "role": mapping.role if mapping else "viewer",
+                    "permissions": {
+                        "can_manage_resources": mapping.can_manage_resources if mapping else False,
+                        "can_view_costs": mapping.can_view_costs if mapping else True,
+                        "can_manage_compliance": mapping.can_manage_compliance
+                        if mapping
+                        else False,
+                    }
+                    if mapping
+                    else {},
+                }
+            )
 
     return UserInfoResponse(
         id=current_user.id,
@@ -615,11 +620,13 @@ async def auth_health_check() -> dict[str, Any]:
     return {
         "status": "healthy",
         "jwt_configured": bool(settings.jwt_secret_key),
-        "azure_ad_configured": all([
-            settings.azure_ad_tenant_id,
-            settings.azure_ad_client_id,
-            settings.azure_ad_client_secret,
-        ]),
+        "azure_ad_configured": all(
+            [
+                settings.azure_ad_tenant_id,
+                settings.azure_ad_client_id,
+                settings.azure_ad_client_secret,
+            ]
+        ),
         "token_endpoint": "/api/v1/auth/token",
         "authorization_endpoint": "/api/v1/auth/azure/login",
     }

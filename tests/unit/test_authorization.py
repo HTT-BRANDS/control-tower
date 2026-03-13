@@ -28,6 +28,7 @@ from app.core.authorization import (
 # Test Fixtures & Helpers
 # =============================================================================
 
+
 def make_user(roles=None, tenant_ids=None, user_id="user-1"):
     """Create a test user with specified roles and tenant access."""
     return User(
@@ -51,6 +52,7 @@ def make_mock_tenant(tenant_id, is_active=True):
 # Test 1: TenantAccessError - Exception Attributes
 # =============================================================================
 
+
 class TestTenantAccessError:
     """Test TenantAccessError exception with tenant_id and user_id attributes."""
 
@@ -68,6 +70,7 @@ class TestTenantAccessError:
 # =============================================================================
 # Test 2-3: get_user_tenants() - Admin vs Token Users
 # =============================================================================
+
 
 class TestGetUserTenants:
     """Test get_user_tenants() for admin and token-based access."""
@@ -113,6 +116,7 @@ class TestGetUserTenants:
 # Test 4: get_user_tenant_ids() - Extract Tenant IDs
 # =============================================================================
 
+
 class TestGetUserTenantIds:
     """Test get_user_tenant_ids() returns list of tenant_id strings."""
 
@@ -138,6 +142,7 @@ class TestGetUserTenantIds:
 # =============================================================================
 # Test 5-7: validate_tenant_access() - Admin, Valid, and Invalid Access
 # =============================================================================
+
 
 class TestValidateTenantAccess:
     """Test validate_tenant_access() for various access scenarios."""
@@ -180,6 +185,7 @@ class TestValidateTenantAccess:
 # Test 8-10: validate_tenants_access() - Empty, Admin, Missing Access
 # =============================================================================
 
+
 class TestValidateTenantsAccess:
     """Test validate_tenants_access() for bulk tenant validation."""
 
@@ -220,6 +226,7 @@ class TestValidateTenantsAccess:
 # =============================================================================
 # Test 11-14: TenantAuthorization Class Methods
 # =============================================================================
+
 
 class TestTenantAuthorization:
     """Test TenantAuthorization helper class methods."""

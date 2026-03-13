@@ -36,7 +36,7 @@ class TestLighthouseAzureClient:
         sub.tags = {
             "environment": "production",
             "managedBy": "lighthouse",
-            "mspOfferName": "Azure Governance Platform"
+            "mspOfferName": "Azure Governance Platform",
         }
         return sub
 
@@ -47,13 +47,16 @@ class TestVerifyDelegation(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_verify_delegation_success(self, mock_delegated_subscription):
         """Test successful delegation verification."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     # Setup mocks
                     mock_cred_instance = MagicMock()
                     mock_cred.return_value = mock_cred_instance
@@ -80,13 +83,16 @@ class TestVerifyDelegation(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_verify_delegation_not_found(self):
         """Test verification when subscription is not found."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
 
                     mock_client = MagicMock()
@@ -105,13 +111,16 @@ class TestVerifyDelegation(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_verify_delegation_not_delegated(self, mock_subscription):
         """Test verification when subscription doesn't exist in accessible list."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
 
                     mock_client = MagicMock()
@@ -137,7 +146,9 @@ class TestVerifyDelegation(TestLighthouseAzureClient):
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
 
                     mock_client = MagicMock()
@@ -156,18 +167,23 @@ class TestVerifyDelegation(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_verify_delegation_azure_api_error(self):
         """Test verification when Azure API raises an error."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
 
                     mock_client = MagicMock()
                     mock_sub_client.return_value = mock_client
-                    mock_client.subscriptions.list.side_effect = Exception("Azure API Error: Authentication failed")
+                    mock_client.subscriptions.list.side_effect = Exception(
+                        "Azure API Error: Authentication failed"
+                    )
 
                     from app.services.lighthouse_client import (
                         LighthouseAzureClient,
@@ -199,7 +215,9 @@ class TestGetCostData(TestLighthouseAzureClient):
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.CostManagementClient") as mock_cost_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_cost_client.return_value = mock_client
                     mock_client.query.usage.return_value = mock_cost_result
@@ -208,20 +226,22 @@ class TestGetCostData(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_cost_data(
                         subscription_id="sub-12345",
                         start_date=datetime(2025, 1, 1),
-                        end_date=datetime(2025, 1, 31)
+                        end_date=datetime(2025, 1, 31),
                     )
 
                     assert result["success"] is True
@@ -242,7 +262,9 @@ class TestGetCostData(TestLighthouseAzureClient):
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.CostManagementClient") as mock_cost_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_cost_client.return_value = mock_client
                     mock_client.query.usage.return_value = mock_cost_result
@@ -251,20 +273,22 @@ class TestGetCostData(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_cost_data(
                         subscription_id="sub-12345",
                         start_date=datetime(2025, 1, 1),
-                        end_date=datetime(2025, 1, 31)
+                        end_date=datetime(2025, 1, 31),
                     )
 
                     assert result["success"] is True
@@ -274,39 +298,49 @@ class TestGetCostData(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_get_cost_data_permission_denied(self):
         """Test cost data when permissions are insufficient."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.CostManagementClient") as mock_cost_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_cost_client.return_value = mock_client
-                    mock_client.query.usage.side_effect = Exception("Forbidden: Insufficient permissions")
+                    mock_client.query.usage.side_effect = Exception(
+                        "Forbidden: Insufficient permissions"
+                    )
 
                     from app.services.lighthouse_client import LighthouseAzureClient
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     with pytest.raises(Exception) as exc_info:
                         await client.get_cost_data(
                             subscription_id="sub-12345",
                             start_date=datetime(2025, 1, 1),
-                            end_date=datetime(2025, 1, 31)
+                            end_date=datetime(2025, 1, 31),
                         )
 
-                    assert "permission" in str(exc_info.value).lower() or "forbidden" in str(exc_info.value).lower()
+                    assert (
+                        "permission" in str(exc_info.value).lower()
+                        or "forbidden" in str(exc_info.value).lower()
+                    )
 
     @pytest.mark.asyncio
     async def test_get_cost_data_with_grouping(self):
@@ -324,7 +358,9 @@ class TestGetCostData(TestLighthouseAzureClient):
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.CostManagementClient") as mock_cost_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_cost_client.return_value = mock_client
                     mock_client.query.usage.return_value = mock_cost_result
@@ -333,21 +369,23 @@ class TestGetCostData(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_cost_data(
                         subscription_id="sub-12345",
                         start_date=datetime(2025, 1, 1),
                         end_date=datetime(2025, 1, 31),
-                        group_by=["ServiceName", "ResourceGroup"]
+                        group_by=["ServiceName", "ResourceGroup"],
                     )
 
                     assert result["success"] is True
@@ -380,7 +418,9 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.SecurityCenter") as mock_security:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_security.return_value = mock_client
                     mock_client.secure_scores.list.return_value = [mock_secure_score]
@@ -390,15 +430,17 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_security_assessments("sub-12345")
 
@@ -411,13 +453,16 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_get_security_assessments_no_data(self):
         """Test security assessments when no data is available."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.SecurityCenter") as mock_security:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_security.return_value = mock_client
                     mock_client.secure_scores.list.return_value = []
@@ -426,15 +471,17 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_security_assessments("sub-12345")
 
@@ -445,13 +492,16 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_get_security_assessments_api_error(self):
         """Test security assessments when API fails."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.SecurityCenter") as mock_security:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_security.return_value = mock_client
                     mock_client.secure_scores.list.side_effect = Exception("API timeout")
@@ -460,15 +510,17 @@ class TestGetSecurityAssessments(TestLighthouseAzureClient):
 
                     client = LighthouseAzureClient(credential=MagicMock())
                     # Mock verify_delegation to bypass SubscriptionClient dependency
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True,
-                        "is_delegated": True,
-                        "subscription_id": "sub-12345",
-                        "display_name": "Test",
-                        "state": "Enabled",
-                        "tenant_id": "test-tenant",
-                        "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
 
                     result = await client.get_security_assessments("sub-12345")
                     assert result["success"] is True
@@ -498,8 +550,12 @@ class TestListResources(TestLighthouseAzureClient):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
-            with patch("app.services.lighthouse_client.ResourceManagementClient") as mock_resource_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+            with patch(
+                "app.services.lighthouse_client.ResourceManagementClient"
+            ) as mock_resource_client:
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_resource_client.return_value = mock_client
 
@@ -509,12 +565,17 @@ class TestListResources(TestLighthouseAzureClient):
                     from app.services.lighthouse_client import LighthouseAzureClient
 
                     client = LighthouseAzureClient(credential=MagicMock())
-                    client.verify_delegation = AsyncMock(return_value={
-
-                        "success": True, "is_delegated": True,
-                        "subscription_id": "sub-12345", "display_name": "Test",
-                        "state": "Enabled", "tenant_id": "test-tenant", "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
                     result = await client.list_resources("sub-12345")
 
                     assert result["success"] is True
@@ -527,13 +588,18 @@ class TestListResources(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_list_resources_empty_subscription(self):
         """Test resource listing when subscription has no resources."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
-            with patch("app.services.lighthouse_client.ResourceManagementClient") as mock_resource_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+            with patch(
+                "app.services.lighthouse_client.ResourceManagementClient"
+            ) as mock_resource_client:
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_resource_client.return_value = mock_client
                     mock_client.resource_groups.list.return_value = []
@@ -541,11 +607,17 @@ class TestListResources(TestLighthouseAzureClient):
                     from app.services.lighthouse_client import LighthouseAzureClient
 
                     client = LighthouseAzureClient(credential=MagicMock())
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True, "is_delegated": True,
-                        "subscription_id": "sub-12345", "display_name": "Test",
-                        "state": "Enabled", "tenant_id": "test-tenant", "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
                     result = await client.list_resources("sub-12345")
 
                     assert result["success"] is True
@@ -574,8 +646,12 @@ class TestListResources(TestLighthouseAzureClient):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
-            with patch("app.services.lighthouse_client.ResourceManagementClient") as mock_resource_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+            with patch(
+                "app.services.lighthouse_client.ResourceManagementClient"
+            ) as mock_resource_client:
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_resource_client.return_value = mock_client
 
@@ -586,14 +662,20 @@ class TestListResources(TestLighthouseAzureClient):
                     from app.services.lighthouse_client import LighthouseAzureClient
 
                     client = LighthouseAzureClient(credential=MagicMock())
-                    client.verify_delegation = AsyncMock(return_value={
-                        "success": True, "is_delegated": True,
-                        "subscription_id": "sub-12345", "display_name": "Test",
-                        "state": "Enabled", "tenant_id": "test-tenant", "error": None,
-                    })
+                    client.verify_delegation = AsyncMock(
+                        return_value={
+                            "success": True,
+                            "is_delegated": True,
+                            "subscription_id": "sub-12345",
+                            "display_name": "Test",
+                            "state": "Enabled",
+                            "tenant_id": "test-tenant",
+                            "error": None,
+                        }
+                    )
                     result = await client.list_resources(
                         subscription_id="sub-12345",
-                        resource_type="Microsoft.Compute/virtualMachines"
+                        resource_type="Microsoft.Compute/virtualMachines",
                     )
 
                     assert result["success"] is True
@@ -614,30 +696,40 @@ class TestValidateTenantAccess(TestLighthouseAzureClient):
                 from app.services.lighthouse_client import LighthouseAzureClient
 
                 client = LighthouseAzureClient()
-                client.verify_delegation = AsyncMock(return_value={
-                    "success": True,
-                    "is_delegated": True,
-                    "subscription_id": "sub-12345",
-                    "display_name": "Delegated Test Subscription",
-                    "state": "Enabled",
-                    "tenant_id": "customer-tenant-789",
-                    "error": None,
-                })
-                client.get_cost_data = AsyncMock(return_value={
-                    "success": True,
-                    "total_cost": 150.0,
-                    "currency": "USD",
-                })
-                client.get_security_assessments = AsyncMock(return_value={
-                    "success": True,
-                    "secure_score": 72.0,
-                    "percentage": 72.0,
-                })
-                client.list_resources = AsyncMock(return_value={
-                    "success": True,
-                    "resources": [{"name": "vm-1", "type": "Microsoft.Compute/virtualMachines"}],
-                    "count": 1,
-                })
+                client.verify_delegation = AsyncMock(
+                    return_value={
+                        "success": True,
+                        "is_delegated": True,
+                        "subscription_id": "sub-12345",
+                        "display_name": "Delegated Test Subscription",
+                        "state": "Enabled",
+                        "tenant_id": "customer-tenant-789",
+                        "error": None,
+                    }
+                )
+                client.get_cost_data = AsyncMock(
+                    return_value={
+                        "success": True,
+                        "total_cost": 150.0,
+                        "currency": "USD",
+                    }
+                )
+                client.get_security_assessments = AsyncMock(
+                    return_value={
+                        "success": True,
+                        "secure_score": 72.0,
+                        "percentage": 72.0,
+                    }
+                )
+                client.list_resources = AsyncMock(
+                    return_value={
+                        "success": True,
+                        "resources": [
+                            {"name": "vm-1", "type": "Microsoft.Compute/virtualMachines"}
+                        ],
+                        "count": 1,
+                    }
+                )
 
                 result = await client.validate_tenant_access(
                     tenant_id="customer-tenant-789",
@@ -661,15 +753,17 @@ class TestValidateTenantAccess(TestLighthouseAzureClient):
                 from app.services.lighthouse_client import LighthouseAzureClient
 
                 client = LighthouseAzureClient()
-                client.verify_delegation = AsyncMock(return_value={
-                    "success": True,
-                    "is_delegated": False,
-                    "subscription_id": "sub-missing",
-                    "display_name": None,
-                    "state": None,
-                    "tenant_id": "tenant-no-subs",
-                    "error": "Subscription not found in delegated subscriptions",
-                })
+                client.verify_delegation = AsyncMock(
+                    return_value={
+                        "success": True,
+                        "is_delegated": False,
+                        "subscription_id": "sub-missing",
+                        "display_name": None,
+                        "state": None,
+                        "tenant_id": "tenant-no-subs",
+                        "error": "Subscription not found in delegated subscriptions",
+                    }
+                )
 
                 result = await client.validate_tenant_access(
                     tenant_id="tenant-no-subs",
@@ -679,7 +773,9 @@ class TestValidateTenantAccess(TestLighthouseAzureClient):
                 assert result["is_valid"] is False
                 assert result["delegation_verified"] is False
                 # Early return means cost/security/resources were never attempted
-                client.get_cost_data.assert_not_called() if hasattr(client, "get_cost_data") and isinstance(client.get_cost_data, AsyncMock) else None
+                client.get_cost_data.assert_not_called() if hasattr(
+                    client, "get_cost_data"
+                ) and isinstance(client.get_cost_data, AsyncMock) else None
 
     @pytest.mark.asyncio
     async def test_validate_tenant_access_failed_delegation(self, mock_delegated_subscription):
@@ -691,9 +787,7 @@ class TestValidateTenantAccess(TestLighthouseAzureClient):
                 from app.services.lighthouse_client import LighthouseAzureClient
 
                 client = LighthouseAzureClient()
-                client.verify_delegation = AsyncMock(
-                    side_effect=Exception("Azure API unreachable")
-                )
+                client.verify_delegation = AsyncMock(side_effect=Exception("Azure API unreachable"))
                 client.get_cost_data = AsyncMock()
                 client.get_security_assessments = AsyncMock()
                 client.list_resources = AsyncMock()
@@ -714,13 +808,16 @@ class TestErrorHandling(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_circuit_breaker_integration(self):
         """Test that circuit breaker is applied to failing requests."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
 
                     mock_client = MagicMock()
@@ -753,13 +850,16 @@ class TestErrorHandling(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_invalid_subscription_id_format(self):
         """Test handling of invalid subscription ID format."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.SubscriptionClient"):
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     from app.services.lighthouse_client import (
                         LighthouseAzureClient,
                     )
@@ -773,17 +873,22 @@ class TestErrorHandling(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_authentication_failure(self):
         """Test handling of Azure authentication failure."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential") as mock_cred:
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_cred.return_value = MagicMock()
                     mock_client = MagicMock()
                     mock_sub.return_value = mock_client
-                    mock_client.subscriptions.list.side_effect = Exception("Authentication failed: unauthorized")
+                    mock_client.subscriptions.list.side_effect = Exception(
+                        "Authentication failed: unauthorized"
+                    )
 
                     from app.services.lighthouse_client import (
                         LighthouseAzureClient,
@@ -798,16 +903,21 @@ class TestErrorHandling(TestLighthouseAzureClient):
     @pytest.mark.asyncio
     async def test_network_timeout(self):
         """Test handling of network timeouts."""
+
         # Mock resilient_api_call to bypass async threading
         async def direct_call(func, api_name=None, max_retries=None, **kwargs):
             return func(**kwargs)
 
         with patch("app.services.lighthouse_client.DefaultAzureCredential"):
             with patch("app.services.lighthouse_client.SubscriptionClient") as mock_sub_client:
-                with patch("app.services.lighthouse_client.resilient_api_call", side_effect=direct_call):
+                with patch(
+                    "app.services.lighthouse_client.resilient_api_call", side_effect=direct_call
+                ):
                     mock_client = MagicMock()
                     mock_sub_client.return_value = mock_client
-                    mock_client.subscriptions.list.side_effect = Exception("Request timeout after 30s")
+                    mock_client.subscriptions.list.side_effect = Exception(
+                        "Request timeout after 30s"
+                    )
 
                     from app.services.lighthouse_client import (
                         LighthouseAzureClient,
@@ -819,7 +929,10 @@ class TestErrorHandling(TestLighthouseAzureClient):
                     with pytest.raises(LighthouseDelegationError) as exc_info:
                         await client.verify_delegation("sub-12345")
 
-                    assert "timeout" in str(exc_info.value).lower() or "network" in str(exc_info.value).lower()
+                    assert (
+                        "timeout" in str(exc_info.value).lower()
+                        or "network" in str(exc_info.value).lower()
+                    )
 
 
 class TestLighthouseClientInitialization:

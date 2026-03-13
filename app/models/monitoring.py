@@ -37,9 +37,7 @@ class SyncJobLog(Base):
     records_updated: Mapped[int] = Column(Integer, default=0)
     errors_count: Mapped[int] = Column(Integer, default=0)
     error_message: Mapped[str | None] = Column(Text, nullable=True)
-    details_json: Mapped[str | None] = Column(
-        Text, nullable=True
-    )  # Additional JSON details
+    details_json: Mapped[str | None] = Column(Text, nullable=True)  # Additional JSON details
 
     # Relationship
     tenant: Mapped["Tenant"] = relationship("Tenant", lazy="joined")
@@ -63,12 +61,8 @@ class SyncJobMetrics(Base):
     __tablename__ = "sync_job_metrics"
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
-    job_type: Mapped[str] = Column(
-        String(50), nullable=False, unique=True, index=True
-    )
-    calculated_at: Mapped[datetime] = Column(
-        DateTime, default=datetime.utcnow, nullable=False
-    )
+    job_type: Mapped[str] = Column(String(50), nullable=False, unique=True, index=True)
+    calculated_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Execution counts
     total_runs: Mapped[int] = Column(Integer, default=0)
@@ -113,9 +107,7 @@ class Alert(Base):
     job_type: Mapped[str | None] = Column(
         String(50), nullable=True, index=True
     )  # costs, compliance, resources, identity
-    tenant_id: Mapped[str | None] = Column(
-        String(36), ForeignKey("tenants.id"), nullable=True
-    )
+    tenant_id: Mapped[str | None] = Column(String(36), ForeignKey("tenants.id"), nullable=True)
     title: Mapped[str] = Column(String(255), nullable=False)
     message: Mapped[str] = Column(Text, nullable=False)
     details_json: Mapped[str | None] = Column(Text, nullable=True)

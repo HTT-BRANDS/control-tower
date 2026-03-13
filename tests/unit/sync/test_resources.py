@@ -28,7 +28,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = sample_resources
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -55,7 +57,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = []
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -119,7 +123,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.side_effect = Exception("HTTP 403")
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute - should not raise
         await sync_resources()
@@ -140,7 +146,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.side_effect = Exception("Auth failed")
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute - should not raise
         await sync_resources()
@@ -162,7 +170,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = sample_resources
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         mock_db_session.commit.side_effect = SQLAlchemyError("Database error")
 
@@ -204,7 +214,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = [failed_resource, orphaned_resource]
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -236,7 +248,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = sample_resources
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -279,7 +293,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = [resource1, resource2]
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -321,7 +337,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = [malformed_resource, valid_resource]
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute - should not raise
         await sync_resources()
@@ -354,7 +372,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = [cost_resource]
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()
@@ -390,7 +410,9 @@ class TestResourceSync:
         mock_resource_client = MagicMock()
         mock_resource_client.resources = MagicMock()
         mock_resource_client.resources.list.return_value = sample_resources
-        mock_azure_client_manager["resources"].get_resource_client.return_value = mock_resource_client
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
 
         # Execute
         await sync_resources()

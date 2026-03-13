@@ -58,7 +58,7 @@ class TestMonitoringServiceAlerts:
             title="Test Alert",
             message="Test message",
             job_type="costs",
-            tenant_id="tenant-123"
+            tenant_id="tenant-123",
         )
 
         # Verify
@@ -66,7 +66,7 @@ class TestMonitoringServiceAlerts:
         mock_db.commit.assert_called_once()
         assert result.id == 1
 
-    @patch('app.api.services.monitoring_service.MonitoringService.send_alert_notification')
+    @patch("app.api.services.monitoring_service.MonitoringService.send_alert_notification")
     def test_create_alert_with_details(self, mock_send_notif, monitoring_service, mock_db):
         """Test create_alert serializes details dict to JSON."""
         # Setup
@@ -89,7 +89,7 @@ class TestMonitoringServiceAlerts:
             severity="error",
             title="High Errors",
             message="Error rate exceeded",
-            details=details
+            details=details,
         )
 
         # Verify
@@ -97,9 +97,12 @@ class TestMonitoringServiceAlerts:
         mock_db.commit.assert_called_once()
         mock_send_notif.assert_called_once()  # Notification sent for error severity
 
-    @patch('app.api.services.monitoring_service.MonitoringService.send_alert_notification')
-    def test_create_alert_triggers_notification_for_critical(self, mock_send_notif, monitoring_service, mock_db):
+    @patch("app.api.services.monitoring_service.MonitoringService.send_alert_notification")
+    def test_create_alert_triggers_notification_for_critical(
+        self, mock_send_notif, monitoring_service, mock_db
+    ):
         """Test create_alert sends notification for error/critical severity."""
+
         # Setup
         def mock_add(obj):
             obj.id = 3
@@ -114,7 +117,7 @@ class TestMonitoringServiceAlerts:
             alert_type="sync_failure",
             severity="error",
             title="Critical Failure",
-            message="System down"
+            message="System down",
         )
 
         # Verify notification was triggered
@@ -249,6 +252,7 @@ class TestMonitoringServiceSyncJobs:
 
     def test_start_sync_job(self, monitoring_service, mock_db):
         """Test start_sync_job creates new log entry."""
+
         # Setup
         def mock_add(obj):
             obj.id = 1
@@ -262,9 +266,7 @@ class TestMonitoringServiceSyncJobs:
 
         # Execute
         result = monitoring_service.start_sync_job(
-            job_type="costs",
-            tenant_id="tenant-123",
-            details={"source": "manual"}
+            job_type="costs", tenant_id="tenant-123", details={"source": "manual"}
         )
 
         # Verify
@@ -290,11 +292,7 @@ class TestMonitoringServiceSyncJobs:
 
         # Execute
         result = monitoring_service.update_sync_progress(
-            log_id=1,
-            records_processed=100,
-            records_created=50,
-            records_updated=30,
-            errors_count=5
+            log_id=1, records_processed=100, records_created=50, records_updated=30, errors_count=5
         )
 
         # Verify
@@ -318,9 +316,13 @@ class TestMonitoringServiceSyncJobs:
         with pytest.raises(ValueError, match="Sync job log with id 999 not found"):
             monitoring_service.update_sync_progress(log_id=999, records_processed=100)
 
-    @patch('app.api.services.monitoring_service.MonitoringService._update_metrics_for_job_type')
-    @patch('app.api.services.monitoring_service.MonitoringService._check_for_alerts_after_completion')
-    def test_complete_sync_job_success(self, mock_check_alerts, mock_update_metrics, monitoring_service, mock_db):
+    @patch("app.api.services.monitoring_service.MonitoringService._update_metrics_for_job_type")
+    @patch(
+        "app.api.services.monitoring_service.MonitoringService._check_for_alerts_after_completion"
+    )
+    def test_complete_sync_job_success(
+        self, mock_check_alerts, mock_update_metrics, monitoring_service, mock_db
+    ):
         """Test complete_sync_job marks job as completed and calculates duration."""
         # Setup
         start_time = datetime.utcnow() - timedelta(seconds=30)
@@ -339,9 +341,7 @@ class TestMonitoringServiceSyncJobs:
 
         # Execute
         result = monitoring_service.complete_sync_job(
-            log_id=1,
-            status="completed",
-            final_records={"records_processed": 100}
+            log_id=1, status="completed", final_records={"records_processed": 100}
         )
 
         # Verify
@@ -353,9 +353,13 @@ class TestMonitoringServiceSyncJobs:
         mock_check_alerts.assert_called_once_with(mock_log)
         mock_db.commit.assert_called_once()
 
-    @patch('app.api.services.monitoring_service.MonitoringService._update_metrics_for_job_type')
-    @patch('app.api.services.monitoring_service.MonitoringService._check_for_alerts_after_completion')
-    def test_complete_sync_job_failure(self, mock_check_alerts, mock_update_metrics, monitoring_service, mock_db):
+    @patch("app.api.services.monitoring_service.MonitoringService._update_metrics_for_job_type")
+    @patch(
+        "app.api.services.monitoring_service.MonitoringService._check_for_alerts_after_completion"
+    )
+    def test_complete_sync_job_failure(
+        self, mock_check_alerts, mock_update_metrics, monitoring_service, mock_db
+    ):
         """Test complete_sync_job handles failed status with error message."""
         # Setup
         start_time = datetime.utcnow() - timedelta(seconds=15)
@@ -374,9 +378,7 @@ class TestMonitoringServiceSyncJobs:
 
         # Execute
         result = monitoring_service.complete_sync_job(
-            log_id=2,
-            status="failed",
-            error_message="Connection timeout"
+            log_id=2, status="failed", error_message="Connection timeout"
         )
 
         # Verify
@@ -494,7 +496,7 @@ class TestMonitoringServiceAlertDetection:
         """Create MonitoringService instance."""
         return MonitoringService(db=mock_db)
 
-    @patch('app.api.services.monitoring_service.MonitoringService.create_alert')
+    @patch("app.api.services.monitoring_service.MonitoringService.create_alert")
     def test_check_for_alerts_on_failure(self, mock_create_alert, monitoring_service, mock_db):
         """Test _check_for_alerts_after_completion creates alert on job failure."""
         # Setup
@@ -520,7 +522,7 @@ class TestMonitoringServiceAlertDetection:
         assert call_kwargs["severity"] == "error"
         assert "failed" in call_kwargs["title"].lower()
 
-    @patch('app.api.services.monitoring_service.MonitoringService.create_alert')
+    @patch("app.api.services.monitoring_service.MonitoringService.create_alert")
     def test_check_for_alerts_on_zero_records(self, mock_create_alert, monitoring_service, mock_db):
         """Test _check_for_alerts_after_completion detects consecutive zero-record runs."""
         # Setup
@@ -556,7 +558,7 @@ class TestMonitoringServiceAlertDetection:
         assert call_kwargs["alert_type"] == "no_records"
         assert call_kwargs["severity"] == "warning"
 
-    @patch('app.api.services.monitoring_service.MonitoringService.create_alert')
+    @patch("app.api.services.monitoring_service.MonitoringService.create_alert")
     def test_check_stale_syncs_creates_alert(self, mock_create_alert, monitoring_service, mock_db):
         """Test check_stale_syncs detects jobs that haven't run recently."""
         # Setup - create metrics with last run 3 days ago (stale for 24h expected interval)
@@ -625,12 +627,7 @@ class TestMonitoringServiceStats:
         type_filter.group_by.return_value = type_group
         type_group.all.return_value = [("sync_failure", 2), ("stale_sync", 1)]
 
-        mock_db.query.side_effect = [
-            count_query,
-            active_query,
-            severity_query,
-            type_query
-        ]
+        mock_db.query.side_effect = [count_query, active_query, severity_query, type_query]
 
         # Execute
         result = monitoring_service.get_alert_stats()
@@ -642,10 +639,12 @@ class TestMonitoringServiceStats:
         assert result["by_severity"] == {"error": 2, "warning": 1}
         assert result["by_type"] == {"sync_failure": 2, "stale_sync": 1}
 
-    @patch('app.api.services.monitoring_service.MonitoringService.check_stale_syncs')
-    @patch('app.api.services.monitoring_service.MonitoringService.get_metrics')
-    @patch('app.api.services.monitoring_service.MonitoringService.get_active_alerts')
-    def test_get_overall_status_healthy(self, mock_get_alerts, mock_get_metrics, mock_check_stale, monitoring_service, mock_db):
+    @patch("app.api.services.monitoring_service.MonitoringService.check_stale_syncs")
+    @patch("app.api.services.monitoring_service.MonitoringService.get_metrics")
+    @patch("app.api.services.monitoring_service.MonitoringService.get_active_alerts")
+    def test_get_overall_status_healthy(
+        self, mock_get_alerts, mock_get_metrics, mock_check_stale, monitoring_service, mock_db
+    ):
         """Test get_overall_status returns healthy when no critical issues."""
         # Setup
         mock_check_stale.return_value = []
@@ -668,10 +667,12 @@ class TestMonitoringServiceStats:
         assert result["alerts"]["total_active"] == 0
         assert "jobs" in result
 
-    @patch('app.api.services.monitoring_service.MonitoringService.check_stale_syncs')
-    @patch('app.api.services.monitoring_service.MonitoringService.get_metrics')
-    @patch('app.api.services.monitoring_service.MonitoringService.get_active_alerts')
-    def test_get_overall_status_critical(self, mock_get_alerts, mock_get_metrics, mock_check_stale, monitoring_service, mock_db):
+    @patch("app.api.services.monitoring_service.MonitoringService.check_stale_syncs")
+    @patch("app.api.services.monitoring_service.MonitoringService.get_metrics")
+    @patch("app.api.services.monitoring_service.MonitoringService.get_active_alerts")
+    def test_get_overall_status_critical(
+        self, mock_get_alerts, mock_get_metrics, mock_check_stale, monitoring_service, mock_db
+    ):
         """Test get_overall_status returns critical when critical alerts exist."""
         # Setup
         mock_check_stale.return_value = []

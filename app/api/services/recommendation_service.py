@@ -67,7 +67,9 @@ class RecommendationService:
             Recommendation(
                 id=r.id,
                 tenant_id=r.tenant_id,
-                tenant_name=tenant_names.get(r.tenant_id, "Unknown") if r.tenant_id else "All Tenants",
+                tenant_name=tenant_names.get(r.tenant_id, "Unknown")
+                if r.tenant_id
+                else "All Tenants",
                 subscription_id=r.subscription_id,
                 category=RecommendationCategory(r.category),
                 recommendation_type=r.recommendation_type,
@@ -110,9 +112,7 @@ class RecommendationService:
 
         result = []
         for category, recs in by_category.items():
-            total_savings = sum(
-                (r.potential_savings_monthly or 0) for r in recs
-            )
+            total_savings = sum((r.potential_savings_monthly or 0) for r in recs)
             result.append(
                 RecommendationsByCategory(
                     category=category,
@@ -147,9 +147,7 @@ class RecommendationService:
 
         return by_tenant
 
-    def get_savings_potential(
-        self, tenant_ids: list[str] | None = None
-    ) -> SavingsPotential:
+    def get_savings_potential(self, tenant_ids: list[str] | None = None) -> SavingsPotential:
         """Get total potential savings across all recommendations.
 
         Args:
@@ -159,18 +157,16 @@ class RecommendationService:
             dismissed=False, limit=1000, tenant_ids=tenant_ids
         )
 
-        total_monthly = sum(
-            (r.potential_savings_monthly or 0) for r in recommendations
-        )
-        total_annual = sum(
-            (r.potential_savings_annual or 0) for r in recommendations
-        )
+        total_monthly = sum((r.potential_savings_monthly or 0) for r in recommendations)
+        total_annual = sum((r.potential_savings_annual or 0) for r in recommendations)
 
         # By category
         by_category: dict[str, float] = {}
         for r in recommendations:
             category = r.category.value
-            by_category[category] = by_category.get(category, 0) + (r.potential_savings_monthly or 0)
+            by_category[category] = by_category.get(category, 0) + (
+                r.potential_savings_monthly or 0
+            )
 
         # By tenant
         by_tenant: dict[str, float] = {}
@@ -206,17 +202,13 @@ class RecommendationService:
 
         result = []
         for category, recs in by_category.items():
-            monthly_savings = sum(
-                (r.potential_savings_monthly or 0) for r in recs
-            )
-            annual_savings = sum(
-                (r.potential_savings_annual or 0) for r in recs
-            )
+            monthly_savings = sum((r.potential_savings_monthly or 0) for r in recs)
+            annual_savings = sum((r.potential_savings_annual or 0) for r in recs)
 
             # Count by impact
             by_impact: dict[str, int] = {}
             for r in recs:
-                impact = r.impact.value if hasattr(r.impact, 'value') else str(r.impact)
+                impact = r.impact.value if hasattr(r.impact, "value") else str(r.impact)
                 by_impact[impact] = by_impact.get(impact, 0) + 1
 
             result.append(

@@ -83,7 +83,7 @@ class TestCalculateComplianceSummary:
         # Verify maturity distribution
         maturity_dist = result["maturity_distribution"]
         assert maturity_dist["below_2"] == 1  # DCE at 1.9
-        assert maturity_dist["2_to_3"] == 4   # HTT, BCC, FN, TLL
+        assert maturity_dist["2_to_3"] == 4  # HTT, BCC, FN, TLL
         assert maturity_dist["3_to_4"] == 0
         assert maturity_dist["above_4"] == 0
 
@@ -133,7 +133,9 @@ class TestCalculateComplianceSummary:
         assert 30.0 <= compliance_pct < 50.0
         assert result["compliance_trend"] == "declining"
 
-    def test_compliance_summary_maturity_distribution_all_excellent(self, db_with_riverside_data: Session):
+    def test_compliance_summary_maturity_distribution_all_excellent(
+        self, db_with_riverside_data: Session
+    ):
         """Test maturity distribution when all tenants are excellent (>= 4.0)."""
         # Update all maturity scores to excellent
         compliance_records = db_with_riverside_data.query(RiversideCompliance).all()
@@ -167,10 +169,10 @@ class TestCalculateComplianceSummary:
         result = calculate_compliance_summary(db_with_riverside_data)
 
         maturity_dist = result["maturity_distribution"]
-        assert maturity_dist["below_2"] == 1   # 1.5
-        assert maturity_dist["2_to_3"] == 2    # 2.5, 2.8
-        assert maturity_dist["3_to_4"] == 1    # 3.5
-        assert maturity_dist["above_4"] == 1   # 4.5
+        assert maturity_dist["below_2"] == 1  # 1.5
+        assert maturity_dist["2_to_3"] == 2  # 2.5, 2.8
+        assert maturity_dist["3_to_4"] == 1  # 3.5
+        assert maturity_dist["above_4"] == 1  # 4.5
 
 
 class TestAnalyzeMFAGaps:
@@ -216,7 +218,13 @@ class TestAnalyzeMFAGaps:
         # HTT: 25/25 = 100%, BCC: 16/18 = 88.9%, FN: 10/12 = 83.3%
         # TLL: 15/15 = 100%, DCE: 4/6 = 66.7%
         # Average: (100 + 88.89 + 83.33 + 100 + 66.67) / 5 = 87.8%
-        admin_percentages = [100.0, round((16/18)*100, 2), round((10/12)*100, 2), 100.0, round((4/6)*100, 2)]
+        admin_percentages = [
+            100.0,
+            round((16 / 18) * 100, 2),
+            round((10 / 12) * 100, 2),
+            100.0,
+            round((4 / 6) * 100, 2),
+        ]
         expected_admin_coverage = round(sum(admin_percentages) / 5, 1)
         assert result["admin_coverage_percentage"] == expected_admin_coverage
 
@@ -255,7 +263,10 @@ class TestAnalyzeMFAGaps:
 
         # Set FN and DCE to have < 50% coverage
         for record in mfa_records:
-            if record.tenant_id in ["33333333-3333-3333-3333-333333333333", "55555555-5555-5555-5555-555555555555"]:
+            if record.tenant_id in [
+                "33333333-3333-3333-3333-333333333333",
+                "55555555-5555-5555-5555-555555555555",
+            ]:
                 # FN: 180 users, set to 80 enrolled = 44.4%
                 # DCE: 85 users, set to 30 enrolled = 35.3%
                 if record.total_users == 180:
@@ -288,7 +299,7 @@ class TestAnalyzeMFAGaps:
             (320, 220),  # 68.8% - high
             (180, 150),  # 83.3% - medium
             (280, 250),  # 89.3% - medium
-            (85, 80),    # 94.1% - medium
+            (85, 80),  # 94.1% - medium
         ]
 
         for record, (total, enrolled) in zip(mfa_records, coverage_levels, strict=False):
@@ -303,8 +314,8 @@ class TestAnalyzeMFAGaps:
         # Verify risk level assignments
         risk_levels = [t["risk_level"] for t in result["tenant_breakdown"]]
         assert "critical" in risk_levels  # < 50%
-        assert "high" in risk_levels      # < 75%
-        assert "medium" in risk_levels    # >= 75%
+        assert "high" in risk_levels  # < 75%
+        assert "medium" in risk_levels  # >= 75%
 
     def test_mfa_gaps_recommendations_critical_coverage(self, db_with_riverside_data: Session):
         """Test that critical recommendations are generated for < 50% coverage."""
@@ -328,9 +339,11 @@ class TestAnalyzeMFAGaps:
         mfa_records = db_with_riverside_data.query(RiversideMFA).all()
         for record in mfa_records:
             record.admin_accounts_mfa = record.admin_accounts_total - 2  # Missing 2 admins
-            record.admin_mfa_percentage = round(
-                (record.admin_accounts_mfa / record.admin_accounts_total) * 100, 2
-            ) if record.admin_accounts_total > 0 else 0.0
+            record.admin_mfa_percentage = (
+                round((record.admin_accounts_mfa / record.admin_accounts_total) * 100, 2)
+                if record.admin_accounts_total > 0
+                else 0.0
+            )
         db_with_riverside_data.commit()
 
         result = analyze_mfa_gaps(db_with_riverside_data)

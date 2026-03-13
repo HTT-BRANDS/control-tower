@@ -66,11 +66,13 @@ async def get_sync_status(
 
     jobs = []
     for job in scheduler.get_jobs():
-        jobs.append({
-            "id": job.id,
-            "name": job.name,
-            "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
-        })
+        jobs.append(
+            {
+                "id": job.id,
+                "name": job.name,
+                "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+            }
+        )
 
     return {"status": "running", "jobs": jobs}
 
@@ -101,9 +103,7 @@ async def get_sync_history(
     """Get recent sync job execution history."""
     authz.ensure_at_least_one_tenant()
     monitoring = MonitoringService(db)
-    logs = monitoring.get_recent_logs(
-        job_type=job_type, limit=limit, include_running=False
-    )
+    logs = monitoring.get_recent_logs(job_type=job_type, limit=limit, include_running=False)
 
     # Filter logs by tenant access
     accessible_tenants = authz.accessible_tenant_ids

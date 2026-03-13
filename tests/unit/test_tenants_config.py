@@ -104,8 +104,7 @@ class TestKeyVaultSecretNames:
     def test_secret_name_contains_lowercase_code(self, code: str) -> None:
         secret_name = RIVERSIDE_TENANTS[code].key_vault_secret_name
         assert code.lower() in secret_name, (
-            f"{code}: key_vault_secret_name '{secret_name}' "
-            f"does not contain '{code.lower()}'"
+            f"{code}: key_vault_secret_name '{secret_name}' does not contain '{code.lower()}'"
         )
 
     @pytest.mark.parametrize("code", EXPECTED_CODES)

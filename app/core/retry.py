@@ -13,7 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 # Retryable HTTP status codes
 RETRYABLE_STATUS_CODES = {429, 502, 503, 504}
@@ -46,13 +46,13 @@ def is_retryable_error(error: Exception) -> bool:
 
     # HTTP errors - check status code
     if isinstance(error, HttpResponseError):
-        if hasattr(error, 'status_code'):
+        if hasattr(error, "status_code"):
             return error.status_code in RETRYABLE_STATUS_CODES
         return False
 
     # Connection and timeout errors are retryable
     error_type = type(error).__name__
-    if error_type in ['TimeoutError', 'ConnectionError', 'ConnectionResetError']:
+    if error_type in ["TimeoutError", "ConnectionError", "ConnectionResetError"]:
         return True
 
     # Default: retry unknown errors
@@ -89,7 +89,7 @@ def retry_with_backoff(policy: RetryPolicy | None = None):
 
                     # Calculate backoff with jitter
                     wait_time = min(
-                        policy.backoff_factor * (2 ** attempt) + random.uniform(0, 1),
+                        policy.backoff_factor * (2**attempt) + random.uniform(0, 1),
                         policy.max_wait,
                     )
 

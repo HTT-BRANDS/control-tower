@@ -12,6 +12,7 @@ import pytest
 # Shared fixture – thin httpx client scoped to the module
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def client(base_url: str) -> httpx.Client:
     """Yield an httpx Client pointed at the running test server."""
@@ -22,6 +23,7 @@ def client(base_url: str) -> httpx.Client:
 # ---------------------------------------------------------------------------
 # GET /health
 # ---------------------------------------------------------------------------
+
 
 class TestHealthEndpoint:
     """Basic health-check endpoint."""
@@ -52,6 +54,7 @@ class TestHealthEndpoint:
 # ---------------------------------------------------------------------------
 # GET /health/detailed
 # ---------------------------------------------------------------------------
+
 
 class TestHealthDetailedEndpoint:
     """Detailed health-check with per-component status."""
@@ -104,6 +107,7 @@ class TestHealthDetailedEndpoint:
 # GET /metrics  (Prometheus)
 # ---------------------------------------------------------------------------
 
+
 class TestMetricsEndpoint:
     """Prometheus metrics exposition."""
 
@@ -134,6 +138,7 @@ class TestMetricsEndpoint:
 # ---------------------------------------------------------------------------
 # GET /api/v1/status
 # ---------------------------------------------------------------------------
+
 
 class TestApiV1StatusEndpoint:
     """System-wide status endpoint with rich telemetry."""

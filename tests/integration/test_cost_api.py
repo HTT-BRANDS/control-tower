@@ -37,6 +37,7 @@ from app.models.cost import CostAnomaly
 # GET /api/v1/costs/summary Tests
 # ============================================================================
 
+
 class TestCostSummaryEndpoint:
     """Integration tests for GET /api/v1/costs/summary."""
 
@@ -105,10 +106,13 @@ class TestCostSummaryEndpoint:
 # GET /api/v1/costs/by-tenant Tests
 # ============================================================================
 
+
 class TestCostsByTenantEndpoint:
     """Integration tests for GET /api/v1/costs/by-tenant."""
 
-    def test_get_costs_by_tenant_success(self, authenticated_client: TestClient, test_tenant_id: str):
+    def test_get_costs_by_tenant_success(
+        self, authenticated_client: TestClient, test_tenant_id: str
+    ):
         """Costs by tenant returns breakdown by tenant."""
         response = authenticated_client.get("/api/v1/costs/by-tenant?period_days=30")
 
@@ -140,6 +144,7 @@ class TestCostsByTenantEndpoint:
 # ============================================================================
 # GET /api/v1/costs/trends Tests
 # ============================================================================
+
 
 class TestCostTrendsEndpoint:
     """Integration tests for GET /api/v1/costs/trends."""
@@ -189,6 +194,7 @@ class TestCostTrendsEndpoint:
 # GET /api/v1/costs/trends/forecast Tests
 # ============================================================================
 
+
 class TestCostForecastEndpoint:
     """Integration tests for GET /api/v1/costs/trends/forecast."""
 
@@ -222,6 +228,7 @@ class TestCostForecastEndpoint:
 # ============================================================================
 # GET /api/v1/costs/anomalies Tests
 # ============================================================================
+
 
 class TestCostAnomaliesEndpoint:
     """Integration tests for GET /api/v1/costs/anomalies."""
@@ -287,6 +294,7 @@ class TestCostAnomaliesEndpoint:
 # GET /api/v1/costs/anomalies/trends Tests
 # ============================================================================
 
+
 class TestAnomalyTrendsEndpoint:
     """Integration tests for GET /api/v1/costs/anomalies/trends."""
 
@@ -318,6 +326,7 @@ class TestAnomalyTrendsEndpoint:
 # ============================================================================
 # GET /api/v1/costs/anomalies/by-service Tests
 # ============================================================================
+
 
 class TestAnomaliesByServiceEndpoint:
     """Integration tests for GET /api/v1/costs/anomalies/by-service."""
@@ -362,6 +371,7 @@ class TestAnomaliesByServiceEndpoint:
 # ============================================================================
 # GET /api/v1/costs/anomalies/top Tests
 # ============================================================================
+
 
 class TestTopAnomaliesEndpoint:
     """Integration tests for GET /api/v1/costs/anomalies/top."""
@@ -413,6 +423,7 @@ class TestTopAnomaliesEndpoint:
 # POST /api/v1/costs/anomalies/{id}/acknowledge Tests
 # ============================================================================
 
+
 class TestAcknowledgeAnomalyEndpoint:
     """Integration tests for POST /api/v1/costs/anomalies/{id}/acknowledge."""
 
@@ -439,7 +450,9 @@ class TestAcknowledgeAnomalyEndpoint:
         assert anomaly_in_db.acknowledged_by == "user-123"
         assert anomaly_in_db.acknowledged_at is not None
 
-    @pytest.mark.xfail(reason="Integration test fixtures need refinement - tracked in follow-up issue")
+    @pytest.mark.xfail(
+        reason="Integration test fixtures need refinement - tracked in follow-up issue"
+    )
     def test_acknowledge_nonexistent_anomaly(self, authenticated_client: TestClient):
         """Acknowledging a non-existent anomaly returns success=False."""
         response = authenticated_client.post("/api/v1/costs/anomalies/99999/acknowledge")
@@ -458,6 +471,7 @@ class TestAcknowledgeAnomalyEndpoint:
 # POST /api/v1/costs/anomalies/bulk-acknowledge Tests
 # ============================================================================
 
+
 class TestBulkAcknowledgeAnomaliesEndpoint:
     """Integration tests for POST /api/v1/costs/anomalies/bulk-acknowledge."""
 
@@ -473,8 +487,7 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
 
         # Bulk acknowledge
         response = authenticated_client.post(
-            "/api/v1/costs/anomalies/bulk-acknowledge",
-            json={"anomaly_ids": anomaly_ids}
+            "/api/v1/costs/anomalies/bulk-acknowledge", json={"anomaly_ids": anomaly_ids}
         )
 
         assert response.status_code == 200
@@ -487,11 +500,15 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
 
         # Verify database state
         for anomaly_id in anomaly_ids:
-            anomaly_in_db = seeded_db.query(CostAnomaly).filter(CostAnomaly.id == anomaly_id).first()
+            anomaly_in_db = (
+                seeded_db.query(CostAnomaly).filter(CostAnomaly.id == anomaly_id).first()
+            )
             assert anomaly_in_db.is_acknowledged is True
             assert anomaly_in_db.acknowledged_by == "user-123"
 
-    @pytest.mark.xfail(reason="Integration test fixtures need refinement - tracked in follow-up issue")
+    @pytest.mark.xfail(
+        reason="Integration test fixtures need refinement - tracked in follow-up issue"
+    )
     def test_bulk_acknowledge_partial_failure(self, authenticated_client: TestClient):
         """Bulk acknowledge handles mix of valid and invalid IDs."""
         # Get one valid anomaly
@@ -505,7 +522,7 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
             # Mix valid and invalid
             response = authenticated_client.post(
                 "/api/v1/costs/anomalies/bulk-acknowledge",
-                json={"anomaly_ids": [valid_id, invalid_id]}
+                json={"anomaly_ids": [valid_id, invalid_id]},
             )
 
             assert response.status_code == 200
@@ -517,17 +534,17 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
     def test_bulk_acknowledge_requires_auth(self, unauthenticated_client: TestClient):
         """Bulk acknowledge endpoint requires authentication."""
         response = unauthenticated_client.post(
-            "/api/v1/costs/anomalies/bulk-acknowledge",
-            json={"anomaly_ids": [1, 2]}
+            "/api/v1/costs/anomalies/bulk-acknowledge", json={"anomaly_ids": [1, 2]}
         )
         assert response.status_code == 401
 
-    @pytest.mark.xfail(reason="Integration test fixtures need refinement - tracked in follow-up issue")
+    @pytest.mark.xfail(
+        reason="Integration test fixtures need refinement - tracked in follow-up issue"
+    )
     def test_bulk_acknowledge_empty_list(self, authenticated_client: TestClient):
         """Bulk acknowledge handles empty list gracefully."""
         response = authenticated_client.post(
-            "/api/v1/costs/anomalies/bulk-acknowledge",
-            json={"anomaly_ids": []}
+            "/api/v1/costs/anomalies/bulk-acknowledge", json={"anomaly_ids": []}
         )
 
         assert response.status_code == 200

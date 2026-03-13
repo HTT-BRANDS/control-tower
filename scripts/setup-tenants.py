@@ -37,9 +37,11 @@ from datetime import datetime
 # This avoids importing the full app and its dependencies
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class TenantConfig:
     """Configuration for a single Azure tenant."""
+
     tenant_id: str
     name: str
     code: str
@@ -128,15 +130,16 @@ GRAPH_PERMISSIONS = {
 # VALIDATION FUNCTIONS
 # =============================================================================
 
+
 def is_valid_uuid(value: str) -> bool:
     """Check if a string is a valid UUID."""
-    pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     return bool(re.match(pattern, value, re.IGNORECASE))
 
 
 def is_valid_email(email: str) -> bool:
     """Check if a string is a valid email address."""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return bool(re.match(pattern, email))
 
 
@@ -173,16 +176,13 @@ def validate_tenant_config() -> list[str]:
 
 def get_active_tenants() -> dict[str, TenantConfig]:
     """Return only active tenant configurations."""
-    return {
-        code: config
-        for code, config in RIVERSIDE_TENANTS.items()
-        if config.is_active
-    }
+    return {code: config for code, config in RIVERSIDE_TENANTS.items() if config.is_active}
 
 
 # =============================================================================
 # SETUP MANAGER
 # =============================================================================
+
 
 class TenantSetupManager:
     """Manages the setup and initialization of Riverside tenants."""
@@ -459,38 +459,26 @@ Examples:
   python setup-tenants.py --init           # Initialize database entries
   python setup-tenants.py --verify         # Verify Graph API access
   python setup-tenants.py --all            # Run all operations
-        """
+        """,
     )
 
     parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Validate tenant configurations without making changes"
+        "--check", action="store_true", help="Validate tenant configurations without making changes"
     )
     parser.add_argument(
-        "--init",
-        action="store_true",
-        help="Initialize tenant entries in the database"
+        "--init", action="store_true", help="Initialize tenant entries in the database"
     )
     parser.add_argument(
-        "--verify",
-        action="store_true",
-        help="Verify Graph API connectivity for all tenants"
+        "--verify", action="store_true", help="Verify Graph API connectivity for all tenants"
     )
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run all operations (check, init, verify)"
+        "--all", action="store_true", help="Run all operations (check, init, verify)"
     )
     parser.add_argument(
-        "--instructions",
-        action="store_true",
-        help="Print manual setup instructions"
+        "--instructions", action="store_true", help="Print manual setup instructions"
     )
     parser.add_argument(
-        "--database-url",
-        default=None,
-        help="Database URL (overrides environment variable)"
+        "--database-url", default=None, help="Database URL (overrides environment variable)"
     )
 
     args = parser.parse_args()

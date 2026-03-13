@@ -273,13 +273,15 @@ class TestBatchInserter:
 
         # Add 5 records (exact batch size)
         for _ in range(5):
-            inserter.add({
-                "id": str(uuid.uuid4()),
-                "job_type": "costs",
-                "status": "pending",
-                "start_date": datetime(2024, 1, 1),
-                "end_date": datetime(2024, 1, 31),
-            })
+            inserter.add(
+                {
+                    "id": str(uuid.uuid4()),
+                    "job_type": "costs",
+                    "status": "pending",
+                    "start_date": datetime(2024, 1, 1),
+                    "end_date": datetime(2024, 1, 31),
+                }
+            )
 
         # Buffer should be empty after flush
         assert inserter.buffer_size == 0

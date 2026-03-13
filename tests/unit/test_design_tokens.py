@@ -28,10 +28,12 @@ from app.core.design_tokens import (
 # Clear module-level cache before tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def clear_brand_cache():
     """Clear the module-level registry cache before each test."""
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None
@@ -121,6 +123,7 @@ def test_shadow_style_enum():
 # Semantic colors and theme tokens (microsoft-group-management)
 # ---------------------------------------------------------------------------
 
+
 class TestSemanticColors:
     """Validate SemanticColors model from microsoft-group-management."""
 
@@ -160,6 +163,7 @@ class TestThemeTokens:
 # Brand-specific tests (microsoft-group-management tenant colors)
 # ---------------------------------------------------------------------------
 
+
 class TestTenantColors:
     """Validate tenant colors match microsoft-group-management tailwind.config.ts."""
 
@@ -194,6 +198,7 @@ class TestTenantColors:
 # ---------------------------------------------------------------------------
 # Gradient validator tests (BrandColors.gradient)  — bd:3t8 / M-1
 # ---------------------------------------------------------------------------
+
 
 def _make_colors(**overrides):
     """Helper to build a BrandColors with valid defaults, overriding as needed."""
@@ -271,6 +276,7 @@ class TestGradientValidator:
 # Font name validator tests (BrandTypography)  — bd:3t8 / M-1
 # ---------------------------------------------------------------------------
 
+
 class TestFontNameValidator:
     """Validate that font name fields reject CSS-unsafe characters."""
 
@@ -335,6 +341,7 @@ class TestFontNameValidator:
 # ---------------------------------------------------------------------------
 # Border-radius validator tests (BrandDesignSystem)  — bd:3t8 / M-1
 # ---------------------------------------------------------------------------
+
 
 class TestBorderRadiusValidator:
     """Validate that borderRadius only accepts safe CSS size values."""

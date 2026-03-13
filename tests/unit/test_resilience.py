@@ -103,9 +103,11 @@ class TestResilientAzureClient:
 
         mock_circuit_breaker = Mock()
         mock_func = AsyncMock(return_value="success!")
+
         # Circuit breaker should properly await and return the result
         async def circuit_call(func, *args, **kwargs):
             return await func(*args, **kwargs)
+
         mock_circuit_breaker.call_async = AsyncMock(side_effect=circuit_call)
 
         client = ResilientAzureClient(
@@ -307,9 +309,11 @@ class TestResilientApiCallHelper:
         mock_rate_limiter.acquire_async_with_wait = AsyncMock(return_value=True)
 
         mock_circuit_breaker = Mock()
+
         # Circuit breaker should properly await and return the result
         async def circuit_call(func, *args, **kwargs):
             return await func(*args, **kwargs)
+
         mock_circuit_breaker.call_async = AsyncMock(side_effect=circuit_call)
 
         # Act
@@ -370,6 +374,7 @@ class TestResilientApiCallHelper:
     @pytest.mark.asyncio
     async def test_resilient_api_call_propagates_resilience_error(self):
         """Test resilient_api_call propagates ResilienceError after exhaustion."""
+
         # Arrange
         async def always_fail():
             raise ValueError("Persistent error")
@@ -433,7 +438,7 @@ class TestResilientAzureClientSync:
         )
 
         # Act - call_with_retry should handle sync function
-        with patch('asyncio.to_thread', new_callable=AsyncMock) as mock_to_thread:
+        with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_to_thread:
             mock_to_thread.return_value = "sync result: test"
             result = await client.call_with_retry(sync_function, "test")
 

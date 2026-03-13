@@ -83,9 +83,7 @@ class TestResourcesEndpoint:
         )
         mock_service_cls.return_value = mock_svc
 
-        response = authed_client.get(
-            "/api/v1/resources?resource_type=VirtualMachine&limit=100"
-        )
+        response = authed_client.get("/api/v1/resources?resource_type=VirtualMachine&limit=100")
         assert response.status_code == 200
 
 
@@ -274,9 +272,7 @@ class TestTaggingComplianceEndpoint:
         assert response.status_code == 401
 
     @patch("app.api.routes.resources.ResourceService")
-    def test_get_tagging_compliance_with_required_tags(
-        self, mock_service_cls, authed_client
-    ):
+    def test_get_tagging_compliance_with_required_tags(self, mock_service_cls, authed_client):
         """Tagging compliance endpoint accepts required tags parameter."""
         mock_svc = MagicMock()
         mock_svc.get_tagging_compliance = AsyncMock(

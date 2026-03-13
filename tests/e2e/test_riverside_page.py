@@ -26,9 +26,7 @@ class TestRiversideDashboard:
             content = authenticated_page.content()
             # Should have deadline or countdown related content
             assert (
-                "deadline" in content.lower()
-                or "countdown" in content.lower()
-                or "2026" in content
+                "deadline" in content.lower() or "countdown" in content.lower() or "2026" in content
             )
 
     @pytest.mark.xfail(reason="May require cookie auth")

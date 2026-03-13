@@ -116,6 +116,7 @@ class AzureClientManager:
         self._settings = get_settings()
         self._credential_ttl = credential_ttl_seconds or self.DEFAULT_CREDENTIAL_TTL_SECONDS
         logger.debug(f"AzureClientManager initialized with credential TTL: {self._credential_ttl}s")
+
     def _get_key_vault_client(self) -> "SecretClient | None":
         """Get or create Key Vault client using DefaultAzureCredential.
 
@@ -163,9 +164,7 @@ class AzureClientManager:
             logger.warning(f"Failed to fetch tenant {tenant_id} from database: {e}")
             return None
 
-    def _fetch_key_vault_secret(
-        self, secret_name: str, tenant_id: str
-    ) -> str | None:
+    def _fetch_key_vault_secret(self, secret_name: str, tenant_id: str) -> str | None:
         """Fetch a secret from Key Vault with TTL-based caching.
 
         Resolution order:
@@ -222,9 +221,7 @@ class AzureClientManager:
             )
             return None
 
-    def _resolve_credentials(
-        self, tenant_id: str
-    ) -> tuple[str, str, Tenant | None]:
+    def _resolve_credentials(self, tenant_id: str) -> tuple[str, str, Tenant | None]:
         """Resolve client_id and client_secret for a tenant.
 
         Resolution order:
@@ -249,9 +246,7 @@ class AzureClientManager:
 
         # Try custom client_id + client_secret_ref (env var → KV → fail)
         if tenant and tenant.client_id and tenant.client_secret_ref:
-            client_secret = self._fetch_key_vault_secret(
-                tenant.client_secret_ref, tenant_id
-            )
+            client_secret = self._fetch_key_vault_secret(tenant.client_secret_ref, tenant_id)
             if client_secret:
                 logger.debug(
                     f"Using custom app registration for tenant {tenant_id} "
@@ -280,9 +275,7 @@ class AzureClientManager:
 
         # Fetch standard Key Vault secrets
         client_id = self._fetch_key_vault_secret(f"{tenant_id}-client-id", tenant_id)
-        client_secret = self._fetch_key_vault_secret(
-            f"{tenant_id}-client-secret", tenant_id
-        )
+        client_secret = self._fetch_key_vault_secret(f"{tenant_id}-client-secret", tenant_id)
 
         if client_id and client_secret:
             logger.debug(f"Using Key Vault credentials for tenant {tenant_id}")
@@ -331,7 +324,9 @@ class AzureClientManager:
                     return cached.credential
                 else:
                     # Credential is valid but approaching expiry - refresh in background
-                    logger.debug(f"Credential for tenant {tenant_id} approaching expiry, refreshing")
+                    logger.debug(
+                        f"Credential for tenant {tenant_id} approaching expiry, refreshing"
+                    )
             else:
                 logger.debug(f"Credential for tenant {tenant_id} expired, refreshing")
         elif force_refresh:
@@ -353,7 +348,9 @@ class AzureClientManager:
             expires_at=now + self._credential_ttl,
         )
 
-        logger.debug(f"Created new credential for tenant {tenant_id}, expires in {self._credential_ttl}s")
+        logger.debug(
+            f"Created new credential for tenant {tenant_id}, expires in {self._credential_ttl}s"
+        )
         return new_credential
 
     def get_default_credential(self) -> DefaultAzureCredential:
@@ -367,16 +364,12 @@ class AzureClientManager:
         credential = self.get_credential(tenant_id)
         return SubscriptionClient(credential)
 
-    def get_resource_client(
-        self, tenant_id: str, subscription_id: str
-    ) -> ResourceManagementClient:
+    def get_resource_client(self, tenant_id: str, subscription_id: str) -> ResourceManagementClient:
         """Get resource management client."""
         credential = self.get_credential(tenant_id)
         return ResourceManagementClient(credential, subscription_id)
 
-    def get_cost_client(
-        self, tenant_id: str, subscription_id: str
-    ) -> CostManagementClient:
+    def get_cost_client(self, tenant_id: str, subscription_id: str) -> CostManagementClient:
         """Get cost management client.
 
         Note: CostManagementClient does NOT take subscription_id in its
@@ -386,16 +379,12 @@ class AzureClientManager:
         credential = self.get_credential(tenant_id)
         return CostManagementClient(credential)
 
-    def get_policy_client(
-        self, tenant_id: str, subscription_id: str
-    ) -> PolicyInsightsClient:
+    def get_policy_client(self, tenant_id: str, subscription_id: str) -> PolicyInsightsClient:
         """Get policy insights client."""
         credential = self.get_credential(tenant_id)
         return PolicyInsightsClient(credential, subscription_id)
 
-    def get_security_client(
-        self, tenant_id: str, subscription_id: str
-    ) -> SecurityCenter:
+    def get_security_client(self, tenant_id: str, subscription_id: str) -> SecurityCenter:
         """Get security center client."""
         credential = self.get_credential(tenant_id)
         return SecurityCenter(credential, subscription_id)
@@ -406,11 +395,13 @@ class AzureClientManager:
             client = self.get_subscription_client(tenant_id)
             subscriptions = []
             for sub in client.subscriptions.list():
-                subscriptions.append({
-                    "subscription_id": sub.subscription_id,
-                    "display_name": sub.display_name,
-                    "state": str(sub.state) if sub.state else "Unknown",
-                })
+                subscriptions.append(
+                    {
+                        "subscription_id": sub.subscription_id,
+                        "display_name": sub.display_name,
+                        "state": str(sub.state) if sub.state else "Unknown",
+                    }
+                )
             return subscriptions
         except Exception as e:
             logger.error(f"Failed to list subscriptions for tenant {tenant_id}: {e}")
@@ -438,9 +429,7 @@ class AzureClientManager:
                 stats["credentials_cleared"] = 1
 
             # Clear Key Vault cache entries for this tenant
-            keys_to_remove = [
-                k for k in self._key_vault_cache if k.startswith(f"{tenant_id}:")
-            ]
+            keys_to_remove = [k for k in self._key_vault_cache if k.startswith(f"{tenant_id}:")]
             for key in keys_to_remove:
                 del self._key_vault_cache[key]
                 stats["secrets_cleared"] += 1
@@ -467,9 +456,7 @@ class AzureClientManager:
             "credential_cache_size": len(self._credentials),
             "secret_cache_size": len(self._key_vault_cache),
             "credential_ttl_seconds": self._credential_ttl,
-            "expired_credentials": sum(
-                1 for c in self._credentials.values() if c.is_expired()
-            ),
+            "expired_credentials": sum(1 for c in self._credentials.values() if c.is_expired()),
             "expiring_soon": sum(
                 1 for c in self._credentials.values() if c.should_refresh() and not c.is_expired()
             ),

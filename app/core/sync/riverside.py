@@ -60,11 +60,13 @@ async def sync_riverside():
                 logger.info("Syncing MFA data...")
                 mfa_results = await service.sync_riverside_mfa()
                 results["mfa_synced"] = sum(
-                    1 for r in mfa_results.values()
+                    1
+                    for r in mfa_results.values()
                     if isinstance(r, dict) and r.get("status") == "success"
                 )
                 total_errors += sum(
-                    1 for r in mfa_results.values()
+                    1
+                    for r in mfa_results.values()
                     if isinstance(r, dict) and r.get("status") == "error"
                 )
 
@@ -72,11 +74,13 @@ async def sync_riverside():
                 logger.info("Syncing device compliance data...")
                 device_results = await service.sync_riverside_device_compliance()
                 results["device_synced"] = sum(
-                    1 for r in device_results.values()
+                    1
+                    for r in device_results.values()
                     if isinstance(r, dict) and r.get("status") == "success"
                 )
                 total_errors += sum(
-                    1 for r in device_results.values()
+                    1
+                    for r in device_results.values()
                     if isinstance(r, dict) and r.get("status") == "error"
                 )
 
@@ -89,7 +93,8 @@ async def sync_riverside():
                 logger.info("Calculating maturity scores...")
                 maturity_results = await service.sync_riverside_maturity_scores()
                 results["maturity_calculated"] = sum(
-                    1 for r in maturity_results.values()
+                    1
+                    for r in maturity_results.values()
                     if isinstance(r, dict) and r.get("status") == "success"
                 )
 

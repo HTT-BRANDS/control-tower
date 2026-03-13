@@ -57,8 +57,12 @@ class RetentionService:
         """Delete records older than the configured retention period."""
         days = self.retention.get(table_name, 365)
         cutoff = datetime.utcnow() - timedelta(days=days)
-        count = self.db.query(model).filter(date_col < cutoff).delete(
-            synchronize_session=False,
+        count = (
+            self.db.query(model)
+            .filter(date_col < cutoff)
+            .delete(
+                synchronize_session=False,
+            )
         )
         self.db.commit()
         logger.info("Deleted %d records from %s older than %dd", count, table_name, days)

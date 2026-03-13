@@ -19,6 +19,7 @@ class TestAdminMfaCheck:
     def check(self):
         """Create an AdminMfaCheck instance."""
         from app.preflight.admin_risk_checks import AdminMfaCheck
+
         return AdminMfaCheck()
 
     def test_check_initialization(self, check):
@@ -114,6 +115,7 @@ class TestOverprivilegedAccountCheck:
     def check(self):
         """Create an OverprivilegedAccountCheck instance."""
         from app.preflight.admin_risk_checks import OverprivilegedAccountCheck
+
         return OverprivilegedAccountCheck()
 
     def test_check_initialization(self, check):
@@ -190,6 +192,7 @@ class TestInactiveAdminCheck:
     def check(self):
         """Create an InactiveAdminCheck instance."""
         from app.preflight.admin_risk_checks import InactiveAdminCheck
+
         return InactiveAdminCheck()
 
     def test_check_initialization(self, check):
@@ -250,6 +253,7 @@ class TestSharedAdminCheck:
     def check(self):
         """Create a SharedAdminCheck instance."""
         from app.preflight.admin_risk_checks import SharedAdminCheck
+
         return SharedAdminCheck()
 
     def test_check_initialization(self, check):
@@ -345,6 +349,7 @@ class TestAdminComplianceGapCheck:
     def check(self):
         """Create an AdminComplianceGapCheck instance."""
         from app.preflight.admin_risk_checks import AdminComplianceGapCheck
+
         return AdminComplianceGapCheck()
 
     def test_check_initialization(self, check):
@@ -444,6 +449,7 @@ class TestAdminRiskCheckFunctions:
         assert len(checks) == 5
         # All should have the correct category
         from app.preflight.base import BasePreflightCheck
+
         assert all(isinstance(c, BasePreflightCheck) for c in checks.values())
 
         # Verify check IDs
@@ -476,6 +482,7 @@ class TestAdminRiskCheckFunctions:
         assert len(results) == 5
         # All should be CheckResult instances
         from app.preflight.models import CheckResult
+
         assert all(isinstance(r, CheckResult) for r in results)
 
 

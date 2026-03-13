@@ -58,7 +58,7 @@ def seed_tenants(db):
                 id=str(uuid.uuid4()),
                 tenant_ref=tenant.id,
                 subscription_id=str(uuid.uuid4()),
-                display_name=f"{tenant.name} - Sub {i+1}",
+                display_name=f"{tenant.name} - Sub {i + 1}",
                 state="Enabled",
                 synced_at=datetime.utcnow(),
             )

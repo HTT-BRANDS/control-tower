@@ -22,6 +22,7 @@ class TestTenantAccess:
 
     def test_user_can_access_own_tenant_data(self, seeded_db, test_tenant_id):
         """User with tenant A access → can see tenant A data."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -49,17 +50,18 @@ class TestTenantAccess:
         app.dependency_overrides[get_tenant_authorization] = lambda: mock_authz
 
         with TestClient(app) as client:
-            response = client.get(
-                f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}"
-            )
+            response = client.get(f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}")
 
             # Should succeed - user has access to this tenant
             assert response.status_code == 200
 
         app.dependency_overrides.clear()
 
-    def test_user_cannot_access_other_tenant_data(self, seeded_db, test_tenant_id, second_tenant_id):
+    def test_user_cannot_access_other_tenant_data(
+        self, seeded_db, test_tenant_id, second_tenant_id
+    ):
         """User with tenant A access → cannot see tenant B data (403)."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -80,9 +82,7 @@ class TestTenantAccess:
         # Mock authz that blocks second tenant
         mock_authz = MagicMock(spec=TenantAuthorization)
         mock_authz.accessible_tenant_ids = [test_tenant_id]
-        mock_authz.validate_tenant_access = MagicMock(
-            side_effect=lambda tid: tid == test_tenant_id
-        )
+        mock_authz.validate_tenant_access = MagicMock(side_effect=lambda tid: tid == test_tenant_id)
         mock_authz.filter_tenant_ids = MagicMock(
             return_value=[test_tenant_id]  # Filters out second_tenant_id
         )
@@ -93,9 +93,7 @@ class TestTenantAccess:
 
         with TestClient(app) as client:
             # Try to access second tenant's data
-            response = client.get(
-                f"/api/v1/compliance/summary?tenant_ids={second_tenant_id}"
-            )
+            response = client.get(f"/api/v1/compliance/summary?tenant_ids={second_tenant_id}")
 
             # Should return 200 but with empty/filtered data since authz filters it out
             # (the authorization layer filters tenant_ids before query)
@@ -109,6 +107,7 @@ class TestTenantAccess:
 
     def test_admin_user_can_access_all_tenants(self, seeded_db, test_tenant_id, second_tenant_id):
         """Admin user → can see all tenant data."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -139,21 +138,20 @@ class TestTenantAccess:
 
         with TestClient(app) as client:
             # Admin can access first tenant
-            response1 = client.get(
-                f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}"
-            )
+            response1 = client.get(f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}")
             assert response1.status_code == 200
 
             # Admin can also access second tenant
-            response2 = client.get(
-                f"/api/v1/compliance/summary?tenant_ids={second_tenant_id}"
-            )
+            response2 = client.get(f"/api/v1/compliance/summary?tenant_ids={second_tenant_id}")
             assert response2.status_code == 200
 
         app.dependency_overrides.clear()
 
-    def test_multi_tenant_user_can_access_both_tenants(self, seeded_db, test_tenant_id, second_tenant_id):
+    def test_multi_tenant_user_can_access_both_tenants(
+        self, seeded_db, test_tenant_id, second_tenant_id
+    ):
         """User with access to multiple tenants can see data from all of them."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -173,9 +171,7 @@ class TestTenantAccess:
         mock_authz = MagicMock(spec=TenantAuthorization)
         mock_authz.accessible_tenant_ids = [test_tenant_id, second_tenant_id]
         mock_authz.validate_tenant_access = MagicMock(return_value=True)
-        mock_authz.filter_tenant_ids = MagicMock(
-            return_value=[test_tenant_id, second_tenant_id]
-        )
+        mock_authz.filter_tenant_ids = MagicMock(return_value=[test_tenant_id, second_tenant_id])
 
         app.dependency_overrides[get_db] = override_get_db
         app.dependency_overrides[get_current_user] = lambda: multi_tenant_user

@@ -68,11 +68,41 @@ class TestJSONReportGeneration:
     def test_to_json_summary_counts(self):
         """Test JSON report has correct summary counts."""
         results = [
-            CheckResult(check_id="c1", name="Check 1", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c2", name="Check 2", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c3", name="Check 3", category=CheckCategory.SYSTEM, status=CheckStatus.FAIL, message="Fail"),
-            CheckResult(check_id="c4", name="Check 4", category=CheckCategory.SYSTEM, status=CheckStatus.WARNING, message="Warn"),
-            CheckResult(check_id="c5", name="Check 5", category=CheckCategory.SYSTEM, status=CheckStatus.SKIPPED, message="Skip"),
+            CheckResult(
+                check_id="c1",
+                name="Check 1",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c2",
+                name="Check 2",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c3",
+                name="Check 3",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.FAIL,
+                message="Fail",
+            ),
+            CheckResult(
+                check_id="c4",
+                name="Check 4",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.WARNING,
+                message="Warn",
+            ),
+            CheckResult(
+                check_id="c5",
+                name="Check 5",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.SKIPPED,
+                message="Skip",
+            ),
         ]
 
         report = PreflightReport(
@@ -166,8 +196,20 @@ class TestMarkdownReportGeneration:
     def test_to_markdown_includes_summary(self):
         """Test Markdown report includes summary section."""
         results = [
-            CheckResult(check_id="c1", name="Check 1", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c2", name="Check 2", category=CheckCategory.SYSTEM, status=CheckStatus.FAIL, message="Fail"),
+            CheckResult(
+                check_id="c1",
+                name="Check 1",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c2",
+                name="Check 2",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.FAIL,
+                message="Fail",
+            ),
         ]
 
         report = PreflightReport(
@@ -192,11 +234,41 @@ class TestSummaryCalculation:
     def test_calculate_summary_stats(self):
         """Test summary statistics are correctly calculated."""
         results = [
-            CheckResult(check_id="c1", name="Check 1", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c2", name="Check 2", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c3", name="Check 3", category=CheckCategory.SYSTEM, status=CheckStatus.PASS, message="Pass"),
-            CheckResult(check_id="c4", name="Check 4", category=CheckCategory.SYSTEM, status=CheckStatus.FAIL, message="Fail"),
-            CheckResult(check_id="c5", name="Check 5", category=CheckCategory.SYSTEM, status=CheckStatus.WARNING, message="Warn"),
+            CheckResult(
+                check_id="c1",
+                name="Check 1",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c2",
+                name="Check 2",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c3",
+                name="Check 3",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.PASS,
+                message="Pass",
+            ),
+            CheckResult(
+                check_id="c4",
+                name="Check 4",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.FAIL,
+                message="Fail",
+            ),
+            CheckResult(
+                check_id="c5",
+                name="Check 5",
+                category=CheckCategory.SYSTEM,
+                status=CheckStatus.WARNING,
+                message="Warn",
+            ),
         ]
 
         report = PreflightReport(

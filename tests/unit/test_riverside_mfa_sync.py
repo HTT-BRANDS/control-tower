@@ -11,18 +11,20 @@ import pytest
 
 # Mock Azure SDK before imports
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
+
 
 class MockHttpResponseError(Exception):
-    def __init__(self, message='', status_code=None, **kwargs):
+    def __init__(self, message="", status_code=None, **kwargs):
         super().__init__(message)
         self.status_code = status_code
         self.message = message
 
+
 azure_mock.HttpResponseError = MockHttpResponseError
-sys.modules['azure.core.exceptions'].HttpResponseError = MockHttpResponseError
+sys.modules["azure.core.exceptions"].HttpResponseError = MockHttpResponseError
 
 from app.services.riverside_sync import (  # noqa: E402
     SyncError,
@@ -210,9 +212,7 @@ class TestEnhancedSyncTenantMFA:
 
             # Verify custom batch size was passed
             mock_graph.get_users_paginated.assert_called_once_with(batch_size=50)
-            mock_graph.get_mfa_registration_details_paginated.assert_called_once_with(
-                batch_size=50
-            )
+            mock_graph.get_mfa_registration_details_paginated.assert_called_once_with(batch_size=50)
 
     @pytest.mark.asyncio
     async def test_sync_tenant_mfa_all_users_without_mfa(
@@ -225,7 +225,11 @@ class TestEnhancedSyncTenantMFA:
             {"id": "user-1", "userPrincipalName": "user1@example.com", "displayName": "User 1"},
         ]
         registrations = [
-            {"userPrincipalName": "user1@example.com", "isMfaRegistered": False, "methodsRegistered": []},
+            {
+                "userPrincipalName": "user1@example.com",
+                "isMfaRegistered": False,
+                "methodsRegistered": [],
+            },
         ]
 
         mock_session = MagicMock()
@@ -262,8 +266,16 @@ class TestEnhancedSyncTenantMFA:
             {"id": "user-2", "userPrincipalName": "user2@example.com", "displayName": "User 2"},
         ]
         registrations = [
-            {"userPrincipalName": "user1@example.com", "isMfaRegistered": True, "methodsRegistered": ["app"]},
-            {"userPrincipalName": "user2@example.com", "isMfaRegistered": True, "methodsRegistered": ["phone"]},
+            {
+                "userPrincipalName": "user1@example.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["app"],
+            },
+            {
+                "userPrincipalName": "user2@example.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["phone"],
+            },
         ]
 
         mock_session = MagicMock()
@@ -329,7 +341,11 @@ class TestEnhancedSyncTenantMFA:
             {"id": "user-1", "userPrincipalName": "User1@Example.COM", "displayName": "User 1"},
         ]
         registrations = [
-            {"userPrincipalName": "user1@example.com", "isMfaRegistered": True, "methodsRegistered": ["app"]},
+            {
+                "userPrincipalName": "user1@example.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["app"],
+            },
         ]
 
         mock_session = MagicMock()
@@ -454,9 +470,10 @@ class TestSyncAllTenants:
         mock_query.filter.return_value = mock_query
         mock_query.all.return_value = mock_tenants
 
-        with patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor, \
-             patch("app.services.riverside_sync.sync_tenant_mfa") as mock_mfa:
-
+        with (
+            patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor,
+            patch("app.services.riverside_sync.sync_tenant_mfa") as mock_mfa,
+        ):
             mock_monitor = MagicMock()
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
@@ -483,12 +500,21 @@ class TestSyncAllTenants:
         mock_query.filter.return_value = mock_query
         mock_query.all.return_value = mock_tenants
 
-        with patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor, \
-             patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa, \
-             patch("app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock) as mock_devices, \
-             patch("app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock) as mock_reqs, \
-             patch("app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock) as mock_maturity:
-
+        with (
+            patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor,
+            patch(
+                "app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock
+            ) as mock_mfa,
+            patch(
+                "app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock
+            ) as mock_devices,
+            patch(
+                "app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock
+            ) as mock_reqs,
+            patch(
+                "app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock
+            ) as mock_maturity,
+        ):
             mock_monitor = MagicMock()
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
@@ -524,9 +550,10 @@ class TestSyncAllTenants:
 
         # Note: The current implementation doesn't pass batch_size to sync_tenant_mfa
         # This test verifies the current behavior
-        with patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor, \
-             patch("app.services.riverside_sync.sync_tenant_mfa") as mock_mfa:
-
+        with (
+            patch("app.services.riverside_sync._get_monitoring_service") as mock_get_monitor,
+            patch("app.services.riverside_sync.sync_tenant_mfa") as mock_mfa,
+        ):
             mock_monitor = MagicMock()
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)

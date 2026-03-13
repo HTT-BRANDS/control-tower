@@ -31,9 +31,7 @@ class NotificationLog(Base):
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
 
     # Notification metadata
-    channel: Mapped[str] = Column(
-        String(20), nullable=False, index=True
-    )  # teams, email, webhook
+    channel: Mapped[str] = Column(String(20), nullable=False, index=True)  # teams, email, webhook
     severity: Mapped[str] = Column(
         String(20), nullable=False, default="warning"
     )  # info, warning, error, critical
@@ -75,9 +73,7 @@ class NotificationLog(Base):
     last_retry_at: Mapped[datetime | None] = Column(DateTime, nullable=True)
 
     # Metadata
-    metadata_json: Mapped[str | None] = Column(
-        Text, nullable=True
-    )  # Additional JSON metadata
+    metadata_json: Mapped[str | None] = Column(Text, nullable=True)  # Additional JSON metadata
 
     # Relationships
     alert: Mapped[Alert] = relationship("Alert", lazy="joined")
@@ -98,7 +94,9 @@ class NotificationLog(Base):
             return False
         return self.retry_count < 3
 
-    def mark_sent(self, response_status: str | None = None, response_body: str | None = None) -> None:
+    def mark_sent(
+        self, response_status: str | None = None, response_body: str | None = None
+    ) -> None:
         """Mark notification as successfully sent.
 
         Args:

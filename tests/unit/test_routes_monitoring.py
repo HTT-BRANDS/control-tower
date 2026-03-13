@@ -58,6 +58,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -105,7 +106,9 @@ def test_get_performance_metrics_success(client_with_db, mock_user):
     }
 
     with patch("app.api.routes.monitoring.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.monitoring.get_performance_dashboard", return_value=mock_dashboard):
+        with patch(
+            "app.api.routes.monitoring.get_performance_dashboard", return_value=mock_dashboard
+        ):
             response = client_with_db.get("/api/v1/monitoring/performance")
 
     assert response.status_code == 200
@@ -279,7 +282,10 @@ def test_health_check_good_cache(client_with_db, mock_user):
 
     with patch("app.api.routes.monitoring.get_current_user", return_value=mock_user):
         with patch("app.api.routes.monitoring.get_cache_stats", return_value=mock_cache_stats):
-            with patch("app.api.routes.monitoring.get_performance_dashboard", return_value=mock_perf_summary):
+            with patch(
+                "app.api.routes.monitoring.get_performance_dashboard",
+                return_value=mock_perf_summary,
+            ):
                 response = client_with_db.get("/api/v1/monitoring/health")
 
     assert response.status_code == 200
@@ -307,7 +313,10 @@ def test_health_check_poor_cache(client_with_db, mock_user):
 
     with patch("app.api.routes.monitoring.get_current_user", return_value=mock_user):
         with patch("app.api.routes.monitoring.get_cache_stats", return_value=mock_cache_stats):
-            with patch("app.api.routes.monitoring.get_performance_dashboard", return_value=mock_perf_summary):
+            with patch(
+                "app.api.routes.monitoring.get_performance_dashboard",
+                return_value=mock_perf_summary,
+            ):
                 response = client_with_db.get("/api/v1/monitoring/health")
 
     assert response.status_code == 200

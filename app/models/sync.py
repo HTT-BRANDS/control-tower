@@ -14,7 +14,9 @@ class SyncJob(Base):
     __tablename__ = "sync_jobs"
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
-    job_type: Mapped[str] = Column(String(50), nullable=False)  # costs, compliance, resources, identity
+    job_type: Mapped[str] = Column(
+        String(50), nullable=False
+    )  # costs, compliance, resources, identity
     tenant_id: Mapped[str | None] = Column(String(36))  # NULL = all tenants
     status: Mapped[str] = Column(String(50), nullable=False)  # pending, running, completed, failed
     started_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow)

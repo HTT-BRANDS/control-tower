@@ -103,6 +103,7 @@ async def bulk_acknowledge_anomalies(
     authz.ensure_at_least_one_tenant()
     # Validate user has access to all anomaly tenants
     from app.models.cost import CostAnomaly
+
     anomalies = db.query(CostAnomaly).filter(CostAnomaly.id.in_(request.anomaly_ids)).all()
     anomaly_tenant_ids = list({a.tenant_id for a in anomalies})
     authz.validate_tenants_access(anomaly_tenant_ids)
@@ -128,7 +129,10 @@ async def bulk_dismiss_recommendations(
     authz.ensure_at_least_one_tenant()
     # Validate user has access to all recommendation tenants
     from app.models.recommendation import Recommendation
-    recommendations = db.query(Recommendation).filter(Recommendation.id.in_(request.recommendation_ids)).all()
+
+    recommendations = (
+        db.query(Recommendation).filter(Recommendation.id.in_(request.recommendation_ids)).all()
+    )
     recommendation_tenant_ids = list({r.tenant_id for r in recommendations if r.tenant_id})
     authz.validate_tenants_access(recommendation_tenant_ids)
 
@@ -153,7 +157,10 @@ async def bulk_review_idle_resources(
     authz.ensure_at_least_one_tenant()
     # Validate user has access to all resource tenants
     from app.models.resource import IdleResource
-    idle_resources = db.query(IdleResource).filter(IdleResource.id.in_(request.idle_resource_ids)).all()
+
+    idle_resources = (
+        db.query(IdleResource).filter(IdleResource.id.in_(request.idle_resource_ids)).all()
+    )
     resource_tenant_ids = list({r.tenant_id for r in idle_resources})
     authz.validate_tenants_access(resource_tenant_ids)
 

@@ -139,7 +139,8 @@ class TestRetryWithBackoff:
     async def test_succeeds_on_first_try(self):
         """Test that decorator returns result when function succeeds immediately."""
         # Mock asyncio.sleep to avoid actual delays
-        with patch('asyncio.sleep', new_callable=AsyncMock):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+
             @retry_with_backoff()
             async def successful_func():
                 return "success"
@@ -152,7 +153,8 @@ class TestRetryWithBackoff:
         """Test that decorator retries on retryable error then succeeds."""
         call_count = 0
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(RetryPolicy(max_retries=3))
             async def flaky_func():
                 nonlocal call_count
@@ -173,7 +175,8 @@ class TestRetryWithBackoff:
         call_count = 0
         policy = RetryPolicy(max_retries=2)
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(policy)
             async def always_fails():
                 nonlocal call_count
@@ -193,7 +196,8 @@ class TestRetryWithBackoff:
         """Test that decorator raises immediately for non-retryable errors."""
         call_count = 0
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff()
             async def auth_error_func():
                 nonlocal call_count
@@ -214,7 +218,8 @@ class TestRetryWithBackoff:
         call_count = 0
         policy = RetryPolicy(max_retries=3, backoff_factor=2.0, max_wait=60.0)
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(policy)
             async def always_fails():
                 nonlocal call_count
@@ -243,7 +248,8 @@ class TestRetryWithBackoff:
         call_count = 0
         policy = RetryPolicy(max_retries=5, backoff_factor=10.0, max_wait=5.0)
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(policy)
             async def always_fails():
                 nonlocal call_count
@@ -263,7 +269,8 @@ class TestRetryWithBackoff:
         """Test that decorator works with functions that take arguments."""
         call_count = 0
 
-        with patch('asyncio.sleep', new_callable=AsyncMock):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+
             @retry_with_backoff(RetryPolicy(max_retries=2))
             async def func_with_args(x: int, y: str) -> str:
                 nonlocal call_count
@@ -279,7 +286,8 @@ class TestRetryWithBackoff:
     @pytest.mark.asyncio
     async def test_default_policy(self):
         """Test that decorator uses default policy when none provided."""
-        with patch('asyncio.sleep', new_callable=AsyncMock):
+        with patch("asyncio.sleep", new_callable=AsyncMock):
+
             @retry_with_backoff()  # No policy provided
             async def successful_func():
                 return "default policy works"
@@ -293,7 +301,8 @@ class TestRetryWithBackoff:
         """Test that HTTP 429 errors are retried."""
         call_count = 0
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(RetryPolicy(max_retries=2))
             async def rate_limited_func():
                 nonlocal call_count
@@ -315,7 +324,8 @@ class TestRetryWithBackoff:
         """Test that HTTP 400 errors are not retried."""
         call_count = 0
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
             @retry_with_backoff(RetryPolicy(max_retries=3))
             async def bad_request_func():
                 nonlocal call_count

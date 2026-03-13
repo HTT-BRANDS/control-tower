@@ -61,9 +61,7 @@ REQUIRED_AZURE_ROLES = [
 class AzureCheckError(Exception):
     """Base exception for Azure preflight check errors."""
 
-    def __init__(
-        self, message: str, error_code: str, details: dict[str, Any] | None = None
-    ):
+    def __init__(self, message: str, error_code: str, details: dict[str, Any] | None = None):
         super().__init__(message)
         self.error_code = error_code
         self.details = details or {}
@@ -265,9 +263,7 @@ class AzureAuthCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the authentication check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -298,9 +294,7 @@ class AzureSubscriptionsCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the subscriptions check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -330,9 +324,7 @@ class AzureGraphCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the Graph API check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -363,9 +355,7 @@ class AzureCostManagementCheck(BasePreflightCheck):
         )
         self._subscription_id = subscription_id
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the Cost Management check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -377,9 +367,7 @@ class AzureCostManagementCheck(BasePreflightCheck):
             try:
                 subs_result = await check_azure_subscriptions(tenant_id)
                 if subs_result.details.get("subscription_count", 0) > 0:
-                    subscription_id = subs_result.details["subscriptions"][0][
-                        "subscription_id"
-                    ]
+                    subscription_id = subs_result.details["subscriptions"][0]["subscription_id"]
             except Exception as e:
                 logger.warning(f"Could not auto-detect subscription: {e}")
 
@@ -412,9 +400,7 @@ class AzurePolicyCheck(BasePreflightCheck):
         )
         self._subscription_id = subscription_id
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the Policy check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -426,9 +412,7 @@ class AzurePolicyCheck(BasePreflightCheck):
             try:
                 subs_result = await check_azure_subscriptions(tenant_id)
                 if subs_result.details.get("subscription_count", 0) > 0:
-                    subscription_id = subs_result.details["subscriptions"][0][
-                        "subscription_id"
-                    ]
+                    subscription_id = subs_result.details["subscriptions"][0]["subscription_id"]
             except Exception as e:
                 logger.warning(f"Could not auto-detect subscription: {e}")
 
@@ -461,9 +445,7 @@ class AzureResourcesCheck(BasePreflightCheck):
         )
         self._subscription_id = subscription_id
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the Resource Manager check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -475,9 +457,7 @@ class AzureResourcesCheck(BasePreflightCheck):
             try:
                 subs_result = await check_azure_subscriptions(tenant_id)
                 if subs_result.details.get("subscription_count", 0) > 0:
-                    subscription_id = subs_result.details["subscriptions"][0][
-                        "subscription_id"
-                    ]
+                    subscription_id = subs_result.details["subscriptions"][0]["subscription_id"]
             except Exception as e:
                 logger.warning(f"Could not auto-detect subscription: {e}")
 
@@ -510,9 +490,7 @@ class AzureSecurityCheck(BasePreflightCheck):
         )
         self._subscription_id = subscription_id
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the Security Center check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -524,9 +502,7 @@ class AzureSecurityCheck(BasePreflightCheck):
             try:
                 subs_result = await check_azure_subscriptions(tenant_id)
                 if subs_result.details.get("subscription_count", 0) > 0:
-                    subscription_id = subs_result.details["subscriptions"][0][
-                        "subscription_id"
-                    ]
+                    subscription_id = subs_result.details["subscriptions"][0]["subscription_id"]
             except Exception as e:
                 logger.warning(f"Could not auto-detect subscription: {e}")
 
@@ -559,9 +535,7 @@ class AzureRBACCheck(BasePreflightCheck):
         )
         self._subscription_id = subscription_id
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute the RBAC check."""
         if not tenant_id:
             tenant_id = settings.azure_tenant_id
@@ -573,9 +547,7 @@ class AzureRBACCheck(BasePreflightCheck):
             try:
                 subs_result = await check_azure_subscriptions(tenant_id)
                 if subs_result.details.get("subscription_count", 0) > 0:
-                    subscription_id = subs_result.details["subscriptions"][0][
-                        "subscription_id"
-                    ]
+                    subscription_id = subs_result.details["subscriptions"][0]["subscription_id"]
             except Exception as e:
                 logger.warning(f"Could not auto-detect subscription: {e}")
 
@@ -707,9 +679,7 @@ async def check_azure_authentication(tenant_id: str) -> CheckResult:
         )
 
     except Exception as e:
-        logger.exception(
-            f"Unexpected error in authentication check for tenant {tenant_id}"
-        )
+        logger.exception(f"Unexpected error in authentication check for tenant {tenant_id}")
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -757,12 +727,14 @@ async def check_azure_subscriptions(tenant_id: str) -> CheckResult:
         states = {}
 
         for sub in client.subscriptions.list():
-            subscriptions.append({
-                "subscription_id": sub.subscription_id,
-                "display_name": sub.display_name,
-                "state": sub.state.value if sub.state else "Unknown",
-                "tenant_id": getattr(sub, "tenant_id", None),
-            })
+            subscriptions.append(
+                {
+                    "subscription_id": sub.subscription_id,
+                    "display_name": sub.display_name,
+                    "state": sub.state.value if sub.state else "Unknown",
+                    "tenant_id": getattr(sub, "tenant_id", None),
+                }
+            )
             state = sub.state.value if sub.state else "Unknown"
             states[state] = states.get(state, 0) + 1
 
@@ -885,9 +857,7 @@ async def check_azure_subscriptions(tenant_id: str) -> CheckResult:
         )
 
 
-async def check_cost_management_access(
-    tenant_id: str, subscription_id: str
-) -> CheckResult:
+async def check_cost_management_access(tenant_id: str, subscription_id: str) -> CheckResult:
     """Verify Cost Management API access for a subscription.
 
     Validates that the application can query cost data for the specified
@@ -934,9 +904,7 @@ async def check_cost_management_access(
             ),
             dataset=QueryDataset(
                 granularity="None",
-                aggregation={
-                    "totalCost": QueryAggregation(name="Cost", function="Sum")
-                },
+                aggregation={"totalCost": QueryAggregation(name="Cost", function="Sum")},
                 grouping=[
                     QueryGrouping(type="Dimension", name="SubscriptionName"),
                 ],
@@ -958,14 +926,8 @@ async def check_cost_management_access(
             for row in result.properties.rows:
                 if len(row) >= 2:
                     try:
-                        total_cost = (
-                            float(row[0])
-                            if isinstance(row[0], (int, float, str))
-                            else 0.0
-                        )
-                        currency = (
-                            str(row[1]) if len(row) > 1 and row[1] else "USD"
-                        )
+                        total_cost = float(row[0]) if isinstance(row[0], (int, float, str)) else 0.0
+                        currency = str(row[1]) if len(row) > 1 and row[1] else "USD"
                         break
                     except (ValueError, TypeError):
                         continue
@@ -1138,9 +1100,7 @@ async def check_policy_access(tenant_id: str, subscription_id: str) -> CheckResu
         raise
 
     except Exception as e:
-        logger.exception(
-            f"Error checking policy access for subscription {subscription_id}"
-        )
+        logger.exception(f"Error checking policy access for subscription {subscription_id}")
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -1160,9 +1120,7 @@ async def check_policy_access(tenant_id: str, subscription_id: str) -> CheckResu
         )
 
 
-async def check_resource_manager_access(
-    tenant_id: str, subscription_id: str
-) -> CheckResult:
+async def check_resource_manager_access(tenant_id: str, subscription_id: str) -> CheckResult:
     """Verify Azure Resource Manager access.
 
     Validates that the application can list resource groups and resources
@@ -1421,9 +1379,7 @@ async def check_graph_api_access(tenant_id: str) -> CheckResult:
         )
 
 
-async def check_security_center_access(
-    tenant_id: str, subscription_id: str
-) -> CheckResult:
+async def check_security_center_access(tenant_id: str, subscription_id: str) -> CheckResult:
     """Verify Security Center API access.
 
     Validates that the application can access Azure Security Center data
@@ -1464,9 +1420,7 @@ async def check_security_center_access(
             "overall_score": overall_score,
             "max_score": max_score,
             "percentage": (
-                round((overall_score / max_score * 100), 2)
-                if overall_score and max_score
-                else None
+                round((overall_score / max_score * 100), 2) if overall_score and max_score else None
             ),
         }
 
@@ -1608,11 +1562,13 @@ async def check_rbac_permissions(tenant_id: str, subscription_id: str) -> CheckR
             if hasattr(assignment, "principal_id"):
                 role_def = role_defs.get(assignment.role_definition_id)
                 if role_def:
-                    our_assignments.append({
-                        "role_name": role_def.role_name,
-                        "role_type": role_def.role_type,
-                        "scope": assignment.scope,
-                    })
+                    our_assignments.append(
+                        {
+                            "role_name": role_def.role_name,
+                            "role_type": role_def.role_type,
+                            "scope": assignment.scope,
+                        }
+                    )
 
         # Determine which required roles are present
         found_roles = {a["role_name"] for a in our_assignments}
@@ -1703,9 +1659,7 @@ async def check_rbac_permissions(tenant_id: str, subscription_id: str) -> CheckR
         raise
 
     except Exception as e:
-        logger.exception(
-            f"Error checking RBAC permissions for subscription {subscription_id}"
-        )
+        logger.exception(f"Error checking RBAC permissions for subscription {subscription_id}")
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -1785,9 +1739,7 @@ async def run_all_azure_checks(
 
     # If we have a subscription ID, run subscription-scoped checks
     if subscription_id:
-        logger.info(
-            f"Running subscription-scoped checks for {subscription_id[:8]}..."
-        )
+        logger.info(f"Running subscription-scoped checks for {subscription_id[:8]}...")
 
         sub_checks = [
             check_cost_management_access(tenant_id, subscription_id),

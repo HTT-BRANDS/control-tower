@@ -1,6 +1,5 @@
 """Tests for Key Vault integration."""
 
-
 from app.core.keyvault import KeyVaultClient, get_keyvault_client
 
 
@@ -11,7 +10,9 @@ class TestKeyVaultClient:
         """When no Key Vault URL, falls back to env vars."""
         monkeypatch.setenv("HTT_CLIENT_SECRET", "test-secret-123")  # pragma: allowlist secret
         client = KeyVaultClient(vault_url=None)
-        assert client.get_secret("htt-client-secret") == "test-secret-123"  # pragma: allowlist secret
+        assert (
+            client.get_secret("htt-client-secret") == "test-secret-123"
+        )  # pragma: allowlist secret
 
     def test_env_var_not_found(self):
         """Returns None when secret not in env vars and no Key Vault."""

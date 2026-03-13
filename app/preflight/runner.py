@@ -86,10 +86,7 @@ class PreflightRunner:
         if categories is None:
             return list(self._checks.values())
 
-        return [
-            check for check in self._checks.values()
-            if check.category in categories
-        ]
+        return [check for check in self._checks.values() if check.category in categories]
 
     def _get_tenants_to_check(self) -> list[Tenant]:
         """Get list of tenants to check.
@@ -148,7 +145,11 @@ class PreflightRunner:
         logger.info(f"Running {len(checks_to_run)} checks")
 
         # Get tenants if needed
-        tenants = self._get_tenants_to_check() if check_tenant_ids or self._needs_tenant_checks(checks_to_run) else []
+        tenants = (
+            self._get_tenants_to_check()
+            if check_tenant_ids or self._needs_tenant_checks(checks_to_run)
+            else []
+        )
 
         # Build execution plan
         execution_plan = self._build_execution_plan(checks_to_run, tenants)
@@ -173,13 +174,11 @@ class PreflightRunner:
 
                             # Check fail fast
                             if self.fail_fast and result.status == CheckStatus.FAIL:
-                                logger.warning(
-                                    f"Fail-fast triggered by check: {check.check_id}"
-                                )
+                                logger.warning(f"Fail-fast triggered by check: {check.check_id}")
                                 break
 
                         if self.fail_fast and any(
-                            r.status == CheckStatus.FAIL for r in report.results[-len(checks):]
+                            r.status == CheckStatus.FAIL for r in report.results[-len(checks) :]
                         ):
                             break
 
@@ -196,14 +195,10 @@ class PreflightRunner:
 
                         # Check fail fast
                         if self.fail_fast and result.status == CheckStatus.FAIL:
-                            logger.warning(
-                                f"Fail-fast triggered by check: {check.check_id}"
-                            )
+                            logger.warning(f"Fail-fast triggered by check: {check.check_id}")
                             break
 
-                if self.fail_fast and any(
-                    r.status == CheckStatus.FAIL for r in report.results
-                ):
+                if self.fail_fast and any(r.status == CheckStatus.FAIL for r in report.results):
                     break
 
         finally:

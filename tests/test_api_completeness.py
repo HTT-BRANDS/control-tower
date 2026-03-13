@@ -121,12 +121,15 @@ class TestStatusAPI:
 class TestFiltering:
     """Test suite for enhanced filtering across endpoints."""
 
-    @pytest.mark.parametrize("endpoint", [
-        "/api/v1/costs/anomalies",
-        "/api/v1/resources/idle",
-        "/api/v1/compliance/scores",
-        "/api/v1/identity/privileged",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint",
+        [
+            "/api/v1/costs/anomalies",
+            "/api/v1/resources/idle",
+            "/api/v1/compliance/scores",
+            "/api/v1/identity/privileged",
+        ],
+    )
     def test_common_filter_parameters(self, endpoint):
         """Test that common filter parameters are consistent."""
         common_params = {

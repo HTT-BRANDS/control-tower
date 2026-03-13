@@ -26,10 +26,19 @@ WEBHOOK_URL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 SENSITIVE_PATTERNS = {
-    "api_key": re.compile(r"(['\"]?(?:api[_-]?key|apikey)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE),
-    "password": re.compile(r"(['\"]?(?:password|passwd|pwd)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE),
-    "secret": re.compile(r"(['\"]?(?:client_secret|secret)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE),
-    "token": re.compile(r"(['\"]?(?:token|access_token|refresh_token)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE),
+    "api_key": re.compile(
+        r"(['\"]?(?:api[_-]?key|apikey)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE
+    ),
+    "password": re.compile(
+        r"(['\"]?(?:password|passwd|pwd)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE
+    ),
+    "secret": re.compile(
+        r"(['\"]?(?:client_secret|secret)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]", re.IGNORECASE
+    ),
+    "token": re.compile(
+        r"(['\"]?(?:token|access_token|refresh_token)['\"]?\s*[:=]\s*)['\"][^'\"]+['\"]",
+        re.IGNORECASE,
+    ),
     "bearer": re.compile(r"(bearer\s+)\S+", re.IGNORECASE),
     "connection_string": re.compile(r"([a-z]+://[^:]+:)[^@]+(@)", re.IGNORECASE),
 }
@@ -200,17 +209,21 @@ def format_sync_alert(notification: Notification) -> dict[str, Any]:
     # Action buttons
     actions = []
     if notification.dashboard_url:
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": "📊 View Dashboard",
-            "url": notification.dashboard_url,
-        })
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": "📊 View Dashboard",
+                "url": notification.dashboard_url,
+            }
+        )
     if notification.retry_url:
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": "🔄 Retry Sync",
-            "url": notification.retry_url,
-        })
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": "🔄 Retry Sync",
+                "url": notification.retry_url,
+            }
+        )
 
     # Build the card
     card = {
@@ -249,7 +262,9 @@ def format_sync_alert(notification: Notification) -> dict[str, Any]:
                                             "text": f"🔔 {notification.title}",
                                             "weight": "Bolder",
                                             "size": "Large",
-                                            "color": notification.severity == Severity.CRITICAL and "Attention" or "Default",
+                                            "color": notification.severity == Severity.CRITICAL
+                                            and "Attention"
+                                            or "Default",
                                         },
                                         {
                                             "type": "TextBlock",
@@ -275,32 +290,36 @@ def format_sync_alert(notification: Notification) -> dict[str, Any]:
 
     # Add error details if present
     if notification.error_message:
-        card["attachments"][0]["content"]["body"].append({
-            "type": "Container",
-            "style": "emphasis",
-            "items": [
-                {
-                    "type": "TextBlock",
-                    "text": "Error Details",
-                    "weight": "Bolder",
-                    "size": "Medium",
-                },
-                {
-                    "type": "TextBlock",
-                    "text": notification.error_message[:500],  # Truncate long errors
-                    "fontType": "Monospace",
-                    "wrap": True,
-                    "size": "Small",
-                },
-            ],
-        })
+        card["attachments"][0]["content"]["body"].append(
+            {
+                "type": "Container",
+                "style": "emphasis",
+                "items": [
+                    {
+                        "type": "TextBlock",
+                        "text": "Error Details",
+                        "weight": "Bolder",
+                        "size": "Medium",
+                    },
+                    {
+                        "type": "TextBlock",
+                        "text": notification.error_message[:500],  # Truncate long errors
+                        "fontType": "Monospace",
+                        "wrap": True,
+                        "size": "Small",
+                    },
+                ],
+            }
+        )
 
     # Add facts table
     if facts:
-        card["attachments"][0]["content"]["body"].append({
-            "type": "FactSet",
-            "facts": facts,
-        })
+        card["attachments"][0]["content"]["body"].append(
+            {
+                "type": "FactSet",
+                "facts": facts,
+            }
+        )
 
     # Add actions if available
     if actions:
@@ -331,6 +350,7 @@ def sanitize_log_message(message: str) -> str:
 
     # Redact sensitive patterns
     for _pattern_name, pattern in SENSITIVE_PATTERNS.items():
+
         def replace_sensitive(match: re.Match) -> str:
             """Replace sensitive value with [REDACTED]."""
             # If there are capture groups, preserve the key/prefix part
@@ -339,6 +359,7 @@ def sanitize_log_message(message: str) -> str:
                 suffix = match.group(2) if match.lastindex >= 2 else ""
                 return f"{prefix}[REDACTED]{suffix}"
             return "[REDACTED]"
+
         sanitized = pattern.sub(replace_sensitive, sanitized)
 
     return sanitized

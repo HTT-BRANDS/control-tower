@@ -42,7 +42,6 @@ def _resolve_tenant_code(tenant) -> str:
     return tenant.tenant_id[:4].upper()
 
 
-
 def get_riverside_summary(db) -> dict:
     """Get executive summary for Riverside compliance dashboard.
 
@@ -66,13 +65,19 @@ def get_riverside_summary(db) -> dict:
     total_critical_gaps = 0
 
     for tenant in tenants:
-        compliance = db.query(RiversideCompliance).filter(
-            RiversideCompliance.tenant_id == tenant.tenant_id
-        ).order_by(RiversideCompliance.updated_at.desc()).first()
+        compliance = (
+            db.query(RiversideCompliance)
+            .filter(RiversideCompliance.tenant_id == tenant.tenant_id)
+            .order_by(RiversideCompliance.updated_at.desc())
+            .first()
+        )
 
-        mfa = db.query(RiversideMFA).filter(
-            RiversideMFA.tenant_id == tenant.tenant_id
-        ).order_by(RiversideMFA.snapshot_date.desc()).first()
+        mfa = (
+            db.query(RiversideMFA)
+            .filter(RiversideMFA.tenant_id == tenant.tenant_id)
+            .order_by(RiversideMFA.snapshot_date.desc())
+            .first()
+        )
 
         # NOTE: Device compliance disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)
         # device = db.query(RiversideDeviceCompliance).filter(
@@ -89,22 +94,24 @@ def get_riverside_summary(db) -> dict:
         tenant_code = _resolve_tenant_code(tenant)
         tenant_name = ALL_TENANTS.get(tenant_code, tenant.name)
 
-        tenant_summaries.append({
-            "tenant_id": tenant.tenant_id,
-            "tenant_code": tenant_code,
-            "tenant_name": tenant_name,
-            "maturity_score": maturity_score,
-            "mfa_coverage": mfa_coverage,
-            "admin_mfa_pct": mfa.admin_mfa_percentage if mfa else 0.0,
-            "device_compliance": {
-                "status": "coming_soon",
-                "message": "Device compliance via Sui Generis MSP (Phase 2, Q3 2025)",
-                "enabled": False,
-            },
-            "requirements_completed": reqs_completed,
-            "requirements_total": reqs_total,
-            "critical_gaps": gaps,
-        })
+        tenant_summaries.append(
+            {
+                "tenant_id": tenant.tenant_id,
+                "tenant_code": tenant_code,
+                "tenant_name": tenant_name,
+                "maturity_score": maturity_score,
+                "mfa_coverage": mfa_coverage,
+                "admin_mfa_pct": mfa.admin_mfa_percentage if mfa else 0.0,
+                "device_compliance": {
+                    "status": "coming_soon",
+                    "message": "Device compliance via Sui Generis MSP (Phase 2, Q3 2025)",
+                    "enabled": False,
+                },
+                "requirements_completed": reqs_completed,
+                "requirements_total": reqs_total,
+                "critical_gaps": gaps,
+            }
+        )
 
         total_maturity += maturity_score
         total_mfa += mfa_coverage
@@ -117,18 +124,18 @@ def get_riverside_summary(db) -> dict:
 
     # Calculate requirements by status
     requirements_by_status = {
-        "not_started": db.query(RiversideRequirement).filter(
-            RiversideRequirement.status == "not_started"
-        ).count(),
-        "in_progress": db.query(RiversideRequirement).filter(
-            RiversideRequirement.status == "in_progress"
-        ).count(),
-        "completed": db.query(RiversideRequirement).filter(
-            RiversideRequirement.status == "completed"
-        ).count(),
-        "blocked": db.query(RiversideRequirement).filter(
-            RiversideRequirement.status == "blocked"
-        ).count(),
+        "not_started": db.query(RiversideRequirement)
+        .filter(RiversideRequirement.status == "not_started")
+        .count(),
+        "in_progress": db.query(RiversideRequirement)
+        .filter(RiversideRequirement.status == "in_progress")
+        .count(),
+        "completed": db.query(RiversideRequirement)
+        .filter(RiversideRequirement.status == "completed")
+        .count(),
+        "blocked": db.query(RiversideRequirement)
+        .filter(RiversideRequirement.status == "blocked")
+        .count(),
     }
 
     # Calculate requirements by category
@@ -171,7 +178,9 @@ def get_riverside_summary(db) -> dict:
         "total_requirements": total_requirements,
         "overall_completion_pct": round(
             (total_requirements_completed / total_requirements * 100), 1
-        ) if total_requirements > 0 else 0,
+        )
+        if total_requirements > 0
+        else 0,
         "total_critical_gaps": total_critical_gaps,
         "tenant_count": len(tenants),
         "tenant_summaries": tenant_summaries,
@@ -201,9 +210,12 @@ def get_mfa_status(db) -> dict:
     total_admin_mfa = 0
 
     for tenant in tenants:
-        mfa = db.query(RiversideMFA).filter(
-            RiversideMFA.tenant_id == tenant.tenant_id
-        ).order_by(RiversideMFA.snapshot_date.desc()).first()
+        mfa = (
+            db.query(RiversideMFA)
+            .filter(RiversideMFA.tenant_id == tenant.tenant_id)
+            .order_by(RiversideMFA.snapshot_date.desc())
+            .first()
+        )
 
         if mfa:
             total_users += mfa.total_users
@@ -214,32 +226,34 @@ def get_mfa_status(db) -> dict:
             tenant_code = _resolve_tenant_code(tenant)
             tenant_name = ALL_TENANTS.get(tenant_code, tenant.name)
 
-            tenant_mfa.append({
-                "tenant_id": tenant.tenant_id,
-                "tenant_code": tenant_code,
-                "tenant_name": tenant_name,
-                "total_users": mfa.total_users,
-                "mfa_enrolled": mfa.mfa_enrolled_users,
-                "mfa_coverage_pct": mfa.mfa_coverage_percentage,
-                "admin_accounts": mfa.admin_accounts_total,
-                "admin_mfa": mfa.admin_accounts_mfa,
-                "admin_mfa_pct": mfa.admin_mfa_percentage,
-                "unprotected_users": mfa.unprotected_users,
-                "snapshot_date": mfa.snapshot_date.isoformat() if mfa.snapshot_date else None,
-            })
+            tenant_mfa.append(
+                {
+                    "tenant_id": tenant.tenant_id,
+                    "tenant_code": tenant_code,
+                    "tenant_name": tenant_name,
+                    "total_users": mfa.total_users,
+                    "mfa_enrolled": mfa.mfa_enrolled_users,
+                    "mfa_coverage_pct": mfa.mfa_coverage_percentage,
+                    "admin_accounts": mfa.admin_accounts_total,
+                    "admin_mfa": mfa.admin_accounts_mfa,
+                    "admin_mfa_pct": mfa.admin_mfa_percentage,
+                    "unprotected_users": mfa.unprotected_users,
+                    "snapshot_date": mfa.snapshot_date.isoformat() if mfa.snapshot_date else None,
+                }
+            )
 
     return {
         "summary": {
             "total_users": total_users,
             "mfa_enrolled": total_mfa_enrolled,
-            "overall_coverage_pct": round(
-                (total_mfa_enrolled / total_users * 100), 1
-            ) if total_users > 0 else 0,
+            "overall_coverage_pct": round((total_mfa_enrolled / total_users * 100), 1)
+            if total_users > 0
+            else 0,
             "admin_accounts": total_admin_accounts,
             "admin_mfa": total_admin_mfa,
-            "admin_mfa_pct": round(
-                (total_admin_mfa / total_admin_accounts * 100), 1
-            ) if total_admin_accounts > 0 else 0,
+            "admin_mfa_pct": round((total_admin_mfa / total_admin_accounts * 100), 1)
+            if total_admin_accounts > 0
+            else 0,
         },
         "tenants": tenant_mfa,
         "target": 100,
@@ -266,9 +280,12 @@ def get_maturity_scores(db) -> dict:
     }
 
     for tenant in tenants:
-        compliance = db.query(RiversideCompliance).filter(
-            RiversideCompliance.tenant_id == tenant.tenant_id
-        ).order_by(RiversideCompliance.updated_at.desc()).first()
+        compliance = (
+            db.query(RiversideCompliance)
+            .filter(RiversideCompliance.tenant_id == tenant.tenant_id)
+            .order_by(RiversideCompliance.updated_at.desc())
+            .first()
+        )
 
         if compliance:
             tenant_code = _resolve_tenant_code(tenant)
@@ -277,15 +294,15 @@ def get_maturity_scores(db) -> dict:
             # Calculate domain scores based on requirements
             iam_reqs = db.query(RiversideRequirement).filter(
                 RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.category == "IAM"
+                RiversideRequirement.category == "IAM",
             )
             gs_reqs = db.query(RiversideRequirement).filter(
                 RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.category == "GS"
+                RiversideRequirement.category == "GS",
             )
             ds_reqs = db.query(RiversideRequirement).filter(
                 RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.category == "DS"
+                RiversideRequirement.category == "DS",
             )
 
             iam_total = iam_reqs.count()
@@ -304,30 +321,42 @@ def get_maturity_scores(db) -> dict:
             domain_scores["GS"].append(gs_score)
             domain_scores["DS"].append(ds_score)
 
-            tenant_scores.append({
-                "tenant_id": tenant.tenant_id,
-                "tenant_code": tenant_code,
-                "tenant_name": tenant_name,
-                "overall_maturity": compliance.overall_maturity_score,
-                "target_maturity": compliance.target_maturity_score,
-                "domain_scores": {
-                    "IAM": round(iam_score, 2),
-                    "GS": round(gs_score, 2),
-                    "DS": round(ds_score, 2),
-                },
-                "critical_gaps": compliance.critical_gaps_count,
-                "last_assessment": compliance.last_assessment_date.isoformat() if compliance.last_assessment_date else None,
-            })
+            tenant_scores.append(
+                {
+                    "tenant_id": tenant.tenant_id,
+                    "tenant_code": tenant_code,
+                    "tenant_name": tenant_name,
+                    "overall_maturity": compliance.overall_maturity_score,
+                    "target_maturity": compliance.target_maturity_score,
+                    "domain_scores": {
+                        "IAM": round(iam_score, 2),
+                        "GS": round(gs_score, 2),
+                        "DS": round(ds_score, 2),
+                    },
+                    "critical_gaps": compliance.critical_gaps_count,
+                    "last_assessment": compliance.last_assessment_date.isoformat()
+                    if compliance.last_assessment_date
+                    else None,
+                }
+            )
 
     return {
         "summary": {
             "overall_average": round(
                 sum(t["overall_maturity"] for t in tenant_scores) / len(tenant_scores), 2
-            ) if tenant_scores else 0,
+            )
+            if tenant_scores
+            else 0,
             "target": 3.0,
-            "iam_average": round(sum(domain_scores["IAM"]) / len(domain_scores["IAM"]), 2) if domain_scores["IAM"] else 0,
-            "gs_average": round(sum(domain_scores["GS"]) / len(domain_scores["GS"]), 2) if domain_scores["GS"] else 0,
-            "ds_average": round(sum(domain_scores["DS"]) / len(domain_scores["DS"]), 2) if domain_scores["DS"] else 0,
+            "iam_average": round(sum(domain_scores["IAM"]) / len(domain_scores["IAM"]), 2)
+            if domain_scores["IAM"]
+            else 0,
+            "gs_average": round(sum(domain_scores["GS"]) / len(domain_scores["GS"]), 2)
+            if domain_scores["GS"]
+            else 0,
+            "ds_average": round(sum(domain_scores["DS"]) / len(domain_scores["DS"]), 2)
+            if domain_scores["DS"]
+            else 0,
         },
         "tenants": tenant_scores,
         "deadline": RIVERSIDE_DEADLINE.isoformat(),
@@ -335,7 +364,9 @@ def get_maturity_scores(db) -> dict:
     }
 
 
-def get_requirements(db, category: str | None = None, priority: str | None = None, status: str | None = None) -> dict:
+def get_requirements(
+    db, category: str | None = None, priority: str | None = None, status: str | None = None
+) -> dict:
     """Get requirements list with optional filtering.
 
     Args:
@@ -363,24 +394,26 @@ def get_requirements(db, category: str | None = None, priority: str | None = Non
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
         tenant_code = _resolve_tenant_code(tenant) if tenant else "N/A"
 
-        results.append({
-            "id": req.id,
-            "requirement_id": req.requirement_id,
-            "title": req.title,
-            "description": req.description,
-            "category": req.category,
-            "priority": req.priority,
-            "status": req.status,
-            "tenant_id": req.tenant_id,
-            "tenant_code": tenant_code,
-            "due_date": req.due_date.isoformat() if req.due_date else None,
-            "completed_date": req.completed_date.isoformat() if req.completed_date else None,
-            "owner": req.owner,
-            "evidence_url": req.evidence_url,
-            "evidence_notes": req.evidence_notes,
-            "created_at": req.created_at.isoformat() if req.created_at else None,
-            "updated_at": req.updated_at.isoformat() if req.updated_at else None,
-        })
+        results.append(
+            {
+                "id": req.id,
+                "requirement_id": req.requirement_id,
+                "title": req.title,
+                "description": req.description,
+                "category": req.category,
+                "priority": req.priority,
+                "status": req.status,
+                "tenant_id": req.tenant_id,
+                "tenant_code": tenant_code,
+                "due_date": req.due_date.isoformat() if req.due_date else None,
+                "completed_date": req.completed_date.isoformat() if req.completed_date else None,
+                "owner": req.owner,
+                "evidence_url": req.evidence_url,
+                "evidence_notes": req.evidence_notes,
+                "created_at": req.created_at.isoformat() if req.created_at else None,
+                "updated_at": req.updated_at.isoformat() if req.updated_at else None,
+            }
+        )
 
     stats = {
         "total": len(results),
@@ -473,10 +506,11 @@ def _get_critical_gaps(db) -> list[GapAnalysis]:
     today = date.today()
 
     # Get all incomplete P0 requirements
-    p0_requirements = db.query(RiversideRequirement).filter(
-        RiversideRequirement.priority == "P0",
-        RiversideRequirement.status != "completed"
-    ).all()
+    p0_requirements = (
+        db.query(RiversideRequirement)
+        .filter(RiversideRequirement.priority == "P0", RiversideRequirement.status != "completed")
+        .all()
+    )
 
     for req in p0_requirements:
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
@@ -488,27 +522,33 @@ def _get_critical_gaps(db) -> list[GapAnalysis]:
             days_overdue = (today - req.due_date).days
             is_overdue = days_overdue > 0
 
-        gaps.append(GapAnalysis(
-            requirement_id=req.requirement_id,
-            title=req.title,
-            category=req.category,
-            priority=req.priority,
-            status=req.status,
-            tenant_id=req.tenant_id,
-            tenant_code=tenant_code,
-            due_date=req.due_date.isoformat() if req.due_date else None,
-            is_overdue=is_overdue,
-            days_overdue=days_overdue if is_overdue else 0,
-            risk_level="Critical" if is_overdue else "High",
-            description=req.description,
-        ))
+        gaps.append(
+            GapAnalysis(
+                requirement_id=req.requirement_id,
+                title=req.title,
+                category=req.category,
+                priority=req.priority,
+                status=req.status,
+                tenant_id=req.tenant_id,
+                tenant_code=tenant_code,
+                due_date=req.due_date.isoformat() if req.due_date else None,
+                is_overdue=is_overdue,
+                days_overdue=days_overdue if is_overdue else 0,
+                risk_level="Critical" if is_overdue else "High",
+                description=req.description,
+            )
+        )
 
     # Get P1 requirements that are overdue
-    overdue_p1 = db.query(RiversideRequirement).filter(
-        RiversideRequirement.priority == "P1",
-        RiversideRequirement.status != "completed",
-        RiversideRequirement.due_date < today
-    ).all()
+    overdue_p1 = (
+        db.query(RiversideRequirement)
+        .filter(
+            RiversideRequirement.priority == "P1",
+            RiversideRequirement.status != "completed",
+            RiversideRequirement.due_date < today,
+        )
+        .all()
+    )
 
     for req in overdue_p1:
         tenant = db.query(Tenant).filter(Tenant.tenant_id == req.tenant_id).first()
@@ -516,19 +556,21 @@ def _get_critical_gaps(db) -> list[GapAnalysis]:
 
         days_overdue = (today - req.due_date).days if req.due_date else 0
 
-        gaps.append(GapAnalysis(
-            requirement_id=req.requirement_id,
-            title=req.title,
-            category=req.category,
-            priority=req.priority,
-            status=req.status,
-            tenant_id=req.tenant_id,
-            tenant_code=tenant_code,
-            due_date=req.due_date.isoformat() if req.due_date else None,
-            is_overdue=True,
-            days_overdue=days_overdue,
-            risk_level="High",
-            description=req.description,
-        ))
+        gaps.append(
+            GapAnalysis(
+                requirement_id=req.requirement_id,
+                title=req.title,
+                category=req.category,
+                priority=req.priority,
+                status=req.status,
+                tenant_id=req.tenant_id,
+                tenant_code=tenant_code,
+                due_date=req.due_date.isoformat() if req.due_date else None,
+                is_overdue=True,
+                days_overdue=days_overdue,
+                risk_level="High",
+                description=req.description,
+            )
+        )
 
     return gaps

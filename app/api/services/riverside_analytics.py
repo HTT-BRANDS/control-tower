@@ -54,9 +54,7 @@ def track_requirement_progress(db: Session, requirement_id: int) -> dict:
         ValueError: If the requirement is not found.
     """
     requirement = (
-        db.query(RiversideRequirement)
-        .filter(RiversideRequirement.id == requirement_id)
-        .first()
+        db.query(RiversideRequirement).filter(RiversideRequirement.id == requirement_id).first()
     )
 
     if not requirement:
@@ -235,9 +233,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
     ]
 
     # Calculate urgency score (0-100)
-    total_requirements = (
-        db.query(func.count(RiversideRequirement.id)).scalar() or 1
-    )
+    total_requirements = db.query(func.count(RiversideRequirement.id)).scalar() or 1
     completed_requirements = (
         db.query(func.count(RiversideRequirement.id))
         .filter(RiversideRequirement.status == RequirementStatus.COMPLETED)
@@ -424,9 +420,7 @@ def get_riverside_metrics(db: Session) -> dict:
         total_devices += record.total_devices
         total_compliant_devices += record.compliant_devices
 
-    avg_device_compliance = (
-        total_device_compliance / len(device_records) if device_records else 0.0
-    )
+    avg_device_compliance = total_device_compliance / len(device_records) if device_records else 0.0
 
     # Calculate threat summary
     total_vulnerabilities = 0
@@ -466,9 +460,7 @@ def get_riverside_metrics(db: Session) -> dict:
     )
 
     completion_rate = (
-        (completed_requirements / total_requirements * 100)
-        if total_requirements > 0
-        else 0.0
+        (completed_requirements / total_requirements * 100) if total_requirements > 0 else 0.0
     )
 
     # Calculate financial exposure based on gaps and posture
@@ -522,7 +514,13 @@ def get_riverside_metrics(db: Session) -> dict:
             "average_coverage": round(avg_mfa_coverage, 1),
             "admin_coverage": round(avg_admin_mfa, 1),
             "total_unprotected_users": total_unprotected,
-            "coverage_grade": "A" if avg_mfa_coverage >= 90 else "B" if avg_mfa_coverage >= 75 else "C" if avg_mfa_coverage >= 50 else "F",
+            "coverage_grade": "A"
+            if avg_mfa_coverage >= 90
+            else "B"
+            if avg_mfa_coverage >= 75
+            else "C"
+            if avg_mfa_coverage >= 50
+            else "F",
         },
         "device_summary": {
             "average_compliance": round(avg_device_compliance, 1),
@@ -537,7 +535,11 @@ def get_riverside_metrics(db: Session) -> dict:
         "threat_summary": {
             "average_threat_score": round(avg_threat_score, 1),
             "total_vulnerabilities": total_vulnerabilities,
-            "risk_level": "low" if avg_threat_score < 30 else "medium" if avg_threat_score < 60 else "high",
+            "risk_level": "low"
+            if avg_threat_score < 30
+            else "medium"
+            if avg_threat_score < 60
+            else "high",
         },
         "requirements_summary": {
             "total": total_requirements,

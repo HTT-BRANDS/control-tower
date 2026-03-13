@@ -25,10 +25,7 @@ class TestBrandColors:
     def test_to_css_variables_returns_dict_with_correct_keys(self):
         """Test to_css_variables() returns dict with --brand-* keys."""
         brand = BrandColors(
-            primary="#ff0000",
-            secondary="#00ff00",
-            accent="#0000ff",
-            theme_name="test"
+            primary="#ff0000", secondary="#00ff00", accent="#0000ff", theme_name="test"
         )
 
         css_vars = brand.to_css_variables()
@@ -44,10 +41,7 @@ class TestBrandColors:
     def test_to_inline_style_returns_valid_css_string(self):
         """Test to_inline_style() returns valid CSS variable string."""
         brand = BrandColors(
-            primary="#500711",
-            secondary="#d1bdbf",
-            accent="#ffc957",
-            theme_name="htt"
+            primary="#500711", secondary="#d1bdbf", accent="#ffc957", theme_name="htt"
         )
 
         inline_style = brand.to_inline_style()
@@ -63,10 +57,7 @@ class TestBrandColors:
     def test_to_inline_style_format_is_parseable(self):
         """Test inline style string has valid CSS format."""
         brand = BrandColors(
-            primary="#123456",
-            secondary="#abcdef",
-            accent="#fedcba",
-            theme_name="test"
+            primary="#123456", secondary="#abcdef", accent="#fedcba", theme_name="test"
         )
 
         inline_style = brand.to_inline_style()
@@ -83,14 +74,12 @@ class TestBrandColors:
     def test_brand_colors_is_frozen_dataclass(self):
         """Test that BrandColors is immutable (frozen)."""
         brand = BrandColors(
-            primary="#ff0000",
-            secondary="#00ff00",
-            accent="#0000ff",
-            theme_name="test"
+            primary="#ff0000", secondary="#00ff00", accent="#0000ff", theme_name="test"
         )
 
         # Should raise FrozenInstanceError when trying to modify
         import dataclasses
+
         with pytest.raises(dataclasses.FrozenInstanceError):
             brand.primary = "#000000"
 

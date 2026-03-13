@@ -11,7 +11,6 @@ Covered endpoints:
 - GET /api/v1/compliance/status - Returns sync status
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -21,6 +20,7 @@ from app.main import app
 # ============================================================================
 # Fixtures - Custom clients with compliance route authentication
 # ============================================================================
+
 
 @pytest.fixture
 def compliance_client(seeded_db, test_user, mock_authz):
@@ -71,6 +71,7 @@ def compliance_admin_client(seeded_db, admin_user, mock_authz_admin):
 @pytest.fixture
 def compliance_unauth_client(seeded_db):
     """Test client without authentication for compliance routes."""
+
     def override_get_db():
         try:
             yield seeded_db
@@ -88,6 +89,7 @@ def compliance_unauth_client(seeded_db):
 # ============================================================================
 # GET /api/v1/compliance/summary Tests
 # ============================================================================
+
 
 class TestComplianceSummaryEndpoint:
     """Integration tests for GET /api/v1/compliance/summary."""
@@ -140,9 +142,7 @@ class TestComplianceSummaryEndpoint:
 
     def test_get_summary_tenant_filter(self, compliance_client, test_tenant_id):
         """Compliance summary can be filtered by tenant_ids."""
-        response = compliance_client.get(
-            f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}"
-        )
+        response = compliance_client.get(f"/api/v1/compliance/summary?tenant_ids={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -160,6 +160,7 @@ class TestComplianceSummaryEndpoint:
 # ============================================================================
 # GET /api/v1/compliance/scores Tests
 # ============================================================================
+
 
 class TestComplianceScoresEndpoint:
     """Integration tests for GET /api/v1/compliance/scores."""
@@ -198,9 +199,7 @@ class TestComplianceScoresEndpoint:
 
     def test_get_scores_tenant_filter(self, compliance_client, test_tenant_id):
         """Compliance scores can be filtered by tenant_id."""
-        response = compliance_client.get(
-            f"/api/v1/compliance/scores?tenant_id={test_tenant_id}"
-        )
+        response = compliance_client.get(f"/api/v1/compliance/scores?tenant_id={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -211,9 +210,7 @@ class TestComplianceScoresEndpoint:
 
     def test_get_scores_tenant_ids_filter(self, compliance_client, test_tenant_id):
         """Compliance scores can be filtered by tenant_ids list."""
-        response = compliance_client.get(
-            f"/api/v1/compliance/scores?tenant_ids={test_tenant_id}"
-        )
+        response = compliance_client.get(f"/api/v1/compliance/scores?tenant_ids={test_tenant_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -264,6 +261,7 @@ class TestComplianceScoresEndpoint:
 # ============================================================================
 # GET /api/v1/compliance/non-compliant Tests
 # ============================================================================
+
 
 class TestNonCompliantPoliciesEndpoint:
     """Integration tests for GET /api/v1/compliance/non-compliant."""
@@ -336,17 +334,13 @@ class TestNonCompliantPoliciesEndpoint:
     def test_get_non_compliant_severity_validation(self, compliance_client):
         """Non-compliant policies validates severity parameter."""
         # Invalid severity
-        response = compliance_client.get(
-            "/api/v1/compliance/non-compliant?severity=Invalid"
-        )
+        response = compliance_client.get("/api/v1/compliance/non-compliant?severity=Invalid")
         assert response.status_code == 422  # Validation error
 
     def test_get_non_compliant_pagination(self, compliance_client):
         """Non-compliant policies supports pagination."""
         # Get first page
-        response_page1 = compliance_client.get(
-            "/api/v1/compliance/non-compliant?limit=1&offset=0"
-        )
+        response_page1 = compliance_client.get("/api/v1/compliance/non-compliant?limit=1&offset=0")
         assert response_page1.status_code == 200
         page1_data = response_page1.json()
 
@@ -354,9 +348,7 @@ class TestNonCompliantPoliciesEndpoint:
         assert len(page1_data) <= 1
 
         # Get second page
-        response_page2 = compliance_client.get(
-            "/api/v1/compliance/non-compliant?limit=1&offset=1"
-        )
+        response_page2 = compliance_client.get("/api/v1/compliance/non-compliant?limit=1&offset=1")
         assert response_page2.status_code == 200
         page2_data = response_page2.json()
 
@@ -392,9 +384,7 @@ class TestNonCompliantPoliciesEndpoint:
     def test_get_non_compliant_sort_order_validation(self, compliance_client):
         """Non-compliant policies validates sort_order parameter."""
         # Invalid sort order
-        response = compliance_client.get(
-            "/api/v1/compliance/non-compliant?sort_order=invalid"
-        )
+        response = compliance_client.get("/api/v1/compliance/non-compliant?sort_order=invalid")
         assert response.status_code == 422  # Validation error
 
     def test_get_non_compliant_requires_auth(self, compliance_unauth_client):
@@ -406,6 +396,7 @@ class TestNonCompliantPoliciesEndpoint:
 # ============================================================================
 # GET /api/v1/compliance/trends Tests
 # ============================================================================
+
 
 class TestComplianceTrendsEndpoint:
     """Integration tests for GET /api/v1/compliance/trends."""
@@ -503,6 +494,7 @@ class TestComplianceTrendsEndpoint:
 # GET /api/v1/compliance/status Tests
 # ============================================================================
 
+
 class TestComplianceStatusEndpoint:
     """Integration tests for GET /api/v1/compliance/status."""
 
@@ -565,6 +557,7 @@ class TestComplianceStatusEndpoint:
 # Tenant Isolation Tests
 # ============================================================================
 
+
 class TestComplianceTenantIsolation:
     """Tests for tenant isolation across compliance endpoints."""
 
@@ -618,6 +611,7 @@ class TestComplianceTenantIsolation:
 # ============================================================================
 # Admin User Tests
 # ============================================================================
+
 
 class TestComplianceAdminAccess:
     """Tests for admin user access across compliance endpoints."""

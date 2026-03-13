@@ -322,13 +322,15 @@ class GraphClient:
                 if not include_built_in and is_built_in:
                     continue
 
-                roles.append(DirectoryRole(
-                    role_id=role.get("id", ""),
-                    display_name=role.get("displayName", ""),
-                    description=role.get("description", ""),
-                    role_template_id=role.get("roleTemplateId", ""),
-                    is_built_in=is_built_in,
-                ))
+                roles.append(
+                    DirectoryRole(
+                        role_id=role.get("id", ""),
+                        display_name=role.get("displayName", ""),
+                        description=role.get("description", ""),
+                        role_template_id=role.get("roleTemplateId", ""),
+                        is_built_in=is_built_in,
+                    )
+                )
 
             # Handle pagination
             next_link = data.get("@odata.nextLink")
@@ -381,7 +383,9 @@ class GraphClient:
                 principal_type = principal.get("@odata.type", "").replace("#microsoft.graph.", "")
                 if "user" in principal_type.lower():
                     principal_type = "User"
-                    display_name = principal.get("userPrincipalName") or principal.get("displayName", "")
+                    display_name = principal.get("userPrincipalName") or principal.get(
+                        "displayName", ""
+                    )
                 elif "servicePrincipal" in principal_type.lower():
                     principal_type = "ServicePrincipal"
                     display_name = principal.get("appId") or principal.get("displayName", "")
@@ -416,19 +420,21 @@ class GraphClient:
                     # Handle OData metadata issue
                     role_template_id = ""
 
-                assignments.append(RoleAssignment(
-                    assignment_id=assignment.get("id", ""),
-                    principal_id=principal.get("id", ""),
-                    principal_type=principal_type,
-                    principal_display_name=display_name,
-                    role_definition_id=role_def.get("id", ""),
-                    role_name=role_def.get("displayName", ""),
-                    role_template_id=role_template_id,
-                    scope_type=scope_type,
-                    scope_id=scope_id,
-                    created_date_time=assignment.get("createdDateTime"),
-                    assignment_type=assignment_type,
-                ))
+                assignments.append(
+                    RoleAssignment(
+                        assignment_id=assignment.get("id", ""),
+                        principal_id=principal.get("id", ""),
+                        principal_type=principal_type,
+                        principal_display_name=display_name,
+                        role_definition_id=role_def.get("id", ""),
+                        role_name=role_def.get("displayName", ""),
+                        role_template_id=role_template_id,
+                        scope_type=scope_type,
+                        scope_id=scope_id,
+                        created_date_time=assignment.get("createdDateTime"),
+                        assignment_type=assignment_type,
+                    )
+                )
 
             # Handle pagination
             next_link = data.get("@odata.nextLink")
@@ -465,16 +471,12 @@ class GraphClient:
 
         # Get active assignments (beta endpoint)
         if include_active:
-            active_assignments = await self._get_pim_assignments_by_type(
-                "active", batch_size
-            )
+            active_assignments = await self._get_pim_assignments_by_type("active", batch_size)
             assignments.extend(active_assignments)
 
         # Get eligible assignments (beta endpoint)
         if include_eligible:
-            eligible_assignments = await self._get_pim_assignments_by_type(
-                "eligible", batch_size
-            )
+            eligible_assignments = await self._get_pim_assignments_by_type("eligible", batch_size)
             assignments.extend(eligible_assignments)
 
         return assignments
@@ -529,7 +531,9 @@ class GraphClient:
                 principal_type = principal.get("@odata.type", "").replace("#microsoft.graph.", "")
                 if "user" in principal_type.lower():
                     principal_type = "User"
-                    display_name = principal.get("userPrincipalName") or principal.get("displayName", "")
+                    display_name = principal.get("userPrincipalName") or principal.get(
+                        "displayName", ""
+                    )
                 elif "servicePrincipal" in principal_type.lower():
                     principal_type = "ServicePrincipal"
                     display_name = principal.get("appId") or principal.get("displayName", "")
@@ -547,24 +551,27 @@ class GraphClient:
                 if start_time and end_time:
                     try:
                         from datetime import datetime
+
                         start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
                         end = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
                         duration = str(end - start)
                     except Exception:
                         duration = None
 
-                assignments.append(PrivilegedAccessAssignment(
-                    assignment_id=assignment.get("id", ""),
-                    principal_id=principal.get("id", ""),
-                    principal_type=principal_type,
-                    principal_display_name=display_name,
-                    role_definition_id=role_def.get("id", ""),
-                    role_name=role_def.get("displayName", ""),
-                    assignment_state=assignment_type,
-                    start_date_time=start_time,
-                    end_date_time=end_time,
-                    duration=duration,
-                ))
+                assignments.append(
+                    PrivilegedAccessAssignment(
+                        assignment_id=assignment.get("id", ""),
+                        principal_id=principal.get("id", ""),
+                        principal_type=principal_type,
+                        principal_display_name=display_name,
+                        role_definition_id=role_def.get("id", ""),
+                        role_name=role_def.get("displayName", ""),
+                        assignment_state=assignment_type,
+                        start_date_time=start_time,
+                        end_date_time=end_time,
+                        duration=duration,
+                    )
+                )
 
             # Handle pagination
             next_link = data.get("@odata.nextLink")
@@ -657,21 +664,25 @@ class GraphClient:
 
             # Build user/SP lists
             if assignment.principal_type == "User":
-                privileged_users.append({
-                    "principal_id": assignment.principal_id,
-                    "principal_display_name": assignment.principal_display_name,
-                    "role_name": assignment.role_name,
-                    "role_template_id": role_template_id,
-                    "scope_type": assignment.scope_type,
-                    "is_permanent": assignment.assignment_type == "Direct",
-                })
+                privileged_users.append(
+                    {
+                        "principal_id": assignment.principal_id,
+                        "principal_display_name": assignment.principal_display_name,
+                        "role_name": assignment.role_name,
+                        "role_template_id": role_template_id,
+                        "scope_type": assignment.scope_type,
+                        "is_permanent": assignment.assignment_type == "Direct",
+                    }
+                )
             elif assignment.principal_type == "ServicePrincipal":
-                privileged_sps.append({
-                    "principal_id": assignment.principal_id,
-                    "principal_display_name": assignment.principal_display_name,
-                    "role_name": assignment.role_name,
-                    "role_template_id": role_template_id,
-                })
+                privileged_sps.append(
+                    {
+                        "principal_id": assignment.principal_id,
+                        "principal_display_name": assignment.principal_display_name,
+                        "role_name": assignment.role_name,
+                        "role_template_id": role_template_id,
+                    }
+                )
 
         # Find roles without members
         all_role_ids = {r.role_id for r in role_defs if r.is_built_in}
@@ -730,8 +741,7 @@ class GraphClient:
         endpoint = "/servicePrincipals"
         params = {
             "$top": 999,
-            "$select": "id,displayName,appId,servicePrincipalType,"
-                       "accountEnabled,createdDateTime",
+            "$select": "id,displayName,appId,servicePrincipalType,accountEnabled,createdDateTime",
         }
         data = await self._request("GET", endpoint, params)
         return data.get("value", [])
@@ -791,9 +801,7 @@ class GraphClient:
         try:
             # Get user basic info
             user_endpoint = f"/users/{user_id}"
-            user_params = {
-                "$select": "id,displayName,userPrincipalName,signInActivity"
-            }
+            user_params = {"$select": "id,displayName,userPrincipalName,signInActivity"}
             user_data = await self._request("GET", user_endpoint, user_params)
 
             if not user_data:
@@ -827,7 +835,9 @@ class GraphClient:
                     method_details.email_address = method.get("emailAddress")
                     methods_registered.append("email")
                 elif "microsoftAuthenticatorAuthenticationMethod" in method_type:
-                    method_details.display_name = method.get("displayName", "Microsoft Authenticator")
+                    method_details.display_name = method.get(
+                        "displayName", "Microsoft Authenticator"
+                    )
                     method_details.app_id = method.get("authenticatorAppId")
                     methods_registered.append("microsoftAuthenticator")
                 elif "fido2AuthenticationMethod" in method_type:
@@ -984,14 +994,11 @@ class GraphClient:
                         admin_user_ids.add(user_id)
 
         # Get MFA registrations
-        mfa_registrations = await self.get_mfa_registration_details_paginated(
-            batch_size=batch_size
-        )
+        mfa_registrations = await self.get_mfa_registration_details_paginated(batch_size=batch_size)
 
         # Build registration lookup
         registration_lookup: dict[str, dict] = {
-            reg.get("userPrincipalName", "").lower(): reg
-            for reg in mfa_registrations
+            reg.get("userPrincipalName", "").lower(): reg for reg in mfa_registrations
         }
 
         # Calculate statistics
@@ -1022,12 +1029,14 @@ class GraphClient:
                     method_breakdown[method_type] = method_breakdown.get(method_type, 0) + 1
             else:
                 if include_details:
-                    users_without_mfa.append({
-                        "user_id": user_id,
-                        "user_principal_name": upn,
-                        "display_name": user.get("displayName", ""),
-                        "is_admin": is_admin,
-                    })
+                    users_without_mfa.append(
+                        {
+                            "user_id": user_id,
+                            "user_principal_name": upn,
+                            "display_name": user.get("displayName", ""),
+                            "is_admin": is_admin,
+                        }
+                    )
 
             # Rate limiting compliance
             await asyncio.sleep(0.01)
@@ -1076,8 +1085,13 @@ class GraphClient:
 
         if select_fields is None:
             select_fields = [
-                "id", "displayName", "userPrincipalName", "userType",
-                "accountEnabled", "createdDateTime", "signInActivity"
+                "id",
+                "displayName",
+                "userPrincipalName",
+                "userType",
+                "accountEnabled",
+                "createdDateTime",
+                "signInActivity",
             ]
 
         endpoint = "/users"
@@ -1093,15 +1107,14 @@ class GraphClient:
         try:
             data = await self._request("GET", endpoint, params)
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403 and "signInActivity" in (params or {}).get("$select", ""):
+            if e.response.status_code == 403 and "signInActivity" in (params or {}).get(
+                "$select", ""
+            ):
                 logger.warning(
-                    "signInActivity requires Azure AD Premium for tenant "
-                    "%s — retrying without it",
+                    "signInActivity requires Azure AD Premium for tenant %s — retrying without it",
                     self.tenant_id[:8],
                 )
-                fields_without_sign_in = [
-                    f for f in select_fields if f != "signInActivity"
-                ]
+                fields_without_sign_in = [f for f in select_fields if f != "signInActivity"]
                 params["$select"] = ",".join(fields_without_sign_in)
                 data = await self._request("GET", endpoint, params)
             else:

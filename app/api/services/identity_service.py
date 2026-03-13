@@ -27,9 +27,7 @@ class IdentityService:
         self.db = db
 
     @cached("identity_summary")
-    async def get_identity_summary(
-        self, tenant_ids: list[str] | None = None
-    ) -> IdentitySummary:
+    async def get_identity_summary(self, tenant_ids: list[str] | None = None) -> IdentitySummary:
         """Get aggregated identity summary across all tenants.
 
         Args:
@@ -73,9 +71,7 @@ class IdentityService:
                 # Calculate MFA percent for tenant
                 tenant_mfa_percent = 0.0
                 if latest.total_users > 0:
-                    tenant_mfa_percent = (
-                        latest.mfa_enabled_users / latest.total_users * 100
-                    )
+                    tenant_mfa_percent = latest.mfa_enabled_users / latest.total_users * 100
 
                 tenant_summaries.append(
                     TenantIdentitySummary(
@@ -250,19 +246,21 @@ class IdentityService:
                 else 0.0
             )
 
-            trends.append({
-                "date": date_key.isoformat(),
-                "total_users": data["total_users"],
-                "mfa_adoption_rate": round(mfa_adoption_rate, 2),
-                "mfa_enabled": data["mfa_enabled"],
-                "mfa_disabled": data["mfa_disabled"],
-                "guest_users": data["guest_users"],
-                "privileged_users": data["privileged_users"],
-                "stale_accounts_30d": data["stale_accounts_30d"],
-                "stale_accounts_90d": data["stale_accounts_90d"],
-                "service_principals": data["service_principals"],
-                "tenant_count": data["tenant_count"],
-            })
+            trends.append(
+                {
+                    "date": date_key.isoformat(),
+                    "total_users": data["total_users"],
+                    "mfa_adoption_rate": round(mfa_adoption_rate, 2),
+                    "mfa_enabled": data["mfa_enabled"],
+                    "mfa_disabled": data["mfa_disabled"],
+                    "guest_users": data["guest_users"],
+                    "privileged_users": data["privileged_users"],
+                    "stale_accounts_30d": data["stale_accounts_30d"],
+                    "stale_accounts_90d": data["stale_accounts_90d"],
+                    "service_principals": data["service_principals"],
+                    "tenant_count": data["tenant_count"],
+                }
+            )
 
         return trends
 

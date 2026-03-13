@@ -11,10 +11,10 @@ import pytest
 
 # Mock Azure SDK before imports
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.identity'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.identity"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
 
 from app.api.services.graph_client import (  # noqa: E402
     ADMIN_ROLE_TEMPLATE_IDS,
@@ -106,7 +106,7 @@ class TestGraphClientAdminRoles:
     @pytest.fixture
     def mock_graph_client(self):
         """Create a GraphClient with mocked credentials."""
-        with patch.object(GraphClient, '_get_token') as mock_token:
+        with patch.object(GraphClient, "_get_token") as mock_token:
             mock_token.return_value = "mock-token"
             client = GraphClient("test-tenant-id")
             return client
@@ -200,7 +200,7 @@ class TestGraphClientAdminRoles:
     @pytest.mark.asyncio
     async def test_get_directory_role_definitions(self, mock_graph_client, sample_directory_roles):
         """Test successful retrieval of directory role definitions."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = sample_directory_roles
 
             result = await mock_graph_client.get_directory_role_definitions()
@@ -239,7 +239,7 @@ class TestGraphClientAdminRoles:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.side_effect = [page1, page2]
 
             result = await mock_graph_client.get_directory_role_definitions()
@@ -268,7 +268,7 @@ class TestGraphClientAdminRoles:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = data
 
             result = await mock_graph_client.get_directory_role_definitions(include_built_in=False)
@@ -279,7 +279,7 @@ class TestGraphClientAdminRoles:
     @pytest.mark.asyncio
     async def test_get_role_assignments_paginated(self, mock_graph_client, sample_role_assignments):
         """Test role assignments retrieval."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = sample_role_assignments
 
             result = await mock_graph_client.get_role_assignments_paginated(batch_size=100)
@@ -313,7 +313,7 @@ class TestGraphClientAdminRoles:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = data
 
             result = await mock_graph_client.get_role_assignments_paginated()
@@ -356,7 +356,7 @@ class TestGraphClientAdminRoles:
             ),
         ]
 
-        with patch.object(mock_graph_client, 'get_role_assignments_paginated') as mock_get:
+        with patch.object(mock_graph_client, "get_role_assignments_paginated") as mock_get:
             mock_get.return_value = assignments
 
             result = await mock_graph_client.get_service_principal_role_assignments()
@@ -368,11 +368,11 @@ class TestGraphClientAdminRoles:
     @pytest.mark.asyncio
     async def test_get_pim_role_assignments(self, mock_graph_client, sample_pim_assignments):
         """Test PIM role assignments retrieval."""
-        with patch.object(mock_graph_client, '_get_token') as mock_token:
+        with patch.object(mock_graph_client, "_get_token") as mock_token:
             mock_token.return_value = "mock-token"
 
             # Mock the _get_pim_assignments_by_type method directly
-            with patch.object(mock_graph_client, '_get_pim_assignments_by_type') as mock_get_pim:
+            with patch.object(mock_graph_client, "_get_pim_assignments_by_type") as mock_get_pim:
                 mock_get_pim.return_value = [
                     PrivilegedAccessAssignment(
                         assignment_id="pim-1",
@@ -400,19 +400,18 @@ class TestGraphClientAdminRoles:
     @pytest.mark.asyncio
     async def test_get_pim_role_assignments_error_handling(self, mock_graph_client):
         """Test PIM error handling when PIM is not enabled."""
-        with patch.object(mock_graph_client, '_get_token') as mock_token:
+        with patch.object(mock_graph_client, "_get_token") as mock_token:
             mock_token.return_value = "mock-token"
 
-            with patch('httpx.AsyncClient') as mock_client:
+            with patch("httpx.AsyncClient") as mock_client:
                 mock_async_client = AsyncMock()
                 mock_async_client.__aenter__ = AsyncMock(return_value=mock_async_client)
                 mock_async_client.__aexit__ = AsyncMock(return_value=None)
 
                 # Simulate 404 error (PIM not enabled)
                 import httpx
-                mock_async_client.request = AsyncMock(
-                    side_effect=httpx.HTTPError("Not Found")
-                )
+
+                mock_async_client.request = AsyncMock(side_effect=httpx.HTTPError("Not Found"))
                 mock_client.return_value = mock_async_client
 
                 result = await mock_graph_client.get_pim_role_assignments()
@@ -463,10 +462,11 @@ class TestGraphClientAdminRoles:
             ),
         ]
 
-        with patch.object(mock_graph_client, 'get_directory_role_definitions') as mock_roles, \
-             patch.object(mock_graph_client, 'get_role_assignments_paginated') as mock_assignments, \
-             patch.object(mock_graph_client, 'get_pim_role_assignments') as mock_pim:
-
+        with (
+            patch.object(mock_graph_client, "get_directory_role_definitions") as mock_roles,
+            patch.object(mock_graph_client, "get_role_assignments_paginated") as mock_assignments,
+            patch.object(mock_graph_client, "get_pim_role_assignments") as mock_pim,
+        ):
             mock_roles.return_value = roles
             mock_assignments.return_value = assignments
             mock_pim.return_value = []
@@ -500,10 +500,11 @@ class TestGraphClientAdminRoles:
             ),
         ]
 
-        with patch.object(mock_graph_client, 'get_directory_role_definitions') as mock_roles, \
-             patch.object(mock_graph_client, 'get_role_assignments_paginated') as mock_assignments, \
-             patch.object(mock_graph_client, 'get_pim_role_assignments') as mock_pim:
-
+        with (
+            patch.object(mock_graph_client, "get_directory_role_definitions") as mock_roles,
+            patch.object(mock_graph_client, "get_role_assignments_paginated") as mock_assignments,
+            patch.object(mock_graph_client, "get_pim_role_assignments") as mock_pim,
+        ):
             mock_roles.return_value = []
             mock_assignments.return_value = assignments
             mock_pim.return_value = []
@@ -533,6 +534,7 @@ class TestAdminRoleTemplateIds:
     def test_all_template_ids_are_valid_uuids(self):
         """Test that all template IDs are valid UUID format."""
         import uuid
+
         for role_id in ADMIN_ROLE_TEMPLATE_IDS:
             try:
                 uuid.UUID(role_id)

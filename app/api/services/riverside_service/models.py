@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 @dataclass
 class RiversideRequirement:
     """Individual Riverside security requirement."""
+
     id: str
     category: RiversideRequirementCategory
     title: str
@@ -36,6 +37,7 @@ class RiversideRequirement:
 @dataclass
 class TenantRequirementTracker:
     """Tracks requirement status per tenant."""
+
     tenant_id: str
     tenant_name: str
     requirement: RiversideRequirement
@@ -48,6 +50,7 @@ class TenantRequirementTracker:
 @dataclass
 class RiversideComplianceSummary:
     """Overall compliance summary across all tenants."""
+
     overall_compliance_pct: float
     target_compliance_pct: float
     completed_requirements_count: int
@@ -57,6 +60,7 @@ class RiversideComplianceSummary:
 @dataclass
 class MFAMaturityScore:
     """MFA maturity metrics."""
+
     overall_maturity: RequirementLevel
     enrollment_rate_pct: float
     admin_enforcement_pct: float
@@ -67,6 +71,7 @@ class MFAMaturityScore:
 @dataclass
 class RiversideThreatMetrics:
     """Security threat metrics and trends."""
+
     phishing_attempts_30d: int
     malware_detected_30d: int
     spam_filtered_30d: int
@@ -77,6 +82,7 @@ class RiversideThreatMetrics:
 @dataclass
 class TenantRiversideSummary:
     """Compliance summary for individual tenant."""
+
     tenant_id: str
     tenant_name: str
     overall_compliance_pct: float
@@ -91,6 +97,7 @@ class TenantRiversideSummary:
 @dataclass
 class RiversideExecutiveSummary:
     """Executive-level summary across all tenants."""
+
     overall_compliance_pct: float
     phases_complete: list[str]
     completion_by_tenant: list[TenantRiversideSummary]
@@ -103,6 +110,7 @@ class RiversideExecutiveSummary:
 @dataclass
 class AggregateMFAStatus:
     """Aggregated MFA status across environment."""
+
     total_users: int
     mfa_enforced_users: int
     mfa_available_users: int
@@ -115,6 +123,7 @@ class AggregateMFAStatus:
 @dataclass
 class GapAnalysis:
     """Individual gap analysis result."""
+
     requirement_id: str
     title: str
     category: str
@@ -132,6 +141,7 @@ class GapAnalysis:
 @dataclass
 class TenantMFAStatus:
     """MFA status for a single tenant."""
+
     tenant_id: str
     tenant_code: str
     tenant_name: str
@@ -148,6 +158,7 @@ class TenantMFAStatus:
 @dataclass
 class TenantMaturityScore:
     """Maturity scores for a single tenant."""
+
     tenant_id: str
     tenant_code: str
     tenant_name: str
@@ -161,6 +172,7 @@ class TenantMaturityScore:
 @dataclass
 class RequirementListItem:
     """Requirement item for list views."""
+
     id: int
     requirement_id: str
     title: str

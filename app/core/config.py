@@ -47,7 +47,9 @@ class Settings(BaseSettings):
     azure_region: str | None = Field(default=None, alias="AZURE_REGION")
     azure_subscription_id: str | None = Field(default=None, alias="AZURE_SUBSCRIPTION_ID")
     azure_resource_group: str | None = Field(default=None, alias="AZURE_RESOURCE_GROUP")
-    azure_managed_identity_object_id: str | None = Field(default=None, alias="AZURE_MANAGED_IDENTITY_OBJECT_ID")
+    azure_managed_identity_object_id: str | None = Field(
+        default=None, alias="AZURE_MANAGED_IDENTITY_OBJECT_ID"
+    )
 
     # Application
     app_name: str = "Azure Governance Platform"
@@ -69,7 +71,9 @@ class Settings(BaseSettings):
     # JWT Configuration
     jwt_secret_key: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = Field(default=30, alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    jwt_access_token_expire_minutes: int = Field(
+        default=30, alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
     jwt_refresh_token_expire_days: int = Field(default=7, alias="JWT_REFRESH_TOKEN_EXPIRE_DAYS")
 
     # Azure AD / Entra ID OAuth2 Configuration
@@ -77,30 +81,27 @@ class Settings(BaseSettings):
     azure_ad_client_id: str | None = Field(default=None, alias="AZURE_AD_CLIENT_ID")
     azure_ad_client_secret: str | None = Field(default=None, alias="AZURE_AD_CLIENT_SECRET")
     azure_ad_authority: str = Field(
-        default="https://login.microsoftonline.com/common",
-        alias="AZURE_AD_AUTHORITY"
+        default="https://login.microsoftonline.com/common", alias="AZURE_AD_AUTHORITY"
     )
     azure_ad_token_endpoint: str = Field(
         default="https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        alias="AZURE_AD_TOKEN_ENDPOINT"
+        alias="AZURE_AD_TOKEN_ENDPOINT",
     )
     azure_ad_authorization_endpoint: str = Field(
         default="https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-        alias="AZURE_AD_AUTHORIZATION_ENDPOINT"
+        alias="AZURE_AD_AUTHORIZATION_ENDPOINT",
     )
     azure_ad_jwks_uri: str = Field(
         default="https://login.microsoftonline.com/common/discovery/v2.0/keys",
-        alias="AZURE_AD_JWKS_URI"
+        alias="AZURE_AD_JWKS_URI",
     )
     azure_ad_issuer: str = Field(
-        default="https://login.microsoftonline.com/common/v2.0",
-        alias="AZURE_AD_ISSUER"
+        default="https://login.microsoftonline.com/common/v2.0", alias="AZURE_AD_ISSUER"
     )
 
     # OAuth2 Scopes
     oauth2_scopes: list[str] = Field(
-        default_factory=lambda: ["openid", "profile", "email", "User.Read"],
-        alias="OAUTH2_SCOPES"
+        default_factory=lambda: ["openid", "profile", "email", "User.Read"], alias="OAUTH2_SCOPES"
     )
 
     # Legacy Azure Authentication (for backend service calls)
@@ -145,8 +146,12 @@ class Settings(BaseSettings):
 
     # CORS (RESTRICTED in production - no wildcards allowed)
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
-    cors_allow_methods: list[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
-    cors_allow_headers: list[str] = Field(default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"])
+    cors_allow_methods: list[str] = Field(
+        default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    )
+    cors_allow_headers: list[str] = Field(
+        default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"]
+    )
     cors_allow_credentials: bool = True
 
     # Caching Configuration
@@ -155,10 +160,18 @@ class Settings(BaseSettings):
     cache_default_ttl_seconds: int = Field(default=300, alias="CACHE_DEFAULT_TTL_SECONDS")  # 5 min
     cache_max_ttl_seconds: int = Field(default=86400, alias="CACHE_MAX_TTL_SECONDS")  # 24 hours
     cache_ttl_cost_summary: int = Field(default=3600, alias="CACHE_TTL_COST_SUMMARY")  # 1 hour
-    cache_ttl_compliance_summary: int = Field(default=1800, alias="CACHE_TTL_COMPLIANCE_SUMMARY")  # 30 min
-    cache_ttl_resource_inventory: int = Field(default=900, alias="CACHE_TTL_RESOURCE_INVENTORY")  # 15 min
-    cache_ttl_identity_summary: int = Field(default=3600, alias="CACHE_TTL_IDENTITY_SUMMARY")  # 1 hour
-    cache_ttl_riverside_summary: int = Field(default=900, alias="CACHE_TTL_RIVERSIDE_SUMMARY")  # 15 min
+    cache_ttl_compliance_summary: int = Field(
+        default=1800, alias="CACHE_TTL_COMPLIANCE_SUMMARY"
+    )  # 30 min
+    cache_ttl_resource_inventory: int = Field(
+        default=900, alias="CACHE_TTL_RESOURCE_INVENTORY"
+    )  # 15 min
+    cache_ttl_identity_summary: int = Field(
+        default=3600, alias="CACHE_TTL_IDENTITY_SUMMARY"
+    )  # 1 hour
+    cache_ttl_riverside_summary: int = Field(
+        default=900, alias="CACHE_TTL_RIVERSIDE_SUMMARY"
+    )  # 15 min
 
     # Production Hardening Defaults
     cache_default_ttl: int = 300
@@ -295,7 +308,7 @@ class Settings(BaseSettings):
         if len(v) < 32:
             logger.warning(
                 "JWT secret key is too short (< 32 characters). "
-                "Generate a strong key with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+                'Generate a strong key with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
         return v
 
@@ -324,18 +337,22 @@ class Settings(BaseSettings):
     @property
     def is_configured(self) -> bool:
         """Check if minimum Azure configuration is present."""
-        return all([
-            self.azure_tenant_id,
-            self.azure_client_id,
-            self.azure_client_secret,
-        ])
+        return all(
+            [
+                self.azure_tenant_id,
+                self.azure_client_id,
+                self.azure_client_secret,
+            ]
+        )
 
     @property
     def is_containerized(self) -> bool:
         """Check if running in a container environment."""
-        return os.getenv("KUBERNETES_SERVICE_HOST") is not None or \
-               os.getenv("CONTAINER") is not None or \
-               os.path.exists("/.dockerenv")
+        return (
+            os.getenv("KUBERNETES_SERVICE_HOST") is not None
+            or os.getenv("CONTAINER") is not None
+            or os.path.exists("/.dockerenv")
+        )
 
     @property
     def is_azure_app_service(self) -> bool:

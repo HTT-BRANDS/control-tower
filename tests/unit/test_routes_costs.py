@@ -162,9 +162,7 @@ class TestCostAnomaliesEndpoint:
         mock_svc.get_anomalies.return_value = []  # sync in route
         mock_service_cls.return_value = mock_svc
 
-        response = authed_client.get(
-            "/api/v1/costs/anomalies?acknowledged=false&limit=10"
-        )
+        response = authed_client.get("/api/v1/costs/anomalies?acknowledged=false&limit=10")
 
         assert response.status_code == 200
         mock_svc.get_anomalies.assert_called_once()
@@ -179,9 +177,7 @@ class TestAcknowledgeAnomalyEndpoint:
     """Tests for POST /api/v1/costs/anomalies/{anomaly_id}/acknowledge."""
 
     @patch("app.api.routes.costs.CostService")
-    def test_acknowledge_anomaly_success(
-        self, mock_service_cls, authed_client, db_session
-    ):
+    def test_acknowledge_anomaly_success(self, mock_service_cls, authed_client, db_session):
         """Acknowledge anomaly endpoint succeeds."""
         from app.models.cost import CostAnomaly
 

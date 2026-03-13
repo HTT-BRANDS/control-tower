@@ -60,9 +60,7 @@ class MFATenantDataCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute MFA tenant data availability check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -76,10 +74,7 @@ class MFATenantDataCheck(BasePreflightCheck):
                 query = query.filter(RiversideMFA.tenant_id == tenant_id)
 
             # Get latest MFA data
-            latest_mfa = (
-                query.order_by(RiversideMFA.snapshot_date.desc())
-                .first()
-            )
+            latest_mfa = query.order_by(RiversideMFA.snapshot_date.desc()).first()
 
             # Get total record count
             total_records = query.count()
@@ -108,9 +103,7 @@ class MFATenantDataCheck(BasePreflightCheck):
                 )
 
             # Check data freshness (data older than 7 days is stale)
-            data_age_days = (
-                datetime.utcnow() - latest_mfa.snapshot_date
-            ).total_seconds() / 86400
+            data_age_days = (datetime.utcnow() - latest_mfa.snapshot_date).total_seconds() / 86400
 
             is_stale = data_age_days > 7
 
@@ -198,9 +191,7 @@ class MFAAdminEnrollmentCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute admin MFA enrollment check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -213,10 +204,7 @@ class MFAAdminEnrollmentCheck(BasePreflightCheck):
             if tenant_id:
                 query = query.filter(RiversideMFA.tenant_id == tenant_id)
 
-            latest_mfa = (
-                query.order_by(RiversideMFA.snapshot_date.desc())
-                .first()
-            )
+            latest_mfa = query.order_by(RiversideMFA.snapshot_date.desc()).first()
 
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
@@ -357,9 +345,7 @@ class MFAUserEnrollmentCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute user MFA enrollment check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -372,10 +358,7 @@ class MFAUserEnrollmentCheck(BasePreflightCheck):
             if tenant_id:
                 query = query.filter(RiversideMFA.tenant_id == tenant_id)
 
-            latest_mfa = (
-                query.order_by(RiversideMFA.snapshot_date.desc())
-                .first()
-            )
+            latest_mfa = query.order_by(RiversideMFA.snapshot_date.desc()).first()
 
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
@@ -551,9 +534,7 @@ class MFAGapReportCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute MFA gap analysis check."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -568,20 +549,17 @@ class MFAGapReportCheck(BasePreflightCheck):
             latest_dates = (
                 db.query(
                     RiversideMFA.tenant_id,
-                    func.max(RiversideMFA.snapshot_date).label("latest_date")
+                    func.max(RiversideMFA.snapshot_date).label("latest_date"),
                 )
                 .group_by(RiversideMFA.tenant_id)
                 .subquery()
             )
 
             # Get latest MFA records
-            query = (
-                db.query(RiversideMFA)
-                .join(
-                    latest_dates,
-                    (RiversideMFA.tenant_id == latest_dates.c.tenant_id) &
-                    (RiversideMFA.snapshot_date == latest_dates.c.latest_date)
-                )
+            query = db.query(RiversideMFA).join(
+                latest_dates,
+                (RiversideMFA.tenant_id == latest_dates.c.tenant_id)
+                & (RiversideMFA.snapshot_date == latest_dates.c.latest_date),
             )
 
             if tenant_id:
@@ -617,12 +595,8 @@ class MFAGapReportCheck(BasePreflightCheck):
             total_admins = sum(r.admin_accounts_total or 0 for r in mfa_records)
             admins_with_mfa = sum(r.admin_accounts_mfa or 0 for r in mfa_records)
 
-            overall_user_pct = (
-                (total_mfa_enrolled / total_users * 100) if total_users > 0 else 0
-            )
-            overall_admin_pct = (
-                (admins_with_mfa / total_admins * 100) if total_admins > 0 else 0
-            )
+            overall_user_pct = (total_mfa_enrolled / total_users * 100) if total_users > 0 else 0
+            overall_admin_pct = (admins_with_mfa / total_admins * 100) if total_admins > 0 else 0
 
             # Identify gaps
             gaps = []
@@ -635,48 +609,52 @@ class MFAGapReportCheck(BasePreflightCheck):
                 admin_pct = record.admin_mfa_percentage or 0
 
                 if user_pct < 95:
-                    tenant_gaps.append({
-                        "type": "user_mfa",
-                        "current": user_pct,
-                        "target": 95,
-                        "gap": 95 - user_pct,
-                    })
+                    tenant_gaps.append(
+                        {
+                            "type": "user_mfa",
+                            "current": user_pct,
+                            "target": 95,
+                            "gap": 95 - user_pct,
+                        }
+                    )
 
                 if admin_pct < 100:
-                    tenant_gaps.append({
-                        "type": "admin_mfa",
-                        "current": admin_pct,
-                        "target": 100,
-                        "gap": 100 - admin_pct,
-                    })
+                    tenant_gaps.append(
+                        {
+                            "type": "admin_mfa",
+                            "current": admin_pct,
+                            "target": 100,
+                            "gap": 100 - admin_pct,
+                        }
+                    )
 
                 if tenant_gaps:
-                    gaps.append({
-                        "tenant_id": record.tenant_id,
-                        "gaps": tenant_gaps,
-                    })
+                    gaps.append(
+                        {
+                            "tenant_id": record.tenant_id,
+                            "gaps": tenant_gaps,
+                        }
+                    )
 
-                tenant_summaries.append({
-                    "tenant_id": record.tenant_id,
-                    "total_users": record.total_users,
-                    "mfa_enrolled": record.mfa_enrolled_users,
-                    "user_mfa_pct": user_pct,
-                    "admin_total": record.admin_accounts_total,
-                    "admin_mfa": record.admin_accounts_mfa,
-                    "admin_mfa_pct": admin_pct,
-                })
+                tenant_summaries.append(
+                    {
+                        "tenant_id": record.tenant_id,
+                        "total_users": record.total_users,
+                        "mfa_enrolled": record.mfa_enrolled_users,
+                        "user_mfa_pct": user_pct,
+                        "admin_total": record.admin_accounts_total,
+                        "admin_mfa": record.admin_accounts_mfa,
+                        "admin_mfa_pct": admin_pct,
+                    }
+                )
 
             # Determine overall status
             critical_gaps = sum(
-                1 for g in gaps
-                for tg in g["gaps"]
-                if tg["type"] == "admin_mfa" and tg["gap"] > 0
+                1 for g in gaps for tg in g["gaps"] if tg["type"] == "admin_mfa" and tg["gap"] > 0
             )
 
             warning_gaps = sum(
-                1 for g in gaps
-                for tg in g["gaps"]
-                if tg["type"] == "user_mfa" and tg["gap"] > 0
+                1 for g in gaps for tg in g["gaps"] if tg["type"] == "user_mfa" and tg["gap"] > 0
             )
 
             if critical_gaps > 0:
@@ -701,28 +679,16 @@ class MFAGapReportCheck(BasePreflightCheck):
                 recommendations.append(
                     "Enable Conditional Access policy requiring MFA for all admin roles"
                 )
-                recommendations.append(
-                    "Review and revoke unnecessary admin privileges"
-                )
+                recommendations.append("Review and revoke unnecessary admin privileges")
 
             if warning_gaps > 0:
-                recommendations.append(
-                    f"{warning_gaps} tenant(s) below 95% user MFA target"
-                )
-                recommendations.append(
-                    "Enable MFA registration campaign in Azure AD"
-                )
-                recommendations.append(
-                    "Send targeted communications to non-enrolled users"
-                )
+                recommendations.append(f"{warning_gaps} tenant(s) below 95% user MFA target")
+                recommendations.append("Enable MFA registration campaign in Azure AD")
+                recommendations.append("Send targeted communications to non-enrolled users")
 
             if not recommendations:
-                recommendations.append(
-                    "Maintain current MFA policies and monitoring"
-                )
-                recommendations.append(
-                    "Consider increasing user MFA target to 98-100%"
-                )
+                recommendations.append("Maintain current MFA policies and monitoring")
+                recommendations.append("Consider increasing user MFA target to 98-100%")
 
             return CheckResult(
                 check_id=self.check_id,
@@ -775,6 +741,7 @@ class MFAGapReportCheck(BasePreflightCheck):
 # ============================================================================
 # FUNCTION-BASED API (for direct use)
 # ============================================================================
+
 
 async def check_mfa_tenant_data(tenant_id: str | None = None) -> CheckResult:
     """Check MFA tenant data availability.

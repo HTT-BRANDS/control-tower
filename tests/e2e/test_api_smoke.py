@@ -14,16 +14,19 @@ def client(base_url):
 class TestProtectedEndpointsRequireAuth:
     """All protected API endpoints should return 401 or 403 without authentication."""
 
-    @pytest.mark.parametrize("path", [
-        "/api/v1/preflight/status",
-        "/api/v1/sync/metrics",
-        "/api/v1/recommendations",
-        "/monitoring/performance",
-        "/monitoring/cache",
-        "/api/v1/costs/summary",
-        "/api/v1/compliance/summary",
-        "/api/v1/identity/summary",
-    ])
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/api/v1/preflight/status",
+            "/api/v1/sync/metrics",
+            "/api/v1/recommendations",
+            "/monitoring/performance",
+            "/monitoring/cache",
+            "/api/v1/costs/summary",
+            "/api/v1/compliance/summary",
+            "/api/v1/identity/summary",
+        ],
+    )
     def test_endpoint_rejects_unauthenticated_request(self, client, path):
         """Protected endpoint should return 401 or 403 without auth token."""
         response = client.get(path)
@@ -31,10 +34,16 @@ class TestProtectedEndpointsRequireAuth:
             f"{path} returned {response.status_code}, expected 401 or 403"
         )
 
-    @pytest.mark.parametrize("path", [
-        "/api/v1/preflight/run",
-        pytest.param("/api/v1/sync/trigger/costs", marks=pytest.mark.xfail(reason="sync trigger endpoint not yet implemented")),
-    ])
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/api/v1/preflight/run",
+            pytest.param(
+                "/api/v1/sync/trigger/costs",
+                marks=pytest.mark.xfail(reason="sync trigger endpoint not yet implemented"),
+            ),
+        ],
+    )
     def test_post_endpoint_rejects_unauthenticated_request(self, client, path):
         """Protected POST endpoints should also reject without auth."""
         response = client.post(path)

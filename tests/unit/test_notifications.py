@@ -154,6 +154,7 @@ class TestShouldNotify:
 
         # Clear any existing history
         from app.core.notifications import _notification_history
+
         _notification_history.clear()
 
         assert should_notify("test_alert") is True
@@ -168,6 +169,7 @@ class TestShouldNotify:
 
         # Clear and set history
         from app.core.notifications import _notification_history
+
         _notification_history.clear()
         record_notification_sent("test_alert")
 

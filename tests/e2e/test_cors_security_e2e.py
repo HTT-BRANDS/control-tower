@@ -39,20 +39,14 @@ class TestSecurityMiddleware:
         """Every response should have X-Frame-Options header."""
         for path in ["/health", "/api/v1/status", "/metrics"]:
             resp = api_context.get(path)
-            assert (
-                resp.headers.get("x-frame-options") == "DENY"
-            ), f"{path} missing X-Frame-Options"
+            assert resp.headers.get("x-frame-options") == "DENY", f"{path} missing X-Frame-Options"
 
-    def test_all_responses_have_content_type_options(
-        self, api_context: APIRequestContext
-    ):
+    def test_all_responses_have_content_type_options(self, api_context: APIRequestContext):
         for path in ["/health", "/api/v1/status"]:
             resp = api_context.get(path)
             assert resp.headers.get("x-content-type-options") == "nosniff"
 
-    def test_json_endpoints_return_json_content_type(
-        self, api_context: APIRequestContext
-    ):
+    def test_json_endpoints_return_json_content_type(self, api_context: APIRequestContext):
         """JSON API endpoints should set application/json content type."""
         resp = api_context.get("/health")
         assert "application/json" in resp.headers.get("content-type", "")

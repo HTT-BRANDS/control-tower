@@ -470,6 +470,7 @@ def require_roles(required_roles: list[str]):
         async def admin_endpoint(user: User = Depends(require_roles(["admin"]))):
             ...
     """
+
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if "admin" in current_user.roles:
             return current_user

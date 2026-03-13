@@ -45,15 +45,11 @@ async def sync_compliance():
             logger.info(f"Found {len(tenants)} active tenants to sync for compliance")
 
             for tenant in tenants:
-                logger.info(
-                    f"Syncing compliance for tenant: {tenant.name} ({tenant.tenant_id})"
-                )
+                logger.info(f"Syncing compliance for tenant: {tenant.name} ({tenant.tenant_id})")
 
                 try:
                     # Get subscriptions for this tenant
-                    subscriptions = await azure_client_manager.list_subscriptions(
-                        tenant.tenant_id
-                    )
+                    subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
                     logger.info(
                         f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
                     )
@@ -64,9 +60,7 @@ async def sync_compliance():
 
                         # Skip non-enabled subscriptions
                         if sub["state"] != "Enabled":
-                            logger.info(
-                                f"Skipping subscription {sub_name} (state: {sub['state']})"
-                            )
+                            logger.info(f"Skipping subscription {sub_name} (state: {sub['state']})")
                             continue
 
                         try:
@@ -90,9 +84,11 @@ async def sync_compliance():
 
                             # Query Azure Policy Insights for compliance states
                             try:
-                                policy_states = policy_client.policy_states.list_query_results_for_subscription(
-                                    policy_states_resource="latest",
-                                    subscription_id=sub_id,
+                                policy_states = (
+                                    policy_client.policy_states.list_query_results_for_subscription(
+                                        policy_states_resource="latest",
+                                        subscription_id=sub_id,
+                                    )
                                 )
 
                                 # Track unique policies for aggregation
@@ -100,12 +96,16 @@ async def sync_compliance():
 
                                 for state in policy_states:
                                     policy_def_id = state.policy_definition_id or "unknown"
-                                    policy_name = state.policy_definition_reference_id or "Unknown Policy"
+                                    policy_name = (
+                                        state.policy_definition_reference_id or "Unknown Policy"
+                                    )
                                     # SDK v4+ returns strings; older versions return enums
                                     raw_state = state.compliance_state
                                     compliance_state = (
-                                        raw_state.value if hasattr(raw_state, 'value')
-                                        else str(raw_state) if raw_state
+                                        raw_state.value
+                                        if hasattr(raw_state, "value")
+                                        else str(raw_state)
+                                        if raw_state
                                         else "Unknown"
                                     )
                                     resource_id = state.resource_id or ""
@@ -139,12 +139,12 @@ async def sync_compliance():
                                         }
 
                                     if compliance_state == "NonCompliant":
-                                        policy_aggregates[policy_key][
-                                            "non_compliant_count"
-                                        ] += 1
+                                        policy_aggregates[policy_key]["non_compliant_count"] += 1
                                         # Store first non-compliant resource as example
                                         if not policy_aggregates[policy_key]["resource_id"]:
-                                            policy_aggregates[policy_key]["resource_id"] = resource_id
+                                            policy_aggregates[policy_key]["resource_id"] = (
+                                                resource_id
+                                            )
 
                                 # Create PolicyState records
                                 for policy_data in policy_aggregates.values():
@@ -188,15 +188,13 @@ async def sync_compliance():
                                     # Get the overall secure score (percentage)
                                     if score.name == "ascScore":
                                         # SDK flattens properties.score.current → score.current
-                                        secure_score = getattr(score, 'current', None)
-                                        if secure_score is None and hasattr(score, 'score'):
-                                            secure_score = getattr(score.score, 'current', None)
+                                        secure_score = getattr(score, "current", None)
+                                        if secure_score is None and hasattr(score, "score"):
+                                            secure_score = getattr(score.score, "current", None)
                                         break
 
                                 if secure_score is not None:
-                                    logger.info(
-                                        f"Secure score for {sub_name}: {secure_score:.2f}"
-                                    )
+                                    logger.info(f"Secure score for {sub_name}: {secure_score:.2f}")
                                 else:
                                     logger.info(
                                         f"No secure score found for subscription {sub_name}"
@@ -217,9 +215,7 @@ async def sync_compliance():
 
                             # Calculate overall compliance percentage
                             total_evaluated = (
-                                compliant_resources
-                                + non_compliant_resources
-                                + exempt_resources
+                                compliant_resources + non_compliant_resources + exempt_resources
                             )
                             overall_compliance = (
                                 (compliant_resources / total_evaluated * 100)

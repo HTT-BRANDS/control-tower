@@ -5,6 +5,7 @@ Updated for microsoft-group-management design system:
   color intended for use on dark backgrounds, not as text on white.
 - Primary colors all pass WCAG AA on white backgrounds.
 """
+
 import pytest
 
 from app.core.color_utils import get_contrast_ratio
@@ -14,6 +15,7 @@ from app.core.design_tokens import load_brands
 @pytest.fixture(autouse=True)
 def clear_brand_cache():
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None

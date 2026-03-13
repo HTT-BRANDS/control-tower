@@ -191,10 +191,7 @@ class RiversideService:
         return get_maturity_scores(self.db)
 
     def get_requirements(
-        self,
-        category: str | None = None,
-        priority: str | None = None,
-        status: str | None = None
+        self, category: str | None = None, priority: str | None = None, status: str | None = None
     ) -> dict:
         """Get requirements list with optional filtering (not cached - real-time).
 

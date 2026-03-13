@@ -95,7 +95,9 @@ class TestBulkService:
     # ==========================================================================
 
     @pytest.mark.asyncio
-    async def test_bulk_acknowledge_anomalies_success(self, bulk_service, mock_db, sample_anomalies):
+    async def test_bulk_acknowledge_anomalies_success(
+        self, bulk_service, mock_db, sample_anomalies
+    ):
         """Test bulk_acknowledge_anomalies successfully acknowledges all anomalies."""
         # Setup mock query
         mock_query = MagicMock()
@@ -106,9 +108,7 @@ class TestBulkService:
         # Execute
         anomaly_ids = [a.id for a in sample_anomalies]
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=anomaly_ids,
-            user="test@example.com",
-            notes="Test acknowledgment"
+            anomaly_ids=anomaly_ids, user="test@example.com", notes="Test acknowledgment"
         )
 
         # Verify
@@ -137,8 +137,7 @@ class TestBulkService:
 
         # Execute with empty list
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=[],
-            user="test@example.com"
+            anomaly_ids=[], user="test@example.com"
         )
 
         # Verify
@@ -162,8 +161,7 @@ class TestBulkService:
         # Execute with 5 IDs (2 don't exist)
         anomaly_ids = [1, 2, 3, 999, 1000]
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=anomaly_ids,
-            user="test@example.com"
+            anomaly_ids=anomaly_ids, user="test@example.com"
         )
 
         # Verify - should still succeed but with lower count
@@ -186,9 +184,7 @@ class TestBulkService:
 
         # Execute
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=[1, 2],
-            user="admin@example.com",
-            notes="Reviewed by admin"
+            anomaly_ids=[1, 2], user="admin@example.com", notes="Reviewed by admin"
         )
 
         # Verify user is set correctly
@@ -208,7 +204,9 @@ class TestBulkService:
     # ==========================================================================
 
     @pytest.mark.asyncio
-    async def test_bulk_dismiss_recommendations_success(self, bulk_service, mock_db, sample_recommendations):
+    async def test_bulk_dismiss_recommendations_success(
+        self, bulk_service, mock_db, sample_recommendations
+    ):
         """Test bulk_dismiss_recommendations successfully dismisses all recommendations."""
         # Setup mock query
         mock_query = MagicMock()
@@ -221,7 +219,7 @@ class TestBulkService:
         result = await bulk_service.bulk_dismiss_recommendations(
             recommendation_ids=recommendation_ids,
             user="test@example.com",
-            reason="Not applicable to our use case"
+            reason="Not applicable to our use case",
         )
 
         # Verify
@@ -250,9 +248,7 @@ class TestBulkService:
 
         # Execute with empty list
         result = await bulk_service.bulk_dismiss_recommendations(
-            recommendation_ids=[],
-            user="test@example.com",
-            reason="Testing empty list"
+            recommendation_ids=[], user="test@example.com", reason="Testing empty list"
         )
 
         # Verify
@@ -277,9 +273,7 @@ class TestBulkService:
         # Execute with 6 IDs (2 don't exist)
         recommendation_ids = [1, 2, 3, 4, 999, 1000]
         result = await bulk_service.bulk_dismiss_recommendations(
-            recommendation_ids=recommendation_ids,
-            user="test@example.com",
-            reason="Bulk dismissal"
+            recommendation_ids=recommendation_ids, user="test@example.com", reason="Bulk dismissal"
         )
 
         # Verify - should still succeed but with lower count
@@ -291,7 +285,9 @@ class TestBulkService:
         mock_db.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_bulk_dismiss_recommendations_validates_status_and_reason(self, bulk_service, mock_db):
+    async def test_bulk_dismiss_recommendations_validates_status_and_reason(
+        self, bulk_service, mock_db
+    ):
         """Test bulk_dismiss_recommendations properly sets status and reason."""
         # Setup mock query
         mock_query = MagicMock()
@@ -303,7 +299,7 @@ class TestBulkService:
         result = await bulk_service.bulk_dismiss_recommendations(
             recommendation_ids=[1, 2, 3],
             user="senior-admin@example.com",
-            reason="Already implemented in our environment"
+            reason="Already implemented in our environment",
         )
 
         # Verify fields are set correctly
@@ -324,9 +320,11 @@ class TestBulkService:
     # ==========================================================================
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
-    @patch('app.api.services.bulk_service.bulk_insert_chunks')
-    async def test_bulk_tag_resources_success_with_ids(self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources):
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
+    @patch("app.api.services.bulk_service.bulk_insert_chunks")
+    async def test_bulk_tag_resources_success_with_ids(
+        self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources
+    ):
         """Test bulk_tag_resources successfully tags resources by IDs."""
         # Setup mock query
         mock_query = MagicMock()
@@ -343,18 +341,12 @@ class TestBulkService:
         # Create operation
         operation = BulkTagOperation(
             resource_ids=[r.id for r in sample_resources],
-            tags={
-                "Environment": "Production",
-                "Owner": "DevOps"
-            },
-            required_tags=["Environment"]
+            tags={"Environment": "Production", "Owner": "DevOps"},
+            required_tags=["Environment"],
         )
 
         # Execute
-        result = await bulk_service.bulk_tag_resources(
-            operation=operation,
-            user="test@example.com"
-        )
+        result = await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
         # Verify
         assert result.success is True
@@ -383,15 +375,11 @@ class TestBulkService:
 
         # Create operation
         operation = BulkTagOperation(
-            resource_ids=["non-existent-1", "non-existent-2"],
-            tags={"Test": "Tag"}
+            resource_ids=["non-existent-1", "non-existent-2"], tags={"Test": "Tag"}
         )
 
         # Execute
-        result = await bulk_service.bulk_tag_resources(
-            operation=operation,
-            user="test@example.com"
-        )
+        result = await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
         # Verify
         assert result.success is False
@@ -402,9 +390,11 @@ class TestBulkService:
         assert len(result.results) == 0
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
-    @patch('app.api.services.bulk_service.bulk_insert_chunks')
-    async def test_bulk_tag_resources_with_filter_criteria(self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources):
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
+    @patch("app.api.services.bulk_service.bulk_insert_chunks")
+    async def test_bulk_tag_resources_with_filter_criteria(
+        self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources
+    ):
         """Test bulk_tag_resources with filter criteria instead of IDs."""
         # Filter to get resources from specific tenant and type
         filtered_resources = [r for r in sample_resources if r.tenant_id == "tenant-1"]
@@ -424,17 +414,13 @@ class TestBulkService:
         # Create operation with filter
         operation = BulkTagOperation(
             resource_filter=ResourceFilterCriteria(
-                tenant_ids=["tenant-1"],
-                resource_types=["Microsoft.Compute/virtualMachines"]
+                tenant_ids=["tenant-1"], resource_types=["Microsoft.Compute/virtualMachines"]
             ),
-            tags={"Department": "Engineering"}
+            tags={"Department": "Engineering"},
         )
 
         # Execute
-        result = await bulk_service.bulk_tag_resources(
-            operation=operation,
-            user="test@example.com"
-        )
+        result = await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
         # Verify
         assert result.success is True
@@ -448,9 +434,11 @@ class TestBulkService:
         assert mock_query.filter.call_count >= 1
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
-    @patch('app.api.services.bulk_service.bulk_insert_chunks')
-    async def test_bulk_tag_resources_partial_failure(self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db):
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
+    @patch("app.api.services.bulk_service.bulk_insert_chunks")
+    async def test_bulk_tag_resources_partial_failure(
+        self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db
+    ):
         """Test bulk_tag_resources handles partial failures gracefully."""
         # Create mix of successful and failing resources
         resources = []
@@ -482,17 +470,11 @@ class TestBulkService:
         # Create operation
         operation = BulkTagOperation(
             resource_ids=[r.id for r in resources if r.id],
-            tags={
-                "App": "MyApp",
-                "Cost-Center": "IT"
-            }
+            tags={"App": "MyApp", "Cost-Center": "IT"},
         )
 
         # Execute
-        result = await bulk_service.bulk_tag_resources(
-            operation=operation,
-            user="test@example.com"
-        )
+        result = await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
         # Verify - should have both successes and failures
         assert result.total_processed == len(resources)
@@ -502,9 +484,11 @@ class TestBulkService:
         assert result.success_count + result.failed_count == len(resources)
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
-    @patch('app.api.services.bulk_service.bulk_insert_chunks')
-    async def test_bulk_tag_resources_cache_invalidation(self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources):
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
+    @patch("app.api.services.bulk_service.bulk_insert_chunks")
+    async def test_bulk_tag_resources_cache_invalidation(
+        self, mock_bulk_insert, mock_invalidate_cache, bulk_service, mock_db, sample_resources
+    ):
         """Test bulk_tag_resources invalidates cache for affected tenants."""
         # Setup mock query
         mock_query = MagicMock()
@@ -520,15 +504,11 @@ class TestBulkService:
 
         # Create operation
         operation = BulkTagOperation(
-            resource_ids=[r.id for r in sample_resources],
-            tags={"Status": "Active"}
+            resource_ids=[r.id for r in sample_resources], tags={"Status": "Active"}
         )
 
         # Execute
-        await bulk_service.bulk_tag_resources(
-            operation=operation,
-            user="test@example.com"
-        )
+        await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
         # Verify cache was invalidated for affected tenants
         # Resources are split between tenant-1 and tenant-2
@@ -540,8 +520,10 @@ class TestBulkService:
     # ==========================================================================
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
-    async def test_bulk_remove_tags_success(self, mock_invalidate_cache, bulk_service, mock_db, sample_resources):
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
+    async def test_bulk_remove_tags_success(
+        self, mock_invalidate_cache, bulk_service, mock_db, sample_resources
+    ):
         """Test bulk_remove_tags successfully removes tags from resources."""
         # Setup mock query for tag deletion
         mock_tag_query = MagicMock()
@@ -569,9 +551,7 @@ class TestBulkService:
         # Execute
         resource_ids = [r.id for r in sample_resources]
         result = await bulk_service.bulk_remove_tags(
-            resource_ids=resource_ids,
-            tag_names=["Environment", "Owner"],
-            user="test@example.com"
+            resource_ids=resource_ids, tag_names=["Environment", "Owner"], user="test@example.com"
         )
 
         # Verify
@@ -586,7 +566,7 @@ class TestBulkService:
         mock_db.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.invalidate_on_sync_completion')
+    @patch("app.api.services.bulk_service.invalidate_on_sync_completion")
     async def test_bulk_remove_tags_empty_list(self, mock_invalidate_cache, bulk_service, mock_db):
         """Test bulk_remove_tags with empty resource list."""
         # Setup mock queries
@@ -610,9 +590,7 @@ class TestBulkService:
 
         # Execute
         result = await bulk_service.bulk_remove_tags(
-            resource_ids=[],
-            tag_names=["Test"],
-            user="test@example.com"
+            resource_ids=[], tag_names=["Test"], user="test@example.com"
         )
 
         # Verify
@@ -639,7 +617,7 @@ class TestBulkService:
         result = await bulk_service.bulk_review_idle_resources(
             idle_resource_ids=[1, 2, 3, 4, 5],
             user="reviewer@example.com",
-            notes="Confirmed these resources are still needed"
+            notes="Confirmed these resources are still needed",
         )
 
         # Verify
@@ -669,7 +647,7 @@ class TestBulkService:
         result = await bulk_service.bulk_review_idle_resources(
             idle_resource_ids=[1, 2, 3, 999, 1000],
             user="reviewer@example.com",
-            notes="Partial review"
+            notes="Partial review",
         )
 
         # Verify
@@ -694,8 +672,7 @@ class TestBulkService:
         # Execute - should raise exception
         with pytest.raises(Exception, match="Database connection lost"):
             await bulk_service.bulk_acknowledge_anomalies(
-                anomaly_ids=[1, 2, 3],
-                user="test@example.com"
+                anomaly_ids=[1, 2, 3], user="test@example.com"
             )
 
     @pytest.mark.asyncio
@@ -710,14 +687,14 @@ class TestBulkService:
         # Execute - should raise exception
         with pytest.raises(Exception, match="Constraint violation"):
             await bulk_service.bulk_dismiss_recommendations(
-                recommendation_ids=[1, 2, 3],
-                user="test@example.com",
-                reason="Testing error"
+                recommendation_ids=[1, 2, 3], user="test@example.com", reason="Testing error"
             )
 
     @pytest.mark.asyncio
-    @patch('app.api.services.bulk_service.bulk_insert_chunks')
-    async def test_bulk_tag_resources_insert_error(self, mock_bulk_insert, bulk_service, mock_db, sample_resources):
+    @patch("app.api.services.bulk_service.bulk_insert_chunks")
+    async def test_bulk_tag_resources_insert_error(
+        self, mock_bulk_insert, bulk_service, mock_db, sample_resources
+    ):
         """Test bulk_tag_resources handles bulk insert errors."""
         # Setup mock query
         mock_query = MagicMock()
@@ -730,16 +707,12 @@ class TestBulkService:
 
         # Create operation
         operation = BulkTagOperation(
-            resource_ids=[r.id for r in sample_resources],
-            tags={"Test": "Value"}
+            resource_ids=[r.id for r in sample_resources], tags={"Test": "Value"}
         )
 
         # Execute - should raise exception
         with pytest.raises(Exception, match="Bulk insert failed"):
-            await bulk_service.bulk_tag_resources(
-                operation=operation,
-                user="test@example.com"
-            )
+            await bulk_service.bulk_tag_resources(operation=operation, user="test@example.com")
 
     @pytest.mark.asyncio
     async def test_bulk_acknowledge_anomalies_with_none_notes(self, bulk_service, mock_db):
@@ -752,9 +725,7 @@ class TestBulkService:
 
         # Execute with None notes
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=[1, 2],
-            user="test@example.com",
-            notes=None
+            anomaly_ids=[1, 2], user="test@example.com", notes=None
         )
 
         # Verify
@@ -774,9 +745,7 @@ class TestBulkService:
 
         # Execute with None notes
         result = await bulk_service.bulk_review_idle_resources(
-            idle_resource_ids=[1, 2, 3],
-            user="test@example.com",
-            notes=None
+            idle_resource_ids=[1, 2, 3], user="test@example.com", notes=None
         )
 
         # Verify
@@ -796,8 +765,7 @@ class TestBulkService:
         # Execute
         before = datetime.now(UTC)
         result = await bulk_service.bulk_acknowledge_anomalies(
-            anomaly_ids=[1],
-            user="test@example.com"
+            anomaly_ids=[1], user="test@example.com"
         )
         after = datetime.now(UTC)
 
@@ -818,9 +786,7 @@ class TestBulkService:
         # Execute
         before = datetime.now(UTC)
         result = await bulk_service.bulk_dismiss_recommendations(
-            recommendation_ids=[1],
-            user="test@example.com",
-            reason="Test"
+            recommendation_ids=[1], user="test@example.com", reason="Test"
         )
         after = datetime.now(UTC)
 

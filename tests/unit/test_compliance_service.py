@@ -20,6 +20,7 @@ from app.schemas.compliance import (
 async def clear_cache():
     """Clear the cache before each test to prevent pollution."""
     from app.core.cache import cache_manager
+
     # Clear all cache before test
     if cache_manager._cache is not None:
         await cache_manager._cache.clear()
@@ -153,10 +154,7 @@ class TestComplianceServiceMapSeverity:
     def test_map_severity_multiple_keywords_high_priority(self, service):
         """Test that high severity keywords take precedence."""
         # Has both "tag" (low) and "encryption" (high) - should be High
-        result = service._map_severity(
-            "Tag resources with encryption requirements",
-            "Security"
-        )
+        result = service._map_severity("Tag resources with encryption requirements", "Security")
         assert result == "High"
 
     def test_map_severity_partial_match(self, service):
@@ -423,9 +421,7 @@ class TestComplianceServiceGetScoresByTenant:
         tenant.is_active = True
         return tenant
 
-    def _create_mock_snapshot(
-        self, tenant_id: str, compliance_percent: float
-    ) -> MagicMock:
+    def _create_mock_snapshot(self, tenant_id: str, compliance_percent: float) -> MagicMock:
         snapshot = MagicMock(spec=ComplianceSnapshot)
         snapshot.tenant_id = tenant_id
         snapshot.subscription_id = f"sub-{tenant_id}"
@@ -695,10 +691,7 @@ class TestComplianceServiceGetComplianceTrends:
         mock_db.query.return_value = query
 
         # Execute with tenant filter
-        result = await service.get_compliance_trends(
-            tenant_ids=["tenant-1", "tenant-2"],
-            days=7
-        )
+        result = await service.get_compliance_trends(tenant_ids=["tenant-1", "tenant-2"], days=7)
 
         # Verify
         assert isinstance(result, list)
@@ -787,15 +780,9 @@ class TestComplianceServiceGetTopViolations:
     async def test_get_top_violations_multiple_policies(self, service, mock_db):
         """Test getting top violations with multiple policies."""
         policies = [
-            self._create_mock_policy_state(
-                "Require encryption", "Security", "tenant-1", 20
-            ),
-            self._create_mock_policy_state(
-                "Apply required tags", "Governance", "tenant-1", 15
-            ),
-            self._create_mock_policy_state(
-                "Require encryption", "Security", "tenant-2", 10
-            ),
+            self._create_mock_policy_state("Require encryption", "Security", "tenant-1", 20),
+            self._create_mock_policy_state("Apply required tags", "Governance", "tenant-1", 15),
+            self._create_mock_policy_state("Require encryption", "Security", "tenant-2", 10),
         ]
 
         query = MagicMock()
@@ -828,9 +815,7 @@ class TestComplianceServiceGetTopViolations:
         """Test that limit parameter is respected."""
         # Create more policies than the limit
         policies = [
-            self._create_mock_policy_state(
-                f"Policy {i}", "Security", "tenant-1", 100 - i
-            )
+            self._create_mock_policy_state(f"Policy {i}", "Security", "tenant-1", 100 - i)
             for i in range(15)
         ]
 

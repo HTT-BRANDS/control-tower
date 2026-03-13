@@ -60,6 +60,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -89,6 +90,7 @@ def mock_user():
 # ============================================================================
 # POST /api/v1/auth/login Tests
 # ============================================================================
+
 
 class TestLoginEndpoint:
     """Tests for POST /api/v1/auth/login endpoint."""
@@ -168,6 +170,7 @@ class TestLoginEndpoint:
 # POST /api/v1/auth/token Tests
 # ============================================================================
 
+
 class TestTokenEndpoint:
     """Tests for POST /api/v1/auth/token endpoint."""
 
@@ -219,6 +222,7 @@ class TestTokenEndpoint:
 # ============================================================================
 # POST /api/v1/auth/refresh Tests
 # ============================================================================
+
 
 class TestRefreshEndpoint:
     """Tests for POST /api/v1/auth/refresh endpoint."""
@@ -290,11 +294,14 @@ class TestRefreshEndpoint:
 # GET /api/v1/auth/me Tests
 # ============================================================================
 
+
 class TestMeEndpoint:
     """Tests for GET /api/v1/auth/me endpoint."""
 
     @patch("app.api.routes.auth.get_current_user")
-    def test_me_returns_user_info_when_authenticated(self, mock_get_user, client_with_db, mock_user):
+    def test_me_returns_user_info_when_authenticated(
+        self, mock_get_user, client_with_db, mock_user
+    ):
         """Me endpoint returns user info when authenticated."""
         # Mock the dependency to return our test user
         mock_get_user.return_value = mock_user
@@ -350,6 +357,7 @@ class TestMeEndpoint:
 # POST /api/v1/auth/logout Tests
 # ============================================================================
 
+
 class TestLogoutEndpoint:
     """Tests for POST /api/v1/auth/logout endpoint."""
 
@@ -378,6 +386,7 @@ class TestLogoutEndpoint:
 # ============================================================================
 # Additional Edge Case Tests
 # ============================================================================
+
 
 class TestAuthHealthEndpoint:
     """Tests for GET /api/v1/auth/health endpoint."""

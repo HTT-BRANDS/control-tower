@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Convenience script for resources data backfill."""
+
 import sys
 from pathlib import Path
 

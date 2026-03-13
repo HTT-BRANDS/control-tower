@@ -89,6 +89,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -197,12 +198,15 @@ def mock_monitoring_service():
 # POST /api/v1/sync/{sync_type} Tests
 # ============================================================================
 
+
 class TestTriggerSyncEndpoint:
     """Tests for POST /api/v1/sync/{sync_type} endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.trigger_manual_sync")
-    def test_trigger_sync_starts_manual_job(self, mock_trigger, mock_get_user, client_with_db, mock_user):
+    def test_trigger_sync_starts_manual_job(
+        self, mock_trigger, mock_get_user, client_with_db, mock_user
+    ):
         """Trigger sync endpoint starts manual sync job."""
         mock_get_user.return_value = mock_user
         mock_trigger.return_value = True
@@ -220,7 +224,9 @@ class TestTriggerSyncEndpoint:
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.trigger_manual_sync")
-    def test_trigger_sync_supports_all_sync_types(self, mock_trigger, mock_get_user, client_with_db, mock_user):
+    def test_trigger_sync_supports_all_sync_types(
+        self, mock_trigger, mock_get_user, client_with_db, mock_user
+    ):
         """Trigger sync supports all valid sync types."""
         mock_get_user.return_value = mock_user
         mock_trigger.return_value = True
@@ -235,7 +241,9 @@ class TestTriggerSyncEndpoint:
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.trigger_manual_sync")
-    def test_trigger_sync_returns_400_for_invalid_type(self, mock_trigger, mock_get_user, client_with_db, mock_user):
+    def test_trigger_sync_returns_400_for_invalid_type(
+        self, mock_trigger, mock_get_user, client_with_db, mock_user
+    ):
         """Trigger sync returns 400 for invalid sync type."""
         mock_get_user.return_value = mock_user
         mock_trigger.return_value = False
@@ -253,12 +261,15 @@ class TestTriggerSyncEndpoint:
 # GET /api/v1/sync/status Tests
 # ============================================================================
 
+
 class TestSyncStatusEndpoint:
     """Tests for GET /api/v1/sync/status endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_scheduler")
-    def test_status_returns_job_schedule(self, mock_scheduler, mock_get_user, client_with_db, mock_user):
+    def test_status_returns_job_schedule(
+        self, mock_scheduler, mock_get_user, client_with_db, mock_user
+    ):
         """Status endpoint returns scheduled job information."""
         mock_get_user.return_value = mock_user
 
@@ -284,7 +295,9 @@ class TestSyncStatusEndpoint:
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_scheduler")
-    def test_status_handles_uninitialized_scheduler(self, mock_scheduler, mock_get_user, client_with_db, mock_user):
+    def test_status_handles_uninitialized_scheduler(
+        self, mock_scheduler, mock_get_user, client_with_db, mock_user
+    ):
         """Status endpoint handles scheduler not initialized."""
         mock_get_user.return_value = mock_user
         mock_scheduler.return_value = None
@@ -304,12 +317,15 @@ class TestSyncStatusEndpoint:
 # GET /api/v1/sync/status/health Tests
 # ============================================================================
 
+
 class TestSyncHealthEndpoint:
     """Tests for GET /api/v1/sync/status/health endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_health_returns_overall_sync_metrics(self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_health_returns_overall_sync_metrics(
+        self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service
+    ):
         """Health endpoint returns overall sync health status."""
         mock_get_user.return_value = mock_user
         mock_service_cls.return_value = mock_monitoring_service
@@ -329,13 +345,22 @@ class TestSyncHealthEndpoint:
 # GET /api/v1/sync/history Tests
 # ============================================================================
 
+
 class TestSyncHistoryEndpoint:
     """Tests for GET /api/v1/sync/history endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_tenant_authorization")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_history_returns_recent_sync_jobs(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_history_returns_recent_sync_jobs(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_monitoring_service,
+    ):
         """History endpoint returns recent sync job execution history."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -358,7 +383,15 @@ class TestSyncHistoryEndpoint:
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_tenant_authorization")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_history_accepts_job_type_filter(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_history_accepts_job_type_filter(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_monitoring_service,
+    ):
         """History endpoint accepts job_type filter parameter."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -380,13 +413,22 @@ class TestSyncHistoryEndpoint:
 # GET /api/v1/sync/metrics Tests
 # ============================================================================
 
+
 class TestSyncMetricsEndpoint:
     """Tests for GET /api/v1/sync/metrics endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_tenant_authorization")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_metrics_returns_aggregate_statistics(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_metrics_returns_aggregate_statistics(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_monitoring_service,
+    ):
         """Metrics endpoint returns aggregate sync job statistics."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -412,13 +454,22 @@ class TestSyncMetricsEndpoint:
 # GET /api/v1/sync/alerts Tests
 # ============================================================================
 
+
 class TestSyncAlertsEndpoint:
     """Tests for GET /api/v1/sync/alerts endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_tenant_authorization")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_alerts_returns_active_sync_alerts(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_alerts_returns_active_sync_alerts(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_monitoring_service,
+    ):
         """Alerts endpoint returns active sync job alerts."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -441,7 +492,15 @@ class TestSyncAlertsEndpoint:
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.get_tenant_authorization")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_alerts_filters_by_severity(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_alerts_filters_by_severity(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_monitoring_service,
+    ):
         """Alerts endpoint filters by severity parameter."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -463,12 +522,15 @@ class TestSyncAlertsEndpoint:
 # POST /api/v1/sync/alerts/{alert_id}/resolve Tests
 # ============================================================================
 
+
 class TestResolveAlertEndpoint:
     """Tests for POST /api/v1/sync/alerts/{alert_id}/resolve endpoint."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_resolve_marks_alert_as_resolved(self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_resolve_marks_alert_as_resolved(
+        self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service
+    ):
         """Resolve endpoint marks alert as resolved."""
         mock_get_user.return_value = mock_user
         mock_service_cls.return_value = mock_monitoring_service
@@ -485,7 +547,9 @@ class TestResolveAlertEndpoint:
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_resolve_returns_404_for_invalid_alert(self, mock_service_cls, mock_get_user, client_with_db, mock_user):
+    def test_resolve_returns_404_for_invalid_alert(
+        self, mock_service_cls, mock_get_user, client_with_db, mock_user
+    ):
         """Resolve endpoint returns 404 for nonexistent alert."""
         mock_get_user.return_value = mock_user
         service = MagicMock()
@@ -504,12 +568,15 @@ class TestResolveAlertEndpoint:
 # GET /api/v1/sync/partials/sync-status Tests
 # ============================================================================
 
+
 class TestSyncStatusPartialEndpoint:
     """Tests for GET /api/v1/sync/partials/sync-status HTMX partial."""
 
     @patch("app.api.routes.sync.get_current_user")
     @patch("app.api.routes.sync.MonitoringService")
-    def test_partial_returns_sync_status_html(self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service):
+    def test_partial_returns_sync_status_html(
+        self, mock_service_cls, mock_get_user, client_with_db, mock_user, mock_monitoring_service
+    ):
         """Sync status partial returns HTML for HTMX rendering."""
         mock_get_user.return_value = mock_user
         mock_service_cls.return_value = mock_monitoring_service

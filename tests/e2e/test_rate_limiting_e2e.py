@@ -13,9 +13,7 @@ class TestRateLimiting:
 
     def test_health_detailed_exempt(self, unauth_api_context: APIRequestContext):
         """Detailed health also excluded from rate limiting."""
-        statuses = [
-            unauth_api_context.get("/health/detailed").status for _ in range(25)
-        ]
+        statuses = [unauth_api_context.get("/health/detailed").status for _ in range(25)]
         assert all(s == 200 for s in statuses)
 
     def test_rate_limit_headers_present(self, api_context: APIRequestContext):

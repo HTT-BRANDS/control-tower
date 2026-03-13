@@ -10,12 +10,23 @@ import re
 from dataclasses import dataclass
 
 __all__ = [
-    "RGB", "HSL",
-    "hex_to_rgb", "rgb_to_hex", "hex_to_hsl", "hsl_to_hex",
-    "get_luminance", "get_contrast_ratio", "is_color_dark",
-    "get_contrasting_text_color", "validate_wcag_aa", "validate_wcag_aa_large",
-    "lighten_color", "darken_color", "generate_color_variants",
-    "hex_to_rgba", "generate_10_shade_scale",
+    "RGB",
+    "HSL",
+    "hex_to_rgb",
+    "rgb_to_hex",
+    "hex_to_hsl",
+    "hsl_to_hex",
+    "get_luminance",
+    "get_contrast_ratio",
+    "is_color_dark",
+    "get_contrasting_text_color",
+    "validate_wcag_aa",
+    "validate_wcag_aa_large",
+    "lighten_color",
+    "darken_color",
+    "generate_color_variants",
+    "hex_to_rgba",
+    "generate_10_shade_scale",
 ]
 
 _HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
@@ -24,6 +35,7 @@ _HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 @dataclass(frozen=True, slots=True)
 class RGB:
     """Red-Green-Blue color (0-255 per channel)."""
+
     r: int
     g: int
     b: int
@@ -32,6 +44,7 @@ class RGB:
 @dataclass(frozen=True, slots=True)
 class HSL:
     """Hue-Saturation-Lightness color."""
+
     h: int  # 0-360
     s: int  # 0-100
     l: int  # 0-100
@@ -120,14 +133,17 @@ def hsl_to_hex(hsl: HSL) -> str:
 
     q = l * (1 + s) if l < 0.5 else l + s - l * s
     p = 2 * l - q
-    return rgb_to_hex(RGB(
-        r=round(_hue2rgb(p, q, h + 1/3) * 255),
-        g=round(_hue2rgb(p, q, h) * 255),
-        b=round(_hue2rgb(p, q, h - 1/3) * 255),
-    ))
+    return rgb_to_hex(
+        RGB(
+            r=round(_hue2rgb(p, q, h + 1 / 3) * 255),
+            g=round(_hue2rgb(p, q, h) * 255),
+            b=round(_hue2rgb(p, q, h - 1 / 3) * 255),
+        )
+    )
 
 
 # --- WCAG Accessibility ---
+
 
 def get_luminance(hex_color: str) -> float:
     """WCAG 2.1 relative luminance (0.0-1.0).
@@ -185,6 +201,7 @@ def validate_wcag_aa_large(foreground: str, background: str) -> bool:
 
 
 # --- Color Manipulation ---
+
 
 def lighten_color(hex_color: str, percent: int) -> str:
     """Lighten a color by increasing HSL lightness."""

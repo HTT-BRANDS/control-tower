@@ -124,7 +124,7 @@ class PerformanceMonitor:
 
         # Trim history
         if len(self._sync_metrics) > self._max_history:
-            self._sync_metrics = self._sync_metrics[-self._max_history:]
+            self._sync_metrics = self._sync_metrics[-self._max_history :]
 
         # Log performance summary
         logger.info(
@@ -152,12 +152,10 @@ class PerformanceMonitor:
         self._query_metrics.append(metrics)
 
         if len(self._query_metrics) > self._max_history:
-            self._query_metrics = self._query_metrics[-self._max_history:]
+            self._query_metrics = self._query_metrics[-self._max_history :]
 
         if is_slow:
-            logger.warning(
-                f"Slow query detected: {query_name} took {duration_ms:.2f}ms"
-            )
+            logger.warning(f"Slow query detected: {query_name} took {duration_ms:.2f}ms")
 
     def get_cache_metrics(self) -> dict[str, Any]:
         """Get current cache metrics."""
@@ -198,12 +196,12 @@ class PerformanceMonitor:
 
         # Calculate sync job averages
         if self._sync_metrics:
-            avg_records_per_second = sum(
-                m.records_per_second for m in self._sync_metrics
-            ) / len(self._sync_metrics)
-            avg_duration = sum(
-                m.duration_seconds for m in self._sync_metrics
-            ) / len(self._sync_metrics)
+            avg_records_per_second = sum(m.records_per_second for m in self._sync_metrics) / len(
+                self._sync_metrics
+            )
+            avg_duration = sum(m.duration_seconds for m in self._sync_metrics) / len(
+                self._sync_metrics
+            )
             total_records = sum(m.records_processed for m in self._sync_metrics)
             total_errors = sum(m.errors for m in self._sync_metrics)
         else:
@@ -214,9 +212,9 @@ class PerformanceMonitor:
 
         # Calculate query averages
         if self._query_metrics:
-            avg_query_time = sum(
-                m.duration_ms for m in self._query_metrics
-            ) / len(self._query_metrics)
+            avg_query_time = sum(m.duration_ms for m in self._query_metrics) / len(
+                self._query_metrics
+            )
             slow_query_count = sum(1 for m in self._query_metrics if m.slow)
         else:
             avg_query_time = 0.0
@@ -277,6 +275,7 @@ def track_sync_job(job_type: str, tenant_id: str | None = None):
             # ... do work ...
             return {"processed": 1000}
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         async def async_wrapper(*args, **kwargs) -> T:
             metrics = performance_monitor.start_sync_job(job_type, tenant_id)
@@ -309,7 +308,7 @@ def track_sync_job(job_type: str, tenant_id: str | None = None):
             finally:
                 performance_monitor.record_sync_job(metrics)
 
-        if __import__('asyncio').iscoroutinefunction(func):
+        if __import__("asyncio").iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
 

@@ -61,6 +61,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -118,8 +119,20 @@ def mock_riverside_service():
     }
     service.get_requirements.return_value = {
         "requirements": [
-            {"id": "IAM-001", "title": "MFA Enforcement", "category": "IAM", "priority": "P0", "status": "in_progress"},
-            {"id": "GS-002", "title": "Conditional Access", "category": "GS", "priority": "P1", "status": "not_started"},
+            {
+                "id": "IAM-001",
+                "title": "MFA Enforcement",
+                "category": "IAM",
+                "priority": "P0",
+                "status": "in_progress",
+            },
+            {
+                "id": "GS-002",
+                "title": "Conditional Access",
+                "category": "GS",
+                "priority": "P1",
+                "status": "not_started",
+            },
         ],
         "total": 2,
     }
@@ -141,11 +154,14 @@ def mock_riverside_service():
 # GET /riverside Tests
 # ============================================================================
 
+
 class TestRiversideDashboardPage:
     """Tests for GET /riverside dashboard page."""
 
     @patch("app.api.routes.riverside.get_current_user")
-    def test_riverside_dashboard_renders_successfully(self, mock_get_user, client_with_db, mock_user):
+    def test_riverside_dashboard_renders_successfully(
+        self, mock_get_user, client_with_db, mock_user
+    ):
         """Riverside dashboard page renders for authenticated users."""
         mock_get_user.return_value = mock_user
 
@@ -169,13 +185,22 @@ class TestRiversideDashboardPage:
 # GET /partials/riverside-badge Tests
 # ============================================================================
 
+
 class TestRiversideBadgePartial:
     """Tests for GET /partials/riverside-badge HTMX partial."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_riverside_badge_returns_critical_gaps_count(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_riverside_badge_returns_critical_gaps_count(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Riverside badge partial returns critical gaps count."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -196,13 +221,22 @@ class TestRiversideBadgePartial:
 # GET /api/v1/riverside/summary Tests
 # ============================================================================
 
+
 class TestRiversideSummaryEndpoint:
     """Tests for GET /api/v1/riverside/summary endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_summary_returns_executive_overview(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_summary_returns_executive_overview(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Summary endpoint returns executive compliance overview."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -231,13 +265,22 @@ class TestRiversideSummaryEndpoint:
 # GET /api/v1/riverside/mfa-status Tests
 # ============================================================================
 
+
 class TestRiversideMFAStatusEndpoint:
     """Tests for GET /api/v1/riverside/mfa-status endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_mfa_status_returns_tenant_mfa_metrics(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_mfa_status_returns_tenant_mfa_metrics(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """MFA status endpoint returns tenant-wide MFA metrics."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -260,13 +303,22 @@ class TestRiversideMFAStatusEndpoint:
 # GET /api/v1/riverside/maturity-scores Tests
 # ============================================================================
 
+
 class TestRiversideMaturityScoresEndpoint:
     """Tests for GET /api/v1/riverside/maturity-scores endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_maturity_scores_returns_domain_grades(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_maturity_scores_returns_domain_grades(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Maturity scores endpoint returns scores per security domain."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -290,13 +342,22 @@ class TestRiversideMaturityScoresEndpoint:
 # GET /api/v1/riverside/requirements Tests
 # ============================================================================
 
+
 class TestRiversideRequirementsEndpoint:
     """Tests for GET /api/v1/riverside/requirements endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_requirements_returns_filtered_list(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_requirements_returns_filtered_list(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Requirements endpoint returns list with optional filtering."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -316,7 +377,15 @@ class TestRiversideRequirementsEndpoint:
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_requirements_accepts_status_filter(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_requirements_accepts_status_filter(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Requirements endpoint accepts status filter parameter."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -336,13 +405,22 @@ class TestRiversideRequirementsEndpoint:
 # GET /api/v1/riverside/gaps Tests
 # ============================================================================
 
+
 class TestRiversideGapsEndpoint:
     """Tests for GET /api/v1/riverside/gaps endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_gaps_returns_critical_security_gaps(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_gaps_returns_critical_security_gaps(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Gaps endpoint returns critical security gaps analysis."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
@@ -364,13 +442,22 @@ class TestRiversideGapsEndpoint:
 # POST /api/v1/riverside/sync Tests
 # ============================================================================
 
+
 class TestRiversideSyncEndpoint:
     """Tests for POST /api/v1/riverside/sync endpoint."""
 
     @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    def test_sync_succeeds_for_admin_users(self, mock_service_cls, mock_authz, mock_get_user, client_with_db, mock_user, mock_riverside_service):
+    def test_sync_succeeds_for_admin_users(
+        self,
+        mock_service_cls,
+        mock_authz,
+        mock_get_user,
+        client_with_db,
+        mock_user,
+        mock_riverside_service,
+    ):
         """Sync endpoint succeeds for users with admin/operator role."""
         mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None

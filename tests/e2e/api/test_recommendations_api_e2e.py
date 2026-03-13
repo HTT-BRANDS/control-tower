@@ -45,7 +45,5 @@ class TestRecommendationsAPI:
         assert resp.status in (403, 404, 400, 422, 500)
 
     def test_list_with_filters(self, api_context: APIRequestContext):
-        resp = api_context.get(
-            "/api/v1/recommendations?category=cost&impact=High&limit=10"
-        )
+        resp = api_context.get("/api/v1/recommendations?category=cost&impact=High&limit=10")
         assert resp.status in (200, 403, 422, 500)

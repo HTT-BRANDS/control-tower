@@ -124,6 +124,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_map_processes_items(self, pool):
         """Test map processes all items."""
+
         async def process(x: int) -> int:
             await asyncio.sleep(0.01)  # Simulate work
             return x * 2
@@ -159,6 +160,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_map_with_empty_list(self, pool):
         """Test map with empty list returns empty results."""
+
         async def process(x: int) -> int:
             return x
 
@@ -168,6 +170,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_map_with_errors(self, pool):
         """Test error isolation - one failure doesn't affect others."""
+
         async def process(x: int) -> int:
             if x == 2:
                 raise ValueError("Test error")
@@ -208,6 +211,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_map_with_progress_no_callback(self, pool):
         """Test map_with_progress works without callback."""
+
         async def process(x: int) -> int:
             return x * 2
 
@@ -219,6 +223,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_map_with_exception_in_callback(self, pool):
         """Test that exception in callback doesn't stop processing."""
+
         def bad_callback(result: TaskResult):
             raise RuntimeError("Callback error")
 
@@ -237,6 +242,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_get_stats(self, pool):
         """Test statistics collection."""
+
         async def process(x: int) -> int:
             await asyncio.sleep(0.01)
             return x
@@ -254,6 +260,7 @@ class TestWorkerPool:
     @pytest.mark.asyncio
     async def test_get_stats_with_failures(self, pool):
         """Test statistics with failures."""
+
         async def process(x: int) -> int:
             if x == 1:
                 raise ValueError("Error")
@@ -407,12 +414,8 @@ class TestTenantProcessor:
         mock_job.is_cancelled = True
         mock_job.last_error = None
 
-        with patch.object(
-            processor._backfill_service, "create_job", return_value=mock_job
-        ):
-            with patch.object(
-                processor._backfill_service, "run_job", return_value=mock_job
-            ):
+        with patch.object(processor._backfill_service, "create_job", return_value=mock_job):
+            with patch.object(processor._backfill_service, "run_job", return_value=mock_job):
                 result = await processor.backfill_tenant(
                     tenant_id="tenant-1",
                     job_type="costs",
@@ -433,12 +436,8 @@ class TestTenantProcessor:
         mock_job.is_cancelled = False
         mock_job.last_error = "Database connection failed"
 
-        with patch.object(
-            processor._backfill_service, "create_job", return_value=mock_job
-        ):
-            with patch.object(
-                processor._backfill_service, "run_job", return_value=mock_job
-            ):
+        with patch.object(processor._backfill_service, "create_job", return_value=mock_job):
+            with patch.object(processor._backfill_service, "run_job", return_value=mock_job):
                 result = await processor.backfill_tenant(
                     tenant_id="tenant-1",
                     job_type="costs",
@@ -661,7 +660,11 @@ class TestConcurrency:
         assert any(r.status == TaskStatus.COMPLETED and r.result == 3 for r in results)
         assert any(r.status == TaskStatus.COMPLETED and r.result == 4 for r in results)
         # Error task should be marked failed
-        assert any(r.status == TaskStatus.FAILED and x == 2 for r, x in zip(results, [1, 2, 3, 4], strict=False) if r.error)
+        assert any(
+            r.status == TaskStatus.FAILED and x == 2
+            for r, x in zip(results, [1, 2, 3, 4], strict=False)
+            if r.error
+        )
 
     @pytest.mark.asyncio
     async def test_single_worker_sequential(self):

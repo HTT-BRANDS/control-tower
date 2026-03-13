@@ -202,9 +202,7 @@ class TestVerifyOnboarding:
 
         # DB round-trip check
         tenant = (
-            db_session.query(Tenant)
-            .filter(Tenant.tenant_id == form["tenant_id"].lower())
-            .first()
+            db_session.query(Tenant).filter(Tenant.tenant_id == form["tenant_id"].lower()).first()
         )
         assert tenant is not None
         assert tenant.name == form["tenant_name"]
@@ -245,9 +243,7 @@ class TestVerifyOnboarding:
         assert response.status_code == 201
 
         tenant = (
-            db_session.query(Tenant)
-            .filter(Tenant.tenant_id == form["tenant_id"].lower())
-            .first()
+            db_session.query(Tenant).filter(Tenant.tenant_id == form["tenant_id"].lower()).first()
         )
         assert tenant is not None
         assert tenant.use_lighthouse is True

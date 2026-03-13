@@ -21,11 +21,11 @@ class TestLoginFlow:
     """Integration tests for complete login flow."""
 
     @pytest.mark.skipif(
-        not get_settings().is_development,
-        reason="Direct login only available in development mode"
+        not get_settings().is_development, reason="Direct login only available in development mode"
     )
     def test_login_success_and_access_protected_endpoint(self, seeded_db, test_tenant_id):
         """Login with valid credentials → get token → access protected endpoint."""
+
         # Setup: Override database dependency
         def override_get_db():
             try:
@@ -72,11 +72,11 @@ class TestLoginFlow:
         app.dependency_overrides.clear()
 
     @pytest.mark.skipif(
-        not get_settings().is_development,
-        reason="Direct login only available in development mode"
+        not get_settings().is_development, reason="Direct login only available in development mode"
     )
     def test_login_invalid_credentials(self, seeded_db):
         """Login with invalid credentials → 401 error."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -101,6 +101,7 @@ class TestLoginFlow:
 
     def test_login_disabled_in_production(self, seeded_db):
         """Direct login is disabled in non-development environments."""
+
         def override_get_db():
             try:
                 yield seeded_db

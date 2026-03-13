@@ -88,7 +88,6 @@ class LighthouseAzureClient:
 
         logger.debug("LighthouseAzureClient initialized with DefaultAzureCredential")
 
-
     async def verify_delegation(self, subscription_id: str) -> dict[str, Any]:
         """Verify that Lighthouse delegation is working for a subscription.
 
@@ -143,7 +142,9 @@ class LighthouseAzureClient:
                         "error": "Subscription is disabled",
                     }
 
-                logger.info(f"Delegation verified for {subscription_id}: {subscription.get('display_name')}")
+                logger.info(
+                    f"Delegation verified for {subscription_id}: {subscription.get('display_name')}"
+                )
                 return {
                     "success": True,
                     "is_delegated": True,
@@ -169,15 +170,20 @@ class LighthouseAzureClient:
             # Check if this is an authentication or network error - these should raise
             # For ResilienceError, check the underlying last_error
             error_to_check = e
-            if hasattr(e, 'last_error') and e.last_error:
+            if hasattr(e, "last_error") and e.last_error:
                 error_to_check = e.last_error
 
             error_str = str(error_to_check).lower()
-            if any(err in error_str for err in ['authentication', 'unauthorized', 'forbidden', 'timeout', 'network']):
-                logger.error(f"Delegation verification failed with API error for {subscription_id}: {error_to_check}")
+            if any(
+                err in error_str
+                for err in ["authentication", "unauthorized", "forbidden", "timeout", "network"]
+            ):
+                logger.error(
+                    f"Delegation verification failed with API error for {subscription_id}: {error_to_check}"
+                )
                 raise LighthouseDelegationError(
                     subscription_id,
-                    f"API error during delegation verification: {str(error_to_check)}"
+                    f"API error during delegation verification: {str(error_to_check)}",
                 ) from e
 
             # Other errors return as failure result
@@ -261,8 +267,7 @@ class LighthouseAzureClient:
         delegation_check = await self.verify_delegation(subscription_id)
         if not delegation_check["is_delegated"]:
             raise LighthouseDelegationError(
-                subscription_id,
-                delegation_check.get("error", "Delegation not verified")
+                subscription_id, delegation_check.get("error", "Delegation not verified")
             )
 
         try:
@@ -408,8 +413,7 @@ class LighthouseAzureClient:
         delegation_check = await self.verify_delegation(subscription_id)
         if not delegation_check["is_delegated"]:
             raise LighthouseDelegationError(
-                subscription_id,
-                delegation_check.get("error", "Delegation not verified")
+                subscription_id, delegation_check.get("error", "Delegation not verified")
             )
 
         # Set default date range if not provided
@@ -430,7 +434,9 @@ class LighthouseAzureClient:
                 group_by=group_by,
             )
 
-            logger.info(f"Retrieved cost data for {subscription_id}: {cost_data['cost']} {cost_data['currency']}")
+            logger.info(
+                f"Retrieved cost data for {subscription_id}: {cost_data['cost']} {cost_data['currency']}"
+            )
             return cost_data
 
         except Exception as e:
@@ -491,9 +497,7 @@ class LighthouseAzureClient:
             time_period={"from": from_date, "to": to_date},
             dataset={
                 "granularity": granularity,
-                "aggregation": {
-                    "totalCost": {"name": "PreTaxCost", "function": "Sum"}
-                },
+                "aggregation": {"totalCost": {"name": "PreTaxCost", "function": "Sum"}},
                 "grouping": grouping_config,
             },
         )
@@ -584,8 +588,7 @@ class LighthouseAzureClient:
         delegation_check = await self.verify_delegation(subscription_id)
         if not delegation_check["is_delegated"]:
             raise LighthouseDelegationError(
-                subscription_id,
-                delegation_check.get("error", "Delegation not verified")
+                subscription_id, delegation_check.get("error", "Delegation not verified")
             )
 
         try:
@@ -596,7 +599,9 @@ class LighthouseAzureClient:
                 subscription_id=subscription_id,
             )
 
-            logger.info(f"Retrieved security data for {subscription_id}: score={security_data.get('percentage', 0):.1f}%")
+            logger.info(
+                f"Retrieved security data for {subscription_id}: score={security_data.get('percentage', 0):.1f}%"
+            )
             return security_data
 
         except Exception as e:
@@ -636,14 +641,16 @@ class LighthouseAzureClient:
         try:
             # Get security assessments
             for assessment in client.assessments.list():
-                assessments.append({
-                    "id": assessment.id,
-                    "name": assessment.name,
-                    "display_name": assessment.display_name,
-                    "resource_details": assessment.resource_details,
-                    "status": assessment.status.code if assessment.status else None,
-                    "severity": assessment.status.severity if assessment.status else None,
-                })
+                assessments.append(
+                    {
+                        "id": assessment.id,
+                        "name": assessment.name,
+                        "display_name": assessment.display_name,
+                        "resource_details": assessment.resource_details,
+                        "status": assessment.status.code if assessment.status else None,
+                        "severity": assessment.status.severity if assessment.status else None,
+                    }
+                )
 
         except Exception as e:
             logger.warning(f"Could not retrieve all assessments: {e}")
@@ -719,7 +726,9 @@ class LighthouseAzureClient:
             result["details"]["subscription"] = delegation
 
             if not delegation["is_delegated"]:
-                result["errors"].append(f"Delegation verification failed: {delegation.get('error')}")
+                result["errors"].append(
+                    f"Delegation verification failed: {delegation.get('error')}"
+                )
                 return result
 
         except Exception as e:
@@ -767,15 +776,17 @@ class LighthouseAzureClient:
         # At minimum, delegation must be verified
         # For full validity, we want cost, security, and resources
         result["is_valid"] = (
-            result["delegation_verified"] and
-            result["cost_accessible"] and
-            result["resources_accessible"]
+            result["delegation_verified"]
+            and result["cost_accessible"]
+            and result["resources_accessible"]
         )
 
         if result["is_valid"]:
             logger.info(f"Tenant access validation succeeded for {tenant_id}/{subscription_id}")
         else:
-            logger.warning(f"Tenant access validation failed for {tenant_id}/{subscription_id}: {result['errors']}")
+            logger.warning(
+                f"Tenant access validation failed for {tenant_id}/{subscription_id}: {result['errors']}"
+            )
 
         return result
 
@@ -822,13 +833,15 @@ class LighthouseAzureClient:
 
         try:
             for sub in client.subscriptions.list():
-                subscriptions.append({
-                    "subscription_id": sub.subscription_id,
-                    "display_name": sub.display_name,
-                    "state": sub.state.value if hasattr(sub.state, "value") else str(sub.state),
-                    "tenant_id": sub.tenant_id,
-                    "is_delegated": True,  # All returned via DefaultAzureCredential are accessible
-                })
+                subscriptions.append(
+                    {
+                        "subscription_id": sub.subscription_id,
+                        "display_name": sub.display_name,
+                        "state": sub.state.value if hasattr(sub.state, "value") else str(sub.state),
+                        "tenant_id": sub.tenant_id,
+                        "is_delegated": True,  # All returned via DefaultAzureCredential are accessible
+                    }
+                )
         except Exception as e:
             logger.error(f"Error listing subscriptions: {e}")
             raise

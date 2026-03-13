@@ -20,9 +20,12 @@ import pytest
 # Mock the cache decorator BEFORE importing the service
 def no_op_cache(cache_key):
     """Decorator that does nothing - bypasses caching."""
+
     def decorator(func):
         return func
+
     return decorator
+
 
 # Patch the cache module before importing identity_service
 with patch("app.core.cache.cached", no_op_cache):
@@ -54,8 +57,8 @@ class TestIdentityServiceSummary:
         tenants = []
         for i in range(3):
             tenant = MagicMock(spec=Tenant)
-            tenant.id = f"tenant-{i+1}"
-            tenant.name = f"Tenant {i+1}"
+            tenant.id = f"tenant-{i + 1}"
+            tenant.name = f"Tenant {i + 1}"
             tenant.is_active = True
             tenants.append(tenant)
         return tenants
@@ -66,7 +69,7 @@ class TestIdentityServiceSummary:
         snapshots = []
         for i in range(3):
             snapshot = MagicMock(spec=IdentitySnapshot)
-            snapshot.tenant_id = f"tenant-{i+1}"
+            snapshot.tenant_id = f"tenant-{i + 1}"
             snapshot.snapshot_date = date.today()
             snapshot.total_users = 100 + (i * 10)
             snapshot.active_users = 90 + (i * 10)
@@ -81,7 +84,9 @@ class TestIdentityServiceSummary:
         return snapshots
 
     @pytest.mark.asyncio
-    async def test_get_identity_summary_with_multiple_tenants(self, identity_service, mock_db, sample_tenants, sample_snapshots):
+    async def test_get_identity_summary_with_multiple_tenants(
+        self, identity_service, mock_db, sample_tenants, sample_snapshots
+    ):
         """Test get_identity_summary aggregates data across multiple tenants correctly."""
         # Setup mock queries
         tenant_query_mock = MagicMock()
@@ -89,9 +94,16 @@ class TestIdentityServiceSummary:
 
         snapshot_query_mock = MagicMock()
         # Return the correct snapshot for each tenant query
-        snapshot_query_mock.filter.return_value.order_by.return_value.first.side_effect = sample_snapshots
+        snapshot_query_mock.filter.return_value.order_by.return_value.first.side_effect = (
+            sample_snapshots
+        )
 
-        mock_db.query.side_effect = [tenant_query_mock, snapshot_query_mock, snapshot_query_mock, snapshot_query_mock]
+        mock_db.query.side_effect = [
+            tenant_query_mock,
+            snapshot_query_mock,
+            snapshot_query_mock,
+            snapshot_query_mock,
+        ]
 
         # Execute
         result = await identity_service.get_identity_summary()
@@ -138,7 +150,9 @@ class TestIdentityServiceSummary:
         assert len(result.by_tenant) == 0
 
     @pytest.mark.asyncio
-    async def test_get_identity_summary_with_no_snapshots(self, identity_service, mock_db, sample_tenants):
+    async def test_get_identity_summary_with_no_snapshots(
+        self, identity_service, mock_db, sample_tenants
+    ):
         """Test get_identity_summary handles tenants with no snapshot data."""
         # Setup mocks - tenants exist but no snapshots
         tenant_query_mock = MagicMock()
@@ -147,7 +161,12 @@ class TestIdentityServiceSummary:
         snapshot_query_mock = MagicMock()
         snapshot_query_mock.filter.return_value.order_by.return_value.first.return_value = None
 
-        mock_db.query.side_effect = [tenant_query_mock, snapshot_query_mock, snapshot_query_mock, snapshot_query_mock]
+        mock_db.query.side_effect = [
+            tenant_query_mock,
+            snapshot_query_mock,
+            snapshot_query_mock,
+            snapshot_query_mock,
+        ]
 
         # Execute
         result = await identity_service.get_identity_summary()
@@ -230,7 +249,9 @@ class TestIdentityServicePrivilegedAccounts:
         return [tenant1, tenant2]
 
     @pytest.mark.asyncio
-    async def test_get_privileged_accounts_all(self, identity_service, mock_db, sample_privileged_users, sample_tenants):
+    async def test_get_privileged_accounts_all(
+        self, identity_service, mock_db, sample_privileged_users, sample_tenants
+    ):
         """Test get_privileged_accounts returns all privileged users when no filter applied."""
         # Setup mocks
         user_query_mock = MagicMock()
@@ -254,7 +275,9 @@ class TestIdentityServicePrivilegedAccounts:
         assert result[2].risk_level == "Medium"
 
     @pytest.mark.asyncio
-    async def test_get_privileged_accounts_filtered_by_tenant(self, identity_service, mock_db, sample_privileged_users, sample_tenants):
+    async def test_get_privileged_accounts_filtered_by_tenant(
+        self, identity_service, mock_db, sample_privileged_users, sample_tenants
+    ):
         """Test get_privileged_accounts filters by tenant_id correctly."""
         # Setup mocks - only return tenant-1 users
         filtered_users = [u for u in sample_privileged_users if u.tenant_id == "tenant-1"]
@@ -374,7 +397,9 @@ class TestIdentityServiceTrends:
         return snapshots
 
     @pytest.mark.asyncio
-    async def test_get_identity_trends_basic(self, identity_service, mock_db, sample_trend_snapshots):
+    async def test_get_identity_trends_basic(
+        self, identity_service, mock_db, sample_trend_snapshots
+    ):
         """Test get_identity_trends returns trend data correctly."""
         # Setup mock query chain
         query_mock = MagicMock()
@@ -406,7 +431,9 @@ class TestIdentityServiceTrends:
         assert first_trend["mfa_adoption_rate"] > 70.0  # Roughly 80+/100+
 
     @pytest.mark.asyncio
-    async def test_get_identity_trends_filtered_by_tenants(self, identity_service, mock_db, sample_trend_snapshots):
+    async def test_get_identity_trends_filtered_by_tenants(
+        self, identity_service, mock_db, sample_trend_snapshots
+    ):
         """Test get_identity_trends filters by tenant_ids list."""
         # Setup mock query chain with in_ filter
         query_mock = MagicMock()
@@ -425,7 +452,9 @@ class TestIdentityServiceTrends:
         mock_db.query.return_value = query_mock
 
         # Execute with tenant filter
-        result = await identity_service.get_identity_trends(tenant_ids=["tenant-1", "tenant-2"], days=7)
+        result = await identity_service.get_identity_trends(
+            tenant_ids=["tenant-1", "tenant-2"], days=7
+        )
 
         # Verify filter was called (checking call count)
         assert filter_chain.filter.called
@@ -464,7 +493,9 @@ class TestIdentityServicePlaceholders:
         result = identity_service.get_guest_accounts()
         assert result == []
 
-        result_with_params = identity_service.get_guest_accounts(tenant_id="tenant-1", stale_only=True)
+        result_with_params = identity_service.get_guest_accounts(
+            tenant_id="tenant-1", stale_only=True
+        )
         assert result_with_params == []
 
     def test_get_stale_accounts_returns_empty(self, identity_service):
@@ -472,5 +503,7 @@ class TestIdentityServicePlaceholders:
         result = identity_service.get_stale_accounts()
         assert result == []
 
-        result_with_params = identity_service.get_stale_accounts(days_inactive=60, tenant_id="tenant-2")
+        result_with_params = identity_service.get_stale_accounts(
+            days_inactive=60, tenant_id="tenant-2"
+        )
         assert result_with_params == []

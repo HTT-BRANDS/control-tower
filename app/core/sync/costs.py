@@ -60,7 +60,9 @@ async def sync_costs():
                 try:
                     # Get subscriptions for this tenant
                     subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
-                    logger.info(f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}")
+                    logger.info(
+                        f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
+                    )
 
                     for sub in subscriptions:
                         sub_id = sub["subscription_id"]
@@ -72,10 +74,15 @@ async def sync_costs():
                             continue
 
                         try:
-                            logger.info(f"Querying costs for subscription: {sub_name} ({sub_id[:8]}...)")
+                            logger.info(
+                                f"Querying costs for subscription: {sub_name} ({sub_id[:8]}...)"
+                            )
 
                             rows = await _query_costs_rest(
-                                tenant.tenant_id, sub_id, from_date, to_date,
+                                tenant.tenant_id,
+                                sub_id,
+                                from_date,
+                                to_date,
                             )
 
                             if rows:
@@ -92,8 +99,12 @@ async def sync_costs():
                                         cost_value = float(row[0]) if row[0] else 0.0
                                         usage_date = datetime.strptime(str(row[1]), "%Y%m%d").date()
                                         currency = str(row[2]) if len(row) > 2 and row[2] else "USD"
-                                        resource_group = str(row[3]) if len(row) > 3 and row[3] else None
-                                        service_name = str(row[4]) if len(row) > 4 and row[4] else None
+                                        resource_group = (
+                                            str(row[3]) if len(row) > 3 and row[3] else None
+                                        )
+                                        service_name = (
+                                            str(row[4]) if len(row) > 4 and row[4] else None
+                                        )
 
                                         # Skip zero-cost entries to save space
                                         if cost_value == 0.0:
@@ -144,15 +155,12 @@ async def sync_costs():
                             total_errors += 1
                             logger.error(
                                 f"Error syncing costs for subscription {sub_name}: {e}",
-                                exc_info=True
+                                exc_info=True,
                             )
 
                 except Exception as e:
                     total_errors += 1
-                    logger.error(
-                        f"Error processing tenant {tenant.name}: {e}",
-                        exc_info=True
-                    )
+                    logger.error(f"Error processing tenant {tenant.name}: {e}", exc_info=True)
 
         # Update monitoring with final status
         if log_id:
@@ -168,8 +176,7 @@ async def sync_costs():
             )
 
         logger.info(
-            f"Cost sync completed: {total_synced} records synced, "
-            f"{total_errors} errors encountered"
+            f"Cost sync completed: {total_synced} records synced, {total_errors} errors encountered"
         )
 
     except Exception as e:

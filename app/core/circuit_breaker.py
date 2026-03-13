@@ -13,7 +13,7 @@ from azure.core.exceptions import HttpResponseError
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class CircuitState(Enum):
@@ -150,8 +150,7 @@ class CircuitBreaker:
             elif self._state == CircuitState.OPEN:
                 if self._should_attempt_reset():
                     logger.info(
-                        f"Circuit breaker '{self.name}' entering half-open state "
-                        "to test recovery"
+                        f"Circuit breaker '{self.name}' entering half-open state to test recovery"
                     )
                     self._state = CircuitState.HALF_OPEN
                     self._success_count = 0

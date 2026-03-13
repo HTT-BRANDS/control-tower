@@ -49,11 +49,7 @@ async def _get_tenant_subscriptions(tenant_id: str) -> list[Subscription]:
         List of Subscription model instances
     """
     with SessionLocal() as db:
-        subscriptions = (
-            db.query(Subscription)
-            .filter(Subscription.tenant_ref == tenant_id)
-            .all()
-        )
+        subscriptions = db.query(Subscription).filter(Subscription.tenant_ref == tenant_id).all()
         return subscriptions
 
 
@@ -198,9 +194,7 @@ async def check_single_tenant(
     results.extend(tenant_results)
 
     # Check if authentication succeeded before proceeding
-    auth_check = next(
-        (r for r in tenant_results if r.check_id == "azure_authentication"), None
-    )
+    auth_check = next((r for r in tenant_results if r.check_id == "azure_authentication"), None)
 
     if auth_check and auth_check.status == CheckStatus.FAIL:
         logger.warning(
@@ -313,17 +307,12 @@ async def check_all_tenants(
 
     if parallel:
         # Run all tenant checks concurrently
-        tasks = [
-            check_single_tenant(tenant, run_subscription_checks)
-            for tenant in tenants
-        ]
+        tasks = [check_single_tenant(tenant, run_subscription_checks) for tenant in tenants]
         tenant_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for tenant, tenant_checks in zip(tenants, tenant_results, strict=False):
             if isinstance(tenant_checks, Exception):
-                logger.error(
-                    f"Failed to run checks for tenant {tenant.tenant_id}: {tenant_checks}"
-                )
+                logger.error(f"Failed to run checks for tenant {tenant.tenant_id}: {tenant_checks}")
                 results[tenant.tenant_id] = [
                     _create_error_result(
                         check_id="tenant_check_execution",
@@ -368,23 +357,13 @@ async def check_all_tenants(
 
     # Calculate summary statistics
     sum(len(checks) for checks in results.values())
-    passed = sum(
-        1 for checks in results.values() for c in checks if c.status == CheckStatus.PASS
-    )
+    passed = sum(1 for checks in results.values() for c in checks if c.status == CheckStatus.PASS)
     warnings = sum(
-        1
-        for checks in results.values()
-        for c in checks
-        if c.status == CheckStatus.WARNING
+        1 for checks in results.values() for c in checks if c.status == CheckStatus.WARNING
     )
-    failed = sum(
-        1 for checks in results.values() for c in checks if c.status == CheckStatus.FAIL
-    )
+    failed = sum(1 for checks in results.values() for c in checks if c.status == CheckStatus.FAIL)
     skipped = sum(
-        1
-        for checks in results.values()
-        for c in checks
-        if c.status == CheckStatus.SKIPPED
+        1 for checks in results.values() for c in checks if c.status == CheckStatus.SKIPPED
     )
 
     logger.info(
@@ -428,9 +407,7 @@ async def check_tenants_quick(
         tenants = await _get_active_tenants()
 
     # Run connectivity checks in parallel
-    tasks = [
-        check_tenant_connectivity(tenant.tenant_id) for tenant in tenants
-    ]
+    tasks = [check_tenant_connectivity(tenant.tenant_id) for tenant in tenants]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     output: dict[str, CheckResult] = {}

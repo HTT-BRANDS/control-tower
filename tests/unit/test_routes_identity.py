@@ -31,15 +31,17 @@ class TestIdentitySummaryEndpoint:
     def test_get_summary_success(self, mock_service_cls, authed_client):
         """Identity summary endpoint returns aggregated data."""
         mock_svc = MagicMock()
-        mock_svc.get_identity_summary = AsyncMock(return_value=IdentitySummary(
-            total_users=100,
-            active_users=80,
-            guest_users=20,
-            mfa_enabled_percent=85.5,
-            privileged_users=10,
-            stale_accounts=5,
-            service_principals=12,
-        ))
+        mock_svc.get_identity_summary = AsyncMock(
+            return_value=IdentitySummary(
+                total_users=100,
+                active_users=80,
+                guest_users=20,
+                mfa_enabled_percent=85.5,
+                privileged_users=10,
+                stale_accounts=5,
+                service_principals=12,
+            )
+        )
         mock_service_cls.return_value = mock_svc
 
         response = authed_client.get("/api/v1/identity/summary")
@@ -68,20 +70,22 @@ class TestPrivilegedAccountsEndpoint:
     def test_get_privileged_accounts_success(self, mock_service_cls, authed_client):
         """Privileged accounts endpoint returns account list."""
         mock_svc = MagicMock()
-        mock_svc.get_privileged_accounts = AsyncMock(return_value=[
-            PrivilegedAccount(
-                tenant_id="test-tenant-123",
-                tenant_name="Test Tenant",
-                user_principal_name="admin@example.com",
-                display_name="Admin User",
-                user_type="Member",
-                role_name="Global Administrator",
-                role_scope="/",
-                is_permanent=True,
-                mfa_enabled=True,
-                risk_level="High",
-            ),
-        ])
+        mock_svc.get_privileged_accounts = AsyncMock(
+            return_value=[
+                PrivilegedAccount(
+                    tenant_id="test-tenant-123",
+                    tenant_name="Test Tenant",
+                    user_principal_name="admin@example.com",
+                    display_name="Admin User",
+                    user_type="Member",
+                    role_name="Global Administrator",
+                    role_scope="/",
+                    is_permanent=True,
+                    mfa_enabled=True,
+                    risk_level="High",
+                ),
+            ]
+        )
         mock_service_cls.return_value = mock_svc
 
         response = authed_client.get("/api/v1/identity/privileged")
@@ -200,10 +204,12 @@ class TestIdentityTrendsEndpoint:
     def test_get_identity_trends_success(self, mock_service_cls, authed_client):
         """Identity trends endpoint returns time series data."""
         mock_svc = MagicMock()
-        mock_svc.get_identity_trends = AsyncMock(return_value={
-            "mfa_adoption": [{"date": "2024-01-01", "percentage": 85.0}],
-            "guest_count": [{"date": "2024-01-01", "count": 20}],
-        })
+        mock_svc.get_identity_trends = AsyncMock(
+            return_value={
+                "mfa_adoption": [{"date": "2024-01-01", "percentage": 85.0}],
+                "guest_count": [{"date": "2024-01-01", "count": 20}],
+            }
+        )
         mock_service_cls.return_value = mock_svc
 
         response = authed_client.get("/api/v1/identity/trends?days=30")
@@ -230,6 +236,7 @@ class TestAdminRolesSummaryEndpoint:
         """Admin roles summary endpoint returns role data."""
         # Route calls summary.__dict__ on return, so give it an object
         from types import SimpleNamespace
+
         mock_service.get_admin_role_summary = AsyncMock(
             return_value=SimpleNamespace(
                 total_roles=10,
@@ -248,9 +255,7 @@ class TestAdminRolesSummaryEndpoint:
 
     def test_get_admin_roles_summary_requires_auth(self, client):
         """Admin roles summary endpoint returns 401 without authentication."""
-        response = client.get(
-            "/api/v1/identity/admin-roles/summary?tenant_id=test-tenant-123"
-        )
+        response = client.get("/api/v1/identity/admin-roles/summary?tenant_id=test-tenant-123")
         assert response.status_code == 401
 
 
@@ -265,9 +270,11 @@ class TestGlobalAdminsEndpoint:
     @patch("app.api.routes.identity.azure_ad_admin_service")
     def test_get_global_admins_success(self, mock_service, authed_client):
         """Global admins endpoint returns admin list."""
-        mock_service.get_global_admins = AsyncMock(return_value=[
-            {"id": "admin-1", "displayName": "Admin User"},
-        ])
+        mock_service.get_global_admins = AsyncMock(
+            return_value=[
+                {"id": "admin-1", "displayName": "Admin User"},
+            ]
+        )
 
         response = authed_client.get(
             "/api/v1/identity/admin-roles/global-admins?tenant_id=test-tenant-123"

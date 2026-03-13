@@ -78,8 +78,8 @@ def calculate_compliance_summary(db: Session) -> dict:
     # Maturity distribution counters
     maturity_distribution: dict[str, int] = {
         "below_2": 0,  # Critical risk
-        "2_to_3": 0,   # Needs improvement
-        "3_to_4": 0,   # Good
+        "2_to_3": 0,  # Needs improvement
+        "3_to_4": 0,  # Good
         "above_4": 0,  # Excellent
     }
 
@@ -102,9 +102,7 @@ def calculate_compliance_summary(db: Session) -> dict:
 
     avg_maturity = total_maturity / total_tenants if total_tenants > 0 else 0.0
     compliance_percentage = (
-        (total_completed / total_requirements * 100)
-        if total_requirements > 0
-        else 0.0
+        (total_completed / total_requirements * 100) if total_requirements > 0 else 0.0
     )
 
     # Calculate trend based on completed vs total ratio
@@ -217,13 +215,9 @@ def analyze_mfa_gaps(db: Session, tenant_id: str | None = None) -> dict:
     # Generate recommendations based on gaps
     recommendations: list[str] = []
     if avg_coverage < 50:
-        recommendations.append(
-            "CRITICAL: Implement emergency MFA rollout - coverage below 50%"
-        )
+        recommendations.append("CRITICAL: Implement emergency MFA rollout - coverage below 50%")
     if avg_admin_coverage < 100:
-        recommendations.append(
-            "URGENT: Ensure 100% admin MFA coverage before addressing user MFA"
-        )
+        recommendations.append("URGENT: Ensure 100% admin MFA coverage before addressing user MFA")
     if high_risk_tenants:
         recommendations.append(
             f"Prioritize {len(high_risk_tenants)} high-risk tenants for immediate remediation"

@@ -47,14 +47,10 @@ class TestOnboardingAccessibility:
         """Onboarding page should have lang attribute on html tag."""
         resp = unauthenticated_page.goto(f"{base_url}/onboarding")
         if resp and resp.status == 200:
-            lang = unauthenticated_page.evaluate(
-                "() => document.documentElement.lang"
-            )
+            lang = unauthenticated_page.evaluate("() => document.documentElement.lang")
             assert lang and len(lang) > 0, "Missing lang attribute on <html>"
 
-    def test_onboarding_has_viewport_meta(
-        self, unauthenticated_page: Page, base_url: str
-    ):
+    def test_onboarding_has_viewport_meta(self, unauthenticated_page: Page, base_url: str):
         """Onboarding page should have viewport meta tag for mobile."""
         resp = unauthenticated_page.goto(f"{base_url}/onboarding")
         if resp and resp.status == 200:

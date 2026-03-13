@@ -64,9 +64,7 @@ class CheckResult(BaseModel):
     recommendations: list[str] = Field(
         default_factory=list, description="List of fix recommendations"
     )
-    tenant_id: str | None = Field(
-        None, description="Tenant ID if this check is tenant-specific"
-    )
+    tenant_id: str | None = Field(None, description="Tenant ID if this check is tenant-specific")
 
     model_config = {"from_attributes": True}
 
@@ -98,12 +96,8 @@ class PreflightReport(BaseModel):
     started_at: datetime = Field(
         default_factory=datetime.utcnow, description="When the check run started"
     )
-    completed_at: datetime | None = Field(
-        None, description="When the check run completed"
-    )
-    results: list[CheckResult] = Field(
-        default_factory=list, description="Results of all checks"
-    )
+    completed_at: datetime | None = Field(None, description="When the check run completed")
+    results: list[CheckResult] = Field(default_factory=list, description="Results of all checks")
     categories_requested: list[CheckCategory] = Field(
         default_factory=list, description="Categories that were checked"
     )
@@ -151,9 +145,7 @@ class PreflightReport(BaseModel):
         """Check if there are any failures."""
         return self.failed_count > 0
 
-    def get_results_by_category(
-        self, category: CheckCategory
-    ) -> list[CheckResult]:
+    def get_results_by_category(self, category: CheckCategory) -> list[CheckResult]:
         """Get all results for a specific category."""
         return [r for r in self.results if r.category == category]
 
@@ -213,9 +205,7 @@ class PreflightStatusResponse(BaseModel):
     latest_report: PreflightReport | None = Field(
         None, description="The most recent preflight report"
     )
-    last_run_at: datetime | None = Field(
-        None, description="When the last check run was initiated"
-    )
+    last_run_at: datetime | None = Field(None, description="When the last check run was initiated")
     is_running: bool = Field(False, description="Whether checks are currently running")
 
 

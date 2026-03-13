@@ -108,11 +108,11 @@ def azure_credentials_configured() -> bool:
 async def http_client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Provide an HTTP client for making async requests.
 
-    This fixture provides a configured httpx.AsyncClient with reasonable
-timeouts and automatic cleanup after each test.
+        This fixture provides a configured httpx.AsyncClient with reasonable
+    timeouts and automatic cleanup after each test.
 
-    Yields:
-        httpx.AsyncClient: Configured async HTTP client.
+        Yields:
+            httpx.AsyncClient: Configured async HTTP client.
     """
     async with httpx.AsyncClient(timeout=httpx.Timeout(30.0), follow_redirects=True) as client:
         yield client
@@ -193,8 +193,7 @@ async def assert_successful_response(
         AssertionError: If response status doesn't match expected.
     """
     assert response.status_code == expected_status, (
-        f"Expected status {expected_status}, got {response.status_code}. "
-        f"Response: {response.text}"
+        f"Expected status {expected_status}, got {response.status_code}. Response: {response.text}"
     )
     return response.json()
 
@@ -208,8 +207,8 @@ async def assert_successful_response(
 class TestApiHealth:
     """Tests for API health endpoints.
 
-    These tests verify that the basic health endpoints are responding
-correctly and returning expected response structures.
+        These tests verify that the basic health endpoints are responding
+    correctly and returning expected response structures.
     """
 
     async def test_basic_health_endpoint_returns_healthy_status(
@@ -484,9 +483,7 @@ class TestAuthentication:
         url = get_full_url(base_url, "/api/v1/riverside/summary")
         response = await http_client.get(url)
 
-        assert response.status_code == 401, (
-            "Riverside endpoints should require authentication"
-        )
+        assert response.status_code == 401, "Riverside endpoints should require authentication"
 
     @pytest.mark.skip(reason="Preflight router not yet mounted in main app")
     async def test_protected_preflight_endpoints_require_auth(
@@ -504,9 +501,7 @@ class TestAuthentication:
         url = get_full_url(base_url, "/api/v1/preflight/status")
         response = await http_client.get(url)
 
-        assert response.status_code == 401, (
-            "Preflight endpoints should require authentication"
-        )
+        assert response.status_code == 401, "Preflight endpoints should require authentication"
 
     async def test_protected_sync_endpoints_require_auth(
         self,
@@ -523,9 +518,7 @@ class TestAuthentication:
         url = get_full_url(base_url, "/api/v1/sync/status")
         response = await http_client.get(url)
 
-        assert response.status_code == 401, (
-            "Sync endpoints should require authentication"
-        )
+        assert response.status_code == 401, "Sync endpoints should require authentication"
 
     async def test_invalid_token_rejected_with_401(
         self,
@@ -543,9 +536,7 @@ class TestAuthentication:
         headers = {"Authorization": "Bearer invalid-token"}
         response = await http_client.get(url, headers=headers)
 
-        assert response.status_code == 401, (
-            "Invalid tokens should be rejected with 401"
-        )
+        assert response.status_code == 401, "Invalid tokens should be rejected with 401"
         assert "WWW-Authenticate" in response.headers, (
             "Response should include WWW-Authenticate header"
         )
@@ -561,9 +552,9 @@ class TestAuthentication:
 class TestRiversideEndpoints:
     """Tests for Riverside-specific endpoints.
 
-    These tests verify the Riverside compliance tracking endpoints
-    are functioning correctly. They require authentication and
-can optionally test with Azure credentials for full data access.
+        These tests verify the Riverside compliance tracking endpoints
+        are functioning correctly. They require authentication and
+    can optionally test with Azure credentials for full data access.
     """
 
     async def test_riverside_mfa_status_endpoint_returns_tracking_data(

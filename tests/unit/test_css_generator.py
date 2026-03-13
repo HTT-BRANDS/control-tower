@@ -5,6 +5,7 @@ Updated for microsoft-group-management design system:
 - Font: Inter
 - Includes semantic and theme variable generation
 """
+
 import pytest
 
 from app.core.css_generator import (
@@ -111,6 +112,7 @@ def test_inline(b):
 # ---------------------------------------------------------------------------
 # Semantic & Theme variable tests (microsoft-group-management)
 # ---------------------------------------------------------------------------
+
 
 def test_semantic_variables_defaults():
     v = generate_semantic_variables()

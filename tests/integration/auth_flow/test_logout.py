@@ -21,6 +21,7 @@ class TestLogoutFlow:
 
     def test_logout_success(self, seeded_db, test_tenant_id):
         """POST /api/v1/auth/logout → invalidates token."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -68,6 +69,7 @@ class TestLogoutFlow:
         The token blacklist prevents use of logged-out tokens for true
         server-side revocation. This test verifies the blacklist works.
         """
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -117,6 +119,7 @@ class TestLogoutFlow:
 
     def test_logout_without_token_fails(self, seeded_db):
         """Logout without auth token → 401."""
+
         def override_get_db():
             try:
                 yield seeded_db

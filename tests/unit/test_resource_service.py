@@ -39,10 +39,10 @@ class TestResourceServiceInit:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     def test_init_with_db_session(self):
@@ -58,10 +58,10 @@ class TestResourceServiceGetResourceInventory:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -75,10 +75,26 @@ class TestResourceServiceGetResourceInventory:
         """Create mock Resource objects."""
         now = datetime.now(UTC)
         # Create proper mocks with spec_set to prevent attribute access issues
-        resource1 = MagicMock(spec_set=['id', 'tenant_id', 'subscription_id', 'resource_group',
-                                        'resource_type', 'name', 'location', 'provisioning_state',
-                                        'sku', 'tags_json', 'is_orphaned', 'estimated_monthly_cost', 'synced_at'])
-        resource1.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm1"
+        resource1 = MagicMock(
+            spec_set=[
+                "id",
+                "tenant_id",
+                "subscription_id",
+                "resource_group",
+                "resource_type",
+                "name",
+                "location",
+                "provisioning_state",
+                "sku",
+                "tags_json",
+                "is_orphaned",
+                "estimated_monthly_cost",
+                "synced_at",
+            ]
+        )
+        resource1.id = (
+            "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm1"
+        )
         resource1.tenant_id = "tenant-1"
         resource1.subscription_id = "sub-1"
         resource1.resource_group = "rg1"
@@ -92,9 +108,23 @@ class TestResourceServiceGetResourceInventory:
         resource1.estimated_monthly_cost = 150.0
         resource1.synced_at = now
 
-        resource2 = MagicMock(spec_set=['id', 'tenant_id', 'subscription_id', 'resource_group',
-                                        'resource_type', 'name', 'location', 'provisioning_state',
-                                        'sku', 'tags_json', 'is_orphaned', 'estimated_monthly_cost', 'synced_at'])
+        resource2 = MagicMock(
+            spec_set=[
+                "id",
+                "tenant_id",
+                "subscription_id",
+                "resource_group",
+                "resource_type",
+                "name",
+                "location",
+                "provisioning_state",
+                "sku",
+                "tags_json",
+                "is_orphaned",
+                "estimated_monthly_cost",
+                "synced_at",
+            ]
+        )
         resource2.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/storage1"
         resource2.tenant_id = "tenant-1"
         resource2.subscription_id = "sub-1"
@@ -120,10 +150,10 @@ class TestResourceServiceGetResourceInventory:
         service.db.query.return_value = mock_query
 
         # Mock tenants and subscriptions
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -166,10 +196,10 @@ class TestResourceServiceGetResourceInventory:
         mock_query = MagicMock()
         mock_query.filter.return_value.limit.return_value.all.return_value = mock_resources
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -203,10 +233,10 @@ class TestResourceServiceGetResourceInventory:
         mock_query.filter.return_value.limit.return_value.all.return_value = filtered_resources
         service.db.query.return_value = mock_query
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -232,10 +262,26 @@ class TestResourceServiceGetResourceInventory:
     async def test_get_resource_inventory_handles_invalid_json_tags(self, service):
         """Test resource inventory handles invalid JSON in tags_json gracefully."""
         now = datetime.now(UTC)
-        bad_resource = MagicMock(spec_set=['id', 'tenant_id', 'subscription_id', 'resource_group',
-                                           'resource_type', 'name', 'location', 'provisioning_state',
-                                           'sku', 'tags_json', 'is_orphaned', 'estimated_monthly_cost', 'synced_at'])
-        bad_resource.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Web/sites/webapp1"
+        bad_resource = MagicMock(
+            spec_set=[
+                "id",
+                "tenant_id",
+                "subscription_id",
+                "resource_group",
+                "resource_type",
+                "name",
+                "location",
+                "provisioning_state",
+                "sku",
+                "tags_json",
+                "is_orphaned",
+                "estimated_monthly_cost",
+                "synced_at",
+            ]
+        )
+        bad_resource.id = (
+            "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Web/sites/webapp1"
+        )
         bad_resource.tenant_id = "tenant-1"
         bad_resource.subscription_id = "sub-1"
         bad_resource.resource_group = "rg1"
@@ -252,10 +298,10 @@ class TestResourceServiceGetResourceInventory:
         mock_query = MagicMock()
         mock_query.limit.return_value.all.return_value = [bad_resource]
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -289,10 +335,10 @@ class TestResourceServiceGetOrphanedResources:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -302,17 +348,33 @@ class TestResourceServiceGetOrphanedResources:
         return ResourceService(db=mock_db)
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_orphaned_resources_basic(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_orphaned_resources_basic(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test getting list of orphaned resources."""
         now = datetime.now(UTC)
         past = now - timedelta(days=30)
 
-        orphan1 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tenant_id',
-                                      'subscription_id', 'estimated_monthly_cost', 'synced_at', 'provisioning_state'])
-        orphan1.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/disks/orphan-disk"
+        orphan1 = MagicMock(
+            spec_set=[
+                "id",
+                "name",
+                "resource_type",
+                "tenant_id",
+                "subscription_id",
+                "estimated_monthly_cost",
+                "synced_at",
+                "provisioning_state",
+            ]
+        )
+        orphan1.id = (
+            "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/disks/orphan-disk"
+        )
         orphan1.name = "orphan-disk"
         orphan1.resource_type = "Microsoft.Compute/disks"
         orphan1.tenant_id = "tenant-1"
@@ -321,8 +383,18 @@ class TestResourceServiceGetOrphanedResources:
         orphan1.synced_at = past
         orphan1.provisioning_state = "Succeeded"
 
-        orphan2 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tenant_id',
-                                      'subscription_id', 'estimated_monthly_cost', 'synced_at', 'provisioning_state'])
+        orphan2 = MagicMock(
+            spec_set=[
+                "id",
+                "name",
+                "resource_type",
+                "tenant_id",
+                "subscription_id",
+                "estimated_monthly_cost",
+                "synced_at",
+                "provisioning_state",
+            ]
+        )
         orphan2.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Network/publicIPAddresses/orphan-ip"
         orphan2.name = "orphan-ip"
         orphan2.resource_type = "Microsoft.Network/publicIPAddresses"
@@ -336,12 +408,14 @@ class TestResourceServiceGetOrphanedResources:
 
         # Setup mock query chain
         mock_query = MagicMock()
-        mock_query.filter.return_value.order_by.return_value.limit.return_value.all.return_value = orphaned_resources
+        mock_query.filter.return_value.order_by.return_value.limit.return_value.all.return_value = (
+            orphaned_resources
+        )
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -369,14 +443,30 @@ class TestResourceServiceGetOrphanedResources:
         assert result[1].reason == "provisioning_failed"  # Failed state
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_orphaned_resources_with_none_synced_at(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_orphaned_resources_with_none_synced_at(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test orphaned resources with None synced_at uses default."""
-        orphan = MagicMock(spec_set=['id', 'name', 'resource_type', 'tenant_id',
-                                     'subscription_id', 'estimated_monthly_cost', 'synced_at', 'provisioning_state'])
-        orphan.id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/disks/orphan-disk"
+        orphan = MagicMock(
+            spec_set=[
+                "id",
+                "name",
+                "resource_type",
+                "tenant_id",
+                "subscription_id",
+                "estimated_monthly_cost",
+                "synced_at",
+                "provisioning_state",
+            ]
+        )
+        orphan.id = (
+            "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/disks/orphan-disk"
+        )
         orphan.name = "orphan-disk"
         orphan.resource_type = "Microsoft.Compute/disks"
         orphan.tenant_id = "tenant-1"
@@ -388,12 +478,14 @@ class TestResourceServiceGetOrphanedResources:
         orphaned_resources = [orphan]
 
         mock_query = MagicMock()
-        mock_query.filter.return_value.order_by.return_value.limit.return_value.all.return_value = orphaned_resources
+        mock_query.filter.return_value.order_by.return_value.limit.return_value.all.return_value = (
+            orphaned_resources
+        )
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
-        subscription = MagicMock(spec_set=['subscription_id', 'display_name'])
+        subscription = MagicMock(spec_set=["subscription_id", "display_name"])
         subscription.subscription_id = "sub-1"
         subscription.display_name = "Test Subscription"
 
@@ -425,10 +517,10 @@ class TestResourceServiceGetIdleResources:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -440,10 +532,23 @@ class TestResourceServiceGetIdleResources:
     def test_get_idle_resources_basic(self, service):
         """Test getting idle resources with basic query."""
         now = datetime.now(UTC)
-        idle_res = MagicMock(spec_set=['id', 'resource_id', 'tenant_id', 'subscription_id',
-                                       'detected_at', 'idle_type', 'description',
-                                       'estimated_monthly_savings', 'idle_days', 'is_reviewed',
-                                       'reviewed_by', 'reviewed_at', 'review_notes'])
+        idle_res = MagicMock(
+            spec_set=[
+                "id",
+                "resource_id",
+                "tenant_id",
+                "subscription_id",
+                "detected_at",
+                "idle_type",
+                "description",
+                "estimated_monthly_savings",
+                "idle_days",
+                "is_reviewed",
+                "reviewed_by",
+                "reviewed_at",
+                "review_notes",
+            ]
+        )
         idle_res.id = 1
         idle_res.resource_id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/idle-vm"
         idle_res.tenant_id = "tenant-1"
@@ -465,7 +570,7 @@ class TestResourceServiceGetIdleResources:
         mock_query.offset.return_value.limit.return_value.all.return_value = idle_resources
         mock_query.order_by.return_value = mock_query  # Chain ordering
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-1"
         tenant.name = "Test Tenant"
 
@@ -490,12 +595,27 @@ class TestResourceServiceGetIdleResources:
     def test_get_idle_resources_with_filters(self, service):
         """Test idle resources with tenant and type filters."""
         now = datetime.now(UTC)
-        idle_res = MagicMock(spec_set=['id', 'resource_id', 'tenant_id', 'subscription_id',
-                                       'detected_at', 'idle_type', 'description',
-                                       'estimated_monthly_savings', 'idle_days', 'is_reviewed',
-                                       'reviewed_by', 'reviewed_at', 'review_notes'])
+        idle_res = MagicMock(
+            spec_set=[
+                "id",
+                "resource_id",
+                "tenant_id",
+                "subscription_id",
+                "detected_at",
+                "idle_type",
+                "description",
+                "estimated_monthly_savings",
+                "idle_days",
+                "is_reviewed",
+                "reviewed_by",
+                "reviewed_at",
+                "review_notes",
+            ]
+        )
         idle_res.id = 2
-        idle_res.resource_id = "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/idle-db"
+        idle_res.resource_id = (
+            "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/idle-db"
+        )
         idle_res.tenant_id = "tenant-2"
         idle_res.subscription_id = "sub-2"
         idle_res.detected_at = now
@@ -515,7 +635,7 @@ class TestResourceServiceGetIdleResources:
         mock_query.order_by.return_value = mock_query
         mock_query.offset.return_value.limit.return_value.all.return_value = idle_resources
 
-        tenant = MagicMock(spec_set=['id', 'name'])
+        tenant = MagicMock(spec_set=["id", "name"])
         tenant.id = "tenant-2"
         tenant.name = "Tenant 2"
 
@@ -592,10 +712,10 @@ class TestResourceServiceGetIdleResourcesSummary:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -605,13 +725,26 @@ class TestResourceServiceGetIdleResourcesSummary:
         return ResourceService(db=mock_db)
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_idle_resources_summary(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_idle_resources_summary(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test getting idle resources summary with aggregations."""
         datetime.now(UTC)
-        idle1 = MagicMock(spec_set=['id', 'resource_id', 'tenant_id', 'idle_type', 'estimated_monthly_savings', 'is_reviewed'])
+        idle1 = MagicMock(
+            spec_set=[
+                "id",
+                "resource_id",
+                "tenant_id",
+                "idle_type",
+                "estimated_monthly_savings",
+                "is_reviewed",
+            ]
+        )
         idle1.id = 1
         idle1.resource_id = "res1"
         idle1.tenant_id = "tenant-1"
@@ -619,7 +752,16 @@ class TestResourceServiceGetIdleResourcesSummary:
         idle1.estimated_monthly_savings = 150.0
         idle1.is_reviewed = 0
 
-        idle2 = MagicMock(spec_set=['id', 'resource_id', 'tenant_id', 'idle_type', 'estimated_monthly_savings', 'is_reviewed'])
+        idle2 = MagicMock(
+            spec_set=[
+                "id",
+                "resource_id",
+                "tenant_id",
+                "idle_type",
+                "estimated_monthly_savings",
+                "is_reviewed",
+            ]
+        )
         idle2.id = 2
         idle2.resource_id = "res2"
         idle2.tenant_id = "tenant-1"
@@ -627,7 +769,16 @@ class TestResourceServiceGetIdleResourcesSummary:
         idle2.estimated_monthly_savings = 500.0
         idle2.is_reviewed = 0
 
-        idle3 = MagicMock(spec_set=['id', 'resource_id', 'tenant_id', 'idle_type', 'estimated_monthly_savings', 'is_reviewed'])
+        idle3 = MagicMock(
+            spec_set=[
+                "id",
+                "resource_id",
+                "tenant_id",
+                "idle_type",
+                "estimated_monthly_savings",
+                "is_reviewed",
+            ]
+        )
         idle3.id = 3
         idle3.resource_id = "res3"
         idle3.tenant_id = "tenant-2"
@@ -640,10 +791,10 @@ class TestResourceServiceGetIdleResourcesSummary:
         mock_query = MagicMock()
         mock_query.filter.return_value.all.return_value = idle_resources
 
-        tenant1 = MagicMock(spec_set=['id', 'name'])
+        tenant1 = MagicMock(spec_set=["id", "name"])
         tenant1.id = "tenant-1"
         tenant1.name = "Tenant 1"
-        tenant2 = MagicMock(spec_set=['id', 'name'])
+        tenant2 = MagicMock(spec_set=["id", "name"])
         tenant2.id = "tenant-2"
         tenant2.name = "Tenant 2"
 
@@ -670,10 +821,14 @@ class TestResourceServiceGetIdleResourcesSummary:
         assert result.by_tenant["Tenant 2"] == 1
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_idle_resources_summary_empty(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_idle_resources_summary_empty(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test idle resources summary with no idle resources."""
         mock_query = MagicMock()
         mock_query.filter.return_value.all.return_value = []
@@ -704,10 +859,10 @@ class TestResourceServiceGetTaggingCompliance:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -717,32 +872,38 @@ class TestResourceServiceGetTaggingCompliance:
         return ResourceService(db=mock_db)
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_tagging_compliance_basic(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_tagging_compliance_basic(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test tagging compliance with default required tags."""
         # Fully tagged
-        res1 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+        res1 = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
         res1.id = "res1"
         res1.name = "resource1"
         res1.resource_type = "Microsoft.Compute/virtualMachines"
-        res1.tags_json = json.dumps({
-            "Environment": "Production",
-            "Owner": "TeamA",
-            "CostCenter": "IT",
-            "Application": "WebApp",
-        })
+        res1.tags_json = json.dumps(
+            {
+                "Environment": "Production",
+                "Owner": "TeamA",
+                "CostCenter": "IT",
+                "Application": "WebApp",
+            }
+        )
 
         # Partially tagged
-        res2 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+        res2 = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
         res2.id = "res2"
         res2.name = "resource2"
         res2.resource_type = "Microsoft.Storage/storageAccounts"
         res2.tags_json = json.dumps({"Environment": "Development"})
 
         # Untagged
-        res3 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+        res3 = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
         res3.id = "res3"
         res3.name = "resource3"
         res3.resource_type = "Microsoft.Network/virtualNetworks"
@@ -772,12 +933,16 @@ class TestResourceServiceGetTaggingCompliance:
         assert len(result.missing_tags_by_resource) == 2  # Partially and untagged
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_tagging_compliance_custom_tags(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_tagging_compliance_custom_tags(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test tagging compliance with custom required tags."""
-        res1 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+        res1 = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
         res1.id = "res1"
         res1.name = "resource1"
         res1.resource_type = "Microsoft.Compute/virtualMachines"
@@ -803,12 +968,16 @@ class TestResourceServiceGetTaggingCompliance:
         assert result.compliance_percent == 100.0
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_tagging_compliance_handles_invalid_json(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_tagging_compliance_handles_invalid_json(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test tagging compliance handles invalid JSON tags gracefully."""
-        res1 = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+        res1 = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
         res1.id = "res1"
         res1.name = "resource1"
         res1.resource_type = "Microsoft.Compute/virtualMachines"
@@ -833,15 +1002,19 @@ class TestResourceServiceGetTaggingCompliance:
         assert result.fully_tagged == 0
 
     @pytest.mark.asyncio
-    @patch('app.core.cache.cache_manager.get', return_value=None)  # Disable cache
-    @patch('app.core.cache.cache_manager.set', return_value=None)  # Disable cache
-    @patch('app.api.services.resource_service.invalidate_on_sync_completion', new_callable=AsyncMock)
-    async def test_get_tagging_compliance_limits_output(self, mock_invalidate, mock_cache_set, mock_cache_get, service):
+    @patch("app.core.cache.cache_manager.get", return_value=None)  # Disable cache
+    @patch("app.core.cache.cache_manager.set", return_value=None)  # Disable cache
+    @patch(
+        "app.api.services.resource_service.invalidate_on_sync_completion", new_callable=AsyncMock
+    )
+    async def test_get_tagging_compliance_limits_output(
+        self, mock_invalidate, mock_cache_set, mock_cache_get, service
+    ):
         """Test tagging compliance limits missing_tags_by_resource to 100."""
         # Create 150 untagged resources
         resources = []
         for i in range(150):
-            res = MagicMock(spec_set=['id', 'name', 'resource_type', 'tags_json'])
+            res = MagicMock(spec_set=["id", "name", "resource_type", "tags_json"])
             res.id = f"res{i}"
             res.name = f"resource{i}"
             res.resource_type = "Microsoft.Compute/virtualMachines"
@@ -871,10 +1044,10 @@ class TestResourceServiceTagIdleResourceAsReviewed:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture
@@ -967,10 +1140,10 @@ class TestResourceServiceInvalidateCache:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         """Clear cache before each test."""
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
         yield
-        if hasattr(cache_manager, 'cache'):
+        if hasattr(cache_manager, "cache"):
             cache_manager.cache.clear()
 
     @pytest.fixture

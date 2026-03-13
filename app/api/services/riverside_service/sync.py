@@ -75,14 +75,20 @@ async def sync_riverside_mfa(db) -> dict:
 
             # Calculate percentages
             mfa_coverage_pct = (mfa_enrolled / total_users * 100) if total_users > 0 else 0
-            admin_mfa_pct = (admin_accounts_mfa / admin_accounts_total * 100) if admin_accounts_total > 0 else 0
+            admin_mfa_pct = (
+                (admin_accounts_mfa / admin_accounts_total * 100) if admin_accounts_total > 0 else 0
+            )
             unprotected = total_users - mfa_enrolled
 
             # Create or update MFA record
-            mfa_record = db.query(RiversideMFA).filter(
-                RiversideMFA.tenant_id == tenant.tenant_id,
-                func.date(RiversideMFA.snapshot_date) == snapshot_date.date()
-            ).first()
+            mfa_record = (
+                db.query(RiversideMFA)
+                .filter(
+                    RiversideMFA.tenant_id == tenant.tenant_id,
+                    func.date(RiversideMFA.snapshot_date) == snapshot_date.date(),
+                )
+                .first()
+            )
 
             if mfa_record:
                 mfa_record.total_users = total_users
@@ -151,9 +157,7 @@ async def sync_riverside_device_compliance(db) -> dict:
 
             # Get managed devices from Intune
             devices = await graph_client._request(
-                "GET",
-                "/deviceManagement/managedDevices",
-                params={"$top": 999}
+                "GET", "/deviceManagement/managedDevices", params={"$top": 999}
             )
 
             device_list = devices.get("value", [])
@@ -168,8 +172,10 @@ async def sync_riverside_device_compliance(db) -> dict:
                 if device.get("complianceState") == "compliant":
                     compliant += 1
                 if device.get("managementAgent") in [
-                    "mdm", "easMdm", "configurationManagerClientMdm",
-                    "configurationManagerClientMdmEas"
+                    "mdm",
+                    "easMdm",
+                    "configurationManagerClientMdm",
+                    "configurationManagerClientMdmEas",
                 ]:
                     mdm_enrolled += 1
                 if device.get("isEncrypted"):
@@ -179,10 +185,14 @@ async def sync_riverside_device_compliance(db) -> dict:
             compliance_pct = (compliant / total_devices * 100) if total_devices > 0 else 0
 
             # Create or update device compliance record
-            device_record = db.query(RiversideDeviceCompliance).filter(
-                RiversideDeviceCompliance.tenant_id == tenant.tenant_id,
-                func.date(RiversideDeviceCompliance.snapshot_date) == snapshot_date.date()
-            ).first()
+            device_record = (
+                db.query(RiversideDeviceCompliance)
+                .filter(
+                    RiversideDeviceCompliance.tenant_id == tenant.tenant_id,
+                    func.date(RiversideDeviceCompliance.snapshot_date) == snapshot_date.date(),
+                )
+                .first()
+            )
 
             if device_record:
                 device_record.total_devices = total_devices
@@ -216,7 +226,9 @@ async def sync_riverside_device_compliance(db) -> dict:
                 "encrypted": encrypted,
             }
 
-            logger.info(f"Synced device compliance for {tenant.name}: {compliance_pct:.1f}% compliant")
+            logger.info(
+                f"Synced device compliance for {tenant.name}: {compliance_pct:.1f}% compliant"
+            )
 
         except Exception as e:
             logger.error(f"Failed to sync device compliance for {tenant.name}: {e}")
@@ -257,15 +269,22 @@ async def sync_riverside_requirements(db) -> dict:
             ca_policies = await graph_client.get_conditional_access_policies()
 
             # Check for MFA enforcement requirement
-            mfa_req = db.query(RiversideRequirement).filter(
-                RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.requirement_id.like("%MFA%")
-            ).first()
+            mfa_req = (
+                db.query(RiversideRequirement)
+                .filter(
+                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.requirement_id.like("%MFA%"),
+                )
+                .first()
+            )
 
             if mfa_req:
                 has_mfa_policy = any(
-                    "mfa" in (policy.get("displayName", "")).lower() or
-                    any("mfa" in str(grant).lower() for grant in policy.get("grantControls", {}).get("builtInControls", []))
+                    "mfa" in (policy.get("displayName", "")).lower()
+                    or any(
+                        "mfa" in str(grant).lower()
+                        for grant in policy.get("grantControls", {}).get("builtInControls", [])
+                    )
                     for policy in ca_policies
                 )
 
@@ -301,24 +320,36 @@ async def sync_riverside_maturity_scores(db) -> dict:
     for tenant in tenants:
         try:
             # Get latest MFA data
-            mfa_data = db.query(RiversideMFA).filter(
-                RiversideMFA.tenant_id == tenant.tenant_id
-            ).order_by(RiversideMFA.snapshot_date.desc()).first()
+            mfa_data = (
+                db.query(RiversideMFA)
+                .filter(RiversideMFA.tenant_id == tenant.tenant_id)
+                .order_by(RiversideMFA.snapshot_date.desc())
+                .first()
+            )
 
             # Get latest device compliance data
-            device_data = db.query(RiversideDeviceCompliance).filter(
-                RiversideDeviceCompliance.tenant_id == tenant.tenant_id
-            ).order_by(RiversideDeviceCompliance.snapshot_date.desc()).first()
+            device_data = (
+                db.query(RiversideDeviceCompliance)
+                .filter(RiversideDeviceCompliance.tenant_id == tenant.tenant_id)
+                .order_by(RiversideDeviceCompliance.snapshot_date.desc())
+                .first()
+            )
 
             # Get requirements data
-            total_reqs = db.query(RiversideRequirement).filter(
-                RiversideRequirement.tenant_id == tenant.tenant_id
-            ).count()
+            total_reqs = (
+                db.query(RiversideRequirement)
+                .filter(RiversideRequirement.tenant_id == tenant.tenant_id)
+                .count()
+            )
 
-            completed_reqs = db.query(RiversideRequirement).filter(
-                RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.status == "completed"
-            ).count()
+            completed_reqs = (
+                db.query(RiversideRequirement)
+                .filter(
+                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.status == "completed",
+                )
+                .count()
+            )
 
             # Calculate maturity score (0-5 scale)
             mfa_score = 0.0
@@ -341,16 +372,22 @@ async def sync_riverside_maturity_scores(db) -> dict:
             overall_maturity = (mfa_score * 0.4) + (device_score * 0.3) + (req_score * 0.3)
 
             # Count critical gaps
-            critical_gaps = db.query(RiversideRequirement).filter(
-                RiversideRequirement.tenant_id == tenant.tenant_id,
-                RiversideRequirement.status != "completed",
-                RiversideRequirement.priority == "P0"
-            ).count()
+            critical_gaps = (
+                db.query(RiversideRequirement)
+                .filter(
+                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.status != "completed",
+                    RiversideRequirement.priority == "P0",
+                )
+                .count()
+            )
 
             # Create or update compliance record
-            compliance_record = db.query(RiversideCompliance).filter(
-                RiversideCompliance.tenant_id == tenant.tenant_id
-            ).first()
+            compliance_record = (
+                db.query(RiversideCompliance)
+                .filter(RiversideCompliance.tenant_id == tenant.tenant_id)
+                .first()
+            )
 
             if compliance_record:
                 compliance_record.overall_maturity_score = round(overall_maturity, 2)

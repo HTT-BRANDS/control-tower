@@ -201,12 +201,15 @@ class TestThemeForTenant:
 class TestRiversideBrandColors:
     """Tests for Riverside brand colors."""
 
-    @pytest.mark.parametrize("brand_name,primary,secondary", [
-        ("HTT", "#500711", "#d1bdbf"),
-        ("Frenchies", "#052b48", "#faaca8"),
-        ("Bishops", "#EB631B", "#CE9F7C"),
-        ("Lash Lounge", "#513550", "#D3BCC5"),
-    ])
+    @pytest.mark.parametrize(
+        "brand_name,primary,secondary",
+        [
+            ("HTT", "#500711", "#d1bdbf"),
+            ("Frenchies", "#052b48", "#faaca8"),
+            ("Bishops", "#EB631B", "#CE9F7C"),
+            ("Lash Lounge", "#513550", "#D3BCC5"),
+        ],
+    )
     def test_riverside_brand_primary_contrast_on_white(
         self, theme_service, brand_name, primary, secondary
     ):

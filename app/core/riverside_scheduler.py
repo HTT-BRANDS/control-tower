@@ -953,8 +953,7 @@ async def schedule_mfa_alert_checks(
 
     if _riverside_scheduler is None:
         raise RuntimeError(
-            "Riverside scheduler not initialized. "
-            "Call init_riverside_scheduler() first."
+            "Riverside scheduler not initialized. Call init_riverside_scheduler() first."
         )
 
     # Import here to avoid circular dependencies
@@ -975,9 +974,7 @@ async def schedule_mfa_alert_checks(
         replace_existing=True,
     )
 
-    logger.info(
-        f"Scheduled MFA alert checks: interval={interval_minutes}min, job_id={job_id}"
-    )
+    logger.info(f"Scheduled MFA alert checks: interval={interval_minutes}min, job_id={job_id}")
 
     return {
         "success": True,
@@ -1021,6 +1018,8 @@ async def remove_mfa_alert_checks(job_id: str = "mfa_gap_alerts") -> dict[str, A
             "job_id": job_id,
             "error": str(e),
         }
+
+
 async def schedule_deadline_checks() -> dict[str, Any]:
     """Run scheduled deadline monitoring using the DeadlineTracker.
 

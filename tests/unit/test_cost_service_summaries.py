@@ -18,9 +18,12 @@ import pytest
 # Mock the cache decorator BEFORE importing the service
 def no_op_cache(cache_key):
     """Decorator that does nothing - bypasses caching."""
+
     def decorator(func):
         return func
+
     return decorator
+
 
 # Patch the cache module before importing cost_service
 with patch("app.core.cache.cached", no_op_cache):
@@ -73,16 +76,14 @@ class TestCostServiceSummaries:
         tenants = []
         for i in range(3):
             tenant = MagicMock(spec=Tenant)
-            tenant.id = f"tenant-{i+1}"
-            tenant.name = f"Tenant {i+1}"
+            tenant.id = f"tenant-{i + 1}"
+            tenant.name = f"Tenant {i + 1}"
             tenant.is_active = True
             tenants.append(tenant)
         return tenants
 
     @pytest.mark.asyncio
-    async def test_get_cost_summary_with_data(
-        self, cost_service, mock_db, sample_cost_snapshots
-    ):
+    async def test_get_cost_summary_with_data(self, cost_service, mock_db, sample_cost_snapshots):
         """Test get_cost_summary with valid data."""
         # Setup mock query
         mock_query = MagicMock()
@@ -175,9 +176,7 @@ class TestCostServiceSummaries:
         assert result.cost_change_percent == 100.0
 
     @pytest.mark.asyncio
-    async def test_get_cost_trends_with_data(
-        self, cost_service, mock_db, sample_cost_snapshots
-    ):
+    async def test_get_cost_trends_with_data(self, cost_service, mock_db, sample_cost_snapshots):
         """Test get_cost_trends returns daily aggregated costs."""
         # Setup mock query
         mock_query = MagicMock()
@@ -227,8 +226,8 @@ class TestCostServiceSummaries:
         tenants = []
         for i in range(3):
             tenant = MagicMock(spec=Tenant)
-            tenant.id = f"tenant-{i+1}"
-            tenant.name = f"Tenant {i+1}"
+            tenant.id = f"tenant-{i + 1}"
+            tenant.name = f"Tenant {i + 1}"
             tenant.is_active = True
             tenants.append(tenant)
 
@@ -299,7 +298,7 @@ class TestCostServiceSummaries:
         historical_data = []
         for i in range(90):
             row = MagicMock()
-            row.date = date.today() - timedelta(days=90-i)
+            row.date = date.today() - timedelta(days=90 - i)
             row.daily_cost = 100.0 + (i * 0.5)
             historical_data.append(row)
 
@@ -337,7 +336,7 @@ class TestCostServiceSummaries:
         historical_data = []
         for i in range(5):
             row = MagicMock()
-            row.date = date.today() - timedelta(days=5-i)
+            row.date = date.today() - timedelta(days=5 - i)
             row.daily_cost = 100.0
             historical_data.append(row)
 
@@ -367,7 +366,7 @@ class TestCostServiceSummaries:
         historical_data = []
         for i in range(90):
             row = MagicMock()
-            row.date = date.today() - timedelta(days=90-i)
+            row.date = date.today() - timedelta(days=90 - i)
             row.daily_cost = 0.0
             historical_data.append(row)
 

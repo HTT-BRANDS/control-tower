@@ -191,9 +191,7 @@ class MFAGapDetector:
                 raise
             return []
 
-    async def check_admin_compliance(
-        self, db: Session | None = None
-    ) -> list[MFAComplianceStatus]:
+    async def check_admin_compliance(self, db: Session | None = None) -> list[MFAComplianceStatus]:
         """Check admin MFA compliance specifically.
 
         Returns tenants where admin MFA coverage is below 100%.
@@ -208,9 +206,7 @@ class MFAGapDetector:
         all_gaps = await self.detect_gaps(db)
         return [g for g in all_gaps if not g.admin_compliant]
 
-    async def check_user_compliance(
-        self, db: Session | None = None
-    ) -> list[MFAComplianceStatus]:
+    async def check_user_compliance(self, db: Session | None = None) -> list[MFAComplianceStatus]:
         """Check user MFA compliance specifically.
 
         Returns tenants where user MFA coverage is below 95%.
@@ -296,8 +292,7 @@ class MFAGapDetector:
                 logger.info(f"MFA alert sent for tenant {status.tenant_id}")
             else:
                 logger.warning(
-                    f"Failed to send MFA alert for {status.tenant_id}: "
-                    f"{result.get('error')}"
+                    f"Failed to send MFA alert for {status.tenant_id}: {result.get('error')}"
                 )
 
             return {
@@ -399,9 +394,7 @@ async def check_user_mfa_compliance(
     return await detector.check_user_compliance(db)
 
 
-async def trigger_mfa_alert(
-    status: MFAComplianceStatus, force: bool = False
-) -> dict[str, Any]:
+async def trigger_mfa_alert(status: MFAComplianceStatus, force: bool = False) -> dict[str, Any]:
     """Trigger an MFA alert for a specific tenant.
 
     Args:

@@ -163,7 +163,9 @@ def create_adaptive_card(card: TeamsCard) -> dict[str, Any]:
                             "text": f"{theme['icon']} {card.title}",
                             "weight": "Bolder",
                             "size": "Large",
-                            "color": theme["accent"] if card.severity != Severity.INFO else "Default",
+                            "color": theme["accent"]
+                            if card.severity != Severity.INFO
+                            else "Default",
                         },
                         {
                             "type": "TextBlock",
@@ -191,11 +193,13 @@ def create_adaptive_card(card: TeamsCard) -> dict[str, Any]:
 
     # Add facts table if provided
     if card.facts:
-        body.append({
-            "type": "FactSet",
-            "facts": card.facts,
-            "spacing": "Medium",
-        })
+        body.append(
+            {
+                "type": "FactSet",
+                "facts": card.facts,
+                "spacing": "Medium",
+            }
+        )
 
     # Build action buttons
     actions: list[dict[str, Any]] = []
@@ -258,11 +262,13 @@ def create_mfa_alert_card(
 
     actions = []
     if dashboard_url:
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": "📊 View Dashboard",
-            "url": dashboard_url,
-        })
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": "📊 View Dashboard",
+                "url": dashboard_url,
+            }
+        )
 
     return TeamsCard(
         title=f"MFA Compliance Alert: {tenant_id}",
@@ -315,11 +321,13 @@ def create_deadline_alert_card(
 
     actions = []
     if dashboard_url:
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": "📋 View Requirements",
-            "url": dashboard_url,
-        })
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": "📋 View Requirements",
+                "url": dashboard_url,
+            }
+        )
 
     return TeamsCard(
         title=f"{'Overdue' if is_overdue else 'Deadline Approaching'}: {requirement_id}",
@@ -361,11 +369,13 @@ def create_threat_alert_card(
 
     actions = []
     if dashboard_url:
-        actions.append({
-            "type": "Action.OpenUrl",
-            "title": "🛡️ View Threat Dashboard",
-            "url": dashboard_url,
-        })
+        actions.append(
+            {
+                "type": "Action.OpenUrl",
+                "title": "🛡️ View Threat Dashboard",
+                "url": dashboard_url,
+            }
+        )
 
     return TeamsCard(
         title=f"{'Critical' if severity == Severity.CRITICAL else 'High'} Threat Detected: {tenant_id}",
@@ -497,17 +507,21 @@ class TeamsWebhookClient:
         # Build actions
         actions = []
         if notification.dashboard_url:
-            actions.append({
-                "type": "Action.OpenUrl",
-                "title": "📊 View Dashboard",
-                "url": notification.dashboard_url,
-            })
+            actions.append(
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "📊 View Dashboard",
+                    "url": notification.dashboard_url,
+                }
+            )
         if notification.retry_url:
-            actions.append({
-                "type": "Action.OpenUrl",
-                "title": "🔄 Retry",
-                "url": notification.retry_url,
-            })
+            actions.append(
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "🔄 Retry",
+                    "url": notification.retry_url,
+                }
+            )
 
         card = TeamsCard(
             title=notification.title,

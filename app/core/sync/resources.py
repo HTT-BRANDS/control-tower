@@ -45,15 +45,11 @@ async def sync_resources():
             logger.info(f"Found {len(tenants)} active tenants to sync for resources")
 
             for tenant in tenants:
-                logger.info(
-                    f"Syncing resources for tenant: {tenant.name} ({tenant.tenant_id})"
-                )
+                logger.info(f"Syncing resources for tenant: {tenant.name} ({tenant.tenant_id})")
 
                 try:
                     # Get subscriptions for this tenant
-                    subscriptions = await azure_client_manager.list_subscriptions(
-                        tenant.tenant_id
-                    )
+                    subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
                     logger.info(
                         f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
                     )
@@ -64,9 +60,7 @@ async def sync_resources():
 
                         # Skip non-enabled subscriptions
                         if sub["state"] != "Enabled":
-                            logger.info(
-                                f"Skipping subscription {sub_name} (state: {sub['state']})"
-                            )
+                            logger.info(f"Skipping subscription {sub_name} (state: {sub['state']})")
                             continue
 
                         try:
@@ -100,7 +94,9 @@ async def sync_resources():
                                     if len(id_parts) > 4 and id_parts[1] == "subscriptions":
                                         # Find resourceGroups in path
                                         for i, part in enumerate(id_parts):
-                                            if part.lower() == "resourcegroups" and i + 1 < len(id_parts):
+                                            if part.lower() == "resourcegroups" and i + 1 < len(
+                                                id_parts
+                                            ):
                                                 resource_group = id_parts[i + 1]
                                                 break
 
@@ -109,7 +105,9 @@ async def sync_resources():
                                         provider_part = resource_id.split("/providers/")[-1]
                                         provider_parts = provider_part.split("/")
                                         if len(provider_parts) >= 2:
-                                            resource_type = f"{provider_parts[0]}/{provider_parts[1]}"
+                                            resource_type = (
+                                                f"{provider_parts[0]}/{provider_parts[1]}"
+                                            )
 
                                     # Serialize tags as JSON
                                     tags_json = None
@@ -149,15 +147,19 @@ async def sync_resources():
                                             if "cost" in key.lower() and "month" in key.lower():
                                                 try:
                                                     # Try to parse cost value
-                                                    cost_val = str(value).replace("$", "").replace(",", "")
+                                                    cost_val = (
+                                                        str(value).replace("$", "").replace(",", "")
+                                                    )
                                                     estimated_cost = float(cost_val)
                                                 except (ValueError, TypeError):
                                                     pass
 
                                     # Check if resource already exists
-                                    existing = db.query(Resource).filter(
-                                        Resource.id == resource_id
-                                    ).first()
+                                    existing = (
+                                        db.query(Resource)
+                                        .filter(Resource.id == resource_id)
+                                        .first()
+                                    )
 
                                     if existing:
                                         # Update existing resource
@@ -197,9 +199,7 @@ async def sync_resources():
 
                                 except Exception as e:
                                     total_errors += 1
-                                    logger.warning(
-                                        f"Error processing resource {resource.id}: {e}"
-                                    )
+                                    logger.warning(f"Error processing resource {resource.id}: {e}")
                                     continue
 
                             # Commit all resources for this subscription

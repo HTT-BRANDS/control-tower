@@ -246,6 +246,7 @@ def require_tenant_access(tenant_id_param: str = "tenant_id") -> Callable[[F], F
     Args:
         tenant_id_param: Name of the parameter containing the tenant ID
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -346,6 +347,7 @@ async def get_tenant_authorization(
 # ============================================================================
 # Route-level dependencies for common patterns
 # ============================================================================
+
 
 async def validate_tenant_ids_param(
     request: Request,

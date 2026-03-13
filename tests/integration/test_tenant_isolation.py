@@ -23,6 +23,7 @@ pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=F
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def tenant1_only_authz(test_tenant_id: str):
     """Mock authorization for user with access to tenant 1 only."""
@@ -31,12 +32,8 @@ def tenant1_only_authz(test_tenant_id: str):
     authz.ensure_at_least_one_tenant = MagicMock()
     authz.filter_tenant_ids = MagicMock(return_value=[test_tenant_id])
     authz.validate_access = MagicMock()
-    authz.validate_tenant_access = MagicMock(
-        side_effect=lambda tid: tid == test_tenant_id
-    )
-    authz.can_access = MagicMock(
-        side_effect=lambda tid: tid == test_tenant_id
-    )
+    authz.validate_tenant_access = MagicMock(side_effect=lambda tid: tid == test_tenant_id)
+    authz.can_access = MagicMock(side_effect=lambda tid: tid == test_tenant_id)
     return authz
 
 
@@ -48,12 +45,8 @@ def tenant2_only_authz(second_tenant_id: str):
     authz.ensure_at_least_one_tenant = MagicMock()
     authz.filter_tenant_ids = MagicMock(return_value=[second_tenant_id])
     authz.validate_access = MagicMock()
-    authz.validate_tenant_access = MagicMock(
-        side_effect=lambda tid: tid == second_tenant_id
-    )
-    authz.can_access = MagicMock(
-        side_effect=lambda tid: tid == second_tenant_id
-    )
+    authz.validate_tenant_access = MagicMock(side_effect=lambda tid: tid == second_tenant_id)
+    authz.can_access = MagicMock(side_effect=lambda tid: tid == second_tenant_id)
     return authz
 
 
@@ -162,6 +155,7 @@ def admin_test_client(seeded_db, multi_tenant_users, mock_authz_admin):
 # Cost API Tenant Isolation Tests
 # ============================================================================
 
+
 class TestCostTenantIsolation:
     """Test tenant isolation for cost management endpoints."""
 
@@ -177,8 +171,9 @@ class TestCostTenantIsolation:
         assert data["total_cost"] > 0
 
         # All data should be from tenant 1
-        assert "tenant_breakdown" not in data or \
-               all(t["tenant_id"] == test_tenant_id for t in data.get("tenant_breakdown", []))
+        assert "tenant_breakdown" not in data or all(
+            t["tenant_id"] == test_tenant_id for t in data.get("tenant_breakdown", [])
+        )
 
     def test_tenant1_user_sees_only_tenant1_anomalies(self, tenant1_client, test_tenant_id):
         """User with tenant 1 access should only see tenant 1 anomalies."""
@@ -227,6 +222,7 @@ class TestCostTenantIsolation:
 # Compliance API Tenant Isolation Tests
 # ============================================================================
 
+
 class TestComplianceTenantIsolation:
     """Test tenant isolation for compliance endpoints."""
 
@@ -273,6 +269,7 @@ class TestComplianceTenantIsolation:
 # ============================================================================
 # Resource API Tenant Isolation Tests
 # ============================================================================
+
 
 class TestResourceTenantIsolation:
     """Test tenant isolation for resource management endpoints."""
@@ -322,6 +319,7 @@ class TestResourceTenantIsolation:
 # Identity API Tenant Isolation Tests
 # ============================================================================
 
+
 class TestIdentityTenantIsolation:
     """Test tenant isolation for identity and access management endpoints."""
 
@@ -369,6 +367,7 @@ class TestIdentityTenantIsolation:
 # Write Operation Isolation Tests
 # ============================================================================
 
+
 class TestCrossTenantWritePrevention:
     """Test that write operations enforce tenant isolation.
 
@@ -376,7 +375,9 @@ class TestCrossTenantWritePrevention:
     which would be a critical security vulnerability.
     """
 
-    def test_cannot_acknowledge_cross_tenant_anomaly(self, tenant1_client, seeded_db, second_tenant_id):
+    def test_cannot_acknowledge_cross_tenant_anomaly(
+        self, tenant1_client, seeded_db, second_tenant_id
+    ):
         """User cannot acknowledge anomaly in unauthorized tenant.
 
         This test verifies that even if a user knows the ID of an anomaly
@@ -407,10 +408,13 @@ class TestCrossTenantWritePrevention:
         response = tenant1_client.post(f"/api/v1/costs/anomalies/{anomaly_id}/acknowledge")
 
         # Should be forbidden or not found
-        assert response.status_code in [403, 404], \
+        assert response.status_code in [403, 404], (
             f"Expected 403/404, got {response.status_code}. User should not access cross-tenant anomaly!"
+        )
 
-    def test_bulk_acknowledge_filters_unauthorized_tenants(self, tenant1_client, seeded_db, test_tenant_id, second_tenant_id):
+    def test_bulk_acknowledge_filters_unauthorized_tenants(
+        self, tenant1_client, seeded_db, test_tenant_id, second_tenant_id
+    ):
         """Bulk acknowledge should only process authorized tenant anomalies.
 
         If a user tries to bulk-acknowledge anomalies including ones from
@@ -451,7 +455,7 @@ class TestCrossTenantWritePrevention:
         # Try to acknowledge both
         response = tenant1_client.post(
             "/api/v1/costs/anomalies/bulk-acknowledge",
-            json={"anomaly_ids": [anomaly1.id, anomaly2.id]}
+            json={"anomaly_ids": [anomaly1.id, anomaly2.id]},
         )
 
         # Request should either fail entirely or only acknowledge tenant 1's anomaly
@@ -470,6 +474,7 @@ class TestCrossTenantWritePrevention:
 # Multi-Tenant User Tests
 # ============================================================================
 
+
 class TestMultiTenantUserAccess:
     """Test users with access to multiple tenants.
 
@@ -477,7 +482,9 @@ class TestMultiTenantUserAccess:
     and that filtering works correctly.
     """
 
-    def test_multi_tenant_user_sees_both_tenants(self, multi_tenant_client, test_tenant_id, second_tenant_id):
+    def test_multi_tenant_user_sees_both_tenants(
+        self, multi_tenant_client, test_tenant_id, second_tenant_id
+    ):
         """User with access to both tenants should see data from both."""
         response = multi_tenant_client.get("/api/v1/costs/summary")
 
@@ -490,7 +497,9 @@ class TestMultiTenantUserAccess:
             # Should have at least tenant 1 (tenant 2 might be empty in test data)
             assert test_tenant_id in tenant_ids
 
-    def test_multi_tenant_user_can_filter_to_single_tenant(self, multi_tenant_client, test_tenant_id, second_tenant_id):
+    def test_multi_tenant_user_can_filter_to_single_tenant(
+        self, multi_tenant_client, test_tenant_id, second_tenant_id
+    ):
         """User with multi-tenant access can filter to specific tenant."""
         # Filter to only tenant 1
         response = multi_tenant_client.get(f"/api/v1/costs/summary?tenant_ids={test_tenant_id}")
@@ -519,6 +528,7 @@ class TestMultiTenantUserAccess:
 # ============================================================================
 # Admin User Tests
 # ============================================================================
+
 
 class TestAdminUserAccess:
     """Test admin users with access to all tenants.
@@ -549,7 +559,9 @@ class TestAdminUserAccess:
             for tenant_data in data["tenant_breakdown"]:
                 assert tenant_data["tenant_id"] == test_tenant_id
 
-    def test_admin_can_access_any_resource(self, admin_test_client, test_tenant_id, second_tenant_id):
+    def test_admin_can_access_any_resource(
+        self, admin_test_client, test_tenant_id, second_tenant_id
+    ):
         """Admin should be able to view resources from any tenant."""
         # Without filter - should see multiple tenants if data exists
         response = admin_test_client.get("/api/v1/resources")

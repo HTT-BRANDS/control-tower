@@ -437,15 +437,19 @@ class TestResilientAzureClient:
     @pytest.fixture
     def mock_async_func(self):
         """Create a mock async function."""
+
         async def func(*args, **kwargs):
             return {"result": "success", "args": args, "kwargs": kwargs}
+
         return func
 
     @pytest.fixture
     def mock_failing_func(self):
         """Create a mock async function that fails."""
+
         async def func(*args, **kwargs):
             raise ConnectionError("Simulated API failure")
+
         return func
 
     @pytest.mark.asyncio
@@ -470,11 +474,13 @@ class TestResilientAzureClient:
 
         async def async_func():
             return "result"
+
         await client.call(async_func)
 
         # Second call should timeout
         async def async_func2():
             return "result"
+
         with pytest.raises(ResilienceError, match="Rate limit timeout"):
             await client.call(async_func2)
 
@@ -499,6 +505,7 @@ class TestResilientAzureClient:
 
         async def async_func():
             return "result"
+
         with pytest.raises(CircuitBreakerError):
             await client.call(async_func)
 
@@ -571,6 +578,7 @@ class TestResilientAzureClient:
 
         async def async_func():
             return "result"
+
         with pytest.raises(CircuitBreakerError):
             await client.call_with_retry(async_func)
 
@@ -643,6 +651,7 @@ class TestResilientApiCall:
     @pytest.mark.asyncio
     async def test_successful_call(self):
         """Test successful API call."""
+
         async def test_func(x, y):
             return x + y
 
@@ -679,6 +688,7 @@ class TestResilientApiCall:
     @pytest.mark.asyncio
     async def test_all_retries_fail(self):
         """Test when all retries are exhausted."""
+
         async def failing_func():
             raise ConnectionError("Persistent failure")
 

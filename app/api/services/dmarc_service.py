@@ -62,9 +62,7 @@ class DMARCService:
                 dmarc_record = await self._query_dmarc_dns(domain_name)
 
                 if dmarc_record:
-                    record = self._parse_dmarc_record(
-                        tenant_id, domain_name, dmarc_record
-                    )
+                    record = self._parse_dmarc_record(tenant_id, domain_name, dmarc_record)
                     records.append(record)
                     self.db.merge(record)
 
@@ -164,9 +162,7 @@ class DMARCService:
             tenant_dkim = dkim_query.filter(DKIMRecord.tenant_id == tenant.id).all()
 
             # Calculate security score
-            security_score = self._calculate_tenant_security_score(
-                tenant_dmarc, tenant_dkim
-            )
+            security_score = self._calculate_tenant_security_score(tenant_dmarc, tenant_dkim)
 
             tenant_summary = {
                 "tenant_id": tenant.id,
@@ -227,16 +223,8 @@ class DMARCService:
         Based on DMARC policy strength, DKIM alignment, and overall
         email authentication configuration.
         """
-        dmarc_records = (
-            self.db.query(DMARCRecord)
-            .filter(DMARCRecord.tenant_id == tenant_id)
-            .all()
-        )
-        dkim_records = (
-            self.db.query(DKIMRecord)
-            .filter(DKIMRecord.tenant_id == tenant_id)
-            .all()
-        )
+        dmarc_records = self.db.query(DMARCRecord).filter(DMARCRecord.tenant_id == tenant_id).all()
+        dkim_records = self.db.query(DKIMRecord).filter(DKIMRecord.tenant_id == tenant_id).all()
 
         return self._calculate_tenant_security_score(dmarc_records, dkim_records)
 
@@ -348,13 +336,15 @@ class DMARCService:
             passed = sum(r.messages_passed for r in date_reports)
             compliance = (passed / total * 100) if total > 0 else 0
 
-            trends.append({
-                "date": date_key.isoformat(),
-                "messages_total": total,
-                "messages_passed": passed,
-                "messages_failed": sum(r.messages_failed for r in date_reports),
-                "compliance_percentage": round(compliance, 2),
-            })
+            trends.append(
+                {
+                    "date": date_key.isoformat(),
+                    "messages_total": total,
+                    "messages_passed": passed,
+                    "messages_failed": sum(r.messages_failed for r in date_reports),
+                    "compliance_percentage": round(compliance, 2),
+                }
+            )
 
         return trends
 
@@ -413,8 +403,7 @@ class DMARCService:
         try:
             # DKIM configuration is typically in domain settings
             result = await graph_client._request(
-                "GET", "/domains",
-                params={"$select": "id,authenticationType,mailExchangeRecords"}
+                "GET", "/domains", params={"$select": "id,authenticationType,mailExchangeRecords"}
             )
             domains = result.get("value", [])
 
@@ -433,24 +422,32 @@ class DMARCService:
 
                     # Parse DKIM records
                     dkim_record = next(
-                        (r for r in records if r.get("recordType") == "TXT" and "DKIM" in r.get("text", "")),
-                        None
+                        (
+                            r
+                            for r in records
+                            if r.get("recordType") == "TXT" and "DKIM" in r.get("text", "")
+                        ),
+                        None,
                     )
 
-                    configs.append({
-                        "domain": domain_id,
-                        "enabled": domain.get("isVerified", False),
-                        "selector": self._extract_dkim_selector(dkim_record),
-                        "status": "active" if domain.get("isVerified") else "pending",
-                    })
+                    configs.append(
+                        {
+                            "domain": domain_id,
+                            "enabled": domain.get("isVerified", False),
+                            "selector": self._extract_dkim_selector(dkim_record),
+                            "status": "active" if domain.get("isVerified") else "pending",
+                        }
+                    )
                 except Exception:
                     # Fallback - domain exists but DKIM details not available
-                    configs.append({
-                        "domain": domain_id,
-                        "enabled": False,
-                        "selector": "default",
-                        "status": "unknown",
-                    })
+                    configs.append(
+                        {
+                            "domain": domain_id,
+                            "enabled": False,
+                            "selector": "default",
+                            "status": "unknown",
+                        }
+                    )
 
             return configs
         except Exception as e:
@@ -520,9 +517,12 @@ class DMARCService:
 
     async def _get_recent_failures(self, tenant_id: str | None = None) -> list[dict]:
         """Get recent DMARC authentication failures."""
-        query = self.db.query(DMARCReport).filter(
-            DMARCReport.messages_failed > 0
-        ).order_by(DMARCReport.report_date.desc()).limit(10)
+        query = (
+            self.db.query(DMARCReport)
+            .filter(DMARCReport.messages_failed > 0)
+            .order_by(DMARCReport.report_date.desc())
+            .limit(10)
+        )
 
         if tenant_id:
             query = query.filter(DMARCReport.tenant_id == tenant_id)
@@ -536,16 +536,20 @@ class DMARCService:
                 "failed": r.messages_failed,
                 "total": r.messages_total,
                 "failure_rate": round((r.messages_failed / r.messages_total * 100), 2)
-                if r.messages_total > 0 else 0,
+                if r.messages_total > 0
+                else 0,
             }
             for r in reports
         ]
 
     async def _get_active_alerts(self, tenant_id: str | None = None) -> list[dict]:
         """Get active DMARC/DKIM alerts."""
-        query = self.db.query(DMARCAlert).filter(
-            not DMARCAlert.is_acknowledged
-        ).order_by(DMARCAlert.created_at.desc()).limit(10)
+        query = (
+            self.db.query(DMARCAlert)
+            .filter(not DMARCAlert.is_acknowledged)
+            .order_by(DMARCAlert.created_at.desc())
+            .limit(10)
+        )
 
         if tenant_id:
             query = query.filter(DMARCAlert.tenant_id == tenant_id)

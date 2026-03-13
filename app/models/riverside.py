@@ -25,8 +25,8 @@ class RequirementCategory(PyEnum):
     """Riverside compliance requirement categories."""
 
     IAM = "IAM"  # Identity and Access Management
-    GS = "GS"    # Group Security
-    DS = "DS"    # Domain Security
+    GS = "GS"  # Group Security
+    DS = "DS"  # Domain Security
 
 
 class RequirementPriority(PyEnum):
@@ -56,9 +56,7 @@ class RiversideCompliance(Base):
     __tablename__ = "riverside_compliance"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     overall_maturity_score: Mapped[float] = mapped_column(default=0.0)
     target_maturity_score: Mapped[float] = mapped_column(default=3.0)
     deadline_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -67,9 +65,7 @@ class RiversideCompliance(Base):
     requirements_completed: Mapped[int] = mapped_column(Integer, default=0)
     requirements_total: Mapped[int] = mapped_column(Integer, default=0)
     last_assessment_date: Mapped[datetime | None] = mapped_column(DateTime)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -81,12 +77,15 @@ class RiversideCompliance(Base):
     )
 
     def __repr__(self) -> str:
-        maturity = f"{self.overall_maturity_score:.1f}" if self.overall_maturity_score is not None else "N/A"
-        target = f"{self.target_maturity_score:.1f}" if self.target_maturity_score is not None else "N/A"
-        return (
-            f"<RiversideCompliance maturity={maturity} "
-            f"target={target}>"
+        maturity = (
+            f"{self.overall_maturity_score:.1f}"
+            if self.overall_maturity_score is not None
+            else "N/A"
         )
+        target = (
+            f"{self.target_maturity_score:.1f}" if self.target_maturity_score is not None else "N/A"
+        )
+        return f"<RiversideCompliance maturity={maturity} target={target}>"
 
 
 class RiversideMFA(Base):
@@ -99,9 +98,7 @@ class RiversideMFA(Base):
     __tablename__ = "riverside_mfa"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     total_users: Mapped[int] = mapped_column(Integer, default=0)
     mfa_enrolled_users: Mapped[int] = mapped_column(Integer, default=0)
     mfa_coverage_percentage: Mapped[float] = mapped_column(default=0.0)
@@ -110,9 +107,7 @@ class RiversideMFA(Base):
     admin_mfa_percentage: Mapped[float] = mapped_column(default=0.0)
     unprotected_users: Mapped[int] = mapped_column(Integer, default=0)
     snapshot_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Indexes for frequently queried fields
     __table_args__ = (
@@ -121,12 +116,15 @@ class RiversideMFA(Base):
     )
 
     def __repr__(self) -> str:
-        coverage = f"{self.mfa_coverage_percentage:.1f}%" if self.mfa_coverage_percentage is not None else "N/A"
-        admin_mfa = f"{self.admin_mfa_percentage:.1f}%" if self.admin_mfa_percentage is not None else "N/A"
-        return (
-            f"<RiversideMFA coverage={coverage} "
-            f"admin_mfa={admin_mfa}>"
+        coverage = (
+            f"{self.mfa_coverage_percentage:.1f}%"
+            if self.mfa_coverage_percentage is not None
+            else "N/A"
         )
+        admin_mfa = (
+            f"{self.admin_mfa_percentage:.1f}%" if self.admin_mfa_percentage is not None else "N/A"
+        )
+        return f"<RiversideMFA coverage={coverage} admin_mfa={admin_mfa}>"
 
 
 class RiversideRequirement(Base):
@@ -139,20 +137,14 @@ class RiversideRequirement(Base):
     __tablename__ = "riverside_requirements"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     requirement_id: Mapped[str] = mapped_column(
         String(20), nullable=False
     )  # e.g., "RC-001", "RC-010"
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text)
-    category: Mapped[RequirementCategory] = mapped_column(
-        String(10), nullable=False
-    )
-    priority: Mapped[RequirementPriority] = mapped_column(
-        String(10), nullable=False
-    )
+    category: Mapped[RequirementCategory] = mapped_column(String(10), nullable=False)
+    priority: Mapped[RequirementPriority] = mapped_column(String(10), nullable=False)
     status: Mapped[RequirementStatus] = mapped_column(
         String(20), nullable=False, default=RequirementStatus.NOT_STARTED
     )
@@ -161,9 +153,7 @@ class RiversideRequirement(Base):
     due_date: Mapped[date | None] = mapped_column(Date)
     completed_date: Mapped[date | None] = mapped_column(Date)
     owner: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -194,9 +184,7 @@ class RiversideDeviceCompliance(Base):
     __tablename__ = "riverside_device_compliance"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     total_devices: Mapped[int] = mapped_column(Integer, default=0)
     mdm_enrolled: Mapped[int] = mapped_column(Integer, default=0)
     edr_covered: Mapped[int] = mapped_column(Integer, default=0)
@@ -228,9 +216,7 @@ class RiversideThreatData(Base):
     __tablename__ = "riverside_threat_data"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     threat_score: Mapped[float | None] = mapped_column()
     vulnerability_count: Mapped[int] = mapped_column(Integer, default=0)
     malicious_domain_alerts: Mapped[int] = mapped_column(Integer, default=0)

@@ -29,7 +29,9 @@ class BackfillJob(Base):
     __tablename__ = "backfill_jobs"
 
     id: Mapped[str] = Column(String(36), primary_key=True)
-    job_type: Mapped[str] = Column(String(50), nullable=False)  # costs, identity, compliance, resources
+    job_type: Mapped[str] = Column(
+        String(50), nullable=False
+    )  # costs, identity, compliance, resources
     tenant_id: Mapped[str | None] = Column(String(36))
     status: Mapped[str] = Column(String(50), nullable=False, default=BackfillStatus.PENDING.value)
 

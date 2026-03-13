@@ -127,7 +127,9 @@ class SmokeTestReport:
         print(f"{'=' * 60}")
         print(f"Target URL: {self.url}")
         print(f"Total Duration: {self.total_duration:.3f}s")
-        print(f"\nResults: {self.passed_count} passed, {self.failed_count} failed, {self.skipped_count} skipped")
+        print(
+            f"\nResults: {self.passed_count} passed, {self.failed_count} failed, {self.skipped_count} skipped"
+        )
 
         if self.failed_count > 0:
             print("\n❌ FAILED TESTS:")
@@ -138,7 +140,13 @@ class SmokeTestReport:
         if verbose:
             print("\n📋 ALL RESULTS:")
             for result in self.results:
-                icon = "✅" if result.status == TestStatus.PASSED else "❌" if result.status == TestStatus.FAILED else "⏭️"
+                icon = (
+                    "✅"
+                    if result.status == TestStatus.PASSED
+                    else "❌"
+                    if result.status == TestStatus.FAILED
+                    else "⏭️"
+                )
                 print(f"  {icon} {result.name}: {result.status.value} ({result.duration:.3f}s)")
                 if result.details and verbose:
                     for key, value in result.details.items():

@@ -5,17 +5,17 @@ from unittest.mock import AsyncMock, MagicMock
 
 # Mock Azure SDK modules before importing sync modules
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.mgmt'] = azure_mock
-sys.modules['azure.mgmt.resource'] = azure_mock
-sys.modules['azure.mgmt.resource.subscriptions'] = azure_mock
-sys.modules['azure.mgmt.costmanagement'] = azure_mock
-sys.modules['azure.mgmt.costmanagement.models'] = azure_mock
-sys.modules['azure.mgmt.policyinsights'] = azure_mock
-sys.modules['azure.mgmt.security'] = azure_mock
-sys.modules['azure.identity'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.mgmt"] = azure_mock
+sys.modules["azure.mgmt.resource"] = azure_mock
+sys.modules["azure.mgmt.resource.subscriptions"] = azure_mock
+sys.modules["azure.mgmt.costmanagement"] = azure_mock
+sys.modules["azure.mgmt.costmanagement.models"] = azure_mock
+sys.modules["azure.mgmt.policyinsights"] = azure_mock
+sys.modules["azure.mgmt.security"] = azure_mock
+sys.modules["azure.identity"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
 
 import uuid  # noqa: E402
 from datetime import datetime, timedelta  # noqa: E402
@@ -105,14 +105,11 @@ def mock_azure_client_manager(
     mock_resource_client,
 ):
     """Create a mock AzureClientManager with all client types."""
-    with patch(
-        "app.core.sync.costs.azure_client_manager"
-    ) as mock_costs, patch(
-        "app.core.sync.compliance.azure_client_manager"
-    ) as mock_compliance, patch(
-        "app.core.sync.resources.azure_client_manager"
-    ) as mock_resources:
-
+    with (
+        patch("app.core.sync.costs.azure_client_manager") as mock_costs,
+        patch("app.core.sync.compliance.azure_client_manager") as mock_compliance,
+        patch("app.core.sync.resources.azure_client_manager") as mock_resources,
+    ):
         # Configure mock_costs
         mock_costs.list_subscriptions = AsyncMock()
         mock_costs.get_cost_client.return_value = mock_cost_client
@@ -157,18 +154,17 @@ def mock_db_session(mock_db_query):
 @pytest.fixture
 def mock_get_db_context(mock_db_session):
     """Mock the get_db_context context manager."""
-    with patch("app.core.sync.costs.get_db_context") as mock_costs_ctx, patch(
-        "app.core.sync.compliance.get_db_context"
-    ) as mock_compliance_ctx, patch(
-        "app.core.sync.resources.get_db_context"
-    ) as mock_resources_ctx, patch(
-        "app.core.sync.identity.get_db_context"
-    ) as mock_identity_ctx:
-
+    with (
+        patch("app.core.sync.costs.get_db_context") as mock_costs_ctx,
+        patch("app.core.sync.compliance.get_db_context") as mock_compliance_ctx,
+        patch("app.core.sync.resources.get_db_context") as mock_resources_ctx,
+        patch("app.core.sync.identity.get_db_context") as mock_identity_ctx,
+    ):
         # Create context managers that yield the mock session
         class MockContextManager:
             def __enter__(self):
                 return mock_db_session
+
             def __exit__(self, *args):
                 pass
 
@@ -217,7 +213,9 @@ def sample_cost_rows():
 def sample_policy_states():
     """Sample policy state objects."""
     state1 = MagicMock()
-    state1.policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/test-policy-1"
+    state1.policy_definition_id = (
+        "/providers/Microsoft.Authorization/policyDefinitions/test-policy-1"
+    )
     state1.policy_definition_reference_id = "Test Policy 1"
     state1.compliance_state = MagicMock()
     state1.compliance_state.value = "Compliant"
@@ -225,7 +223,9 @@ def sample_policy_states():
     state1.policy_definition_group_names = ["Storage"]
 
     state2 = MagicMock()
-    state2.policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/test-policy-2"
+    state2.policy_definition_id = (
+        "/providers/Microsoft.Authorization/policyDefinitions/test-policy-2"
+    )
     state2.policy_definition_reference_id = "Test Policy 2"
     state2.compliance_state = MagicMock()
     state2.compliance_state.value = "NonCompliant"
@@ -271,7 +271,7 @@ def sample_users():
             "userType": "Member",
             "signInActivity": {
                 "lastSignInDateTime": (datetime.utcnow() - timedelta(days=5)).isoformat() + "Z"
-            }
+            },
         },
         {
             "id": "user-2",
@@ -280,7 +280,7 @@ def sample_users():
             "userType": "Guest",
             "signInActivity": {
                 "lastSignInDateTime": (datetime.utcnow() - timedelta(days=60)).isoformat() + "Z"
-            }
+            },
         },
     ]
 
@@ -298,6 +298,6 @@ def sample_directory_roles():
                     "id": "user-1",
                     "displayName": "Test User",
                 }
-            ]
+            ],
         },
     ]

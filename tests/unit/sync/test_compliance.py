@@ -23,12 +23,16 @@ class TestComplianceSync:
     ):
         """Test successful compliance synchronization."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         # Mock policy client
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = sample_policy_states
+        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = (
+            sample_policy_states
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         # Mock security client
@@ -40,7 +44,9 @@ class TestComplianceSync:
         score.score.current = 85.5
         mock_secure_scores.list.return_value = [score]
         mock_security_client.secure_scores = mock_secure_scores
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute
         await sync_compliance()
@@ -62,7 +68,9 @@ class TestComplianceSync:
     ):
         """Test compliance sync with empty policy data."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
@@ -72,7 +80,9 @@ class TestComplianceSync:
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute
         await sync_compliance()
@@ -130,17 +140,23 @@ class TestComplianceSync:
     ):
         """Test compliance sync handles policy HTTP errors."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.side_effect = Exception("HTTP 403")
+        mock_policy_client.policy_states.list_query_results_for_subscription.side_effect = (
+            Exception("HTTP 403")
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute - should not raise
         await sync_compliance()
@@ -161,17 +177,23 @@ class TestComplianceSync:
     ):
         """Test compliance sync handles security center HTTP errors."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = sample_policy_states
+        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = (
+            sample_policy_states
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.side_effect = Exception("HTTP 403")
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute - should not raise
         await sync_compliance()
@@ -190,17 +212,23 @@ class TestComplianceSync:
     ):
         """Test compliance sync handles authentication errors."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.side_effect = Exception("Auth failed")
+        mock_policy_client.policy_states.list_query_results_for_subscription.side_effect = (
+            Exception("Auth failed")
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute - should not raise
         await sync_compliance()
@@ -217,17 +245,23 @@ class TestComplianceSync:
     ):
         """Test compliance sync handles database errors."""
         # Setup
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = sample_policy_states
+        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = (
+            sample_policy_states
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         mock_db_session.commit.side_effect = SQLAlchemyError("Database error")
 
@@ -270,19 +304,25 @@ class TestComplianceSync:
         state3.resource_id = "/resource3"
         state3.policy_definition_group_names = ["Group2"]
 
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
         mock_policy_client.policy_states.list_query_results_for_subscription.return_value = [
-            state1, state2, state3
+            state1,
+            state2,
+            state3,
         ]
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute
         await sync_compliance()
@@ -309,17 +349,23 @@ class TestComplianceSync:
         exempt_state.resource_id = "/resource1"
         exempt_state.policy_definition_group_names = None
 
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = [exempt_state]
+        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = [
+            exempt_state
+        ]
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute
         await sync_compliance()
@@ -350,17 +396,23 @@ class TestComplianceSync:
         mock_db_query.all.return_value = [mock_tenant, tenant2]
         mock_db_session.query.return_value = mock_db_query
 
-        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [mock_subscription]
+        mock_azure_client_manager["compliance"].list_subscriptions.return_value = [
+            mock_subscription
+        ]
 
         mock_policy_client = MagicMock()
         mock_policy_client.policy_states = MagicMock()
-        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = sample_policy_states
+        mock_policy_client.policy_states.list_query_results_for_subscription.return_value = (
+            sample_policy_states
+        )
         mock_azure_client_manager["compliance"].get_policy_client.return_value = mock_policy_client
 
         mock_security_client = MagicMock()
         mock_security_client.secure_scores = MagicMock()
         mock_security_client.secure_scores.list.return_value = []
-        mock_azure_client_manager["compliance"].get_security_client.return_value = mock_security_client
+        mock_azure_client_manager[
+            "compliance"
+        ].get_security_client.return_value = mock_security_client
 
         # Execute
         await sync_compliance()

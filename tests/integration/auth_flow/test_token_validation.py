@@ -19,6 +19,7 @@ class TestTokenValidation:
 
     def test_valid_token_grants_access(self, seeded_db, test_tenant_id):
         """Valid token → access granted (200)."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -48,6 +49,7 @@ class TestTokenValidation:
 
     def test_invalid_token_denies_access(self, seeded_db):
         """Invalid token → access denied (401)."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -70,6 +72,7 @@ class TestTokenValidation:
 
     def test_expired_token_denies_access(self, seeded_db):
         """Expired token → access denied (401)."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -97,6 +100,7 @@ class TestTokenValidation:
 
     def test_missing_token_denies_access(self, seeded_db):
         """No token → access denied (401)."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -115,6 +119,7 @@ class TestTokenValidation:
 
     def test_malformed_authorization_header(self, seeded_db):
         """Malformed Authorization header → 401."""
+
         def override_get_db():
             try:
                 yield seeded_db

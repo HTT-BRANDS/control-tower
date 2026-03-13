@@ -147,8 +147,7 @@ class InMemoryCache:
         now = time.time()
         async with self._lock:
             expired = [
-                k for k, (_, expiry) in self._cache.items()
-                if expiry is not None and now > expiry
+                k for k, (_, expiry) in self._cache.items() if expiry is not None and now > expiry
             ]
             for key in expired:
                 del self._cache[key]
@@ -172,6 +171,7 @@ class RedisCache:
                 if not self._initialized:
                     try:
                         import redis.asyncio as redis
+
                         self._redis = redis.from_url(
                             self.redis_url,
                             decode_responses=True,
@@ -486,6 +486,7 @@ def cached(
         async def get_cost_summary(self, tenant_id: str | None = None):
             ...
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs) -> T:
@@ -523,7 +524,8 @@ def cached(
             # Only cache successful results (not exceptions)
             if result is not None:
                 await cache_manager.set(
-                    cache_key, result,
+                    cache_key,
+                    result,
                     ttl_seconds=ttl_seconds,
                     data_type=data_type,
                 )

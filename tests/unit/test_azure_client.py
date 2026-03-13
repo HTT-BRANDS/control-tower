@@ -32,8 +32,8 @@ class TestAzureClientManagerInitialization:
         self.mock_settings.azure_tenant_id = "test-tenant-id"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
                 yield
 
     def test_initialization_default_ttl(self):
@@ -61,7 +61,7 @@ class TestAzureClientManagerInitialization:
         """Test initialization when azure-keyvault-secrets package not installed."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', False):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", False):
             manager = AzureClientManager()
             kv_client = manager._get_key_vault_client()
 
@@ -80,8 +80,8 @@ class TestCredentialResolution:
         self.mock_settings.azure_tenant_id = "lighthouse-tenant-id"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
                 yield
 
     def test_lighthouse_mode_no_keyvault(self):
@@ -123,9 +123,9 @@ class TestCredentialResolution:
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_tenant_from_db', return_value=mock_tenant):
+            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
                 client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
 
                 assert client_id == "lighthouse-client-id"
@@ -145,13 +145,11 @@ class TestCredentialResolution:
         mock_tenant.client_id = "custom-client-id"
         mock_tenant.client_secret_ref = "custom-secret-ref"
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_tenant_from_db', return_value=mock_tenant):
+            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
                 with patch.object(
-                    manager,
-                    '_fetch_key_vault_secret',
-                    return_value="custom-secret-value"
+                    manager, "_fetch_key_vault_secret", return_value="custom-secret-value"
                 ) as mock_fetch:
                     client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
 
@@ -173,9 +171,10 @@ class TestCredentialResolution:
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_tenant_from_db', return_value=mock_tenant):
+            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
+
                 def mock_fetch_secret(secret_name, tenant_id):
                     if secret_name == "tenant-123-client-id":
                         return "kv-client-id"
@@ -183,7 +182,9 @@ class TestCredentialResolution:
                         return "kv-client-secret"
                     return None
 
-                with patch.object(manager, '_fetch_key_vault_secret', side_effect=mock_fetch_secret):
+                with patch.object(
+                    manager, "_fetch_key_vault_secret", side_effect=mock_fetch_secret
+                ):
                     client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
 
                     assert client_id == "kv-client-id"
@@ -202,10 +203,10 @@ class TestCredentialResolution:
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_tenant_from_db', return_value=mock_tenant):
-                with patch.object(manager, '_fetch_key_vault_secret', return_value=None):
+            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
+                with patch.object(manager, "_fetch_key_vault_secret", return_value=None):
                     client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
 
                     # Should fallback to lighthouse credentials
@@ -226,10 +227,10 @@ class TestCredentialResolution:
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_tenant_from_db', return_value=mock_tenant):
-                with patch.object(manager, '_fetch_key_vault_secret', return_value=None):
+            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
+                with patch.object(manager, "_fetch_key_vault_secret", return_value=None):
                     with pytest.raises(ValueError, match="Could not resolve credentials"):
                         manager._resolve_credentials("tenant-123")
 
@@ -246,9 +247,11 @@ class TestCredentialCaching:
         self.mock_settings.azure_tenant_id = "test-tenant-id"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
-                with patch('app.api.services.azure_client.ClientSecretCredential') as self.mock_cred:
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
+                with patch(
+                    "app.api.services.azure_client.ClientSecretCredential"
+                ) as self.mock_cred:
                     self.mock_cred_instance = MagicMock()
                     self.mock_cred.return_value = self.mock_cred_instance
                     yield
@@ -382,8 +385,8 @@ class TestKeyVaultIntegration:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
                 yield
 
     def test_key_vault_secret_fetched_and_cached(self):
@@ -396,9 +399,9 @@ class TestKeyVaultIntegration:
         mock_kv_client = MagicMock()
         mock_kv_client.get_secret.return_value = mock_secret
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_key_vault_client', return_value=mock_kv_client):
+            with patch.object(manager, "_get_key_vault_client", return_value=mock_kv_client):
                 secret1 = manager._fetch_key_vault_secret("test-secret", "tenant-123")
                 secret2 = manager._fetch_key_vault_secret("test-secret", "tenant-123")
 
@@ -417,19 +420,21 @@ class TestKeyVaultIntegration:
         mock_kv_client = MagicMock()
         mock_kv_client.get_secret.return_value = mock_secret
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
 
             # Manually add an expired cache entry
             cache_key = "tenant-123:test-secret"
             manager._key_vault_cache[cache_key] = ("old-value", time.time() - 100)
 
-            with patch.object(manager, '_get_key_vault_client', return_value=mock_kv_client):
+            with patch.object(manager, "_get_key_vault_client", return_value=mock_kv_client):
                 secret = manager._fetch_key_vault_secret("test-secret", "tenant-123")
 
                 assert secret == "secret-value-123"  # New value
-                assert cache_key not in manager._key_vault_cache or \
-                       manager._key_vault_cache[cache_key][0] == "secret-value-123"
+                assert (
+                    cache_key not in manager._key_vault_cache
+                    or manager._key_vault_cache[cache_key][0] == "secret-value-123"
+                )
                 mock_kv_client.get_secret.assert_called_once()
 
     def test_key_vault_secret_fetch_error_returns_none(self):
@@ -439,9 +444,9 @@ class TestKeyVaultIntegration:
         mock_kv_client = MagicMock()
         mock_kv_client.get_secret.side_effect = Exception("Key Vault error")
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
-            with patch.object(manager, '_get_key_vault_client', return_value=mock_kv_client):
+            with patch.object(manager, "_get_key_vault_client", return_value=mock_kv_client):
                 secret = manager._fetch_key_vault_secret("test-secret", "tenant-123")
 
                 assert secret is None
@@ -469,16 +474,16 @@ class TestClientCreation:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
-                with patch('app.api.services.azure_client.ClientSecretCredential'):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
+                with patch("app.api.services.azure_client.ClientSecretCredential"):
                     yield
 
     def test_get_subscription_client(self):
         """Test creating SubscriptionClient for a tenant."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.SubscriptionClient') as mock_sub_client:
+        with patch("app.api.services.azure_client.SubscriptionClient") as mock_sub_client:
             manager = AzureClientManager()
             client = manager.get_subscription_client("tenant-123")
 
@@ -489,7 +494,9 @@ class TestClientCreation:
         """Test creating ResourceManagementClient for a tenant."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.ResourceManagementClient') as mock_resource_client:
+        with patch(
+            "app.api.services.azure_client.ResourceManagementClient"
+        ) as mock_resource_client:
             manager = AzureClientManager()
             manager.get_resource_client("tenant-123", "sub-456")
 
@@ -501,7 +508,7 @@ class TestClientCreation:
         """Test creating CostManagementClient for a tenant."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.CostManagementClient') as mock_cost_client:
+        with patch("app.api.services.azure_client.CostManagementClient") as mock_cost_client:
             manager = AzureClientManager()
             manager.get_cost_client("tenant-123", "sub-456")
 
@@ -514,7 +521,7 @@ class TestClientCreation:
         """Test creating PolicyInsightsClient for a tenant."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.PolicyInsightsClient') as mock_policy_client:
+        with patch("app.api.services.azure_client.PolicyInsightsClient") as mock_policy_client:
             manager = AzureClientManager()
             manager.get_policy_client("tenant-123", "sub-456")
 
@@ -526,7 +533,7 @@ class TestClientCreation:
         """Test creating SecurityCenter client for a tenant."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.SecurityCenter') as mock_security_client:
+        with patch("app.api.services.azure_client.SecurityCenter") as mock_security_client:
             manager = AzureClientManager()
             manager.get_security_client("tenant-123", "sub-456")
 
@@ -538,7 +545,7 @@ class TestClientCreation:
         """Test getting DefaultAzureCredential for Lighthouse scenarios."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.DefaultAzureCredential') as mock_default_cred:
+        with patch("app.api.services.azure_client.DefaultAzureCredential") as mock_default_cred:
             mock_default_instance = MagicMock()
             mock_default_cred.return_value = mock_default_instance
 
@@ -563,9 +570,9 @@ class TestCacheManagement:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
-                with patch('app.api.services.azure_client.ClientSecretCredential'):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
+                with patch("app.api.services.azure_client.ClientSecretCredential"):
                     yield
 
     def test_clear_cache_specific_tenant(self):
@@ -684,7 +691,7 @@ class TestCacheManagement:
             expires_at=now + 3600,
         )
 
-        with patch.object(manager, 'get_credential') as mock_get_cred:
+        with patch.object(manager, "get_credential") as mock_get_cred:
             stats = manager.refresh_all_credentials()
 
             assert stats["refreshed"] == 2
@@ -692,7 +699,7 @@ class TestCacheManagement:
             assert mock_get_cred.call_count == 2
             # Verify force_refresh was used
             for call in mock_get_cred.call_args_list:
-                assert call.kwargs.get('force_refresh') is True
+                assert call.kwargs.get("force_refresh") is True
 
     def test_refresh_all_credentials_with_failures(self):
         """Test bulk credential refresh handles failures gracefully."""
@@ -718,7 +725,7 @@ class TestCacheManagement:
                 raise ValueError("Credential error")
             return MagicMock()
 
-        with patch.object(manager, 'get_credential', side_effect=mock_get_cred):
+        with patch.object(manager, "get_credential", side_effect=mock_get_cred):
             stats = manager.refresh_all_credentials()
 
             assert stats["refreshed"] == 1
@@ -736,8 +743,8 @@ class TestErrorHandling:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
 
-        with patch('app.api.services.azure_client.get_settings', return_value=self.mock_settings):
-            with patch('app.api.services.azure_client.settings', self.mock_settings):
+        with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
+            with patch("app.api.services.azure_client.settings", self.mock_settings):
                 yield
 
     def test_invalid_tenant_config_raises_error(self):
@@ -760,16 +767,18 @@ class TestErrorHandling:
 
         self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
 
             # Mock DB lookup to return None (simulates failure)
-            with patch.object(manager, '_get_tenant_from_db', return_value=None):
+            with patch.object(manager, "_get_tenant_from_db", return_value=None):
                 # Should fallback to Key Vault lookup
                 with patch.object(
                     manager,
-                    '_fetch_key_vault_secret',
-                    side_effect=lambda name, tid: "secret-value" if "secret" in name else "client-id"
+                    "_fetch_key_vault_secret",
+                    side_effect=lambda name, tid: (
+                        "secret-value" if "secret" in name else "client-id"
+                    ),
                 ):
                     client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
                     assert client_id == "client-id"
@@ -782,9 +791,11 @@ class TestErrorHandling:
 
         self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
 
-        with patch('app.api.services.azure_client.KEYVAULT_AVAILABLE', True):
-            with patch('app.api.services.azure_client.DefaultAzureCredential',
-                       side_effect=Exception("Auth error")):
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
+            with patch(
+                "app.api.services.azure_client.DefaultAzureCredential",
+                side_effect=Exception("Auth error"),
+            ):
                 manager = AzureClientManager()
                 kv_client = manager._get_key_vault_client()
 
@@ -795,8 +806,8 @@ class TestErrorHandling:
         """Test that subscription listing errors are properly raised."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch('app.api.services.azure_client.ClientSecretCredential'):
-            with patch('app.api.services.azure_client.SubscriptionClient') as mock_sub_client:
+        with patch("app.api.services.azure_client.ClientSecretCredential"):
+            with patch("app.api.services.azure_client.SubscriptionClient") as mock_sub_client:
                 mock_client = MagicMock()
                 mock_client.subscriptions.list.side_effect = Exception("API error")
                 mock_sub_client.return_value = mock_client
@@ -821,8 +832,8 @@ class TestErrorHandling:
         mock_sub2.display_name = "Sub 2"
         mock_sub2.state = "Disabled"
 
-        with patch('app.api.services.azure_client.ClientSecretCredential'):
-            with patch('app.api.services.azure_client.SubscriptionClient') as mock_sub_client:
+        with patch("app.api.services.azure_client.ClientSecretCredential"):
+            with patch("app.api.services.azure_client.SubscriptionClient") as mock_sub_client:
                 mock_client = MagicMock()
                 mock_client.subscriptions.list.return_value = [mock_sub1, mock_sub2]
                 mock_sub_client.return_value = mock_client

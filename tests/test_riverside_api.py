@@ -94,8 +94,6 @@ def mock_tenant_auth(monkeypatch):
 
     # Also mock the app.api.routes.riverside imports
 
-
-
     # Mock rate limiting to prevent 429 errors
     monkeypatch.setattr(RateLimiter, "check_rate_limit", mock_check_rate_limit)
 
@@ -442,7 +440,9 @@ class TestRequirementsQueryParameters:
 
     def test_requirements_filter_by_multiple_params(self, auth_client):
         """Test filtering requirements with multiple query parameters."""
-        response = auth_client.get("/api/v1/riverside/requirements?category=IAM&priority=P0&status=not_started")
+        response = auth_client.get(
+            "/api/v1/riverside/requirements?category=IAM&priority=P0&status=not_started"
+        )
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, dict)
@@ -478,7 +478,11 @@ class TestAdminOnlyEndpoints:
         assert response.status_code == 403
         data = response.json()
         assert "detail" in data
-        assert "operator" in data["detail"].lower() or "admin" in data["detail"].lower() or "forbidden" in data["detail"].lower()
+        assert (
+            "operator" in data["detail"].lower()
+            or "admin" in data["detail"].lower()
+            or "forbidden" in data["detail"].lower()
+        )
 
 
 # =============================================================================

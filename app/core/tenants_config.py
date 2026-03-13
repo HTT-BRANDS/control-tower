@@ -36,6 +36,7 @@ class TenantConfig:
         is_riverside: Whether this is a Riverside-managed tenant
         priority: Tenant priority for sync operations (1=highest)
     """
+
     tenant_id: str
     name: str
     code: str
@@ -161,6 +162,7 @@ RIVERSIDE_TENANTS: dict[str, TenantConfig] = {
 # DMARC/DKIM MONITORING CONFIGURATION
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class DmarcDkimConfig:
     """Configuration for DMARC/DKIM monitoring across all tenants."""
@@ -203,10 +205,8 @@ KEY_VAULT_CONFIG = {
     # Key Vault URL should be set via environment variable
     # Format: https://{vault-name}.vault.azure.net/
     "vault_url_env_var": "KEY_VAULT_URL",
-
     # Secret naming convention for tenant credentials
     "secret_name_template": "{tenant_code.lower()}-client-secret",
-
     # Certificate-based auth (preferred over secrets)
     "use_certificate_auth": False,  # Set to True when certificates are available
     "certificate_env_var": "AZURE_CLIENT_CERTIFICATE_PATH",
@@ -217,13 +217,10 @@ KEY_VAULT_CONFIG = {
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def get_active_tenants() -> dict[str, TenantConfig]:
     """Return only active tenant configurations."""
-    return {
-        code: config
-        for code, config in RIVERSIDE_TENANTS.items()
-        if config.is_active
-    }
+    return {code: config for code, config in RIVERSIDE_TENANTS.items() if config.is_active}
 
 
 def get_tenant_by_id(tenant_id: str) -> TenantConfig | None:
@@ -246,11 +243,7 @@ def get_all_tenant_ids() -> list[str]:
 
 def get_all_active_tenant_ids() -> list[str]:
     """Return list of active tenant IDs."""
-    return [
-        config.tenant_id
-        for config in RIVERSIDE_TENANTS.values()
-        if config.is_active
-    ]
+    return [config.tenant_id for config in RIVERSIDE_TENANTS.values() if config.is_active]
 
 
 def get_key_vault_secret_name(tenant_code: str) -> str:
@@ -275,6 +268,7 @@ def validate_tenant_config() -> list[str]:
 
         # Validate UUID format
         import uuid
+
         try:
             if config.tenant_id not in ("TBD", "", None):
                 uuid.UUID(config.tenant_id)
@@ -301,14 +295,12 @@ def validate_tenant_config() -> list[str]:
 DEFAULT_TENANT_SETTINGS = {
     # Graph API version to use
     "graph_api_version": "v1.0",
-
     # Default sync intervals (hours)
     "sync_intervals": {
         "dmarc_dkim": 1,
         "security_alerts": 1,
         "domain_status": 24,
     },
-
     # Monitoring flags
     "monitoring": {
         "enable_dmarc_monitoring": True,
@@ -316,7 +308,6 @@ DEFAULT_TENANT_SETTINGS = {
         "enable_spf_monitoring": True,
         "alert_on_failure": True,
     },
-
     # Retry configuration
     "retry": {
         "max_retries": 3,

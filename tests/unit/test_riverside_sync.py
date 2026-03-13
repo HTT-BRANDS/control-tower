@@ -7,36 +7,41 @@ import pytest
 
 # Mock Azure SDK modules before importing
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.mgmt'] = azure_mock
-sys.modules['azure.mgmt.resource'] = azure_mock
-sys.modules['azure.mgmt.costmanagement'] = azure_mock
-sys.modules['azure.mgmt.policyinsights'] = azure_mock
-sys.modules['azure.mgmt.security'] = azure_mock
-sys.modules['azure.identity'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.mgmt"] = azure_mock
+sys.modules["azure.mgmt.resource"] = azure_mock
+sys.modules["azure.mgmt.costmanagement"] = azure_mock
+sys.modules["azure.mgmt.policyinsights"] = azure_mock
+sys.modules["azure.mgmt.security"] = azure_mock
+sys.modules["azure.identity"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
+
 
 # Make HttpResponseError a real exception so except clause works
 class MockHttpResponseError(Exception):
-    def __init__(self, message='', status_code=None, **kwargs):
-        super().__init__(message)
-        self.status_code = status_code
-        self.message = message
-
-azure_mock.HttpResponseError = MockHttpResponseError
-sys.modules['azure.core.exceptions'].HttpResponseError = MockHttpResponseError
-
-# Make HttpResponseError a real exception so 'except HttpResponseError' works
-class MockHttpResponseError(Exception):
-    """Mock Azure HttpResponseError that is a real exception subclass."""
     def __init__(self, message="", status_code=None, **kwargs):
         super().__init__(message)
         self.status_code = status_code
         self.message = message
 
+
 azure_mock.HttpResponseError = MockHttpResponseError
-sys.modules['azure.core.exceptions'].HttpResponseError = MockHttpResponseError
+sys.modules["azure.core.exceptions"].HttpResponseError = MockHttpResponseError
+
+
+# Make HttpResponseError a real exception so 'except HttpResponseError' works
+class MockHttpResponseError(Exception):
+    """Mock Azure HttpResponseError that is a real exception subclass."""
+
+    def __init__(self, message="", status_code=None, **kwargs):
+        super().__init__(message)
+        self.status_code = status_code
+        self.message = message
+
+
+azure_mock.HttpResponseError = MockHttpResponseError
+sys.modules["azure.core.exceptions"].HttpResponseError = MockHttpResponseError
 
 from app.models.riverside import (  # noqa: E402
     RequirementStatus,
@@ -136,9 +141,21 @@ class TestSyncTenantMFA:
     def mock_mfa_registrations(self):
         """Sample MFA registration data."""
         return [
-            {"userPrincipalName": "user1@test.com", "isMfaRegistered": True, "methodsRegistered": ["phone"]},
-            {"userPrincipalName": "user2@test.com", "isMfaRegistered": False, "methodsRegistered": []},
-            {"userPrincipalName": "user3@test.com", "isMfaRegistered": True, "methodsRegistered": ["app"]},
+            {
+                "userPrincipalName": "user1@test.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["phone"],
+            },
+            {
+                "userPrincipalName": "user2@test.com",
+                "isMfaRegistered": False,
+                "methodsRegistered": [],
+            },
+            {
+                "userPrincipalName": "user3@test.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["app"],
+            },
         ]
 
     @pytest.fixture
@@ -160,7 +177,7 @@ class TestSyncTenantMFA:
                 "members": [
                     {"id": "1", "userPrincipalName": "user1@test.com"},
                     {"id": "2", "userPrincipalName": "user2@test.com"},
-                ]
+                ],
             }
         ]
 
@@ -183,7 +200,9 @@ class TestSyncTenantMFA:
         with patch("app.services.riverside_sync._get_graph_client") as mock_get_graph:
             mock_graph = MagicMock()
             mock_get_graph.return_value = mock_graph
-            mock_graph.get_mfa_registration_details_paginated = AsyncMock(return_value=mock_mfa_registrations)
+            mock_graph.get_mfa_registration_details_paginated = AsyncMock(
+                return_value=mock_mfa_registrations
+            )
             mock_graph.get_users_paginated = AsyncMock(return_value=mock_users)
             mock_graph.get_directory_roles = AsyncMock(return_value=mock_directory_roles)
 
@@ -229,12 +248,17 @@ class TestSyncTenantMFA:
         mock_query = MagicMock()
         mock_session.query.return_value = mock_query
         mock_query.filter.return_value = mock_query
-        mock_query.first.side_effect = [mock_tenant, MagicMock()]  # tenant, then existing MFA record
+        mock_query.first.side_effect = [
+            mock_tenant,
+            MagicMock(),
+        ]  # tenant, then existing MFA record
 
         with patch("app.services.riverside_sync._get_graph_client") as mock_get_graph:
             mock_graph = MagicMock()
             mock_get_graph.return_value = mock_graph
-            mock_graph.get_mfa_registration_details_paginated = AsyncMock(return_value=mock_mfa_registrations)
+            mock_graph.get_mfa_registration_details_paginated = AsyncMock(
+                return_value=mock_mfa_registrations
+            )
             mock_graph.get_users_paginated = AsyncMock(return_value=mock_users)
             mock_graph.get_directory_roles = AsyncMock(return_value=mock_directory_roles)
 
@@ -261,10 +285,30 @@ class TestSyncTenantDevices:
     def mock_devices(self):
         """Sample device data."""
         return [
-            {"id": "1", "complianceState": "compliant", "managementAgent": "mdm", "isEncrypted": True},
-            {"id": "2", "complianceState": "noncompliant", "managementAgent": "mdm", "isEncrypted": False},
-            {"id": "3", "complianceState": "compliant", "managementAgent": "eas", "isEncrypted": True},
-            {"id": "4", "complianceState": "compliant", "managementAgent": "configurationManagerClientMdm", "isEncrypted": True},
+            {
+                "id": "1",
+                "complianceState": "compliant",
+                "managementAgent": "mdm",
+                "isEncrypted": True,
+            },
+            {
+                "id": "2",
+                "complianceState": "noncompliant",
+                "managementAgent": "mdm",
+                "isEncrypted": False,
+            },
+            {
+                "id": "3",
+                "complianceState": "compliant",
+                "managementAgent": "eas",
+                "isEncrypted": True,
+            },
+            {
+                "id": "4",
+                "complianceState": "compliant",
+                "managementAgent": "configurationManagerClientMdm",
+                "isEncrypted": True,
+            },
         ]
 
     @pytest.mark.asyncio
@@ -344,10 +388,7 @@ class TestSyncRequirementStatus:
     def mock_ca_policies_with_mfa(self):
         """Sample CA policies with MFA enforcement."""
         return [
-            {
-                "displayName": "Require MFA for Admins",
-                "grantControls": {"builtInControls": ["mfa"]}
-            }
+            {"displayName": "Require MFA for Admins", "grantControls": {"builtInControls": ["mfa"]}}
         ]
 
     @pytest.mark.asyncio
@@ -368,7 +409,9 @@ class TestSyncRequirementStatus:
         with patch("app.services.riverside_sync._get_graph_client") as mock_get_graph:
             mock_graph = MagicMock()
             mock_get_graph.return_value = mock_graph
-            mock_graph.get_conditional_access_policies = AsyncMock(return_value=mock_ca_policies_with_mfa)
+            mock_graph.get_conditional_access_policies = AsyncMock(
+                return_value=mock_ca_policies_with_mfa
+            )
 
             result = await sync_requirement_status("test-tenant-id", mock_session)
 
@@ -443,10 +486,10 @@ class TestSyncMaturityScores:
         mock_query.order_by.return_value = mock_query
 
         mock_query.first.side_effect = [
-            mock_tenant,      # First call: get tenant
-            mock_mfa_data,    # Second call: get MFA data (via .order_by().first())
-            mock_device_data, # Third call: get device data (via .order_by().first())
-            None,             # Fourth call: check existing compliance record
+            mock_tenant,  # First call: get tenant
+            mock_mfa_data,  # Second call: get MFA data (via .order_by().first())
+            mock_device_data,  # Third call: get device data (via .order_by().first())
+            None,  # Fourth call: check existing compliance record
         ]
         # total_reqs, completed_reqs, critical_gaps
         mock_query.count.side_effect = [10, 5, 2]
@@ -520,11 +563,20 @@ class TestSyncAllTenants:
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
 
-            with patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa, \
-                 patch("app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock) as mock_devices, \
-                 patch("app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock) as mock_reqs, \
-                 patch("app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock) as mock_maturity:
-
+            with (
+                patch(
+                    "app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock
+                ) as mock_mfa,
+                patch(
+                    "app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock
+                ) as mock_devices,
+                patch(
+                    "app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock
+                ) as mock_reqs,
+                patch(
+                    "app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock
+                ) as mock_maturity,
+            ):
                 mock_mfa.return_value = {"status": "success"}
                 mock_devices.return_value = {"status": "success"}
                 mock_reqs.return_value = {"status": "success"}
@@ -551,10 +603,20 @@ class TestSyncAllTenants:
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
 
-            with patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa, \
-                 patch("app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock) as mock_devices, \
-                 patch("app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock) as mock_reqs, \
-                 patch("app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock) as mock_maturity:
+            with (
+                patch(
+                    "app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock
+                ) as mock_mfa,
+                patch(
+                    "app.services.riverside_sync.sync_tenant_devices", new_callable=AsyncMock
+                ) as mock_devices,
+                patch(
+                    "app.services.riverside_sync.sync_requirement_status", new_callable=AsyncMock
+                ) as mock_reqs,
+                patch(
+                    "app.services.riverside_sync.sync_maturity_scores", new_callable=AsyncMock
+                ) as mock_maturity,
+            ):
                 # First tenant succeeds, second tenant MFA fails
                 mock_mfa.side_effect = [
                     {"status": "success"},
@@ -588,8 +650,9 @@ class TestSyncAllTenants:
             mock_get_monitor.return_value = mock_monitor
             mock_monitor.start_sync_job.return_value = MagicMock(id=1)
 
-            with patch("app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock) as mock_mfa:
-
+            with patch(
+                "app.services.riverside_sync.sync_tenant_mfa", new_callable=AsyncMock
+            ) as mock_mfa:
                 mock_mfa.return_value = {"status": "success"}
 
                 result = await sync_all_tenants(

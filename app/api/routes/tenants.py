@@ -49,7 +49,7 @@ def validate_uuid_param(tenant_id: str, param_name: str = "tenant_id") -> str:
             detail=f"{param_name} is required",
         )
 
-    uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     if not re.match(uuid_pattern, tenant_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -57,6 +57,7 @@ def validate_uuid_param(tenant_id: str, param_name: str = "tenant_id") -> str:
         )
 
     return tenant_id.lower()
+
 
 router = APIRouter(
     prefix="/api/v1/tenants",
@@ -157,7 +158,11 @@ async def create_tenant(
     dependencies=[Depends(rate_limit("default"))],
 )
 async def get_tenant(
-    id: str = Path(..., description="Tenant UUID", pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'),
+    id: str = Path(
+        ...,
+        description="Tenant UUID",
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     authz: TenantAuthorization = Depends(get_tenant_authorization),
@@ -196,7 +201,11 @@ async def get_tenant(
 )
 async def update_tenant(
     tenant_update: TenantUpdate,
-    id: str = Path(..., description="Tenant UUID", pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'),
+    id: str = Path(
+        ...,
+        description="Tenant UUID",
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -244,7 +253,11 @@ async def update_tenant(
     dependencies=[Depends(rate_limit("auth"))],
 )
 async def delete_tenant(
-    id: str = Path(..., description="Tenant UUID", pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'),
+    id: str = Path(
+        ...,
+        description="Tenant UUID",
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -276,7 +289,11 @@ async def delete_tenant(
     dependencies=[Depends(rate_limit("default"))],
 )
 async def get_tenant_subscriptions(
-    id: str = Path(..., description="Tenant UUID", pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'),
+    id: str = Path(
+        ...,
+        description="Tenant UUID",
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     authz: TenantAuthorization = Depends(get_tenant_authorization),

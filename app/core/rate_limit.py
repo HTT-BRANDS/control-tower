@@ -115,9 +115,7 @@ class RateLimiter:
 
         return ip
 
-    async def _check_redis_limit(
-        self, key: str, config: RateLimitConfig
-    ) -> tuple[bool, dict]:
+    async def _check_redis_limit(self, key: str, config: RateLimitConfig) -> tuple[bool, dict]:
         """Check rate limit using Redis.
 
         Returns:
@@ -153,9 +151,7 @@ class RateLimiter:
 
         return True, headers
 
-    def _check_memory_limit(
-        self, key: str, config: RateLimitConfig
-    ) -> tuple[bool, dict]:
+    def _check_memory_limit(self, key: str, config: RateLimitConfig) -> tuple[bool, dict]:
         """Check rate limit using in-memory cache.
 
         Returns:
@@ -169,9 +165,7 @@ class RateLimiter:
 
         # Clean old entries periodically
         if len(self._memory_cache) > 10000:
-            self._memory_cache = {
-                k: v for k, v in self._memory_cache.items() if v[1] > now
-            }
+            self._memory_cache = {k: v for k, v in self._memory_cache.items() if v[1] > now}
 
         # Get or create entry
         if window_key not in self._memory_cache:
@@ -447,9 +441,7 @@ class TokenBucketRateLimiter:
         """
         return self.acquire(tokens)
 
-    async def acquire_async_with_wait(
-        self, tokens: int = 1, timeout: float | None = None
-    ) -> bool:
+    async def acquire_async_with_wait(self, tokens: int = 1, timeout: float | None = None) -> bool:
         """Async version of acquire with wait.
 
         Args:
@@ -547,10 +539,7 @@ class MultiApiRateLimiter:
             KeyError: If api_name is not recognized
         """
         if api_name not in self._limiters:
-            raise KeyError(
-                f"Unknown API: {api_name}. "
-                f"Available: {list(self._limiters.keys())}"
-            )
+            raise KeyError(f"Unknown API: {api_name}. Available: {list(self._limiters.keys())}")
         return self._limiters[api_name]
 
     def acquire(self, api_name: str, tokens: int = 1) -> bool:
@@ -648,9 +637,7 @@ class MultiApiRateLimiter:
         limiter = self.get_limiter(api_name)
         return limiter.get_wait_time(tokens)
 
-    def register_limiter(
-        self, api_name: str, limiter: TokenBucketRateLimiter
-    ) -> None:
+    def register_limiter(self, api_name: str, limiter: TokenBucketRateLimiter) -> None:
         """Register a custom rate limiter for an API.
 
         Args:
@@ -696,7 +683,7 @@ def calculate_backoff(
         raise ValueError("max_delay must be positive")
 
     # Calculate exponential delay
-    exponential_delay = base_delay * (2 ** attempt)
+    exponential_delay = base_delay * (2**attempt)
     capped_delay = min(exponential_delay, max_delay)
 
     if jitter:

@@ -648,9 +648,7 @@ class TestSendAlerts:
     @patch("app.core.riverside_scheduler.should_notify")
     @patch("app.core.riverside_scheduler.send_notification")
     @patch("app.core.riverside_scheduler.record_notification_sent")
-    async def test_send_mfa_compliance_alerts(
-        self, mock_record, mock_send, mock_should_notify
-    ):
+    async def test_send_mfa_compliance_alerts(self, mock_record, mock_send, mock_should_notify):
         """Test sending MFA compliance alerts."""
         mock_should_notify.return_value = True
         mock_send.return_value = {"success": True}
@@ -707,9 +705,7 @@ class TestSendAlerts:
     @patch("app.core.riverside_scheduler.should_notify")
     @patch("app.core.riverside_scheduler.send_notification")
     @patch("app.core.riverside_scheduler.record_notification_sent")
-    async def test_send_deadline_alerts(
-        self, mock_record, mock_send, mock_should_notify
-    ):
+    async def test_send_deadline_alerts(self, mock_record, mock_send, mock_should_notify):
         """Test sending deadline alerts."""
         mock_should_notify.return_value = True
         mock_send.return_value = {"success": True}
@@ -773,9 +769,7 @@ class TestSendAlerts:
     @patch("app.core.riverside_scheduler.should_notify")
     @patch("app.core.riverside_scheduler.send_notification")
     @patch("app.core.riverside_scheduler.record_notification_sent")
-    async def test_send_threat_escalation_alerts(
-        self, mock_record, mock_send, mock_should_notify
-    ):
+    async def test_send_threat_escalation_alerts(self, mock_record, mock_send, mock_should_notify):
         """Test sending threat escalation alerts."""
         mock_should_notify.return_value = True
         mock_send.return_value = {"success": True}

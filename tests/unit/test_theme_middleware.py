@@ -2,6 +2,7 @@
 
 Updated for microsoft-group-management design system (Inter font, #500711 primary).
 """
+
 from dataclasses import FrozenInstanceError
 from unittest.mock import MagicMock
 
@@ -20,6 +21,7 @@ from app.core.theme_middleware import (
 def clear_brand_cache():
     """Clear the module-level registry cache before each test."""
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None
@@ -38,12 +40,15 @@ def test_default_brand_key():
 def test_theme_context_properties():
     from app.core.css_generator import generate_brand_css_variables, generate_inline_style
     from app.core.design_tokens import get_brand, get_google_fonts_url
+
     brand = get_brand("httbrands")
     ctx = ThemeContext(
-        brand_key="httbrands", brand_config=brand,
+        brand_key="httbrands",
+        brand_config=brand,
         css_variables=generate_brand_css_variables(brand),
         inline_style=generate_inline_style(brand),
-        google_fonts_url=get_google_fonts_url(brand))
+        google_fonts_url=get_google_fonts_url(brand),
+    )
     assert ctx.brand_name == "Head to Toe Brands"
     assert ctx.logo_primary.endswith(".svg")
 
@@ -51,12 +56,15 @@ def test_theme_context_properties():
 def test_theme_context_to_template():
     from app.core.css_generator import generate_brand_css_variables, generate_inline_style
     from app.core.design_tokens import get_brand, get_google_fonts_url
+
     brand = get_brand("frenchies")
     ctx = ThemeContext(
-        brand_key="frenchies", brand_config=brand,
+        brand_key="frenchies",
+        brand_config=brand,
         css_variables=generate_brand_css_variables(brand),
         inline_style=generate_inline_style(brand),
-        google_fonts_url=get_google_fonts_url(brand))
+        google_fonts_url=get_google_fonts_url(brand),
+    )
     t = ctx.to_template_context()
     assert t["brand"]["key"] == "frenchies"
     assert "css_variables" in t["brand"]
@@ -70,12 +78,15 @@ def test_theme_context_to_template():
 def test_theme_context_frozen():
     from app.core.css_generator import generate_brand_css_variables, generate_inline_style
     from app.core.design_tokens import get_brand, get_google_fonts_url
+
     brand = get_brand("httbrands")
     ctx = ThemeContext(
-        brand_key="httbrands", brand_config=brand,
+        brand_key="httbrands",
+        brand_config=brand,
         css_variables=generate_brand_css_variables(brand),
         inline_style=generate_inline_style(brand),
-        google_fonts_url=get_google_fonts_url(brand))
+        google_fonts_url=get_google_fonts_url(brand),
+    )
     with pytest.raises((AttributeError, FrozenInstanceError)):
         ctx.brand_key = "other"
 
@@ -112,6 +123,7 @@ def test_get_theme_context_fallback():
 def test_google_fonts_url_uses_inter():
     """All brands should generate Inter font URLs."""
     from app.core.design_tokens import get_brand, get_google_fonts_url
+
     brand = get_brand("httbrands")
     url = get_google_fonts_url(brand)
     assert "Inter" in url

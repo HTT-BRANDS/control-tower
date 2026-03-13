@@ -135,6 +135,7 @@ TaggingCompliance.model_rebuild()
 # Bulk Operation Schemas
 # ==========================================================================
 
+
 class ResourceFilterCriteria(BaseModel):
     """Filter criteria for bulk resource operations."""
 

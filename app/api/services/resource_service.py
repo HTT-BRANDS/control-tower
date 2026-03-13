@@ -98,9 +98,7 @@ class ResourceService:
                     tenant_id=r.tenant_id,
                     tenant_name=tenant_name,
                     subscription_id=r.subscription_id,
-                    subscription_name=subscriptions.get(
-                        r.subscription_id, r.subscription_id
-                    ),
+                    subscription_name=subscriptions.get(r.subscription_id, r.subscription_id),
                     resource_group=r.resource_group,
                     resource_type=r.resource_type,
                     name=r.name,
@@ -166,9 +164,7 @@ class ResourceService:
                 resource_name=r.name,
                 resource_type=r.resource_type,
                 tenant_name=tenants.get(r.tenant_id, "Unknown"),
-                subscription_name=subscriptions.get(
-                    r.subscription_id, r.subscription_id
-                ),
+                subscription_name=subscriptions.get(r.subscription_id, r.subscription_id),
                 estimated_monthly_cost=r.estimated_monthly_cost,
                 days_inactive=_get_inactive_days(r),
                 reason=_get_orphan_reason(r),
@@ -308,9 +304,7 @@ class ResourceService:
         idle_resources = query.all()
 
         total_count = len(idle_resources)
-        total_monthly_savings = sum(
-            (r.estimated_monthly_savings or 0) for r in idle_resources
-        )
+        total_monthly_savings = sum((r.estimated_monthly_savings or 0) for r in idle_resources)
         total_annual_savings = total_monthly_savings * 12
 
         # By type
@@ -338,9 +332,7 @@ class ResourceService:
     ) -> TagResourceResponse:
         """Tag an idle resource as reviewed."""
         idle_resource = (
-            self.db.query(IdleResource)
-            .filter(IdleResource.id == idle_resource_id)
-            .first()
+            self.db.query(IdleResource).filter(IdleResource.id == idle_resource_id).first()
         )
 
         if not idle_resource:

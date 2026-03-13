@@ -104,9 +104,7 @@ class TokenBlacklist:
         if self._redis is not None:
             try:
                 count = 0
-                for _ in self._redis.scan_iter(
-                    f"{self.REDIS_KEY_PREFIX}*", count=1000
-                ):
+                for _ in self._redis.scan_iter(f"{self.REDIS_KEY_PREFIX}*", count=1000):
                     count += 1
                 return count
             except Exception as exc:
@@ -123,9 +121,7 @@ class TokenBlacklist:
         self._memory_fallback.clear()
         if self._redis is not None:
             try:
-                for key in self._redis.scan_iter(
-                    f"{self.REDIS_KEY_PREFIX}*", count=1000
-                ):
+                for key in self._redis.scan_iter(f"{self.REDIS_KEY_PREFIX}*", count=1000):
                     self._redis.delete(key)
             except Exception:
                 pass

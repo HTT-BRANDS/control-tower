@@ -26,7 +26,9 @@ from app.models.riverside import (
 from tests.fixtures.riverside_fixtures import create_riverside_test_data
 
 # Mark all tests as xfail due to RequirementStatus enum binding issues with SQLAlchemy
-pytestmark = pytest.mark.xfail(reason="RequirementStatus enum not properly bound in SQLAlchemy queries")
+pytestmark = pytest.mark.xfail(
+    reason="RequirementStatus enum not properly bound in SQLAlchemy queries"
+)
 
 
 @pytest.fixture
@@ -139,9 +141,7 @@ class TestTrackRequirementProgress:
                 assert related_req.category == req.category
                 assert related_req.tenant_id == req.tenant_id
 
-    def test_track_requirement_calculates_velocity(
-        self, db_with_riverside_data: Session
-    ):
+    def test_track_requirement_calculates_velocity(self, db_with_riverside_data: Session):
         """Test that velocity metric is calculated based on tenant completion rate."""
         req = db_with_riverside_data.query(RiversideRequirement).first()
 
@@ -188,9 +188,7 @@ class TestGetDeadlineStatus:
 
         assert 0 <= result["urgency_score"] <= 100
 
-    def test_deadline_status_risk_assessment_levels(
-        self, db_with_riverside_data: Session
-    ):
+    def test_deadline_status_risk_assessment_levels(self, db_with_riverside_data: Session):
         """Test that risk assessment is one of the valid levels."""
         result = get_deadline_status(db_with_riverside_data)
 
@@ -205,9 +203,7 @@ class TestGetDeadlineStatus:
         # With a larger window, we should find more (or equal) at-risk requirements
         assert result_60["at_risk_count"] >= result_30["at_risk_count"]
 
-    def test_deadline_status_upcoming_deadlines_structure(
-        self, db_with_riverside_data: Session
-    ):
+    def test_deadline_status_upcoming_deadlines_structure(self, db_with_riverside_data: Session):
         """Test that upcoming deadlines are properly structured."""
         result = get_deadline_status(db_with_riverside_data, days_window=365)
 
@@ -225,16 +221,12 @@ class TestGetDeadlineStatus:
             assert "priority" in deadline_item
             assert "owner" in deadline_item
 
-    def test_deadline_status_negative_window_raises_error(
-        self, db_with_riverside_data: Session
-    ):
+    def test_deadline_status_negative_window_raises_error(self, db_with_riverside_data: Session):
         """Test that negative days_window raises ValueError."""
         with pytest.raises(ValueError, match="days_window must be non-negative"):
             get_deadline_status(db_with_riverside_data, days_window=-10)
 
-    def test_deadline_status_completion_rate_calculation(
-        self, db_with_riverside_data: Session
-    ):
+    def test_deadline_status_completion_rate_calculation(self, db_with_riverside_data: Session):
         """Test that completion rate is correctly calculated."""
         result = get_deadline_status(db_with_riverside_data)
 
@@ -246,9 +238,7 @@ class TestGetDeadlineStatus:
         assert result["completed_requirements"] <= result["total_requirements"]
 
         # Verify calculation
-        expected_rate = (
-            result["completed_requirements"] / result["total_requirements"] * 100
-        )
+        expected_rate = result["completed_requirements"] / result["total_requirements"] * 100
         assert abs(result["completion_rate"] - expected_rate) < 0.2  # Allow rounding
 
 
@@ -384,18 +374,14 @@ class TestGetRiversideMetrics:
         # Base exposure should be $20M
         assert "20,000,000" in financial["base_exposure"]
 
-    def test_riverside_metrics_security_posture_score_range(
-        self, db_with_riverside_data: Session
-    ):
+    def test_riverside_metrics_security_posture_score_range(self, db_with_riverside_data: Session):
         """Test that security posture score is within valid range."""
         result = get_riverside_metrics(db_with_riverside_data)
 
         # Security posture should be 0-100
         assert 0 <= result["security_posture_score"] <= 100
 
-    def test_riverside_metrics_executive_summary_status(
-        self, db_with_riverside_data: Session
-    ):
+    def test_riverside_metrics_executive_summary_status(self, db_with_riverside_data: Session):
         """Test executive summary generation and status assessment."""
         result = get_riverside_metrics(db_with_riverside_data)
 
@@ -429,9 +415,7 @@ class TestGetRiversideMetrics:
         with pytest.raises(ValueError, match="No tenant data available"):
             get_riverside_metrics(db)
 
-    def test_riverside_metrics_requirements_summary(
-        self, db_with_riverside_data: Session
-    ):
+    def test_riverside_metrics_requirements_summary(self, db_with_riverside_data: Session):
         """Test requirements completion summary."""
         result = get_riverside_metrics(db_with_riverside_data)
 

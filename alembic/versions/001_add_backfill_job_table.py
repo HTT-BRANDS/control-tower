@@ -5,6 +5,7 @@ Revises:
 Create Date: 2025-01-01 00:00:00.000000
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -35,7 +36,9 @@ def upgrade() -> None:
         sa.Column("records_failed", sa.Integer(), nullable=False, default=0),
         sa.Column("last_error", sa.Text(), nullable=True),
         sa.Column("error_count", sa.Integer(), nullable=False, default=0),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")
+        ),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
         sa.Column("paused_at", sa.DateTime(), nullable=True),

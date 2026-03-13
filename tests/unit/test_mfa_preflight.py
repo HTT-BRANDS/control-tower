@@ -19,6 +19,7 @@ class TestMFATenantDataCheck:
     def check(self):
         """Create a MFATenantDataCheck instance."""
         from app.preflight.mfa_checks import MFATenantDataCheck
+
         return MFATenantDataCheck()
 
     def test_check_initialization(self, check):
@@ -91,6 +92,7 @@ class TestMFAAdminEnrollmentCheck:
     def check(self):
         """Create a MFAAdminEnrollmentCheck instance."""
         from app.preflight.mfa_checks import MFAAdminEnrollmentCheck
+
         return MFAAdminEnrollmentCheck()
 
     def test_check_initialization(self, check):
@@ -182,6 +184,7 @@ class TestMFAUserEnrollmentCheck:
     def check(self):
         """Create a MFAUserEnrollmentCheck instance."""
         from app.preflight.mfa_checks import MFAUserEnrollmentCheck
+
         return MFAUserEnrollmentCheck()
 
     def test_check_initialization(self, check):
@@ -292,6 +295,7 @@ class TestMFAGapReportCheck:
     def check(self):
         """Create a MFAGapReportCheck instance."""
         from app.preflight.mfa_checks import MFAGapReportCheck
+
         return MFAGapReportCheck()
 
     def test_check_initialization(self, check):
@@ -393,6 +397,7 @@ class TestMFACheckFunctions:
         """Test run_all_mfa_checks runs all checks."""
         from app.preflight.base import BasePreflightCheck
         from app.preflight.mfa_checks import run_all_mfa_checks
+
         BasePreflightCheck.clear_cache()
 
         with patch("app.preflight.mfa_checks.SessionLocal") as mock_session:
@@ -426,6 +431,7 @@ class TestMFACheckFunctions:
             assert len(results) == 4
             # All should be CheckResult instances
             from app.preflight.models import CheckResult
+
             assert all(isinstance(r, CheckResult) for r in results)
 
     def test_get_mfa_checks(self):
@@ -438,6 +444,7 @@ class TestMFACheckFunctions:
         assert len(checks) == 4
         # All should have the correct category
         from app.preflight.base import BasePreflightCheck
+
         assert all(isinstance(c, BasePreflightCheck) for c in checks.values())
         # Verify check IDs
         assert "mfa_tenant_data" in checks
@@ -465,6 +472,7 @@ class TestCheckResultStructure:
     async def test_all_checks_return_valid_results(self):
         """Verify all MFA checks return properly structured results."""
         from app.preflight.base import BasePreflightCheck
+
         BasePreflightCheck.clear_cache()
 
         from app.preflight.mfa_checks import (

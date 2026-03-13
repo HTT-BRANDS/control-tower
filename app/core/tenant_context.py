@@ -28,6 +28,7 @@ class BrandColors:
         accent: Highlight/accent color (for warnings, highlights)
         theme_name: CSS theme identifier for data-theme attribute
     """
+
     primary: str
     secondary: str
     accent: str
@@ -53,33 +54,33 @@ class BrandColors:
 
 BRAND_PALETTES: dict[str, BrandColors] = {
     "HTT": BrandColors(
-        primary="#500711",      # Burgundy
-        secondary="#d1bdbf",    # Mauve
-        accent="#ffc957",       # Gold
+        primary="#500711",  # Burgundy
+        secondary="#d1bdbf",  # Mauve
+        accent="#ffc957",  # Gold
         theme_name="htt",
     ),
     "FN": BrandColors(
-        primary="#052b48",      # Navy
-        secondary="#faaca8",    # Peach
-        accent="#ffc957",       # Gold (shared)
+        primary="#052b48",  # Navy
+        secondary="#faaca8",  # Peach
+        accent="#ffc957",  # Gold (shared)
         theme_name="frenchies",
     ),
     "BCC": BrandColors(
-        primary="#EB631B",      # Orange
-        secondary="#CE9F7C",    # Tan
-        accent="#ffc957",       # Gold (shared)
+        primary="#EB631B",  # Orange
+        secondary="#CE9F7C",  # Tan
+        accent="#ffc957",  # Gold (shared)
         theme_name="bishops",
     ),
     "TLL": BrandColors(
-        primary="#513550",      # Purple
-        secondary="#D3BCC5",    # Lavender
-        accent="#ffc957",       # Gold (shared)
+        primary="#513550",  # Purple
+        secondary="#D3BCC5",  # Lavender
+        accent="#ffc957",  # Gold (shared)
         theme_name="lash-lounge",
     ),
     "DCE": BrandColors(
-        primary="#0053e2",      # Walmart Blue
-        secondary="#9e9e9e",    # Gray
-        accent="#ffc220",       # Walmart Spark Yellow
+        primary="#0053e2",  # Walmart Blue
+        secondary="#9e9e9e",  # Gray
+        accent="#ffc220",  # Walmart Spark Yellow
         theme_name="delta-crown",
     ),
 }
@@ -96,6 +97,7 @@ DEFAULT_BRAND = BrandColors(
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def get_brand_colors(tenant_id: str) -> BrandColors:
     """Get brand colors for a tenant by tenant ID.
@@ -193,6 +195,7 @@ def get_brand_css_variables(tenant_id: str | None = None) -> str:
 # TEMPLATE CONTEXT PROVIDERS
 # ============================================================================
 
+
 def get_template_context(tenant_id: str | None = None) -> dict[str, Any]:
     """Generate template context with brand colors.
 
@@ -229,7 +232,9 @@ def get_template_context(tenant_id: str | None = None) -> dict[str, Any]:
             "id": tenant_config.tenant_id if tenant_config else None,
             "name": tenant_config.name if tenant_config else "Default",
             "code": tenant_config.code if tenant_config else None,
-        } if tenant_config else None,
+        }
+        if tenant_config
+        else None,
     }
 
 
@@ -249,9 +254,9 @@ def get_brand_context_for_request(request: Request) -> dict[str, Any]:
 
     # Also try to get tenant config
     tenant_id = (
-        request.path_params.get("tenant_id") or
-        request.query_params.get("tenant_id") or
-        request.headers.get("X-Tenant-ID")
+        request.path_params.get("tenant_id")
+        or request.query_params.get("tenant_id")
+        or request.headers.get("X-Tenant-ID")
     )
 
     tenant_config = None
@@ -274,7 +279,9 @@ def get_brand_context_for_request(request: Request) -> dict[str, Any]:
             "id": tenant_config.tenant_id if tenant_config else None,
             "name": tenant_config.name if tenant_config else "Azure Governance",
             "code": tenant_config.code if tenant_config else None,
-        } if tenant_config else {
+        }
+        if tenant_config
+        else {
             "name": "Azure Governance",
             "code": None,
         },
@@ -284,6 +291,7 @@ def get_brand_context_for_request(request: Request) -> dict[str, Any]:
 # ============================================================================
 # MIDDLEWARE SUPPORT
 # ============================================================================
+
 
 class TenantContextMiddleware:
     """ASGI middleware to inject tenant context into requests.
@@ -308,9 +316,9 @@ class TenantContextMiddleware:
 
         # Detect tenant and store in scope
         tenant_id = (
-            request.path_params.get("tenant_id") or
-            request.query_params.get("tenant_id") or
-            request.headers.get("X-Tenant-ID")
+            request.path_params.get("tenant_id")
+            or request.query_params.get("tenant_id")
+            or request.headers.get("X-Tenant-ID")
         )
 
         scope["tenant_id"] = tenant_id
@@ -322,6 +330,7 @@ class TenantContextMiddleware:
 # ============================================================================
 # TEMPLATE FILTERS
 # ============================================================================
+
 
 def brand_color_filter(color_type: str, tenant_code: str | None = None) -> str:
     """Jinja2 filter to get brand colors.

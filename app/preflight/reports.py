@@ -53,9 +53,7 @@ class ReportGenerator:
                 "duration_ms": self.report.total_duration_ms,
                 "is_success": self.report.is_success,
             },
-            "categories_requested": [
-                cat.value for cat in self.report.categories_requested
-            ],
+            "categories_requested": [cat.value for cat in self.report.categories_requested],
             "fail_fast": self.report.fail_fast,
             "results": [
                 {
@@ -96,18 +94,20 @@ class ReportGenerator:
                 f"**Completed:** {self.report.completed_at.strftime('%Y-%m-%d %H:%M:%S')} UTC"
             )
 
-        lines.extend([
-            "",
-            "## Summary",
-            "",
-            f"- ✅ **Passed:** {self.report.passed_count}",
-            f"- ⚠️ **Warnings:** {self.report.warning_count}",
-            f"- ❌ **Failed:** {self.report.failed_count}",
-            f"- ⏭️ **Skipped:** {self.report.skipped_count}",
-            f"- 📊 **Total:** {len(self.report.results)}",
-            f"- ⏱️ **Duration:** {self.report.total_duration_ms:.2f}ms",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Summary",
+                "",
+                f"- ✅ **Passed:** {self.report.passed_count}",
+                f"- ⚠️ **Warnings:** {self.report.warning_count}",
+                f"- ❌ **Failed:** {self.report.failed_count}",
+                f"- ⏭️ **Skipped:** {self.report.skipped_count}",
+                f"- 📊 **Total:** {len(self.report.results)}",
+                f"- ⏱️ **Duration:** {self.report.total_duration_ms:.2f}ms",
+                "",
+            ]
+        )
 
         if self.report.is_success:
             status_emoji = "✅"
@@ -116,10 +116,12 @@ class ReportGenerator:
             status_emoji = "❌"
             status_text = "FAILED"
 
-        lines.extend([
-            f"## Overall Status: {status_emoji} **{status_text}**",
-            "",
-        ])
+        lines.extend(
+            [
+                f"## Overall Status: {status_emoji} **{status_text}**",
+                "",
+            ]
+        )
 
         # Group results by category
         category_groups: dict[CheckCategory, list[CheckResult]] = {}
@@ -134,9 +136,7 @@ class ReportGenerator:
 
             for result in results:
                 status_emoji = self._get_status_emoji(result.status)
-                lines.append(
-                    f"- {status_emoji} **{result.name}**: {result.message}"
-                )
+                lines.append(f"- {status_emoji} **{result.name}**: {result.message}")
 
                 if result.status == CheckStatus.FAIL and result.recommendations:
                     lines.append("  - Recommendations:")
@@ -148,20 +148,24 @@ class ReportGenerator:
         # Add failed check details
         failed_checks = self.report.get_failed_checks()
         if failed_checks:
-            lines.extend([
-                "## Failed Check Details",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Failed Check Details",
+                    "",
+                ]
+            )
 
             for result in failed_checks:
-                lines.extend([
-                    f"### {result.name}",
-                    "",
-                    f"**Status:** {result.status.value}",
-                    "",
-                    f"**Message:** {result.message}",
-                    "",
-                ])
+                lines.extend(
+                    [
+                        f"### {result.name}",
+                        "",
+                        f"**Status:** {result.status.value}",
+                        "",
+                        f"**Message:** {result.message}",
+                        "",
+                    ]
+                )
 
                 if result.details:
                     lines.append("**Details:**")
@@ -194,32 +198,32 @@ class ReportGenerator:
 <div class="preflight-report">
     <h2>Preflight Check Report</h2>
     <p class="report-meta">
-        <strong>Report ID:</strong> {summary['id']}<br>
-        <strong>Started:</strong> {summary['started_at']}<br>
-        {f"<strong>Completed:</strong> {summary['completed_at']}<br>" if summary['completed_at'] else ""}
+        <strong>Report ID:</strong> {summary["id"]}<br>
+        <strong>Started:</strong> {summary["started_at"]}<br>
+        {f"<strong>Completed:</strong> {summary['completed_at']}<br>" if summary["completed_at"] else ""}
     </p>
 
     <div class="summary-cards">
         <div class="summary-card passed">
-            <span class="count">{summary['passed']}</span>
+            <span class="count">{summary["passed"]}</span>
             <span class="label">Passed</span>
         </div>
         <div class="summary-card warning">
-            <span class="count">{summary['warnings']}</span>
+            <span class="count">{summary["warnings"]}</span>
             <span class="label">Warnings</span>
         </div>
         <div class="summary-card failed">
-            <span class="count">{summary['failed']}</span>
+            <span class="count">{summary["failed"]}</span>
             <span class="label">Failed</span>
         </div>
         <div class="summary-card skipped">
-            <span class="count">{summary['skipped']}</span>
+            <span class="count">{summary["skipped"]}</span>
             <span class="label">Skipped</span>
         </div>
     </div>
 
-    <div class="overall-status {('success' if summary['is_success'] else 'failure')}">
-        {'✅ All checks passed!' if summary['is_success'] else '❌ Some checks failed'}
+    <div class="overall-status {("success" if summary["is_success"] else "failure")}">
+        {"✅ All checks passed!" if summary["is_success"] else "❌ Some checks failed"}
     </div>
 """
 
@@ -282,9 +286,7 @@ class ReportGenerator:
             "pass_rate": (self.report.passed_count / total) * 100,
             "fail_rate": (self.report.failed_count / total) * 100,
             "total_duration_ms": self.report.total_duration_ms,
-            "average_duration_ms": self.report.total_duration_ms / total
-            if total > 0
-            else 0,
+            "average_duration_ms": self.report.total_duration_ms / total if total > 0 else 0,
             "is_success": self.report.is_success,
             "has_warnings": self.report.has_warnings,
             "has_failures": self.report.has_failures,
@@ -301,17 +303,19 @@ class ReportGenerator:
         failed = []
 
         for result in self.report.get_failed_checks():
-            failed.append({
-                "check_id": result.check_id,
-                "name": result.name,
-                "category": result.category.value,
-                "status": result.status.value,
-                "message": result.message,
-                "details": result.details,
-                "duration_ms": result.duration_ms,
-                "recommendations": result.recommendations,
-                "tenant_id": result.tenant_id,
-            })
+            failed.append(
+                {
+                    "check_id": result.check_id,
+                    "name": result.name,
+                    "category": result.category.value,
+                    "status": result.status.value,
+                    "message": result.message,
+                    "details": result.details,
+                    "duration_ms": result.duration_ms,
+                    "recommendations": result.recommendations,
+                    "tenant_id": result.tenant_id,
+                }
+            )
 
         return failed
 
@@ -371,8 +375,7 @@ def generate_report(
 
     if format not in format_mapping:
         raise ValueError(
-            f"Unsupported format: {format}. "
-            f"Supported formats: {', '.join(format_mapping.keys())}"
+            f"Unsupported format: {format}. Supported formats: {', '.join(format_mapping.keys())}"
         )
 
     return format_mapping[format]()

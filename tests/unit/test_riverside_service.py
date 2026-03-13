@@ -49,6 +49,7 @@ class TestRiversideServiceInit:
     def test_riverside_deadline_constant(self):
         """Test that Riverside deadline constant is set correctly."""
         from datetime import date
+
         assert RIVERSIDE_DEADLINE == date(2026, 7, 8)
 
     def test_target_maturity_score_constant(self):
@@ -117,12 +118,8 @@ class TestRiversideServiceQueries:
             "app.api.services.riverside_service.get_requirements",
             return_value=expected,
         ) as mock_query:
-            result = service.get_requirements(
-                category="IAM", priority="P0", status="not_started"
-            )
-            mock_query.assert_called_once_with(
-                service.db, "IAM", "P0", "not_started"
-            )
+            result = service.get_requirements(category="IAM", priority="P0", status="not_started")
+            mock_query.assert_called_once_with(service.db, "IAM", "P0", "not_started")
             assert result == expected
 
     @pytest.mark.asyncio
@@ -144,14 +141,28 @@ class TestRiversideServiceSync:
     @pytest.mark.asyncio
     async def test_sync_all(self, service):
         """Test sync_all runs all sync operations."""
-        with patch.object(
-            service, "sync_riverside_mfa", new_callable=AsyncMock, return_value={"status": "ok"}
-        ), patch.object(
-            service, "sync_riverside_device_compliance", new_callable=AsyncMock, return_value={"status": "ok"}
-        ), patch.object(
-            service, "sync_riverside_requirements", new_callable=AsyncMock, return_value={"status": "ok"}
-        ), patch.object(
-            service, "sync_riverside_maturity_scores", new_callable=AsyncMock, return_value={"status": "ok"}
+        with (
+            patch.object(
+                service, "sync_riverside_mfa", new_callable=AsyncMock, return_value={"status": "ok"}
+            ),
+            patch.object(
+                service,
+                "sync_riverside_device_compliance",
+                new_callable=AsyncMock,
+                return_value={"status": "ok"},
+            ),
+            patch.object(
+                service,
+                "sync_riverside_requirements",
+                new_callable=AsyncMock,
+                return_value={"status": "ok"},
+            ),
+            patch.object(
+                service,
+                "sync_riverside_maturity_scores",
+                new_callable=AsyncMock,
+                return_value={"status": "ok"},
+            ),
         ):
             result = await service.sync_all()
             assert "mfa" in result

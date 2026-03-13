@@ -57,6 +57,7 @@ def test_db_session(db_session):
 @pytest.fixture
 def client_with_db(test_db_session):
     """Test client with database override."""
+
     def override_get_db():
         try:
             yield test_db_session
@@ -176,7 +177,10 @@ def test_bulk_remove_tags_success(client_with_db, mock_operator_user):
 
             response = client_with_db.post(
                 "/api/v1/bulk/tags/remove",
-                params={"resource_ids": ["res-1", "res-2"], "tag_names": ["OldTag", "DeprecatedTag"]},
+                params={
+                    "resource_ids": ["res-1", "res-2"],
+                    "tag_names": ["OldTag", "DeprecatedTag"],
+                },
             )
 
     assert response.status_code == 200
@@ -255,9 +259,7 @@ def test_bulk_review_idle_resources_success(client_with_db, mock_admin_user):
             mock_service = MockBulkService.return_value
             mock_service.bulk_review_idle_resources.return_value = mock_response
 
-            response = client_with_db.post(
-                "/api/v1/bulk/idle-resources/review", json=request_data
-            )
+            response = client_with_db.post("/api/v1/bulk/idle-resources/review", json=request_data)
 
     assert response.status_code == 200
     data = response.json()

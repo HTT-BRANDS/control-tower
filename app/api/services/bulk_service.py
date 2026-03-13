@@ -91,30 +91,36 @@ class BulkService:
         for resource in resources:
             try:
                 for tag_name, tag_value in operation.tags.items():
-                    tag_records.append({
-                        "resource_id": resource.id,
-                        "tag_name": tag_name,
-                        "tag_value": tag_value,
-                        "is_required": tag_name in (operation.required_tags or []),
-                        "synced_at": now,
-                    })
+                    tag_records.append(
+                        {
+                            "resource_id": resource.id,
+                            "tag_name": tag_name,
+                            "tag_value": tag_value,
+                            "is_required": tag_name in (operation.required_tags or []),
+                            "synced_at": now,
+                        }
+                    )
 
-                results.append(TagOperationResult(
-                    resource_id=resource.id,
-                    resource_name=resource.name,
-                    success=True,
-                    message=f"Tagged with {len(operation.tags)} tags",
-                ))
+                results.append(
+                    TagOperationResult(
+                        resource_id=resource.id,
+                        resource_name=resource.name,
+                        success=True,
+                        message=f"Tagged with {len(operation.tags)} tags",
+                    )
+                )
                 success_count += 1
 
             except Exception as e:
                 logger.error(f"Failed to tag resource {resource.id}: {e}")
-                results.append(TagOperationResult(
-                    resource_id=resource.id,
-                    resource_name=resource.name,
-                    success=False,
-                    message=str(e),
-                ))
+                results.append(
+                    TagOperationResult(
+                        resource_id=resource.id,
+                        resource_name=resource.name,
+                        success=False,
+                        message=str(e),
+                    )
+                )
                 failed_count += 1
 
         # Perform bulk insert if we have records
@@ -131,7 +137,8 @@ class BulkService:
 
         return BulkTagResponse(
             success=failed_count == 0,
-            message=f"Tagged {success_count} resources" + (f", {failed_count} failed" if failed_count > 0 else ""),
+            message=f"Tagged {success_count} resources"
+            + (f", {failed_count} failed" if failed_count > 0 else ""),
             total_processed=len(resources),
             success_count=success_count,
             failed_count=failed_count,
@@ -158,10 +165,14 @@ class BulkService:
         success_count = 0
 
         # Delete in bulk
-        deleted = self.db.query(ResourceTag).filter(
-            ResourceTag.resource_id.in_(resource_ids),
-            ResourceTag.tag_name.in_(tag_names),
-        ).delete(synchronize_session=False)
+        deleted = (
+            self.db.query(ResourceTag)
+            .filter(
+                ResourceTag.resource_id.in_(resource_ids),
+                ResourceTag.tag_name.in_(tag_names),
+            )
+            .delete(synchronize_session=False)
+        )
 
         self.db.commit()
 
@@ -170,12 +181,14 @@ class BulkService:
         # Get resource names for results
         resources = self.db.query(Resource).filter(Resource.id.in_(resource_ids)).all()
         for resource in resources:
-            results.append(TagOperationResult(
-                resource_id=resource.id,
-                resource_name=resource.name,
-                success=True,
-                message=f"Removed {len(tag_names)} tags",
-            ))
+            results.append(
+                TagOperationResult(
+                    resource_id=resource.id,
+                    resource_name=resource.name,
+                    success=True,
+                    message=f"Removed {len(tag_names)} tags",
+                )
+            )
             success_count += 1
 
         # Invalidate cache
@@ -215,13 +228,18 @@ class BulkService:
         now = datetime.now(UTC)
 
         # Bulk update using SQL for performance
-        result = self.db.query(CostAnomaly).filter(
-            CostAnomaly.id.in_(anomaly_ids)
-        ).update({
-            "is_acknowledged": True,
-            "acknowledged_by": user,
-            "acknowledged_at": now,
-        }, synchronize_session=False)
+        result = (
+            self.db.query(CostAnomaly)
+            .filter(CostAnomaly.id.in_(anomaly_ids))
+            .update(
+                {
+                    "is_acknowledged": True,
+                    "acknowledged_by": user,
+                    "acknowledged_at": now,
+                },
+                synchronize_session=False,
+            )
+        )
 
         self.db.commit()
 
@@ -255,14 +273,19 @@ class BulkService:
         now = datetime.now(UTC)
 
         # Bulk update
-        result = self.db.query(Recommendation).filter(
-            Recommendation.id.in_(recommendation_ids)
-        ).update({
-            "status": "dismissed",
-            "dismissed_by": user,
-            "dismissed_at": now,
-            "dismissal_reason": reason,
-        }, synchronize_session=False)
+        result = (
+            self.db.query(Recommendation)
+            .filter(Recommendation.id.in_(recommendation_ids))
+            .update(
+                {
+                    "status": "dismissed",
+                    "dismissed_by": user,
+                    "dismissed_at": now,
+                    "dismissal_reason": reason,
+                },
+                synchronize_session=False,
+            )
+        )
 
         self.db.commit()
 
@@ -300,14 +323,19 @@ class BulkService:
         now = datetime.now(UTC)
 
         # Bulk update
-        result = self.db.query(IdleResource).filter(
-            IdleResource.id.in_(idle_resource_ids)
-        ).update({
-            "is_reviewed": True,
-            "reviewed_by": user,
-            "reviewed_at": now,
-            "review_notes": notes,
-        }, synchronize_session=False)
+        result = (
+            self.db.query(IdleResource)
+            .filter(IdleResource.id.in_(idle_resource_ids))
+            .update(
+                {
+                    "is_reviewed": True,
+                    "reviewed_by": user,
+                    "reviewed_at": now,
+                    "review_notes": notes,
+                },
+                synchronize_session=False,
+            )
+        )
 
         self.db.commit()
 
@@ -394,9 +422,7 @@ class BulkService:
             record["tenant_id"] = tenant_id
 
         with get_db_bulk_context() as db:
-            inserted = bulk_insert_chunks(
-                db, CostSnapshot, costs_data, settings.bulk_batch_size
-            )
+            inserted = bulk_insert_chunks(db, CostSnapshot, costs_data, settings.bulk_batch_size)
 
         return {
             "inserted": inserted,

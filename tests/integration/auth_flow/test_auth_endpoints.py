@@ -32,6 +32,7 @@ class TestAuthEndpoints:
 
     def test_get_user_info_with_valid_token(self, seeded_db, test_tenant_id):
         """GET /api/v1/auth/me with valid token → returns user info."""
+
         def override_get_db():
             try:
                 yield seeded_db

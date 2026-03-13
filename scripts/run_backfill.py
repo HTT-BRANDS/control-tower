@@ -339,7 +339,9 @@ Examples:
     )
     run_parser.add_argument("--months", type=int, default=6, help="Number of months to backfill")
     run_parser.add_argument("--batch-size", type=int, default=500, help="Batch insert size")
-    run_parser.add_argument("--sequential", action="store_true", help="Process days sequentially without checkpointing")
+    run_parser.add_argument(
+        "--sequential", action="store_true", help="Process days sequentially without checkpointing"
+    )
     run_parser.add_argument("--dry-run", action="store_true", help="Create job but don't execute")
 
     # resume command
@@ -350,7 +352,11 @@ Examples:
     # list command
     list_parser = subparsers.add_parser("list", help="List jobs")
     list_parser.add_argument("--tenant", help="Filter by tenant ID")
-    list_parser.add_argument("--type", choices=["costs", "identity", "compliance", "resources"], help="Filter by job type")
+    list_parser.add_argument(
+        "--type",
+        choices=["costs", "identity", "compliance", "resources"],
+        help="Filter by job type",
+    )
     list_parser.add_argument("--status", help="Filter by status")
 
     # status command

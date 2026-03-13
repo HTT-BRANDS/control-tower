@@ -14,6 +14,7 @@ CURRENT_MATURITY_SCORE = 2.4
 
 class RequirementLevel(Enum):
     """Maturity levels for security requirements."""
+
     EMERGING = "Emerging"
     DEVELOPING = "Developing"
     MATURE = "Mature"
@@ -22,6 +23,7 @@ class RequirementLevel(Enum):
 
 class MFAStatus(Enum):
     """MFA enforcement status for users."""
+
     ENFORCED = "Enforced"
     AVAILABLE = "Available"
     PENDING = "Pending"
@@ -30,6 +32,7 @@ class MFAStatus(Enum):
 
 class RequirementStatus(Enum):
     """Implementation status of security requirements."""
+
     NOT_STARTED = "Not Started"
     IN_PROGRESS = "In Progress"
     COMPLETED = "Completed"
@@ -38,6 +41,7 @@ class RequirementStatus(Enum):
 
 class DeadlinePhase(Enum):
     """Implementation phases for Riverside requirements."""
+
     PHASE_1_Q3_2025 = "Phase 1: Q3 2025"
     PHASE_2_Q4_2025 = "Phase 2: Q4 2025"
     PHASE_3_Q1_2026 = "Phase 3: Q1 2026"
@@ -45,6 +49,7 @@ class DeadlinePhase(Enum):
 
 class RiversideRequirementCategory(Enum):
     """Categories of Riverside security requirements."""
+
     MFA_ENFORCEMENT = "MFA Enforcement"
     CONDITIONAL_ACCESS = "Conditional Access"
     PRIVILEGED_ACCESS = "Privileged Access"

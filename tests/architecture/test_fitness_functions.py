@@ -144,9 +144,8 @@ def test_no_circular_imports():
                 # Found a cycle
                 cycles_found.append(" -> ".join(cycle))
 
-    assert not cycles_found, (
-        "Circular dependencies detected:\n"
-        + "\n".join(f"  - {cycle}" for cycle in cycles_found)
+    assert not cycles_found, "Circular dependencies detected:\n" + "\n".join(
+        f"  - {cycle}" for cycle in cycles_found
     )
 
 
@@ -211,9 +210,8 @@ def test_agent_least_privilege():
     print(f"  Unique tools across all agents: {len(all_tools)}")
     print(f"  Tools: {', '.join(sorted(all_tools))}")
 
-    assert not violations, (
-        "Agent privilege violations detected:\n"
-        + "\n".join(f"  - {v}" for v in violations)
+    assert not violations, "Agent privilege violations detected:\n" + "\n".join(
+        f"  - {v}" for v in violations
     )
 
 
@@ -262,9 +260,8 @@ def test_security_headers_configured():
         if header not in main_content:
             missing_headers.append(header)
 
-    assert not missing_headers, (
-        "Missing security headers in app/main.py:\n"
-        + "\n".join(f"  - {h}" for h in missing_headers)
+    assert not missing_headers, "Missing security headers in app/main.py:\n" + "\n".join(
+        f"  - {h}" for h in missing_headers
     )
 
     # Check CORS configuration
@@ -437,9 +434,8 @@ def test_api_routes_require_auth():
     else:
         print("\n✅ All API routes properly secured with authentication")
 
-    assert not violations, (
-        "API routes without authentication:\n"
-        + "\n".join(f"  - {v}" for v in violations)
+    assert not violations, "API routes without authentication:\n" + "\n".join(
+        f"  - {v}" for v in violations
     )
 
 
@@ -527,7 +523,10 @@ def test_file_size_limit():
             f"Consider splitting into smaller modules."
         )
 
-        raise AssertionError(f"\n{len(violations)} NEW files exceed {max_lines} line limit. " f"Largest: {violations[0]['file']} ({violations[0]['lines']} lines)")
+        raise AssertionError(
+            f"\n{len(violations)} NEW files exceed {max_lines} line limit. "
+            f"Largest: {violations[0]['file']} ({violations[0]['lines']} lines)"
+        )
     else:
         print(
             f"\n✅ No NEW files exceed {max_lines} lines "
@@ -562,9 +561,7 @@ def test_module_cohesion():
     if core_path.exists():
         for py_file in core_path.rglob("*.py"):
             imports = get_imports_from_file(py_file)
-            bad_imports = {
-                imp for imp in imports if imp.startswith(("app.api", "app.services"))
-            }
+            bad_imports = {imp for imp in imports if imp.startswith(("app.api", "app.services"))}
             if bad_imports:
                 violations.append(
                     f"{py_file.relative_to(app_path.parent)}: "
@@ -592,10 +589,7 @@ def test_module_cohesion():
         print(f"\n⚠️  Found {len(violations)} potential cohesion issues:")
         for v in violations:
             print(f"  - {v}")
-        print(
-            "\nNote: Some violations may be acceptable. Review carefully "
-            "before making changes."
-        )
+        print("\nNote: Some violations may be acceptable. Review carefully before making changes.")
     else:
         print("\n✅ Module cohesion looks good - no obvious layering violations")
 

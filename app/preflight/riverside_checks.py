@@ -63,9 +63,7 @@ class RiversideDatabaseCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute database connectivity check for Riverside tables."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -139,9 +137,7 @@ class RiversideDatabaseCheck(BasePreflightCheck):
                         .order_by(RiversideMFA.snapshot_date.desc())
                         .first()
                     )
-                    recent_data_check["mfa_data"] = (
-                        "found" if recent_mfa else "not_found"
-                    )
+                    recent_data_check["mfa_data"] = "found" if recent_mfa else "not_found"
 
                     # Check for requirements
                     recent_req = (
@@ -149,9 +145,7 @@ class RiversideDatabaseCheck(BasePreflightCheck):
                         .filter(RiversideRequirement.tenant_id == tenant_id)
                         .first()
                     )
-                    recent_data_check["requirements_data"] = (
-                        "found" if recent_req else "not_found"
-                    )
+                    recent_data_check["requirements_data"] = "found" if recent_req else "not_found"
 
                 except Exception as e:
                     recent_data_check["error"] = str(e)[:100]
@@ -241,9 +235,7 @@ class RiversideAPIEndpointCheck(BasePreflightCheck):
             timeout_seconds=20.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute API endpoint availability check."""
         start_time = datetime.utcnow()
         settings = get_settings()
@@ -318,21 +310,11 @@ class RiversideAPIEndpointCheck(BasePreflightCheck):
 
         duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
-        accessible_count = sum(
-            1 for r in results.values() if r.get("accessible")
-        )
+        accessible_count = sum(1 for r in results.values() if r.get("accessible"))
 
         if failed_endpoints:
-            severity = (
-                SeverityLevel.CRITICAL
-                if accessible_count == 0
-                else SeverityLevel.WARNING
-            )
-            status = (
-                CheckStatus.FAIL
-                if accessible_count == 0
-                else CheckStatus.WARNING
-            )
+            severity = SeverityLevel.CRITICAL if accessible_count == 0 else SeverityLevel.WARNING
+            status = CheckStatus.FAIL if accessible_count == 0 else CheckStatus.WARNING
 
             return CheckResult(
                 check_id=self.check_id,
@@ -388,9 +370,7 @@ class RiversideSchedulerCheck(BasePreflightCheck):
             timeout_seconds=10.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute scheduler job registration check."""
         start_time = datetime.utcnow()
 
@@ -431,7 +411,9 @@ class RiversideSchedulerCheck(BasePreflightCheck):
                         "id": job_id,
                         "name": getattr(job, "name", "Unknown"),
                         "trigger": str(job.trigger) if hasattr(job, "trigger") else "Unknown",
-                        "next_run_time": str(job.next_run_time) if hasattr(job, "next_run_time") else None,
+                        "next_run_time": str(job.next_run_time)
+                        if hasattr(job, "next_run_time")
+                        else None,
                     }
                     break
 
@@ -540,9 +522,7 @@ class RiversideAzureADPermissionsCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Azure AD permissions check for Riverside."""
         start_time = datetime.utcnow()
         settings = get_settings()
@@ -625,9 +605,7 @@ class RiversideAzureADPermissionsCheck(BasePreflightCheck):
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             # Determine overall status
-            granted_count = sum(
-                1 for p in permissions_status.values() if p.get("granted")
-            )
+            granted_count = sum(1 for p in permissions_status.values() if p.get("granted"))
 
             if granted_count == 0:
                 return CheckResult(
@@ -747,15 +725,29 @@ class RiversideEvidenceCheck(BasePreflightCheck):
     # Valid evidence file extensions
     VALID_EVIDENCE_EXTENSIONS = {
         # Documents
-        ".pdf", ".doc", ".docx", ".txt", ".md",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".md",
         # Images
-        ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".webp",
         # Spreadsheets
-        ".xls", ".xlsx", ".csv",
+        ".xls",
+        ".xlsx",
+        ".csv",
         # Archives
-        ".zip", ".tar", ".gz",
+        ".zip",
+        ".tar",
+        ".gz",
         # External links (no extension check)
-        "http", "https",
+        "http",
+        "https",
     }
 
     # Maximum evidence file size (50 MB)
@@ -814,6 +806,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
 
         # Check file extension for local files
         import os
+
         _, ext = os.path.splitext(evidence_url_lower)
 
         if ext in self.VALID_EVIDENCE_EXTENSIONS:
@@ -857,6 +850,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
 
         # Local file path check
         import os
+
         try:
             if os.path.exists(evidence_url):
                 size = os.path.getsize(evidence_url)
@@ -880,9 +874,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
                 "error": str(e)[:100],
             }
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute evidence verification check for completed requirements."""
         start_time = datetime.utcnow()
         db: Session | None = None
@@ -951,9 +943,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
                 evidence_results.append(result)
 
                 # Track issues by priority
-                has_valid_evidence = (
-                    format_check["valid"] and existence_check.get("exists", False)
-                )
+                has_valid_evidence = format_check["valid"] and existence_check.get("exists", False)
 
                 if not has_valid_evidence:
                     priority = req.priority.value if req.priority else "P2"
@@ -979,13 +969,15 @@ class RiversideEvidenceCheck(BasePreflightCheck):
                         p1_missing.append(issue)
 
                 elif not format_check["valid"]:
-                    invalid_evidence_items.append({
-                        "requirement_id": req.requirement_id,
-                        "title": req.title,
-                        "priority": req.priority.value if req.priority else "unknown",
-                        "reason": format_check.get("reason", "unknown"),
-                        "message": format_check.get("message", ""),
-                    })
+                    invalid_evidence_items.append(
+                        {
+                            "requirement_id": req.requirement_id,
+                            "title": req.title,
+                            "priority": req.priority.value if req.priority else "unknown",
+                            "reason": format_check.get("reason", "unknown"),
+                            "message": format_check.get("message", ""),
+                        }
+                    )
 
             # Calculate statistics
             total_completed = len(completed_requirements)
@@ -1042,9 +1034,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
                 recommendations.append(
                     "Upload evidence via API: POST /api/v1/riverside/requirements/{id}/evidence"
                 )
-                recommendations.append(
-                    "Ensure evidence files are accessible and under 50MB limit"
-                )
+                recommendations.append("Ensure evidence files are accessible and under 50MB limit")
 
             return CheckResult(
                 check_id=self.check_id,
@@ -1066,7 +1056,9 @@ class RiversideEvidenceCheck(BasePreflightCheck):
                     "severity": severity,
                 },
                 duration_ms=duration_ms,
-                recommendations=recommendations if recommendations else ["Evidence validation passed"],
+                recommendations=recommendations
+                if recommendations
+                else ["Evidence validation passed"],
                 tenant_id=tenant_id,
             )
 
@@ -1112,9 +1104,7 @@ class RiversideMFADataSourceCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute MFA data source connectivity check."""
         start_time = datetime.utcnow()
         settings = get_settings()
@@ -1208,12 +1198,10 @@ class RiversideMFADataSourceCheck(BasePreflightCheck):
             duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             # Determine overall status
-            users_accessible = data_source_status.get("users_endpoint", {}).get(
+            users_accessible = data_source_status.get("users_endpoint", {}).get("accessible", False)
+            auth_methods_accessible = data_source_status.get("authentication_methods", {}).get(
                 "accessible", False
             )
-            auth_methods_accessible = data_source_status.get(
-                "authentication_methods", {}
-            ).get("accessible", False)
 
             if not users_accessible:
                 return CheckResult(
@@ -1298,6 +1286,7 @@ class RiversideMFADataSourceCheck(BasePreflightCheck):
 # ============================================================================
 # FUNCTION-BASED API (for direct use)
 # ============================================================================
+
 
 async def check_riverside_database(tenant_id: str | None = None) -> CheckResult:
     """Check Riverside database connectivity.

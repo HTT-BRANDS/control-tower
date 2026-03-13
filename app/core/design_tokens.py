@@ -16,10 +16,21 @@ import yaml
 from pydantic import BaseModel, Field, field_validator
 
 __all__ = [
-    "ShadowStyle", "BrandLogo", "BrandColors", "BrandTypography",
-    "BrandDesignSystem", "BrandPageConfig", "BrandConfig", "BrandConfigFull",
-    "BrandRegistry", "load_brands", "get_brand", "get_google_fonts_url",
-    "SemanticColors", "ThemeTokens", "DARK_THEME_TOKENS",
+    "ShadowStyle",
+    "BrandLogo",
+    "BrandColors",
+    "BrandTypography",
+    "BrandDesignSystem",
+    "BrandPageConfig",
+    "BrandConfig",
+    "BrandConfigFull",
+    "BrandRegistry",
+    "load_brands",
+    "get_brand",
+    "get_google_fonts_url",
+    "SemanticColors",
+    "ThemeTokens",
+    "DARK_THEME_TOKENS",
 ]
 
 _HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -30,13 +41,17 @@ _SAFE_GRADIENT_RE = re.compile(
     re.IGNORECASE,
 )
 _CSS_INJECTION_PATTERNS = [
-    "expression(", "javascript:", "@import", "url(",
+    "expression(",
+    "javascript:",
+    "@import",
+    "url(",
 ]
 _BRANDS_PATH = Path("config/brands.yaml")
 
 
 class ShadowStyle(StrEnum):
     """Shadow style preference for brand design system."""
+
     SOFT = "soft"
     SHARP = "sharp"
     NONE = "none"
@@ -59,18 +74,13 @@ def _validate_gradient(v: str) -> str:
     lower = v.lower()
     for pattern in _CSS_INJECTION_PATTERNS:
         if pattern in lower:
-            raise ValueError(
-                f"Unsafe CSS pattern {pattern!r} detected in gradient: {v!r}"
-            )
+            raise ValueError(f"Unsafe CSS pattern {pattern!r} detected in gradient: {v!r}")
     for char in ("{", "}", "<", ">"):
         if char in v:
-            raise ValueError(
-                f"Forbidden character {char!r} in gradient: {v!r}"
-            )
+            raise ValueError(f"Forbidden character {char!r} in gradient: {v!r}")
     if not _SAFE_GRADIENT_RE.match(v):
         raise ValueError(
-            f"Invalid gradient syntax: {v!r}. "
-            "Must be linear-gradient(...) or radial-gradient(...)."
+            f"Invalid gradient syntax: {v!r}. Must be linear-gradient(...) or radial-gradient(...)."
         )
     return v
 
@@ -110,6 +120,7 @@ def _validate_border_radius(v: str) -> str:
 
 class SemanticColors(BaseModel):
     """Semantic color tokens from microsoft-group-management design system."""
+
     success: str = "#10B981"
     warning: str = "#F59E0B"
     error: str = "#EF4444"
@@ -123,6 +134,7 @@ class SemanticColors(BaseModel):
 
 class ThemeTokens(BaseModel):
     """Surface and text tokens that change with light/dark mode."""
+
     bg_primary: str = "#FFFFFF"
     bg_secondary: str = "#F9FAFB"
     bg_tertiary: str = "#F3F4F6"
@@ -154,6 +166,7 @@ DARK_THEME_TOKENS = ThemeTokens(
 
 class BrandLogo(BaseModel):
     """Brand logo paths with variants."""
+
     primary: str
     white: str | None = None
     icon: str | None = None
@@ -161,6 +174,7 @@ class BrandLogo(BaseModel):
 
 class BrandColors(BaseModel):
     """Brand color palette."""
+
     primary: str
     secondary: str | None = None
     accent: str
@@ -192,6 +206,7 @@ class BrandColors(BaseModel):
 
 class BrandTypography(BaseModel):
     """Typography configuration."""
+
     headingFont: str = Field(alias="headingFont")
     bodyFont: str = Field(alias="bodyFont")
 
@@ -212,6 +227,7 @@ class BrandTypography(BaseModel):
 
 class BrandDesignSystem(BaseModel):
     """Design system UI tokens."""
+
     borderRadius: str = Field(alias="borderRadius")
     shadowStyle: ShadowStyle = Field(alias="shadowStyle")
 
@@ -226,6 +242,7 @@ class BrandDesignSystem(BaseModel):
 
 class BrandPageConfig(BaseModel):
     """Page configuration for scanning."""
+
     url: str
     name: str
     waitFor: str | None = None
@@ -233,6 +250,7 @@ class BrandPageConfig(BaseModel):
 
 class BrandConfig(BaseModel):
     """Core brand configuration (matches TypeScript BrandConfig)."""
+
     name: str
     domain: str | None = None
     logo: BrandLogo
@@ -245,6 +263,7 @@ class BrandConfig(BaseModel):
 
 class BrandConfigFull(BrandConfig):
     """Extended brand config with metadata (matches TypeScript BrandConfigFull)."""
+
     key: str = ""
     shortName: str = Field(default="", alias="shortName")
     domains: list[str] = Field(default_factory=list)
@@ -256,6 +275,7 @@ class BrandConfigFull(BrandConfig):
 
 class BrandRegistry(BaseModel):
     """Registry of all brand configurations."""
+
     brands: dict[str, BrandConfigFull]
 
     def keys(self) -> list[str]:
@@ -334,7 +354,6 @@ def get_google_fonts_url(brand: BrandConfig) -> str:
     """
     fonts = {brand.typography.headingFont, brand.typography.bodyFont}
     params = "&".join(
-        f"family={font.replace(' ', '+')}:wght@400;500;600;700"
-        for font in sorted(fonts)
+        f"family={font.replace(' ', '+')}:wght@400;500;600;700" for font in sorted(fonts)
     )
     return f"https://fonts.googleapis.com/css2?{params}&display=swap"

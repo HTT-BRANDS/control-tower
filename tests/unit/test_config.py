@@ -90,11 +90,7 @@ def test_is_production_returns_true_for_production(monkeypatch):
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-long-enough-for-production-use")
 
     # Pass values directly to avoid list parsing issues
-    settings = Settings(
-        debug=False,
-        cors_origins=["https://example.com"],
-        _env_file=None
-    )
+    settings = Settings(debug=False, cors_origins=["https://example.com"], _env_file=None)
 
     assert settings.is_production is True
     assert settings.is_development is False
@@ -124,11 +120,7 @@ def test_is_development_returns_false_for_production(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-long-enough-for-production-use")
 
-    settings = Settings(
-        debug=False,
-        cors_origins=["https://prod.example.com"],
-        _env_file=None
-    )
+    settings = Settings(debug=False, cors_origins=["https://prod.example.com"], _env_file=None)
 
     assert settings.is_development is False
 
@@ -203,11 +195,7 @@ def test_validate_debug_mode_raises_error_in_production(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "production")
 
     with pytest.raises(ValueError, match="DEBUG cannot be True in production"):
-        Settings(
-            debug=True,
-            cors_origins=["https://prod.example.com"],
-            _env_file=None
-        )
+        Settings(debug=True, cors_origins=["https://prod.example.com"], _env_file=None)
 
 
 def test_validate_debug_mode_allows_debug_in_development(monkeypatch):
@@ -226,11 +214,7 @@ def test_validate_cors_origins_prevents_wildcard_in_production(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "production")
 
     with pytest.raises(ValueError, match="Wildcard CORS origin.*not allowed in production"):
-        Settings(
-            debug=False,
-            cors_origins=["*"],
-            _env_file=None
-        )
+        Settings(debug=False, cors_origins=["*"], _env_file=None)
 
 
 def test_validate_cors_origins_prevents_default_localhost_in_production(monkeypatch):
@@ -239,10 +223,7 @@ def test_validate_cors_origins_prevents_default_localhost_in_production(monkeypa
 
     with pytest.raises(ValueError, match="CORS origins must be explicitly configured"):
         # Use default cors_origins (localhost)
-        Settings(
-            debug=False,
-            _env_file=None
-        )
+        Settings(debug=False, _env_file=None)
 
 
 def test_validate_cors_origins_allows_explicit_origins_in_production(monkeypatch):
@@ -253,7 +234,7 @@ def test_validate_cors_origins_allows_explicit_origins_in_production(monkeypatch
     settings = Settings(
         debug=False,
         cors_origins=["https://app.example.com", "https://api.example.com"],
-        _env_file=None
+        _env_file=None,
     )
 
     assert settings.environment == "production"
@@ -264,20 +245,14 @@ def test_validate_cors_origins_allows_explicit_origins_in_production(monkeypatch
 def test_parse_managed_tenant_ids_from_comma_separated_string(monkeypatch):
     """Test parse_managed_tenant_ids parses comma-separated string."""
     # Pass as string to test the validator
-    settings = Settings(
-        managed_tenant_ids="tenant-1,tenant-2,tenant-3",
-        _env_file=None
-    )
+    settings = Settings(managed_tenant_ids="tenant-1,tenant-2,tenant-3", _env_file=None)
 
     assert settings.managed_tenant_ids == ["tenant-1", "tenant-2", "tenant-3"]
 
 
 def test_parse_managed_tenant_ids_handles_whitespace(monkeypatch):
     """Test parse_managed_tenant_ids strips whitespace."""
-    settings = Settings(
-        managed_tenant_ids=" tenant-1 , tenant-2 , tenant-3 ",
-        _env_file=None
-    )
+    settings = Settings(managed_tenant_ids=" tenant-1 , tenant-2 , tenant-3 ", _env_file=None)
 
     assert settings.managed_tenant_ids == ["tenant-1", "tenant-2", "tenant-3"]
 
@@ -285,10 +260,7 @@ def test_parse_managed_tenant_ids_handles_whitespace(monkeypatch):
 def test_parse_managed_tenant_ids_from_list(monkeypatch):
     """Test parse_managed_tenant_ids handles list input directly."""
     # When passed directly (not via env var)
-    settings = Settings(
-        managed_tenant_ids=["tenant-a", "tenant-b"],
-        _env_file=None
-    )
+    settings = Settings(managed_tenant_ids=["tenant-a", "tenant-b"], _env_file=None)
 
     assert settings.managed_tenant_ids == ["tenant-a", "tenant-b"]
 
@@ -306,10 +278,7 @@ def test_validate_jwt_secret_warns_if_too_short(monkeypatch, caplog):
 
 def test_parse_cors_origins_from_comma_separated_string(monkeypatch):
     """Test parse_cors_origins handles comma-separated strings."""
-    settings = Settings(
-        cors_origins="http://localhost:3000,http://localhost:8080",
-        _env_file=None
-    )
+    settings = Settings(cors_origins="http://localhost:3000,http://localhost:8080", _env_file=None)
 
     assert "http://localhost:3000" in settings.cors_origins
     assert "http://localhost:8080" in settings.cors_origins
@@ -344,7 +313,9 @@ def test_jwt_secret_accepted_when_set_in_production(monkeypatch):
         _env_file=None,
     )
 
-    assert settings.jwt_secret_key == "a-very-secure-production-secret-key-here"  # pragma: allowlist secret
+    assert (
+        settings.jwt_secret_key == "a-very-secure-production-secret-key-here"
+    )  # pragma: allowlist secret
     assert settings.environment == "production"
 
 

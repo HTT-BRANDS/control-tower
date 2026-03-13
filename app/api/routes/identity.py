@@ -85,8 +85,10 @@ async def get_privileged_accounts(
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     accounts = [
-        a for a in accounts
-        if a.tenant_id in accessible_tenants and (not filtered_tenant_ids or a.tenant_id in filtered_tenant_ids)
+        a
+        for a in accounts
+        if a.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or a.tenant_id in filtered_tenant_ids)
     ]
     if risk_level:
         accounts = [a for a in accounts if a.risk_level == risk_level]
@@ -157,15 +159,15 @@ async def get_stale_accounts(
     filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
 
     service = IdentityService(db)
-    stale = service.get_stale_accounts(
-        days_inactive=days_inactive, tenant_id=tenant_id
-    )
+    stale = service.get_stale_accounts(days_inactive=days_inactive, tenant_id=tenant_id)
 
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     stale = [
-        s for s in stale
-        if s.tenant_id in accessible_tenants and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
+        s
+        for s in stale
+        if s.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
     ]
 
     return stale[offset : offset + limit]
@@ -202,6 +204,7 @@ async def get_identity_trends(
 # ============================================================================
 # Admin Role and Privileged Access Endpoints
 # ============================================================================
+
 
 @router.get("/admin-roles/summary")
 async def get_admin_roles_summary(
@@ -347,9 +350,7 @@ async def get_privileged_service_principals(
     authz.validate_access(tenant_id)
 
     try:
-        sps = await azure_ad_admin_service.get_privileged_service_principals(
-            tenant_id=tenant_id
-        )
+        sps = await azure_ad_admin_service.get_privileged_service_principals(tenant_id=tenant_id)
         return {
             "tenant_id": tenant_id,
             "count": len(sps),

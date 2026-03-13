@@ -23,9 +23,7 @@ class TestBulkAPI:
         resp = api_context.post("/bulk/anomalies/acknowledge")
         assert resp.status in (422, 400, 403, 500)
 
-    def test_recommendations_dismiss_requires_auth(
-        self, unauth_api_context: APIRequestContext
-    ):
+    def test_recommendations_dismiss_requires_auth(self, unauth_api_context: APIRequestContext):
         resp = unauth_api_context.post("/bulk/recommendations/dismiss")
         assert resp.status in (401, 403)
 
@@ -33,9 +31,7 @@ class TestBulkAPI:
         resp = api_context.post("/bulk/recommendations/dismiss")
         assert resp.status in (422, 400, 403, 500)
 
-    def test_idle_resources_review_requires_auth(
-        self, unauth_api_context: APIRequestContext
-    ):
+    def test_idle_resources_review_requires_auth(self, unauth_api_context: APIRequestContext):
         resp = unauth_api_context.post("/bulk/idle-resources/review")
         assert resp.status in (401, 403)
 

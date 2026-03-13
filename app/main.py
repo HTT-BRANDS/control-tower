@@ -82,6 +82,7 @@ async def lifespan(app: FastAPI):
     riverside_sched = None
     try:
         from app.core.riverside_scheduler import init_riverside_scheduler
+
         riverside_sched = init_riverside_scheduler()
         riverside_sched.start()
         logger.info("Riverside compliance scheduler started")
@@ -102,7 +103,7 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="Multi-tenant Azure governance platform for cost optimization, "
-                "compliance monitoring, resource management, and identity governance.",
+    "compliance monitoring, resource management, and identity governance.",
     lifespan=lifespan,
 )
 
@@ -110,9 +111,7 @@ app = FastAPI(
 # SECURITY: Explicit origins, methods, and headers only (P1 fix)
 _cors_origins = list(settings.cors_origins)
 if settings.cors_allowed_origins:
-    _cors_origins.extend(
-        o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()
-    )
+    _cors_origins.extend(o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -262,6 +261,7 @@ async def detailed_health_check():
     # Check database
     try:
         from sqlalchemy import text
+
         db = SessionLocal()
         db.execute(text("SELECT 1"))
         db.close()
@@ -271,6 +271,7 @@ async def detailed_health_check():
 
     # Check scheduler
     from app.core.scheduler import get_scheduler
+
     scheduler = get_scheduler()
     if scheduler and scheduler.running:
         components["scheduler"] = "running"
@@ -286,10 +287,12 @@ async def detailed_health_check():
     components["token_blacklist"] = blacklist_backend
 
     return {
-        "status": "healthy" if all(
+        "status": "healthy"
+        if all(
             v in ["healthy", "running", True] or v not in ["unhealthy", "not_running"]
             for v in components.values()
-        ) else "degraded",
+        )
+        else "degraded",
         "version": settings.app_version,
         "components": components,
         "cache_metrics": cache_metrics,
@@ -331,6 +334,7 @@ async def get_system_status():
     # Check database
     try:
         from sqlalchemy import text
+
         db = SessionLocal()
         db_stats = get_db_stats(db)
         db.execute(text("SELECT 1"))
@@ -344,6 +348,7 @@ async def get_system_status():
     # Check scheduler
     try:
         from app.core.scheduler import get_scheduler
+
         scheduler = get_scheduler()
         if scheduler and scheduler.running:
             status["components"]["scheduler"] = "running"
@@ -388,9 +393,8 @@ async def root(request: Request):
     from fastapi.responses import RedirectResponse
 
     # Check if user has a token (cookie or header)
-    has_token = (
-        request.cookies.get("access_token")
-        or (request.headers.get("Authorization", "").startswith("Bearer "))
+    has_token = request.cookies.get("access_token") or (
+        request.headers.get("Authorization", "").startswith("Bearer ")
     )
     if has_token:
         return RedirectResponse(url="/dashboard")
@@ -401,6 +405,7 @@ async def root(request: Request):
 async def unauthorized_redirect(request: Request, exc):
     """Redirect browser requests to login page on 401."""
     from fastapi.responses import RedirectResponse
+
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
         return RedirectResponse(url="/login", status_code=302)
@@ -428,6 +433,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,

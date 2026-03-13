@@ -156,8 +156,8 @@ class TestCostSync:
         with patch(_QUERY_COSTS_REST, new_callable=AsyncMock) as mock_query:
             mock_query.return_value = [
                 [10.50, 20240115, "USD", "rg-test", "Storage"],
-                [0.0, 20240115, "USD", "rg-test", "Network"],   # Skipped
-                [0.00, 20240115, "USD", "rg-test", "DNS"],       # Skipped
+                [0.0, 20240115, "USD", "rg-test", "Network"],  # Skipped
+                [0.00, 20240115, "USD", "rg-test", "DNS"],  # Skipped
             ]
             await sync_costs()
 
@@ -179,8 +179,8 @@ class TestCostSync:
         with patch(_QUERY_COSTS_REST, new_callable=AsyncMock) as mock_query:
             mock_query.return_value = [
                 [10.50, 20240115, "USD", "rg-test", "Storage"],
-                [],                          # Malformed
-                [25.00, 20240115],           # Missing columns
+                [],  # Malformed
+                [25.00, 20240115],  # Missing columns
             ]
             await sync_costs()
             assert mock_db_session.add.call_count >= 1

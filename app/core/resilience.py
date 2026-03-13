@@ -43,7 +43,7 @@ from app.core.rate_limit import (
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ResilienceError(Exception):
@@ -132,9 +132,7 @@ class ResilientAzureClient:
                 self.rate_limiter = multi_api_limiter.get_limiter(api_name)
             except KeyError:
                 # For unknown APIs, create a default rate limiter with reasonable defaults
-                self.rate_limiter = TokenBucketRateLimiter(
-                    rate_per_second=10.0, burst_size=5
-                )
+                self.rate_limiter = TokenBucketRateLimiter(rate_per_second=10.0, burst_size=5)
         else:
             self.rate_limiter = rate_limiter
 
@@ -187,6 +185,7 @@ class ResilientAzureClient:
             # Sync function - wrap it to run in thread pool
             async def async_wrapper(*args, **kwargs):
                 return await asyncio.to_thread(func, *args, **kwargs)
+
             wrapped_func = async_wrapper
         else:
             wrapped_func = func
@@ -340,6 +339,7 @@ async def resilient_api_call(
 
 
 # Pre-configured resilient clients for Azure services
+
 
 def get_arm_client(config: ResilienceConfig | None = None) -> ResilientAzureClient:
     """Get resilient client for Azure Resource Manager API.

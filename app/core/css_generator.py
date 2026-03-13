@@ -96,7 +96,7 @@ def generate_typography_variables(brand: BrandConfig) -> dict[str, str]:
     """Generate CSS variables for brand typography."""
     typo = brand.typography
     return {
-        "--brand-font-heading": f'"{ typo.headingFont}", sans-serif',
+        "--brand-font-heading": f'"{typo.headingFont}", sans-serif',
         "--brand-font-body": f'"{typo.bodyFont}", sans-serif',
     }
 

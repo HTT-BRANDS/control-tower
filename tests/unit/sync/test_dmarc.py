@@ -49,9 +49,7 @@ class TestSyncDmarcDkim:
             ]
 
             # Mock monitoring service
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
 
@@ -74,19 +72,13 @@ class TestSyncDmarcDkim:
                     mock_dkim_record.domain = "example.com"
                     mock_dkim_record.is_enabled = True
 
-                    mock_service.sync_dmarc_records = AsyncMock(
-                        return_value=[mock_dmarc_record]
-                    )
-                    mock_service.sync_dkim_records = AsyncMock(
-                        return_value=[mock_dkim_record]
-                    )
+                    mock_service.sync_dmarc_records = AsyncMock(return_value=[mock_dmarc_record])
+                    mock_service.sync_dkim_records = AsyncMock(return_value=[mock_dkim_record])
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
                     # Mock security check functions
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security_check:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security_check:
                         mock_security_check.return_value = []
 
                         with patch(
@@ -126,9 +118,7 @@ class TestSyncDmarcDkim:
                 mock_riverside,
             ]
 
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
@@ -144,13 +134,9 @@ class TestSyncDmarcDkim:
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security:
                         mock_security.return_value = []
-                        with patch(
-                            "app.core.sync.dmarc._check_stale_dkim_keys"
-                        ) as mock_stale:
+                        with patch("app.core.sync.dmarc._check_stale_dkim_keys") as mock_stale:
                             mock_stale.return_value = []
 
                             await sync_dmarc_dkim()
@@ -174,13 +160,9 @@ class TestDMARCRecordSync:
             mock_tenant.name = "Test Tenant"
             mock_tenant.is_active = True
 
-            mock_db.query.return_value.filter.return_value.all.return_value = [
-                mock_tenant
-            ]
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_tenant]
 
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
@@ -195,20 +177,14 @@ class TestDMARCRecordSync:
                     mock_dmarc.domain = "test.com"
                     mock_dmarc.policy = "reject"
 
-                    mock_service.sync_dmarc_records = AsyncMock(
-                        return_value=[mock_dmarc]
-                    )
+                    mock_service.sync_dmarc_records = AsyncMock(return_value=[mock_dmarc])
                     mock_service.sync_dkim_records = AsyncMock(return_value=[])
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security:
                         mock_security.return_value = []
-                        with patch(
-                            "app.core.sync.dmarc._check_stale_dkim_keys"
-                        ) as mock_stale:
+                        with patch("app.core.sync.dmarc._check_stale_dkim_keys") as mock_stale:
                             mock_stale.return_value = []
 
                             await sync_dmarc_dkim()
@@ -231,13 +207,9 @@ class TestDKIMRecordSync:
             mock_tenant.name = "Test Tenant"
             mock_tenant.is_active = True
 
-            mock_db.query.return_value.filter.return_value.all.return_value = [
-                mock_tenant
-            ]
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_tenant]
 
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
@@ -253,19 +225,13 @@ class TestDKIMRecordSync:
                     mock_dkim.is_enabled = True
 
                     mock_service.sync_dmarc_records = AsyncMock(return_value=[])
-                    mock_service.sync_dkim_records = AsyncMock(
-                        return_value=[mock_dkim]
-                    )
+                    mock_service.sync_dkim_records = AsyncMock(return_value=[mock_dkim])
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security:
                         mock_security.return_value = []
-                        with patch(
-                            "app.core.sync.dmarc._check_stale_dkim_keys"
-                        ) as mock_stale:
+                        with patch("app.core.sync.dmarc._check_stale_dkim_keys") as mock_stale:
                             mock_stale.return_value = []
 
                             await sync_dmarc_dkim()
@@ -288,13 +254,9 @@ class TestSecurityIssueDetection:
             mock_tenant.name = "Test Tenant"
             mock_tenant.is_active = True
 
-            mock_db.query.return_value.filter.return_value.all.return_value = [
-                mock_tenant
-            ]
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_tenant]
 
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
@@ -311,23 +273,17 @@ class TestSecurityIssueDetection:
                     mock_dmarc.policy = "none"
                     mock_dmarc.pct = 100
 
-                    mock_service.sync_dmarc_records = AsyncMock(
-                        return_value=[mock_dmarc]
-                    )
+                    mock_service.sync_dmarc_records = AsyncMock(return_value=[mock_dmarc])
                     mock_service.sync_dkim_records = AsyncMock(return_value=[])
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
                     # Mock alert creation
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security:
                         mock_alert = MagicMock()
                         mock_security.return_value = [mock_alert]
 
-                        with patch(
-                            "app.core.sync.dmarc._check_stale_dkim_keys"
-                        ) as mock_stale:
+                        with patch("app.core.sync.dmarc._check_stale_dkim_keys") as mock_stale:
                             mock_stale.return_value = []
 
                             await sync_dmarc_dkim()
@@ -351,13 +307,9 @@ class TestStaleDKIMKeyDetection:
             mock_tenant.name = "Test Tenant"
             mock_tenant.is_active = True
 
-            mock_db.query.return_value.filter.return_value.all.return_value = [
-                mock_tenant
-            ]
+            mock_db.query.return_value.filter.return_value.all.return_value = [mock_tenant]
 
-            with patch(
-                "app.core.sync.dmarc.MonitoringService"
-            ) as mock_monitoring_class:
+            with patch("app.core.sync.dmarc.MonitoringService") as mock_monitoring_class:
                 mock_monitoring = MagicMock()
                 mock_monitoring_class.return_value = mock_monitoring
                 mock_log_entry = MagicMock()
@@ -376,20 +328,14 @@ class TestStaleDKIMKeyDetection:
                     mock_dkim.days_since_rotation = 365
 
                     mock_service.sync_dmarc_records = AsyncMock(return_value=[])
-                    mock_service.sync_dkim_records = AsyncMock(
-                        return_value=[mock_dkim]
-                    )
+                    mock_service.sync_dkim_records = AsyncMock(return_value=[mock_dkim])
                     mock_service.sync_dmarc_reports = AsyncMock(return_value=[])
                     mock_service.invalidate_cache = AsyncMock()
 
-                    with patch(
-                        "app.core.sync.dmarc._check_security_issues"
-                    ) as mock_security:
+                    with patch("app.core.sync.dmarc._check_security_issues") as mock_security:
                         mock_security.return_value = []
 
-                        with patch(
-                            "app.core.sync.dmarc._check_stale_dkim_keys"
-                        ) as mock_stale:
+                        with patch("app.core.sync.dmarc._check_stale_dkim_keys") as mock_stale:
                             mock_alert = MagicMock()
                             mock_stale.return_value = [mock_alert]
 

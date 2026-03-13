@@ -11,10 +11,10 @@ import pytest
 
 # Mock Azure SDK before imports
 azure_mock = MagicMock()
-sys.modules['azure'] = azure_mock
-sys.modules['azure.identity'] = azure_mock
-sys.modules['azure.core'] = azure_mock
-sys.modules['azure.core.exceptions'] = azure_mock
+sys.modules["azure"] = azure_mock
+sys.modules["azure.identity"] = azure_mock
+sys.modules["azure.core"] = azure_mock
+sys.modules["azure.core.exceptions"] = azure_mock
 
 from app.api.services.graph_client import (  # noqa: E402
     ADMIN_ROLE_TEMPLATE_IDS,
@@ -89,7 +89,7 @@ class TestGraphClientMFA:
     @pytest.fixture
     def mock_graph_client(self):
         """Create a GraphClient with mocked credentials."""
-        with patch.object(GraphClient, '_get_token') as mock_token:
+        with patch.object(GraphClient, "_get_token") as mock_token:
             mock_token.return_value = "mock-token"
             client = GraphClient("test-tenant-id")
             return client
@@ -131,7 +131,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_user_auth_methods_success(self, mock_graph_client, sample_auth_methods):
         """Test successful retrieval of user authentication methods."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": sample_auth_methods}
 
             result = await mock_graph_client.get_user_auth_methods("user-123")
@@ -143,7 +143,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_user_auth_methods_empty(self, mock_graph_client):
         """Test retrieval with no authentication methods."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": []}
 
             result = await mock_graph_client.get_user_auth_methods("user-123")
@@ -153,7 +153,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_user_auth_methods_error(self, mock_graph_client):
         """Test error handling in auth methods retrieval."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.side_effect = Exception("API Error")
 
             with pytest.raises(MFAError) as exc_info:
@@ -167,7 +167,7 @@ class TestGraphClientMFA:
         self, mock_graph_client, sample_auth_methods, sample_user_data
     ):
         """Test successful retrieval of user MFA details."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             # First call returns user data, second returns auth methods
             mock_request.side_effect = [
                 sample_user_data,
@@ -187,7 +187,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_user_mfa_details_no_user(self, mock_graph_client):
         """Test MFA details when user not found."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = None
 
             result = await mock_graph_client.get_user_mfa_details("user-123")
@@ -234,7 +234,7 @@ class TestGraphClientMFA:
             },
         ]
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.side_effect = [
                 sample_user_data,
                 {"value": auth_methods},
@@ -266,7 +266,7 @@ class TestGraphClientMFA:
             },
         ]
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": registrations}
 
             result = await mock_graph_client.get_mfa_registration_details()
@@ -278,7 +278,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_mfa_registration_details_with_filter(self, mock_graph_client):
         """Test retrieval with filter parameter."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": []}
 
             await mock_graph_client.get_mfa_registration_details(
@@ -305,12 +305,10 @@ class TestGraphClientMFA:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.side_effect = [page1, page2]
 
-            result = await mock_graph_client.get_mfa_registration_details_paginated(
-                batch_size=1
-            )
+            result = await mock_graph_client.get_mfa_registration_details_paginated(batch_size=1)
 
             assert len(result) == 2
             assert result[0]["userPrincipalName"] == "user1@example.com"
@@ -326,7 +324,7 @@ class TestGraphClientMFA:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = data
 
             result = await mock_graph_client.get_mfa_registration_details_paginated()
@@ -351,16 +349,31 @@ class TestGraphClientMFA:
         ]
 
         registrations = [
-            {"userPrincipalName": "user1@example.com", "isMfaRegistered": True, "methodsRegistered": ["phone"]},
-            {"userPrincipalName": "user2@example.com", "isMfaRegistered": True, "methodsRegistered": ["app"]},
-            {"userPrincipalName": "user3@example.com", "isMfaRegistered": False, "methodsRegistered": []},
+            {
+                "userPrincipalName": "user1@example.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["phone"],
+            },
+            {
+                "userPrincipalName": "user2@example.com",
+                "isMfaRegistered": True,
+                "methodsRegistered": ["app"],
+            },
+            {
+                "userPrincipalName": "user3@example.com",
+                "isMfaRegistered": False,
+                "methodsRegistered": [],
+            },
         ]
 
-        with patch.object(mock_graph_client, '_get_token', return_value="mock-token"), \
-             patch.object(mock_graph_client, 'get_users') as mock_get_users, \
-             patch.object(mock_graph_client, 'get_directory_roles') as mock_get_roles, \
-             patch.object(mock_graph_client, 'get_mfa_registration_details_paginated') as mock_get_mfa:
-
+        with (
+            patch.object(mock_graph_client, "_get_token", return_value="mock-token"),
+            patch.object(mock_graph_client, "get_users") as mock_get_users,
+            patch.object(mock_graph_client, "get_directory_roles") as mock_get_roles,
+            patch.object(
+                mock_graph_client, "get_mfa_registration_details_paginated"
+            ) as mock_get_mfa,
+        ):
             mock_get_users.return_value = users
             mock_get_roles.return_value = directory_roles
             mock_get_mfa.return_value = registrations
@@ -382,11 +395,14 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_tenant_mfa_summary_empty_tenant(self, mock_graph_client):
         """Test MFA summary for empty tenant."""
-        with patch.object(mock_graph_client, '_get_token', return_value="mock-token"), \
-             patch.object(mock_graph_client, 'get_users') as mock_get_users, \
-             patch.object(mock_graph_client, 'get_directory_roles') as mock_get_roles, \
-             patch.object(mock_graph_client, 'get_mfa_registration_details_paginated') as mock_get_mfa:
-
+        with (
+            patch.object(mock_graph_client, "_get_token", return_value="mock-token"),
+            patch.object(mock_graph_client, "get_users") as mock_get_users,
+            patch.object(mock_graph_client, "get_directory_roles") as mock_get_roles,
+            patch.object(
+                mock_graph_client, "get_mfa_registration_details_paginated"
+            ) as mock_get_mfa,
+        ):
             mock_get_users.return_value = []
             mock_get_roles.return_value = []
             mock_get_mfa.return_value = []
@@ -413,7 +429,7 @@ class TestGraphClientMFA:
             "@odata.nextLink": None,
         }
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.side_effect = [page1, page2]
 
             result = await mock_graph_client.get_users_paginated(batch_size=1)
@@ -425,7 +441,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_users_paginated_with_filter(self, mock_graph_client):
         """Test paginated users with filter."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": [], "@odata.nextLink": None}
 
             await mock_graph_client.get_users_paginated(
@@ -448,7 +464,7 @@ class TestGraphClientMFA:
             },
         ]
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": policies}
 
             result = await mock_graph_client.get_conditional_access_policies_with_details()
@@ -463,7 +479,7 @@ class TestGraphClientMFA:
             {"id": "log-1", "userPrincipalName": "user1@example.com"},
         ]
 
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": logs}
 
             result = await mock_graph_client.get_sign_in_logs(top=50)
@@ -476,7 +492,7 @@ class TestGraphClientMFA:
     @pytest.mark.asyncio
     async def test_get_sign_in_logs_with_filter(self, mock_graph_client):
         """Test sign-in logs with filter."""
-        with patch.object(mock_graph_client, '_request') as mock_request:
+        with patch.object(mock_graph_client, "_request") as mock_request:
             mock_request.return_value = {"value": []}
 
             await mock_graph_client.get_sign_in_logs(

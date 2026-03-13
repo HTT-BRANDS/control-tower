@@ -85,8 +85,7 @@ class TestMessageCardConstruction:
         assert card["@type"] == "MessageCard"
         assert card["summary"] == "Test Alert"
         assert any(
-            section.get("text") == "This is a test alert"
-            for section in card.get("sections", [])
+            section.get("text") == "This is a test alert" for section in card.get("sections", [])
         )
 
     def test_card_includes_action_buttons(self):

@@ -270,6 +270,7 @@ async def async_main() -> int:
         print(f"Error running preflight checks: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 2
 

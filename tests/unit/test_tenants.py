@@ -39,36 +39,17 @@ def mock_tenant_auth(monkeypatch):
         pass
 
     # Mock authorization functions
-    monkeypatch.setattr(
-        authorization,
-        "get_user_tenants",
-        mock_get_user_tenants
-    )
-    monkeypatch.setattr(
-        authorization,
-        "validate_tenant_access",
-        mock_validate_tenant_access
-    )
+    monkeypatch.setattr(authorization, "get_user_tenants", mock_get_user_tenants)
+    monkeypatch.setattr(authorization, "validate_tenant_access", mock_validate_tenant_access)
 
     # Also mock the app.api.routes.tenants imports
     import app.api.routes.tenants as tenants_module
-    monkeypatch.setattr(
-        tenants_module,
-        "get_user_tenants",
-        mock_get_user_tenants
-    )
-    monkeypatch.setattr(
-        tenants_module,
-        "validate_tenant_access",
-        mock_validate_tenant_access
-    )
+
+    monkeypatch.setattr(tenants_module, "get_user_tenants", mock_get_user_tenants)
+    monkeypatch.setattr(tenants_module, "validate_tenant_access", mock_validate_tenant_access)
 
     # Mock rate limiting to prevent 429 errors
-    monkeypatch.setattr(
-        RateLimiter,
-        "check_rate_limit",
-        mock_check_rate_limit
-    )
+    monkeypatch.setattr(RateLimiter, "check_rate_limit", mock_check_rate_limit)
 
 
 @pytest.fixture

@@ -281,7 +281,7 @@ def get_delegation_template(settings: Any, org_name: str = "") -> dict[str, Any]
         ARM template as a dictionary
     """
     managed_by_tenant_id = settings.azure_ad_tenant_id or settings.azure_tenant_id
-    managed_by_principal_id = getattr(settings, 'managed_identity_object_id', None)
+    managed_by_principal_id = getattr(settings, "managed_identity_object_id", None)
 
     return {
         "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
@@ -295,42 +295,34 @@ def get_delegation_template(settings: Any, org_name: str = "") -> dict[str, Any]
             "managedByTenantId": {
                 "type": "string",
                 "defaultValue": managed_by_tenant_id or "",
-                "metadata": {
-                    "description": "The Azure AD tenant ID of the service provider"
-                }
+                "metadata": {"description": "The Azure AD tenant ID of the service provider"},
             },
             "managedByPrincipalId": {
                 "type": "string",
                 "defaultValue": managed_by_principal_id or "",
                 "metadata": {
                     "description": "The Object ID of the Managed Identity from the Azure Governance Platform"
-                }
+                },
             },
             "mspOfferName": {
                 "type": "string",
                 "defaultValue": "Azure Governance Platform",
-                "metadata": {
-                    "description": "Name of the Lighthouse offer"
-                }
+                "metadata": {"description": "Name of the Lighthouse offer"},
             },
             "mspOfferDescription": {
                 "type": "string",
                 "defaultValue": f"Multi-tenant governance for {org_name or 'your organization'}",
-                "metadata": {
-                    "description": "Description of the Lighthouse offer"
-                }
+                "metadata": {"description": "Description of the Lighthouse offer"},
             },
             "principalDisplayName": {
                 "type": "string",
                 "defaultValue": "Azure Governance Platform Managed Identity",
-                "metadata": {
-                    "description": "Display name for the managed identity principal"
-                }
-            }
+                "metadata": {"description": "Display name for the managed identity principal"},
+            },
         },
         "variables": {
             "registrationDefinitionName": "[parameters('mspOfferName')]",
-            "registrationDefinitionId": "[guid(parameters('mspOfferName'), parameters('managedByTenantId'), subscription().subscriptionId)]"
+            "registrationDefinitionId": "[guid(parameters('mspOfferName'), parameters('managedByTenantId'), subscription().subscriptionId)]",
         },
         "resources": [
             {
@@ -345,20 +337,20 @@ def get_delegation_template(settings: Any, org_name: str = "") -> dict[str, Any]
                         {
                             "principalId": "[parameters('managedByPrincipalId')]",
                             "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Contributor')]",
-                            "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+                            "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
                         },
                         {
                             "principalId": "[parameters('managedByPrincipalId')]",
                             "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Cost Management Reader')]",
-                            "roleDefinitionId": "72fafb9e-0641-4937-9268-a91bfd8191a3"
+                            "roleDefinitionId": "72fafb9e-0641-4937-9268-a91bfd8191a3",
                         },
                         {
                             "principalId": "[parameters('managedByPrincipalId')]",
                             "principalIdDisplayName": "[concat(parameters('principalDisplayName'), ' - Security Reader')]",
-                            "roleDefinitionId": "39bc4728-0917-49c7-9d2c-d95423bc2eb4"
-                        }
-                    ]
-                }
+                            "roleDefinitionId": "39bc4728-0917-49c7-9d2c-d95423bc2eb4",
+                        },
+                    ],
+                },
             },
             {
                 "type": "Microsoft.ManagedServices/registrationAssignments",
@@ -369,21 +361,21 @@ def get_delegation_template(settings: Any, org_name: str = "") -> dict[str, Any]
                 ],
                 "properties": {
                     "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions', variables('registrationDefinitionId'))]"
-                }
-            }
+                },
+            },
         ],
         "outputs": {
             "registrationDefinitionId": {
                 "type": "string",
                 "value": "[variables('registrationDefinitionId')]",
-                "metadata": {"description": "The unique ID of the Lighthouse registration"}
+                "metadata": {"description": "The unique ID of the Lighthouse registration"},
             },
             "delegatedSubscriptionId": {
                 "type": "string",
                 "value": "[subscription().subscriptionId]",
-                "metadata": {"description": "The subscription ID where delegation is applied"}
-            }
-        }
+                "metadata": {"description": "The subscription ID where delegation is applied"},
+            },
+        },
     }
 
 
@@ -443,7 +435,7 @@ async def onboarding_landing_page(request: Request):
     settings = get_settings()
 
     # Check if Lighthouse is enabled
-    if not getattr(settings, 'lighthouse_enabled', True):
+    if not getattr(settings, "lighthouse_enabled", True):
         return HTMLResponse(
             content="""
             <div class="container">
@@ -454,7 +446,7 @@ async def onboarding_landing_page(request: Request):
                 </div>
             </div>
             """,
-            status_code=503
+            status_code=503,
         )
 
     return HTMLResponse(content=LANDING_PAGE_HTML)
@@ -477,25 +469,25 @@ async def generate_template(
     settings = get_settings()
 
     # Check if Lighthouse is enabled
-    if not getattr(settings, 'lighthouse_enabled', True):
+    if not getattr(settings, "lighthouse_enabled", True):
         return HTMLResponse(
             content='<div class="alert alert-error">Self-service onboarding is disabled.</div>',
-            status_code=503
+            status_code=503,
         )
 
     # Validate required settings
     managed_by_tenant_id = settings.azure_ad_tenant_id or settings.azure_tenant_id
-    getattr(settings, 'managed_identity_object_id', None)
+    getattr(settings, "managed_identity_object_id", None)
 
     if not managed_by_tenant_id:
         return HTMLResponse(
-            content='''
+            content="""
             <div class="alert alert-error">
                 <strong>Configuration Error:</strong> Managed by tenant ID is not configured.
                 Please contact your administrator.
             </div>
-            ''',
-            status_code=500
+            """,
+            status_code=500,
         )
 
     # Generate template
@@ -516,8 +508,8 @@ async def generate_template(
 </div>
 
 <p>
-    <a href="data:application/json;charset=utf-8,{template_json.replace(chr(34), '&quot;').replace('<', '&lt;').replace('>', '&gt;')}"
-       download="lighthouse-delegation-{org_name.replace(' ', '-').lower() if org_name else 'template'}.json"
+    <a href="data:application/json;charset=utf-8,{template_json.replace(chr(34), "&quot;").replace("<", "&lt;").replace(">", "&gt;")}"
+       download="lighthouse-delegation-{org_name.replace(" ", "-").lower() if org_name else "template"}.json"
        class="btn-secondary"
        style="display: inline-block; text-decoration: none; padding: 10px 20px; border-radius: 4px;">
        ⬇️ Download Template
@@ -572,39 +564,39 @@ async def verify_delegation(
     # Validate inputs
     if not tenant_name.strip():
         return HTMLResponse(
-            content='<div class="alert alert-error">Tenant name is required.</div>',
-            status_code=400
+            content='<div class="alert alert-error">Tenant name is required.</div>', status_code=400
         )
 
-    if not tenant_id.strip() or len(tenant_id.replace('-', '')) != 32:
+    if not tenant_id.strip() or len(tenant_id.replace("-", "")) != 32:
         return HTMLResponse(
             content='<div class="alert alert-error">Invalid Azure Tenant ID format.</div>',
-            status_code=400
+            status_code=400,
         )
 
-    if not subscription_id.strip() or len(subscription_id.replace('-', '')) != 32:
+    if not subscription_id.strip() or len(subscription_id.replace("-", "")) != 32:
         return HTMLResponse(
             content='<div class="alert alert-error">Invalid Azure Subscription ID format.</div>',
-            status_code=400
+            status_code=400,
         )
 
     # Check for existing tenant
-    existing = db.query(Tenant).filter(
-        (Tenant.tenant_id == tenant_id) |
-        (Tenant.name == tenant_name)
-    ).first()
+    existing = (
+        db.query(Tenant)
+        .filter((Tenant.tenant_id == tenant_id) | (Tenant.name == tenant_name))
+        .first()
+    )
 
     if existing:
         return HTMLResponse(
-            content=f'''
+            content=f"""
             <div class="alert alert-error">
                 <strong>❌ Tenant Already Exists</strong>
                 <p>A tenant with this name or Azure Tenant ID already exists.</p>
                 <p>Tenant Name: {existing.name}</p>
                 <p>Azure Tenant ID: {existing.tenant_id}</p>
             </div>
-            ''',
-            status_code=409
+            """,
+            status_code=409,
         )
 
     # Initialize Lighthouse client and verify delegation
@@ -615,7 +607,7 @@ async def verify_delegation(
         if not delegation_result.get("is_delegated"):
             error_msg = delegation_result.get("error", "Unknown error")
             return HTMLResponse(
-                content=f'''
+                content=f"""
                 <div class="alert alert-error">
                     <strong>❌ Delegation Verification Failed</strong>
                     <p>Could not verify Lighthouse delegation for subscription <code>{subscription_id}</code>.</p>
@@ -629,8 +621,8 @@ async def verify_delegation(
                         <li>Verify you have Owner or Contributor role on the subscription</li>
                     </ul>
                 </div>
-                ''',
-                status_code=400
+                """,
+                status_code=400,
             )
 
         # Delegation verified - create tenant record
@@ -652,7 +644,7 @@ async def verify_delegation(
 
         # Return success
         return HTMLResponse(
-            content=f'''
+            content=f"""
             <div class="alert alert-success">
                 <strong>✅ Tenant Created Successfully!</strong>
                 <p>Your Azure subscription has been onboarded to the Azure Governance Platform.</p>
@@ -673,31 +665,31 @@ async def verify_delegation(
                     </a>
                 </p>
             </div>
-            ''',
-            status_code=201
+            """,
+            status_code=201,
         )
 
     except LighthouseDelegationError as e:
         return HTMLResponse(
-            content=f'''
+            content=f"""
             <div class="alert alert-error">
                 <strong>❌ Lighthouse Delegation Error</strong>
                 <p>{str(e)}</p>
                 <p>Please ensure the ARM template was deployed correctly before verifying.</p>
             </div>
-            ''',
-            status_code=400
+            """,
+            status_code=400,
         )
     except Exception as e:
         return HTMLResponse(
-            content=f'''
+            content=f"""
             <div class="alert alert-error">
                 <strong>❌ Unexpected Error</strong>
                 <p>An error occurred during verification: {str(e)}</p>
                 <p>Please try again or contact support.</p>
             </div>
-            ''',
-            status_code=500
+            """,
+            status_code=500,
         )
 
 
@@ -721,10 +713,7 @@ async def get_onboarding_status(
     if not tenant:
         return JSONResponse(
             status_code=404,
-            content={
-                "status": "not_found",
-                "message": f"Tenant with ID {tenant_id} not found"
-            }
+            content={"status": "not_found", "message": f"Tenant with ID {tenant_id} not found"},
         )
 
     # Get subscription count
@@ -745,13 +734,14 @@ async def get_onboarding_status(
                 "updated_at": tenant.updated_at.isoformat() if tenant.updated_at else None,
             },
             "onboarding_complete": tenant.is_active and tenant.use_lighthouse,
-        }
+        },
     )
 
 
 # ============================================================================
 # JSON API Endpoints (for programmatic access)
 # ============================================================================
+
 
 @router.get("/api/template")
 async def get_template_json(
@@ -767,10 +757,9 @@ async def get_template_json(
     """
     settings = get_settings()
 
-    if not getattr(settings, 'lighthouse_enabled', True):
+    if not getattr(settings, "lighthouse_enabled", True):
         return JSONResponse(
-            status_code=503,
-            content={"error": "Self-service onboarding is disabled"}
+            status_code=503, content={"error": "Self-service onboarding is disabled"}
         )
 
     template = get_delegation_template(settings, org_name)
@@ -782,8 +771,8 @@ async def get_template_json(
             "metadata": {
                 "org_name": org_name or "",
                 "generated_at": "now",
-            }
-        }
+            },
+        },
     )
 
 
@@ -804,16 +793,14 @@ async def verify_delegation_json(
 
     # Validate inputs
     if not tenant_name.strip():
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Tenant name is required"}
-        )
+        return JSONResponse(status_code=400, content={"error": "Tenant name is required"})
 
     # Check for existing tenant
-    existing = db.query(Tenant).filter(
-        (Tenant.tenant_id == tenant_id) |
-        (Tenant.name == tenant_name)
-    ).first()
+    existing = (
+        db.query(Tenant)
+        .filter((Tenant.tenant_id == tenant_id) | (Tenant.name == tenant_name))
+        .first()
+    )
 
     if existing:
         return JSONResponse(
@@ -824,8 +811,8 @@ async def verify_delegation_json(
                     "id": existing.id,
                     "name": existing.name,
                     "tenant_id": existing.tenant_id,
-                }
-            }
+                },
+            },
         )
 
     # Verify delegation
@@ -840,7 +827,7 @@ async def verify_delegation_json(
                     "success": False,
                     "error": delegation_result.get("error", "Delegation verification failed"),
                     "delegation_result": delegation_result,
-                }
+                },
             )
 
         # Create tenant
@@ -870,10 +857,12 @@ async def verify_delegation_json(
                     "tenant_id": new_tenant.tenant_id,
                     "use_lighthouse": new_tenant.use_lighthouse,
                     "is_active": new_tenant.is_active,
-                    "created_at": new_tenant.created_at.isoformat() if new_tenant.created_at else None,
+                    "created_at": new_tenant.created_at.isoformat()
+                    if new_tenant.created_at
+                    else None,
                 },
                 "delegation": delegation_result,
-            }
+            },
         )
 
     except Exception as e:
@@ -882,5 +871,5 @@ async def verify_delegation_json(
             content={
                 "success": False,
                 "error": str(e),
-            }
+            },
         )

@@ -101,9 +101,7 @@ class TestConnectivityChecks:
         tenant_id = "test-tenant"
 
         # Mock the Azure authentication check
-        with patch(
-            "app.preflight.tenant_checks.check_azure_authentication"
-        ) as mock_auth_check:
+        with patch("app.preflight.tenant_checks.check_azure_authentication") as mock_auth_check:
             mock_auth_check.return_value = CheckResult(
                 check_id="auth_check",
                 name="Authentication Check",
@@ -124,9 +122,7 @@ class TestConnectivityChecks:
         tenant_id = "test-tenant"
 
         # Mock the Azure authentication check to fail
-        with patch(
-            "app.preflight.tenant_checks.check_azure_authentication"
-        ) as mock_auth_check:
+        with patch("app.preflight.tenant_checks.check_azure_authentication") as mock_auth_check:
             mock_auth_check.return_value = CheckResult(
                 check_id="auth_check",
                 name="Authentication Check",
@@ -186,9 +182,7 @@ class TestMultiTenantExecution:
             mock_get_tenants.return_value = [mock_tenant1, mock_tenant2]
 
             # Mock check execution
-            with patch(
-                "app.preflight.tenant_checks.run_all_azure_checks"
-            ) as mock_run_checks:
+            with patch("app.preflight.tenant_checks.run_all_azure_checks") as mock_run_checks:
                 mock_run_checks.return_value = [
                     CheckResult(
                         check_id="check1",

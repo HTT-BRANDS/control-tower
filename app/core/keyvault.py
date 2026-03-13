@@ -50,9 +50,7 @@ class KeyVaultClient:
                 "Falling back to environment variables for secrets."
             )
         except Exception as e:
-            logger.warning(
-                "Key Vault initialization failed: %s. Falling back to env vars.", e
-            )
+            logger.warning("Key Vault initialization failed: %s. Falling back to env vars.", e)
 
     def get_secret(self, secret_name: str) -> str | None:
         """Retrieve a secret by name.
@@ -80,9 +78,7 @@ class KeyVaultClient:
                     self._cache[secret_name] = value
                     return value
             except Exception as e:
-                logger.warning(
-                    "Key Vault retrieval failed for '%s': %s", secret_name, e
-                )
+                logger.warning("Key Vault retrieval failed for '%s': %s", secret_name, e)
 
         # Fallback to environment variable
         env_key = secret_name.upper().replace("-", "_")

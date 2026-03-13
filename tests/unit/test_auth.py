@@ -216,7 +216,9 @@ class TestJWTTokenManager:
         assert payload["type"] == "access"
 
     @patch("app.core.auth.get_settings")
-    def test_create_access_token_includes_roles_and_tenant_ids(self, mock_get_settings, mock_settings):
+    def test_create_access_token_includes_roles_and_tenant_ids(
+        self, mock_get_settings, mock_settings
+    ):
         """JWTTokenManager.create_access_token includes roles and tenant_ids."""
         mock_get_settings.return_value = mock_settings
         manager = JWTTokenManager()
@@ -408,11 +410,13 @@ class TestAzureADTokenValidator:
         mock_get_settings.return_value = mock_settings
         validator = AzureADTokenValidator()
 
-        tenant_ids = validator._extract_tenant_ids_from_groups([
-            "governance-tenant-abc123",
-            "governance-tenant-xyz789",
-            "other-group",
-        ])
+        tenant_ids = validator._extract_tenant_ids_from_groups(
+            [
+                "governance-tenant-abc123",
+                "governance-tenant-xyz789",
+                "other-group",
+            ]
+        )
         assert "abc123" in tenant_ids
         assert "xyz789" in tenant_ids
         assert len(tenant_ids) == 2
@@ -423,11 +427,13 @@ class TestAzureADTokenValidator:
         mock_get_settings.return_value = mock_settings
         validator = AzureADTokenValidator()
 
-        tenant_ids = validator._extract_tenant_ids_from_groups([
-            "admin",
-            "operator",
-            "other-group",
-        ])
+        tenant_ids = validator._extract_tenant_ids_from_groups(
+            [
+                "admin",
+                "operator",
+                "other-group",
+            ]
+        )
         assert tenant_ids == []
 
     @patch("app.core.auth.get_settings")

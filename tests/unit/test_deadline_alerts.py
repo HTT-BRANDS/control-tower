@@ -135,7 +135,9 @@ class TestDeadlineTrackingResult:
                 status=RequirementStatus.IN_PROGRESS,
             ),
         ]
-        result = DeadlineTrackingResult(alerts=alerts, info_count=1, overdue_count=1, critical_count=1)
+        result = DeadlineTrackingResult(
+            alerts=alerts, info_count=1, overdue_count=1, critical_count=1
+        )
         assert len(result.alerts) == 2
         assert result.info_count == 1
         assert result.overdue_count == 1

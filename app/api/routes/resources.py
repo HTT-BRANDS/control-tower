@@ -32,7 +32,9 @@ from app.schemas.resource import (
 )
 
 # UUID validation pattern
-UUID_PATTERN = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+UUID_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 
 def validate_tenant_id(tenant_id: str | None) -> str | None:
@@ -62,7 +64,10 @@ def validate_tenant_id(tenant_id: str | None) -> str | None:
 # Type alias for validated tenant_id query parameter
 ValidatedTenantId = Annotated[
     str | None,
-    Query(description="Tenant UUID", pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+    Query(
+        description="Tenant UUID",
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    ),
 ]
 
 
@@ -71,13 +76,17 @@ class ValidatedResourceFilterParams(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    tenant_id: str | None = Field(None, pattern=r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+    tenant_id: str | None = Field(
+        None,
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+    )
     tenant_ids: list[str] | None = None
     resource_type: str | None = Field(None, max_length=100)
     limit: int = Field(default=500, ge=1, le=1000)
     offset: int = Field(default=0, ge=0)
     sort_by: str = Field(default="name", max_length=50)
     sort_order: str = Field(default="asc", pattern="^(asc|desc)$")
+
 
 router = APIRouter(
     prefix="/api/v1/resources",
@@ -134,8 +143,10 @@ async def get_resources(
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     inventory.resources = [
-        r for r in inventory.resources
-        if r.tenant_id in accessible_tenants and (not filtered_tenant_ids or r.tenant_id in filtered_tenant_ids)
+        r
+        for r in inventory.resources
+        if r.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or r.tenant_id in filtered_tenant_ids)
     ]
     inventory.total_resources = len(inventory.resources)
 
@@ -171,8 +182,10 @@ async def get_orphaned_resources(
     # Apply tenant isolation
     accessible_tenants = authz.accessible_tenant_ids
     orphaned = [
-        o for o in orphaned
-        if o.tenant_name in accessible_tenants and (not filtered_tenant_ids or o.tenant_name in filtered_tenant_ids)
+        o
+        for o in orphaned
+        if o.tenant_name in accessible_tenants
+        and (not filtered_tenant_ids or o.tenant_name in filtered_tenant_ids)
     ]
 
     return orphaned[offset : offset + limit]
@@ -259,6 +272,7 @@ async def tag_idle_resource(
     """
     # Get the idle resource to validate tenant access
     from app.models.resource import IdleResource
+
     idle_resource = db.query(IdleResource).filter(IdleResource.id == idle_resource_id).first()
     if idle_resource:
         authz.validate_access(idle_resource.tenant_id)

@@ -32,15 +32,14 @@ class DatabaseCheck(BasePreflightCheck):
             timeout_seconds=10.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute database connectivity check."""
         try:
             db = SessionLocal()
             try:
                 # Simple query to verify connectivity
                 from sqlalchemy import text
+
                 db.execute(text("SELECT 1"))
 
                 # Get some basic stats
@@ -86,9 +85,7 @@ class AzureAuthCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Azure authentication check."""
         settings = get_settings()
 
@@ -167,9 +164,7 @@ class AzureSubscriptionsCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Azure subscriptions check."""
         settings = get_settings()
 
@@ -233,9 +228,7 @@ class AzureCostManagementCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Cost Management API check."""
         settings = get_settings()
 
@@ -299,9 +292,7 @@ class AzurePolicyCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Policy API check."""
         settings = get_settings()
 
@@ -349,9 +340,7 @@ class AzureResourcesCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Resource Manager check."""
         settings = get_settings()
 
@@ -408,9 +397,7 @@ class AzureGraphCheck(BasePreflightCheck):
             timeout_seconds=20.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Graph API check with lightweight direct call."""
 
         settings = get_settings()
@@ -462,7 +449,9 @@ class AzureGraphCheck(BasePreflightCheck):
                 data = response.json()
 
             org_count = len(data.get("value", []))
-            org_name = data.get("value", [{}])[0].get("displayName", "Unknown") if org_count > 0 else "N/A"
+            org_name = (
+                data.get("value", [{}])[0].get("displayName", "Unknown") if org_count > 0 else "N/A"
+            )
 
             return CheckResult(
                 check_id=self.check_id,
@@ -531,21 +520,19 @@ class AzureSecurityCheck(BasePreflightCheck):
             timeout_seconds=30.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute Security Center check."""
         settings = get_settings()
 
         # This check is informational - Security Center may not be available in all subscriptions
         try:
-
             settings_obj = get_settings()
             token = None
 
             # Try to get a token via AzureClientManager
             try:
                 from app.api.services.azure_client import AzureClientManager
+
                 manager = AzureClientManager()
                 credential = manager.get_credential(tenant_id or settings_obj.azure_tenant_id)
                 token = credential.get_token("https://management.azure.com/.default")
@@ -602,9 +589,7 @@ class GitHubAccessCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute GitHub access check."""
         import os
 
@@ -717,9 +702,7 @@ class GitHubActionsCheck(BasePreflightCheck):
             timeout_seconds=15.0,
         )
 
-    async def _execute_check(
-        self, tenant_id: str | None = None
-    ) -> CheckResult:
+    async def _execute_check(self, tenant_id: str | None = None) -> CheckResult:
         """Execute GitHub Actions check."""
         import os
 
@@ -824,17 +807,19 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
             RiversideMFADataSourceCheck,
             RiversideSchedulerCheck,
         )
-        checks.extend([
-            RiversideDatabaseCheck(),
-            RiversideAPIEndpointCheck(),
-            RiversideSchedulerCheck(),
-            RiversideAzureADPermissionsCheck(),
-            RiversideMFADataSourceCheck(),
-        ])
+
+        checks.extend(
+            [
+                RiversideDatabaseCheck(),
+                RiversideAPIEndpointCheck(),
+                RiversideSchedulerCheck(),
+                RiversideAzureADPermissionsCheck(),
+                RiversideMFADataSourceCheck(),
+            ]
+        )
     except ImportError:
         # Riverside checks not available
         pass
-
 
     # Import and add MFA compliance checks
     try:
@@ -844,12 +829,15 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
             MFATenantDataCheck,
             MFAUserEnrollmentCheck,
         )
-        checks.extend([
-            MFATenantDataCheck(),
-            MFAAdminEnrollmentCheck(),
-            MFAUserEnrollmentCheck(),
-            MFAGapReportCheck(),
-        ])
+
+        checks.extend(
+            [
+                MFATenantDataCheck(),
+                MFAAdminEnrollmentCheck(),
+                MFAUserEnrollmentCheck(),
+                MFAGapReportCheck(),
+            ]
+        )
     except ImportError:
         # MFA checks not available
         pass
@@ -863,13 +851,16 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
             OverprivilegedAccountCheck,
             SharedAdminCheck,
         )
-        checks.extend([
-            AdminMfaCheck(),
-            OverprivilegedAccountCheck(),
-            InactiveAdminCheck(),
-            SharedAdminCheck(),
-            AdminComplianceGapCheck(),
-        ])
+
+        checks.extend(
+            [
+                AdminMfaCheck(),
+                OverprivilegedAccountCheck(),
+                InactiveAdminCheck(),
+                SharedAdminCheck(),
+                AdminComplianceGapCheck(),
+            ]
+        )
     except ImportError:
         # Admin risk checks not available
         pass

@@ -78,8 +78,10 @@ async def get_compliance_scores(
     # Empty accessible_tenants means admin can see all
     if accessible_tenants:
         scores = [
-            s for s in scores
-            if s.tenant_id in accessible_tenants and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
+            s
+            for s in scores
+            if s.tenant_id in accessible_tenants
+            and (not filtered_tenant_ids or s.tenant_id in filtered_tenant_ids)
         ]
     elif filtered_tenant_ids:
         # Admin with specific filter
@@ -127,8 +129,10 @@ async def get_non_compliant_policies(
     # Empty accessible_tenants means admin can see all
     if accessible_tenants:
         policies = [
-            p for p in policies
-            if p.tenant_id in accessible_tenants and (not filtered_tenant_ids or p.tenant_id in filtered_tenant_ids)
+            p
+            for p in policies
+            if p.tenant_id in accessible_tenants
+            and (not filtered_tenant_ids or p.tenant_id in filtered_tenant_ids)
         ]
     elif filtered_tenant_ids:
         # Admin with specific filter
@@ -179,9 +183,7 @@ async def compliance_status(
 
         # Get total policy states for accessible tenants
         total_states = (
-            db.query(PolicyState)
-            .filter(PolicyState.tenant_id.in_(accessible_tenant_ids))
-            .count()
+            db.query(PolicyState).filter(PolicyState.tenant_id.in_(accessible_tenant_ids)).count()
         )
 
         # Get non-compliant policy states

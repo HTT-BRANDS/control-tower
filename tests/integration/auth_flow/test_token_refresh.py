@@ -19,6 +19,7 @@ class TestTokenRefresh:
 
     def test_refresh_with_valid_token_returns_new_tokens(self, seeded_db, test_tenant_id):
         """POST /api/v1/auth/refresh with valid refresh token → returns new tokens."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -65,6 +66,7 @@ class TestTokenRefresh:
 
     def test_refresh_with_expired_token_fails(self, seeded_db):
         """POST /api/v1/auth/refresh with expired token → 401."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -91,6 +93,7 @@ class TestTokenRefresh:
 
     def test_refresh_with_invalid_token_fails(self, seeded_db):
         """POST /api/v1/auth/refresh with invalid token → 401."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -112,6 +115,7 @@ class TestTokenRefresh:
 
     def test_refresh_with_access_token_fails(self, seeded_db, test_tenant_id):
         """POST /api/v1/auth/refresh with access token instead of refresh → 401."""
+
         def override_get_db():
             try:
                 yield seeded_db
@@ -141,6 +145,7 @@ class TestTokenRefresh:
 
     def test_token_endpoint_with_refresh_grant_type(self, seeded_db, test_tenant_id):
         """POST /api/v1/auth/token with grant_type=refresh_token works."""
+
         def override_get_db():
             try:
                 yield seeded_db

@@ -46,9 +46,7 @@ class DMARCRecord(Base):
     __tablename__ = "dmarc_records"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     domain: Mapped[str] = mapped_column(String(255), nullable=False)
     policy: Mapped[str] = mapped_column(String(20), nullable=False)  # none, quarantine, reject
     pct: Mapped[int] = mapped_column(Integer, default=100)  # percentage
@@ -94,9 +92,7 @@ class DKIMRecord(Base):
     __tablename__ = "dkim_records"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     domain: Mapped[str] = mapped_column(String(255), nullable=False)
     selector: Mapped[str] = mapped_column(String(100), nullable=False)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -147,9 +143,7 @@ class DMARCReport(Base):
     __tablename__ = "dmarc_reports"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     report_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     domain: Mapped[str] = mapped_column(String(255), nullable=False)
     messages_total: Mapped[int] = mapped_column(Integer, default=0)
@@ -196,9 +190,7 @@ class DMARCAlert(Base):
     __tablename__ = "dmarc_alerts"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    tenant_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("tenants.id"), nullable=False
-    )
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
     alert_type: Mapped[str] = mapped_column(
         String(50), nullable=False
     )  # policy_change, key_rotation, auth_failure, etc.

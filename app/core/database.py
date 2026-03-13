@@ -35,13 +35,15 @@ engine_args: dict[str, Any] = {
 
 # Add pooling settings for non-SQLite databases (PostgreSQL, MySQL)
 if not settings.database_url.startswith("sqlite"):
-    engine_args.update({
-        "pool_size": settings.database_pool_size,
-        "max_overflow": settings.database_max_overflow,
-        "pool_timeout": settings.database_pool_timeout,
-        "pool_pre_ping": True,  # Verify connections before using
-        "pool_recycle": 3600,   # Recycle connections after 1 hour
-    })
+    engine_args.update(
+        {
+            "pool_size": settings.database_pool_size,
+            "max_overflow": settings.database_max_overflow,
+            "pool_timeout": settings.database_pool_timeout,
+            "pool_pre_ping": True,  # Verify connections before using
+            "pool_recycle": 3600,  # Recycle connections after 1 hour
+        }
+    )
 
 engine = create_engine(settings.database_url, **engine_args)
 
@@ -61,9 +63,7 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
     total_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
 
     if total_time > settings.slow_query_threshold_ms:
-        logger.warning(
-            f"Slow query detected ({total_time:.2f}ms): {statement[:200]}..."
-        )
+        logger.warning(f"Slow query detected ({total_time:.2f}ms): {statement[:200]}...")
 
     if settings.debug and settings.enable_query_logging:
         logger.debug(f"Query executed in {total_time:.2f}ms: {statement[:100]}...")
@@ -144,46 +144,36 @@ def _create_indexes() -> None:
         Index("idx_cost_snapshots_date", "cost_snapshots", "date"),
         Index("idx_cost_snapshots_tenant_date", "cost_snapshots", "tenant_id", "date"),
         Index("idx_cost_snapshots_service", "cost_snapshots", "service_name"),
-
         # Cost anomalies - frequently queried by acknowledgment status
         Index("idx_cost_anomalies_acknowledged", "cost_anomalies", "is_acknowledged"),
         Index("idx_cost_anomalies_detected", "cost_anomalies", "detected_at"),
         Index("idx_cost_anomalies_tenant", "cost_anomalies", "tenant_id"),
-
         # Resources - frequently queried by tenant and type
         Index("idx_resources_tenant", "resources", "tenant_id"),
         Index("idx_resources_type", "resources", "resource_type"),
         Index("idx_resources_orphaned", "resources", "is_orphaned"),
         Index("idx_resources_synced", "resources", "synced_at"),
-
         # Idle resources - frequently filtered by review status
         Index("idx_idle_resources_reviewed", "idle_resources", "is_reviewed"),
         Index("idx_idle_resources_tenant", "idle_resources", "tenant_id"),
         Index("idx_idle_resources_savings", "idle_resources", "estimated_monthly_savings"),
-
         # Compliance snapshots
         Index("idx_compliance_snapshots_tenant", "compliance_snapshots", "tenant_id"),
         Index("idx_compliance_snapshots_date", "compliance_snapshots", "snapshot_date"),
-
         # Policy states
         Index("idx_policy_states_compliance", "policy_states", "compliance_state"),
         Index("idx_policy_states_tenant", "policy_states", "tenant_id"),
-
         # Identity snapshots
         Index("idx_identity_snapshots_tenant", "identity_snapshots", "tenant_id"),
         Index("idx_identity_snapshots_date", "identity_snapshots", "snapshot_date"),
-
         # Privileged users
         Index("idx_privileged_users_tenant", "privileged_users", "tenant_id"),
         Index("idx_privileged_users_role", "privileged_users", "role_name"),
-
         # Resource tags
         Index("idx_resource_tags_resource", "resource_tags", "resource_id"),
         Index("idx_resource_tags_name", "resource_tags", "tag_name"),
-
         # Tenants
         Index("idx_tenants_active", "tenants", "is_active"),
-
         # Sync jobs
         Index("idx_sync_jobs_status", "sync_jobs", "status"),
         Index("idx_sync_jobs_tenant", "sync_jobs", "tenant_id"),
@@ -200,6 +190,7 @@ def _create_indexes() -> None:
 
 # Query optimization helpers
 
+
 def eager_load_options(*relationships: str) -> list[Any]:
     """Create eager load options for relationships to prevent N+1 queries.
 
@@ -208,6 +199,7 @@ def eager_load_options(*relationships: str) -> list[Any]:
         query = db.query(Model).options(*eager_load_options("tenant", "tags"))
     """
     from sqlalchemy.orm import joinedload
+
     return [joinedload(r) for r in relationships]
 
 
@@ -271,7 +263,7 @@ def bulk_insert_chunks(
     total_inserted = 0
 
     for i in range(0, len(items), batch_size):
-        batch = items[i:i + batch_size]
+        batch = items[i : i + batch_size]
         db.bulk_insert_mappings(model_class, batch)
         db.commit()
         total_inserted += len(batch)
@@ -286,10 +278,15 @@ def get_db_stats(db: Session) -> dict[str, Any]:
 
     # Table counts
     tables = [
-        "resources", "cost_snapshots", "cost_anomalies",
-        "compliance_snapshots", "policy_states",
-        "identity_snapshots", "privileged_users",
-        "sync_jobs", "tenants"
+        "resources",
+        "cost_snapshots",
+        "cost_anomalies",
+        "compliance_snapshots",
+        "policy_states",
+        "identity_snapshots",
+        "privileged_users",
+        "sync_jobs",
+        "tenants",
     ]
 
     for table in tables:
@@ -302,7 +299,9 @@ def get_db_stats(db: Session) -> dict[str, Any]:
     # Database size (SQLite only)
     if settings.database_url.startswith("sqlite"):
         try:
-            result = db.execute(text("SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()"))
+            result = db.execute(
+                text("SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()")
+            )
             stats["db_size_bytes"] = result.scalar()
         except Exception:
             stats["db_size_bytes"] = None

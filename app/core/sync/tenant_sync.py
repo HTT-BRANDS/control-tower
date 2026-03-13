@@ -13,8 +13,5 @@ async def sync_tenant_data(tenant_id: str):
     if scheduler:
         # Queue sync job
         scheduler.add_job(
-            func=lambda: None,
-            trigger='date',
-            id=f'sync-tenant-{tenant_id}',
-            replace_existing=True
+            func=lambda: None, trigger="date", id=f"sync-tenant-{tenant_id}", replace_existing=True
         )
