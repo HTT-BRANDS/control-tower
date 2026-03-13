@@ -22,6 +22,8 @@ param resourceSuffix string = uniqueString(subscription().id, deployment().name)
 
 @description('App Service Plan SKU')
 @allowed([
+  'F1'
+  'D1'
   'B1'
   'B2'
   'B3'

@@ -5,7 +5,7 @@ param name string
 param location string
 
 @description('SKU for the App Service Plan')
-@allowed(['B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2'])
+@allowed(['F1', 'D1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'P1v2', 'P2v2', 'P3v2'])
 param sku string = 'B1'
 
 @description('Tags to apply')
@@ -16,6 +16,8 @@ param tags object = {}
 param osType string = 'Linux'
 
 var skuMap = {
+  F1: { tier: 'Free', size: 'F1', family: 'F', capacity: 0 }
+  D1: { tier: 'Shared', size: 'D1', family: 'D', capacity: 0 }
   B1: { tier: 'Basic', size: 'B1', family: 'B', capacity: 1 }
   B2: { tier: 'Basic', size: 'B2', family: 'B', capacity: 1 }
   B3: { tier: 'Basic', size: 'B3', family: 'B', capacity: 1 }

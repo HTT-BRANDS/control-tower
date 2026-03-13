@@ -25,14 +25,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Bootstrap app to avoid circular imports
-from app.main import app  # noqa: F401
-
 from app.api.services.riverside_models import (
     RequirementLevel,
     RiversideRequirementCategory,
 )
 from app.api.services.riverside_requirements import REQUIREMENTS
 from app.core.database import SessionLocal
+from app.main import app  # noqa: F401
 from app.models.riverside import (
     RequirementCategory,
     RequirementPriority,
@@ -127,7 +126,7 @@ def seed_requirements() -> dict[str, int]:
         total = db.query(RiversideRequirement).count()
 
         print(f"\n{'='*60}")
-        print(f"RESULTS")
+        print("RESULTS")
         print(f"{'='*60}")
         print(f"  Inserted: {inserted}")
         print(f"  Skipped (already existed): {skipped}")

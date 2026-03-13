@@ -13,7 +13,6 @@ from app.models.riverside import (
     RequirementCategory,
     RequirementPriority,
     RiversideCompliance,
-    RiversideDeviceCompliance,
     RiversideMFA,
     RiversideRequirement,
 )
@@ -61,7 +60,7 @@ def get_riverside_summary(db) -> dict:
     tenant_summaries = []
     total_maturity = 0.0
     total_mfa = 0.0
-    total_device = 0.0
+
     total_requirements_completed = 0
     total_requirements = 0
     total_critical_gaps = 0

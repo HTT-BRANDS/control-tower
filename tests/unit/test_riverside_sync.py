@@ -604,6 +604,6 @@ class TestSyncAllTenants:
                 mock_mfa.assert_called()
                 # Device sync is disabled - Sui Generis MSP integration coming in Phase 2 (Q3 2025)
                 # Verify skipped status is returned instead
-                for tenant_id, device_result in result["results"]["devices"].items():
+                for _tenant_id, device_result in result["results"]["devices"].items():
                     assert device_result["status"] == "skipped"
                     assert "Sui Generis" in device_result["message"]

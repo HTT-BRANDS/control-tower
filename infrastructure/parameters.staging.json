@@ -6,19 +6,19 @@
       "value": "staging"
     },
     "location": {
-      "value": "eastus"
+      "value": "westus2"
     },
     "secondaryLocation": {
       "value": "westus2"
     },
     "appServiceSku": {
-      "value": "B2"
+      "value": "B1"
     },
     "sqlDatabaseSku": {
       "value": "Standard_S0"
     },
     "enableAzureSql": {
-      "value": true
+      "value": false
     },
     "enableAppInsights": {
       "value": true
