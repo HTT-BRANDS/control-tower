@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Riverside Capital PE Governance</title>
-
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-
-    <!-- Compiled Tailwind CSS (same as rest of app) -->
     <link rel="stylesheet" href="/static/css/theme.css">
 </head>
 <body class="min-h-screen flex items-center justify-center" style="background-color: #f3f4f6; font-family: 'Inter', sans-serif;">
@@ -31,13 +27,40 @@
                 </p>
             </div>
 
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-5">
+            <!-- Azure AD SSO Button (Primary for staging/production) -->
+            <div id="azure-login-section">
+                <button id="azure-login-btn" type="button"
+                        class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
+                        style="background-color: #0078d4;"
+                        onclick="signInWithAzureAD()">
+                    <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                    </svg>
+                    <span id="azure-btn-text">Sign in with Microsoft</span>
+                    <svg id="azure-btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Divider (shown when dev login is available) -->
+            <div id="divider" class="hidden my-6 flex items-center">
+                <div class="flex-grow border-t" style="border-color: #e5e7eb;"></div>
+                <span class="px-3 text-xs" style="color: #9ca3af;">or</span>
+                <div class="flex-grow border-t" style="border-color: #e5e7eb;"></div>
+            </div>
+
+            <!-- Dev Login Form (only shown in development) -->
+            <form id="login-form" class="space-y-5 hidden">
                 <div>
                     <label for="username" class="block text-sm font-medium" style="color: #374151;">Username</label>
-                    <input type="text" id="username" name="username" required autofocus
+                    <input type="text" id="username" name="username" required
                            class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                           style="border-color: #d1d5db; focus: ring-color: #500711;"
+                           style="border-color: #d1d5db;"
                            placeholder="Enter username">
                 </div>
 
@@ -48,8 +71,6 @@
                            style="border-color: #d1d5db;"
                            placeholder="Enter password">
                 </div>
-
-                <div id="error-message" class="text-sm hidden rounded-md px-3 py-2" style="color: #991b1b; background-color: #fef2f2;"></div>
 
                 <button type="submit" id="submit-btn"
                         class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
@@ -62,6 +83,8 @@
                 </button>
             </form>
 
+            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4" style="color: #991b1b; background-color: #fef2f2;"></div>
+
             <div class="mt-6 text-center">
                 <p class="text-xs" style="color: #9ca3af;">Access restricted to authorized users</p>
             </div>
@@ -73,26 +96,112 @@
     </div>
 
     <script nonce="{{ request.state.csp_nonce }}">
-        const form = document.getElementById('login-form');
         const errorDiv = document.getElementById('error-message');
+
+        // ── Azure AD SSO ────────────────────────────────────────
+        async function signInWithAzureAD() {
+            const btn = document.getElementById('azure-login-btn');
+            const btnText = document.getElementById('azure-btn-text');
+            const spinner = document.getElementById('azure-btn-spinner');
+            btnText.textContent = 'Redirecting...';
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/v1/auth/azure/login');
+                const config = await resp.json();
+
+                if (!config.client_id || !config.authorization_endpoint) {
+                    throw new Error('Azure AD not configured');
+                }
+
+                // Build authorization URL
+                const params = new URLSearchParams({
+                    client_id: config.client_id,
+                    response_type: 'code',
+                    redirect_uri: window.location.origin + '/login',
+                    scope: config.scopes || 'openid profile email User.Read',
+                    response_mode: 'query',
+                    state: crypto.randomUUID()
+                });
+
+                window.location.href = config.authorization_endpoint + '?' + params.toString();
+            } catch (err) {
+                console.error('Azure AD redirect failed:', err);
+                errorDiv.textContent = 'Azure AD sign-in unavailable. ' + err.message;
+                errorDiv.classList.remove('hidden');
+                btnText.textContent = 'Sign in with Microsoft';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        // ── Handle OAuth callback (code in URL) ────────────────
+        async function handleOAuthCallback() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (!code) return false;
+
+            // Clean the URL
+            window.history.replaceState({}, document.title, '/login');
+
+            const btn = document.getElementById('azure-login-btn');
+            const btnText = document.getElementById('azure-btn-text');
+            const spinner = document.getElementById('azure-btn-spinner');
+            btnText.textContent = 'Completing sign-in...';
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/v1/auth/azure/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: code,
+                        redirect_uri: window.location.origin + '/login'
+                    })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                    const maxAge = data.expires_in || 1800;
+                    document.cookie = `access_token=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                    window.location.href = '/dashboard';
+                    return true;
+                } else {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Authentication failed');
+                }
+            } catch (err) {
+                console.error('OAuth callback error:', err);
+                errorDiv.textContent = err.message || 'Sign-in failed. Please try again.';
+                errorDiv.classList.remove('hidden');
+                btnText.textContent = 'Sign in with Microsoft';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+                return false;
+            }
+        }
+
+        // ── Dev login form handler ──────────────────────────────
+        const form = document.getElementById('login-form');
         const submitBtn = document.getElementById('submit-btn');
-        const btnText = document.getElementById('btn-text');
-        const btnSpinner = document.getElementById('btn-spinner');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorDiv.classList.add('hidden');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
             btnText.textContent = 'Signing in...';
             btnSpinner.classList.remove('hidden');
             submitBtn.disabled = true;
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
             try {
                 const formData = new URLSearchParams();
-                formData.append('username', username);
-                formData.append('password', password);
+                formData.append('username', document.getElementById('username').value);
+                formData.append('password', document.getElementById('password').value);
 
                 const response = await fetch('/api/v1/auth/login', {
                     method: 'POST',
@@ -102,16 +211,10 @@
 
                 if (response.ok) {
                     const data = await response.json();
-
-                    // Store token in localStorage (for API calls)
                     localStorage.setItem('access_token', data.access_token);
                     localStorage.setItem('refresh_token', data.refresh_token);
-
-                    // Set cookie for browser page navigation
                     const maxAge = data.expires_in || 1800;
                     document.cookie = `access_token=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-
-                    // Redirect to dashboard
                     window.location.href = '/dashboard';
                 } else {
                     const err = await response.json().catch(() => ({}));
@@ -119,7 +222,6 @@
                     errorDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                console.error('Login error:', err);
                 errorDiv.textContent = 'Login failed. Please try again.';
                 errorDiv.classList.remove('hidden');
             } finally {
@@ -129,9 +231,32 @@
             }
         });
 
-        // Add hover effect via JS since we can't use Tailwind CDN JIT
+        // Hover effects
+        const azureBtn = document.getElementById('azure-login-btn');
+        azureBtn.addEventListener('mouseenter', () => { azureBtn.style.backgroundColor = '#106ebe'; });
+        azureBtn.addEventListener('mouseleave', () => { azureBtn.style.backgroundColor = '#0078d4'; });
         submitBtn.addEventListener('mouseenter', () => { submitBtn.style.backgroundColor = '#6B1A24'; });
         submitBtn.addEventListener('mouseleave', () => { submitBtn.style.backgroundColor = '#500711'; });
+
+        // ── Page Init ───────────────────────────────────────────
+        (async () => {
+            // Check for OAuth callback first
+            if (await handleOAuthCallback()) return;
+
+            // Show dev login form if we detect development environment
+            try {
+                const resp = await fetch('/api/v1/auth/login', { method: 'HEAD' });
+                // In dev, HEAD might work or return 405; in staging/prod it returns 403
+                // Show dev form if NOT 403
+                if (resp.status !== 403) {
+                    document.getElementById('login-form').classList.remove('hidden');
+                    document.getElementById('divider').classList.remove('hidden');
+                    document.getElementById('divider').style.display = 'flex';
+                }
+            } catch (e) {
+                // If check fails, just show Azure AD only
+            }
+        })();
     </script>
 </body>
 </html>
