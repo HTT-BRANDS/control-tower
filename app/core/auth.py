@@ -37,6 +37,7 @@ class TokenData(BaseModel):
     name: str | None = None
     roles: list[str] = []
     tenant_ids: list[str] = []  # Tenants user has access to
+    azure_tenant_id: str | None = None  # Azure AD 'tid' claim
     exp: datetime | None = None
     iat: datetime | None = None
     iss: str | None = None
@@ -148,10 +149,12 @@ class AzureADTokenValidator:
             # Extract Azure AD claims
             # oid = object ID (user ID in Azure AD)
             # upn = user principal name (email)
+            # tid = Azure AD tenant (directory) ID
             # groups = Azure AD group memberships
             user_id = payload.get("oid") or payload.get("sub")
             email = payload.get("upn") or payload.get("email") or payload.get("preferred_username")
             name = payload.get("name")
+            azure_tenant_id = payload.get("tid")
 
             # Extract groups (tenant permissions)
             groups = payload.get("groups", [])
@@ -166,6 +169,7 @@ class AzureADTokenValidator:
                 name=name,
                 roles=self._map_groups_to_roles(groups),
                 tenant_ids=self._extract_tenant_ids_from_groups(groups),
+                azure_tenant_id=azure_tenant_id,
                 exp=datetime.fromtimestamp(exp, tz=UTC) if exp else None,
                 iat=datetime.fromtimestamp(iat, tz=UTC) if iat else None,
                 iss=payload.get("iss"),

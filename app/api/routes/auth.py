@@ -429,16 +429,16 @@ async def azure_oauth_callback(
 
     validated = await azure_ad_validator.validate_token(id_token)
 
-    # Create or update user tenant mappings based on Azure AD groups
-    await _sync_user_tenant_mappings(db, validated)
+    # Create or update user tenant mappings based on Azure AD groups/tid
+    resolved_tenant_ids = await _sync_user_tenant_mappings(db, validated)
 
-    # Create internal tokens
+    # Create internal tokens — use resolved tenant IDs (includes tid fallback)
     access_token = jwt_manager.create_access_token(
         user_id=validated.sub,
         email=validated.email,
         name=validated.name,
         roles=validated.roles,
-        tenant_ids=validated.tenant_ids,
+        tenant_ids=resolved_tenant_ids,
     )
 
     refresh_token = jwt_manager.create_refresh_token(user_id=validated.sub)
@@ -453,21 +453,41 @@ async def azure_oauth_callback(
     )
 
 
-async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> None:
+async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> list[str]:
     """Sync user tenant mappings based on Azure AD token claims.
 
     Creates UserTenant records for any tenants the user has access to
-    via Azure AD group memberships.
+    via Azure AD group memberships. Falls back to the Azure AD 'tid'
+    claim when no group-based tenant IDs are found.
+
+    Returns:
+        List of resolved Azure tenant IDs the user has access to.
     """
+    import uuid
+
     from app.models.tenant import Tenant
 
-    for tenant_id in token_data.tenant_ids:
+    # Start with group-based tenant IDs; fall back to tid claim
+    candidate_ids = list(token_data.tenant_ids)
+    if not candidate_ids and token_data.azure_tenant_id:
+        candidate_ids = [token_data.azure_tenant_id]
+        logger.info(
+            f"No group-based tenants for {token_data.sub}, "
+            f"falling back to Azure AD tid: {token_data.azure_tenant_id}"
+        )
+
+    resolved: list[str] = []
+
+    for tenant_id in candidate_ids:
         # Find tenant by Azure tenant ID
         tenant = db.query(Tenant).filter(Tenant.tenant_id == tenant_id).first()
         if not tenant:
+            logger.debug(f"No local tenant record for Azure tenant {tenant_id}, skipping")
             continue
 
-        # Check if mapping exists
+        resolved.append(tenant_id)
+
+        # Ensure a UserTenant mapping exists
         existing = (
             db.query(UserTenant)
             .filter(
@@ -478,9 +498,6 @@ async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> None
         )
 
         if not existing:
-            # Create new mapping
-            import uuid
-
             mapping = UserTenant(
                 id=str(uuid.uuid4()),
                 user_id=token_data.sub,
@@ -495,6 +512,8 @@ async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> None
             db.commit()
 
             logger.info(f"Created user tenant mapping: {token_data.sub} -> {tenant_id}")
+
+    return resolved
 
 
 # ============================================================================
