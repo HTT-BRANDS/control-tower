@@ -182,8 +182,8 @@ class DeadlineTracker:
                 .filter(
                     RiversideRequirement.status.in_(
                         [
-                            RequirementStatus.NOT_STARTED,
-                            RequirementStatus.IN_PROGRESS,
+                            RequirementStatus.NOT_STARTED.value,
+                            RequirementStatus.IN_PROGRESS.value,
                         ]
                     ),
                     RiversideRequirement.due_date.isnot(None),

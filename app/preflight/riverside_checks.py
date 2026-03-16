@@ -888,7 +888,7 @@ class RiversideEvidenceCheck(BasePreflightCheck):
 
             # Query for completed requirements
             query = db.query(RiversideRequirement).filter(
-                RiversideRequirement.status == RequirementStatus.COMPLETED
+                RiversideRequirement.status == RequirementStatus.COMPLETED.value
             )
 
             if tenant_id:

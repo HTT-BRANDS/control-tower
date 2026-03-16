@@ -102,7 +102,7 @@ def track_requirement_progress(db: Session, requirement_id: int) -> dict:
         db.query(func.count(RiversideRequirement.id))
         .filter(
             RiversideRequirement.tenant_id == requirement.tenant_id,
-            RiversideRequirement.status == RequirementStatus.COMPLETED,
+            RiversideRequirement.status == RequirementStatus.COMPLETED.value,
         )
         .scalar()
         or 0
@@ -196,7 +196,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
         db.query(RiversideRequirement)
         .filter(
             RiversideRequirement.due_date < today,
-            RiversideRequirement.status != RequirementStatus.COMPLETED,
+            RiversideRequirement.status != RequirementStatus.COMPLETED.value,
         )
         .all()
     )
@@ -210,7 +210,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
         .filter(
             RiversideRequirement.due_date >= today,
             RiversideRequirement.due_date <= cutoff_date,
-            RiversideRequirement.status != RequirementStatus.COMPLETED,
+            RiversideRequirement.status != RequirementStatus.COMPLETED.value,
         )
         .order_by(RiversideRequirement.due_date)
         .all()
@@ -236,7 +236,7 @@ def get_deadline_status(db: Session, days_window: int = 30) -> dict:
     total_requirements = db.query(func.count(RiversideRequirement.id)).scalar() or 1
     completed_requirements = (
         db.query(func.count(RiversideRequirement.id))
-        .filter(RiversideRequirement.status == RequirementStatus.COMPLETED)
+        .filter(RiversideRequirement.status == RequirementStatus.COMPLETED.value)
         .scalar()
         or 0
     )
@@ -453,7 +453,7 @@ def get_riverside_metrics(db: Session) -> dict:
         db.query(func.count(RiversideRequirement.id))
         .filter(
             RiversideRequirement.tenant_id.in_(tenant_ids),
-            RiversideRequirement.status == RequirementStatus.COMPLETED,
+            RiversideRequirement.status == RequirementStatus.COMPLETED.value,
         )
         .scalar()
         or 0
