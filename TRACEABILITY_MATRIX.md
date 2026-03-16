@@ -147,6 +147,91 @@ Each row traces a requirement from **origin → implementation → testing → s
 
 ---
 
+## Epic 11: Riverside Compliance Requirements (RC-xxx)
+
+This epic maps the Riverside-specific requirements from REQUIREMENTS.md Section 8 to their implementing code and test coverage.
+
+### 11.1 Executive Tracking (RC-001 → RC-006)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-001 | Executive compliance dashboard | `app/api/routes/riverside.py` (dashboard page) | `test_routes_riverside::TestRiversideDashboardPage` | Unit + E2E | ✅ Passed |
+| RC-002 | Days to deadline countdown | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestGetDeadlineStatus` | Unit | ✅ Passed |
+| RC-003 | Maturity score tracking | `app/services/riverside_sync.py` (sync_maturity_scores) | `test_riverside_sync::TestSyncMaturityScores`, `test_routes_riverside::TestRiversideMaturityScoresEndpoint` | Unit + Integration | ✅ Passed |
+| RC-004 | Financial risk quantification | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestGetRiversideMetrics` | Unit | ✅ Passed |
+| RC-005 | Requirement completion percentage | `app/api/services/riverside_service/queries.py` | `test_riverside_compliance_service::TestCalculateComplianceSummary` | Unit | ✅ Passed |
+| RC-006 | Trend analysis and forecasting | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestTrackRequirementProgress` | Unit | ✅ Passed |
+
+### 11.2 MFA Monitoring (RC-010 → RC-015)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-010 | Real-time MFA enrollment tracking | `app/services/riverside_sync.py` (sync_tenant_mfa) | `test_riverside_mfa_sync::TestEnhancedSyncTenantMFA`, `test_riverside_sync::TestSyncTenantMFA` | Unit | ✅ Passed |
+| RC-011 | Per-tenant MFA breakdown | `app/api/routes/riverside.py` (mfa_status endpoint) | `test_routes_riverside::TestRiversideMFAStatusEndpoint`, `test_riverside_api::TestRiversideMFAStatusEndpoint` | Unit + Integration | ✅ Passed |
+| RC-012 | Admin account MFA tracking | `app/services/mfa_alerts.py` (MFAGapDetector) | `test_mfa_alerts::TestMFAGapDetectorCheckAdminCompliance`, `test_mfa_preflight::TestMFAAdminEnrollmentCheck` | Unit | ✅ Passed |
+| RC-013 | MFA trend reporting | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestTrackRequirementProgress` | Unit | ✅ Passed |
+| RC-014 | Non-MFA user alerting | `app/services/mfa_alerts.py` (trigger_alert) | `test_mfa_alerts::TestMFAGapDetectorTriggerAlert`, `test_riverside_scheduler::TestCheckMFACompliance` | Unit | ✅ Passed |
+| RC-015 | MFA gap identification | `app/services/mfa_alerts.py` (detect_gaps) | `test_mfa_alerts::TestMFAGapDetectorDetectGaps`, `test_riverside_compliance_service::TestAnalyzeMFAGaps` | Unit | ✅ Passed |
+
+### 11.3 Requirement Tracking (RC-020 → RC-027)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-020 | Requirement status tracking | `app/models/riverside.py` (RiversideRequirement) | `test_routes_riverside::TestRiversideRequirementsEndpoint`, `test_riverside_api::TestRiversideRequirementsEndpoint` | Unit + Integration | ✅ Passed |
+| RC-021 | Evidence upload/link storage | `app/models/riverside.py` (evidence fields) | `test_riverside_preflight::TestRiversideEvidenceCheck` | Unit | ✅ Passed |
+| RC-022 | Requirement categorization | `app/models/riverside.py` (category field) | `test_riverside_api::TestRiversideRequirementsEndpoint` | Integration | ✅ Passed |
+| RC-023 | Owner assignment | `app/models/riverside.py` (owner field) | `test_riverside_api::TestRiversideRequirementsEndpoint` | Integration | ✅ Passed |
+| RC-024 | Due date tracking | `app/services/deadline_alerts.py` (DeadlineTracker) | `test_deadline_alerts::TestDeadlineTrackerTrackDeadlines` | Unit | ✅ Passed |
+| RC-025 | Priority classification (P0/P1/P2) | `app/models/riverside.py` (priority field) | `test_riverside_api::TestRiversideRequirementsEndpoint` | Integration | ✅ Passed |
+| RC-026 | Completion date recording | `app/models/riverside.py` (completed_date field) | `test_riverside_sync::TestSyncRequirementStatus` | Unit | ✅ Passed |
+| RC-027 | Notes and comments | `app/models/riverside.py` (notes field) | `test_riverside_api::TestRiversideRequirementsEndpoint` | Integration | ✅ Passed |
+
+### 11.4 Device Compliance (RC-030 → RC-035)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-030 | MDM enrollment tracking | `app/services/riverside_sync.py` (sync_tenant_devices) | `test_riverside_sync::TestSyncTenantDevices` | Unit | ⏳ Phase 2 (Sui Generis) |
+| RC-031 | EDR coverage monitoring | `app/integrations/sui_generis.py` (placeholder) | — | — | ⏳ Phase 2 |
+| RC-032 | Device encryption status | — | — | — | ⏳ Phase 2 |
+| RC-033 | Asset inventory | — | — | — | ⏳ Phase 2 |
+| RC-034 | Device compliance scoring | — | — | — | ⏳ Phase 2 |
+| RC-035 | Non-compliant device alerting | — | — | — | ⏳ Phase 2 |
+
+### 11.5 Maturity Scoring (RC-040 → RC-045)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-040 | Domain maturity tracking | `app/services/riverside_sync.py` (sync_maturity_scores) | `test_riverside_sync::TestSyncMaturityScores` | Unit | ✅ Passed |
+| RC-041 | Historical trending | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestTrackRequirementProgress` | Unit | ✅ Passed |
+| RC-042 | Score calculation | `app/services/riverside_sync.py` | `test_riverside_sync::TestSyncMaturityScores`, `test_riverside_api::TestRiversideMaturityScoresEndpoint` | Unit + Integration | ✅ Passed |
+| RC-043 | Domain breakdown (IAM, GS, DS) | `app/api/routes/riverside.py` (maturity_scores endpoint) | `test_routes_riverside::TestRiversideMaturityScoresEndpoint` | Unit + Integration | ✅ Passed |
+| RC-044 | Target gap analysis | `app/api/routes/riverside.py` (gaps endpoint) | `test_routes_riverside::TestRiversideGapsEndpoint`, `test_riverside_api::TestRiversideGapsEndpoint` | Unit + Integration | ✅ Passed |
+| RC-045 | Improvement recommendations | `app/api/services/riverside_service/queries.py` | `test_riverside_analytics::TestGetRiversideMetrics` | Unit | ✅ Passed |
+
+### 11.6 External Threats (RC-050 → RC-054)
+
+| Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
+|--------|------------|-----------|---------------|-----------|--------|
+| RC-050 | Threat Beta score display | — | — | — | ⏳ Phase 2 (Cybeta API) |
+| RC-051 | Vulnerability count | — | — | — | ⏳ Phase 2 |
+| RC-052 | Malicious domain alerts | — | — | — | ⏳ Phase 2 |
+| RC-053 | Peer comparison | — | — | — | ⏳ Phase 2 |
+| RC-054 | Threat trend reporting | — | — | — | ⏳ Phase 2 |
+
+### 11.7 RC-xxx Coverage Summary
+
+| Category | Total Reqs | Implemented | Tested | Phase 2 | Coverage |
+|----------|-----------|-------------|--------|---------|----------|
+| Executive Tracking (RC-001–006) | 6 | 6 | 6 | 0 | 100% |
+| MFA Monitoring (RC-010–015) | 6 | 6 | 6 | 0 | 100% |
+| Requirement Tracking (RC-020–027) | 8 | 8 | 8 | 0 | 100% |
+| Device Compliance (RC-030–035) | 6 | 1 | 1 | 5 | 17% (Phase 2) |
+| Maturity Scoring (RC-040–045) | 6 | 6 | 6 | 0 | 100% |
+| External Threats (RC-050–054) | 5 | 0 | 0 | 5 | 0% (Phase 2) |
+| **TOTAL** | **37** | **27** | **27** | **10** | **73% (100% of MVP scope)** |
+
+---
+
 ## Agent Accountability Summary
 
 | Agent | Owns (Primary) | Reviews | Tests/Validates | Signs Off |
