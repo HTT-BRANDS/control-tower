@@ -32,7 +32,7 @@
                 <button id="azure-login-btn" type="button"
                         class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
                         style="background-color: #0078d4;"
-                        onclick="signInWithAzureAD()">
+                        >
                     <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
                         <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
@@ -237,24 +237,32 @@
         azureBtn.addEventListener('mouseleave', () => { azureBtn.style.backgroundColor = '#0078d4'; });
         submitBtn.addEventListener('mouseenter', () => { submitBtn.style.backgroundColor = '#6B1A24'; });
         submitBtn.addEventListener('mouseleave', () => { submitBtn.style.backgroundColor = '#500711'; });
+        azureBtn.addEventListener('click', signInWithAzureAD);
 
         // ── Page Init ───────────────────────────────────────────
         (async () => {
             // Check for OAuth callback first
             if (await handleOAuthCallback()) return;
 
-            // Show dev login form if we detect development environment
+            // Only show dev login if direct login actually works (dev mode)
             try {
-                const resp = await fetch('/api/v1/auth/login', { method: 'HEAD' });
-                // In dev, HEAD might work or return 405; in staging/prod it returns 403
-                // Show dev form if NOT 403
-                if (resp.status !== 403) {
+                const testForm = new URLSearchParams();
+                testForm.append('username', '');
+                testForm.append('password', '');
+                const resp = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: testForm
+                });
+                // In dev mode, empty creds return 401 (invalid creds)
+                // In staging/prod, it returns 403 (direct login disabled)
+                if (resp.status === 401) {
                     document.getElementById('login-form').classList.remove('hidden');
                     document.getElementById('divider').classList.remove('hidden');
                     document.getElementById('divider').style.display = 'flex';
                 }
             } catch (e) {
-                // If check fails, just show Azure AD only
+                // Azure AD only — don't show dev form
             }
         })();
     </script>
