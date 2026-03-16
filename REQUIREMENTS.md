@@ -337,8 +337,8 @@ This section defines requirements specific to Riverside Company compliance track
 | Overall Maturity | 2.4 | 3.0+ | July 8, 2026 | $4M risk |
 | MFA Coverage | 30% (634/1992) | 100% | 30 days | $4M risk |
 | Critical Gaps | 8 | 0 | July 8, 2026 | Compliance failure |
-| Admin MFA | TBD | 100% | 30 days | $4M risk |
-| Device Compliance | TBD | 90%+ | 60 days | Audit failure |
+| Admin MFA | 39 accounts tracked | 100% | 30 days | $4M risk |
+| Device Compliance | Phase 2 (Sui Generis) | 90%+ | 60 days | Audit failure |
 | Domain Maturity (IAM) | 2.2 | 3.0 | July 8, 2026 | - |
 | Domain Maturity (GS) | 2.5 | 3.0 | July 8, 2026 | - |
 | Domain Maturity (DS) | 2.6 | 3.0 | July 8, 2026 | - |
@@ -416,15 +416,17 @@ The following gaps require immediate attention to meet the July 8, 2026 deadline
 
 ### MVP Release Criteria
 
-1. ✅ All 4 tenants connected and data flowing
-2. ✅ Cost dashboard shows aggregated spend
-3. ✅ Compliance scores visible per tenant
-4. ✅ Resource inventory complete
-5. ✅ Identity overview functional
-6. ✅ < $200/month infrastructure cost
-7. ✅ Documentation complete
-8. ✅ Basic alerting operational
-9. ✅ Riverside dashboard operational
+| # | Acceptance Criterion | Code Complete | Staging Verified | Notes |
+|---|---------------------|:------------:|:----------------:|-------|
+| 1 | All 4 tenants connected and data flowing | ✅ | ⏳ Pending | Requires ACR image rebuild + container startup |
+| 2 | Cost dashboard shows aggregated spend | ✅ | ⏳ Pending | Needs live tenant data sync |
+| 3 | Compliance scores visible per tenant | ✅ | ⏳ Pending | Needs live tenant data sync |
+| 4 | Resource inventory complete | ✅ | ⏳ Pending | Needs live tenant data sync |
+| 5 | Identity overview functional | ✅ | ⏳ Pending | Needs live tenant data sync |
+| 6 | < $200/month infrastructure cost | ✅ | ⚠️ To Verify | B1 tier deployed, need Azure Cost Mgmt check |
+| 7 | Documentation complete | ✅ | ✅ | All docs updated and current |
+| 8 | Basic alerting operational | ✅ | ⏳ Pending | Requires running scheduler |
+| 9 | Riverside dashboard operational | ✅ | ⏳ Pending | Requires data sync post-startup |
 
 ### Riverside Compliance Criteria
 

@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### In Progress
+- Staging environment deployment (infrastructure deployed, container startup fix applied)
+- Connect real Azure tenant credentials via Key Vault
+
 ### Planned
-- Connect real Azure tenant credentials (HTT, BCC, FN, TLL, DCE)
-- Staging environment deployment
 - Custom compliance frameworks
 - Teams bot integration
+- Sui Generis device compliance integration (Phase 2)
+
+### Fixed
+- Dockerfile missing `config/`, `alembic/`, and `alembic.ini` in production stage (staging 503 root cause)
 
 ---
 

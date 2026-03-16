@@ -28,14 +28,15 @@
 
 ### Key Milestones
 
-> **Note:** Milestone statuses below are from the original January 2026 baseline plan. Current progress is tracked on the live dashboard.
+> **Note:** Milestone statuses below were updated March 2026 based on platform development progress. Current real-time data is tracked on the live `/riverside` dashboard.
 
 | Milestone | Target Date | Status |
 |-----------|-------------|--------|
-| MFA Coverage >80% | March 8, 2026 | Not Started |
-| All P0 Requirements Met | May 8, 2026 | Not Started |
-| Target Maturity 3.0 | June 8, 2026 | Not Started |
-| Final Assessment | July 8, 2026 | Not Started |
+| Governance platform operational | March 2026 | ✅ Complete (v1.2.0) |
+| MFA Coverage >80% | March 8, 2026 | 🔴 Behind (24.9% as of last sync) |
+| All P0 Requirements Met | May 8, 2026 | 🔄 In Progress |
+| Target Maturity 3.0 | June 8, 2026 | 🔄 In Progress (2.4 current) |
+| Final Assessment | July 8, 2026 | ⏳ Pending |
 
 ---
 
@@ -194,7 +195,8 @@ Overall:    █████████░░ 2.4/5.0  (48%) ███░░░�
 
 ## Resources
 
-- **Dashboard**: http://localhost:8000/riverside
+- **Dashboard (staging)**: https://app-governance-staging-xnczpwyv.azurewebsites.net/riverside *(pending container startup fix)*
+- **Dashboard (local)**: http://localhost:8000/riverside
 - **API Docs**: http://localhost:8000/docs
 - **Integration Guide**: ./RIVERSIDE_INTEGRATION.md
 - **API Reference**: ./RIVERSIDE_API_GUIDE.md
