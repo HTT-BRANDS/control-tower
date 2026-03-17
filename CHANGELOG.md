@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### In Progress
-- Staging environment deployment (infrastructure deployed, container startup fix applied)
-- Connect real Azure tenant credentials via Key Vault
+### Completed (Post v1.2.0)
+- Staging environment fully operational (health checks green, scheduler running, Azure AD SSO live)
+- Azure AD SSO authentication flow configured and tested
+- Admin role assignment from ADMIN_EMAILS + diagnostic logging for auth flow
+- TLL Entra ID P1 license — signInActivity and MFA reports now functional
+
+### Known Limitations
+- DCE tenant lacks Entra ID P1 — graceful degradation for signInActivity/MFA reports (business decision)
 
 ### Planned
 - Custom compliance frameworks
