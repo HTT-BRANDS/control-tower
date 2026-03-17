@@ -225,14 +225,9 @@ class TestTokenEndpoint:
 class TestRefreshEndpoint:
     """Tests for POST /api/v1/auth/refresh endpoint."""
 
-    @patch("app.core.config.get_settings")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_refresh_succeeds_with_valid_token(self, mock_settings, client_with_db):
+    @pytest.mark.xfail(reason="Test fixture needs updating for current API")
+    def test_refresh_succeeds_with_valid_token(self, client_with_db):
         """Refresh endpoint returns new tokens with valid refresh token."""
-        settings = MagicMock()
-        settings.jwt_access_token_expire_minutes = 30
-        mock_settings.return_value = settings
-
         # Create a valid refresh token
         refresh_token = jwt_manager.create_refresh_token(user_id="user:admin")
 
@@ -299,19 +294,9 @@ class TestRefreshEndpoint:
 class TestMeEndpoint:
     """Tests for GET /api/v1/auth/me endpoint."""
 
-    @patch("app.api.routes.auth.get_current_user")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_me_returns_user_info_when_authenticated(
-        self, mock_get_user, client_with_db, mock_user
-    ):
+    def test_me_returns_user_info_when_authenticated(self, authed_client, mock_user):
         """Me endpoint returns user info when authenticated."""
-        # Mock the dependency to return our test user
-        mock_get_user.return_value = mock_user
-
-        response = client_with_db.get(
-            "/api/v1/auth/me",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/auth/me")
 
         assert response.status_code == 200
         data = response.json()
@@ -339,16 +324,9 @@ class TestMeEndpoint:
 
         assert response.status_code == 401
 
-    @patch("app.api.routes.auth.get_current_user")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_me_includes_accessible_tenants(self, mock_get_user, client_with_db, mock_user):
+    def test_me_includes_accessible_tenants(self, authed_client):
         """Me endpoint includes accessible tenants in response."""
-        mock_get_user.return_value = mock_user
-
-        response = client_with_db.get(
-            "/api/v1/auth/me",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/auth/me")
 
         assert response.status_code == 200
         data = response.json()
@@ -364,16 +342,9 @@ class TestMeEndpoint:
 class TestLogoutEndpoint:
     """Tests for POST /api/v1/auth/logout endpoint."""
 
-    @patch("app.api.routes.auth.get_current_user")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_logout_succeeds_when_authenticated(self, mock_get_user, client_with_db, mock_user):
+    def test_logout_succeeds_when_authenticated(self, authed_client):
         """Logout endpoint succeeds when authenticated."""
-        mock_get_user.return_value = mock_user
-
-        response = client_with_db.post(
-            "/api/v1/auth/logout",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.post("/api/v1/auth/logout")
 
         assert response.status_code == 200
         data = response.json()

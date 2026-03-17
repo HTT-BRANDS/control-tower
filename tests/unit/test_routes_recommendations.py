@@ -22,8 +22,6 @@ from app.main import app
 from app.models.tenant import Tenant, UserTenant
 from app.schemas.recommendation import RecommendationCategory
 
-pytestmark = pytest.mark.xfail(reason="Needs authenticated test client fixture")
-
 
 
 
@@ -92,9 +90,9 @@ def mock_recommendations():
     return [
         MagicMock(
             id=1,
-            tenant_id="rec-tenant-123",
-            tenant_name="Recommendations Test Tenant",
-            category=RecommendationCategory.COST,
+            tenant_id="test-tenant-123",
+            tenant_name="Test Tenant",
+            category=RecommendationCategory.COST_OPTIMIZATION,
             title="Resize underutilized VM",
             description="VM-Prod-01 is consistently underutilized",
             impact="High",
@@ -106,8 +104,8 @@ def mock_recommendations():
         ),
         MagicMock(
             id=2,
-            tenant_id="rec-tenant-123",
-            tenant_name="Recommendations Test Tenant",
+            tenant_id="test-tenant-123",
+            tenant_name="Test Tenant",
             category=RecommendationCategory.SECURITY,
             title="Enable disk encryption",
             description="VM-Prod-02 does not have disk encryption enabled",
@@ -121,14 +119,13 @@ def mock_recommendations():
     ]
 
 
-def test_get_recommendations_success(client_with_db, mock_user, mock_recommendations):
+def test_get_recommendations_success(authed_client, mock_recommendations):
     """Test successful retrieval of recommendations."""
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.get_recommendations.return_value = mock_recommendations
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.get_recommendations.return_value = mock_recommendations
 
-            response = client_with_db.get("/api/v1/recommendations")
+        response = authed_client.get("/api/v1/recommendations")
 
     assert response.status_code == 200
     data = response.json()
@@ -137,33 +134,32 @@ def test_get_recommendations_success(client_with_db, mock_user, mock_recommendat
     assert data[1]["impact"] == "Critical"
 
 
-def test_get_recommendations_with_filters(client_with_db, mock_user, mock_recommendations):
+def test_get_recommendations_with_filters(authed_client, mock_recommendations):
     """Test recommendations with category and impact filters."""
     cost_recommendations = [
-        r for r in mock_recommendations if r.category == RecommendationCategory.COST
+        r for r in mock_recommendations if r.category == RecommendationCategory.COST_OPTIMIZATION
     ]
 
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.get_recommendations.return_value = cost_recommendations
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.get_recommendations.return_value = cost_recommendations
 
-            response = client_with_db.get("/api/v1/recommendations?category=cost&impact=High")
+        response = authed_client.get("/api/v1/recommendations?category=cost_optimization&impact=High")
 
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     mock_service.get_recommendations.assert_called_once()
     call_kwargs = mock_service.get_recommendations.call_args[1]
-    assert call_kwargs["category"] == RecommendationCategory.COST
+    assert call_kwargs["category"] == RecommendationCategory.COST_OPTIMIZATION
     assert call_kwargs["impact"] == "High"
 
 
-def test_get_recommendations_by_category(client_with_db, mock_user):
+def test_get_recommendations_by_category(authed_client):
     """Test recommendations grouped by category."""
     mock_by_category = [
         MagicMock(
-            category=RecommendationCategory.COST,
+            category=RecommendationCategory.COST_OPTIMIZATION,
             count=15,
             total_savings=5000.00,
         ),
@@ -174,12 +170,11 @@ def test_get_recommendations_by_category(client_with_db, mock_user):
         ),
     ]
 
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.get_recommendations_by_category.return_value = mock_by_category
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.get_recommendations_by_category.return_value = mock_by_category
 
-            response = client_with_db.get("/api/v1/recommendations/by-category")
+        response = authed_client.get("/api/v1/recommendations/by-category")
 
     assert response.status_code == 200
     data = response.json()
@@ -187,7 +182,7 @@ def test_get_recommendations_by_category(client_with_db, mock_user):
     assert data[0]["count"] == 15
 
 
-def test_get_savings_potential(client_with_db, mock_user):
+def test_get_savings_potential(authed_client):
     """Test total savings potential calculation."""
     mock_savings = MagicMock(
         total_monthly_savings=12500.00,
@@ -196,12 +191,11 @@ def test_get_savings_potential(client_with_db, mock_user):
         high_impact_count=15,
     )
 
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.get_savings_potential.return_value = mock_savings
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.get_savings_potential.return_value = mock_savings
 
-            response = client_with_db.get("/api/v1/recommendations/savings-potential")
+        response = authed_client.get("/api/v1/recommendations/savings-potential")
 
     assert response.status_code == 200
     data = response.json()
@@ -209,11 +203,11 @@ def test_get_savings_potential(client_with_db, mock_user):
     assert data["recommendations_count"] == 42
 
 
-def test_get_recommendation_summary(client_with_db, mock_user):
+def test_get_recommendation_summary(authed_client):
     """Test recommendation summary statistics."""
     mock_summary = [
         MagicMock(
-            category=RecommendationCategory.COST,
+            category=RecommendationCategory.COST_OPTIMIZATION,
             total_count=20,
             high_impact_count=8,
             dismissed_count=2,
@@ -228,12 +222,11 @@ def test_get_recommendation_summary(client_with_db, mock_user):
         ),
     ]
 
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.get_recommendation_summary.return_value = mock_summary
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.get_recommendation_summary.return_value = mock_summary
 
-            response = client_with_db.get("/api/v1/recommendations/summary")
+        response = authed_client.get("/api/v1/recommendations/summary")
 
     assert response.status_code == 200
     data = response.json()
@@ -241,7 +234,7 @@ def test_get_recommendation_summary(client_with_db, mock_user):
     assert data[0]["total_count"] == 20
 
 
-def test_dismiss_recommendation_success(client_with_db, mock_user):
+def test_dismiss_recommendation_success(authed_client):
     """Test successful recommendation dismissal."""
     recommendation_id = 1
     request_data = {"reason": "Not applicable for our use case"}
@@ -250,18 +243,17 @@ def test_dismiss_recommendation_success(client_with_db, mock_user):
         success=True,
         recommendation_id=recommendation_id,
         dismissed_at=datetime.utcnow(),
-        dismissed_by="user-rec-admin",
+        dismissed_by="user-123",
     )
 
-    with patch("app.api.routes.recommendations.get_current_user", return_value=mock_user):
-        with patch("app.api.routes.recommendations.RecommendationService") as MockService:
-            mock_service = MockService.return_value
-            mock_service.dismiss_recommendation.return_value = mock_response
+    with patch("app.api.routes.recommendations.RecommendationService") as MockService:
+        mock_service = MockService.return_value
+        mock_service.dismiss_recommendation.return_value = mock_response
 
-            response = client_with_db.post(
-                f"/api/v1/recommendations/{recommendation_id}/dismiss",
-                json=request_data,
-            )
+        response = authed_client.post(
+            f"/api/v1/recommendations/{recommendation_id}/dismiss",
+            json=request_data,
+        )
 
     assert response.status_code == 200
     data = response.json()
@@ -269,6 +261,6 @@ def test_dismiss_recommendation_success(client_with_db, mock_user):
     assert data["recommendation_id"] == recommendation_id
     mock_service.dismiss_recommendation.assert_called_once_with(
         recommendation_id=recommendation_id,
-        user=mock_user.id,
+        user="user-123",
         reason=request_data["reason"],
     )

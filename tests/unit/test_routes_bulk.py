@@ -20,8 +20,6 @@ from app.core.database import get_db
 from app.main import app
 from app.models.tenant import Tenant, UserTenant
 
-pytestmark = pytest.mark.xfail(reason="Needs authenticated test client fixture")
-
 
 
 
@@ -112,7 +110,7 @@ def mock_viewer_user():
     )
 
 
-def test_bulk_apply_tags_success(client_with_db, mock_admin_user):
+def test_bulk_apply_tags_success(authed_client):
     """Test successful bulk tag application."""
     request_data = {
         "resource_ids": ["res-1", "res-2", "res-3"],
@@ -130,12 +128,11 @@ def test_bulk_apply_tags_success(client_with_db, mock_admin_user):
         ],
     }
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_admin_user):
-        with patch("app.api.routes.bulk.BulkService") as MockBulkService:
-            mock_service = MockBulkService.return_value
-            mock_service.bulk_tag_resources.return_value = mock_response
+    with patch("app.api.routes.bulk.BulkService") as MockBulkService:
+        mock_service = MockBulkService.return_value
+        mock_service.bulk_tag_resources.return_value = mock_response
 
-            response = client_with_db.post("/api/v1/bulk/tags/apply", json=request_data)
+        response = authed_client.post("/bulk/tags/apply", json=request_data)
 
     assert response.status_code == 200
     data = response.json()
@@ -152,13 +149,13 @@ def test_bulk_apply_tags_requires_operator_role(client_with_db, mock_viewer_user
     }
 
     with patch("app.api.routes.bulk.get_current_user", return_value=mock_viewer_user):
-        response = client_with_db.post("/api/v1/bulk/tags/apply", json=request_data)
+        response = client_with_db.post("/bulk/tags/apply", json=request_data)
 
     assert response.status_code == 403
     assert "operator or admin role" in response.json()["detail"]
 
 
-def test_bulk_remove_tags_success(client_with_db, mock_operator_user):
+def test_bulk_remove_tags_success(authed_client):
     """Test successful bulk tag removal."""
 
     mock_response = {
@@ -170,25 +167,24 @@ def test_bulk_remove_tags_success(client_with_db, mock_operator_user):
         ],
     }
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_operator_user):
-        with patch("app.api.routes.bulk.BulkService") as MockBulkService:
-            mock_service = MockBulkService.return_value
-            mock_service.bulk_remove_tags.return_value = mock_response
+    with patch("app.api.routes.bulk.BulkService") as MockBulkService:
+        mock_service = MockBulkService.return_value
+        mock_service.bulk_remove_tags.return_value = mock_response
 
-            response = client_with_db.post(
-                "/api/v1/bulk/tags/remove",
-                params={
-                    "resource_ids": ["res-1", "res-2"],
-                    "tag_names": ["OldTag", "DeprecatedTag"],
-                },
-            )
+        response = authed_client.post(
+            "/bulk/tags/remove",
+            params={
+                "resource_ids": ["res-1", "res-2"],
+                "tag_names": ["OldTag", "DeprecatedTag"],
+            },
+        )
 
     assert response.status_code == 200
     data = response.json()
     assert data["success_count"] == 2
 
 
-def test_bulk_acknowledge_anomalies_success(client_with_db, mock_admin_user):
+def test_bulk_acknowledge_anomalies_success(authed_client):
     """Test successful bulk anomaly acknowledgment."""
     request_data = {
         "anomaly_ids": [1, 2, 3],
@@ -201,12 +197,11 @@ def test_bulk_acknowledge_anomalies_success(client_with_db, mock_admin_user):
         "anomaly_ids": [1, 2, 3],
     }
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_admin_user):
-        with patch("app.api.routes.bulk.BulkService") as MockBulkService:
-            mock_service = MockBulkService.return_value
-            mock_service.bulk_acknowledge_anomalies.return_value = mock_response
+    with patch("app.api.routes.bulk.BulkService") as MockBulkService:
+        mock_service = MockBulkService.return_value
+        mock_service.bulk_acknowledge_anomalies.return_value = mock_response
 
-            response = client_with_db.post("/api/v1/bulk/anomalies/acknowledge", json=request_data)
+        response = authed_client.post("/bulk/anomalies/acknowledge", json=request_data)
 
     assert response.status_code == 200
     data = response.json()
@@ -214,7 +209,7 @@ def test_bulk_acknowledge_anomalies_success(client_with_db, mock_admin_user):
     assert data["failed_count"] == 0
 
 
-def test_bulk_dismiss_recommendations_success(client_with_db, mock_admin_user):
+def test_bulk_dismiss_recommendations_success(authed_client):
     """Test successful bulk recommendation dismissal."""
     request_data = {
         "recommendation_ids": [10, 20, 30],
@@ -227,21 +222,18 @@ def test_bulk_dismiss_recommendations_success(client_with_db, mock_admin_user):
         "recommendation_ids": [10, 20, 30],
     }
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_admin_user):
-        with patch("app.api.routes.bulk.BulkService") as MockBulkService:
-            mock_service = MockBulkService.return_value
-            mock_service.bulk_dismiss_recommendations.return_value = mock_response
+    with patch("app.api.routes.bulk.BulkService") as MockBulkService:
+        mock_service = MockBulkService.return_value
+        mock_service.bulk_dismiss_recommendations.return_value = mock_response
 
-            response = client_with_db.post(
-                "/api/v1/bulk/recommendations/dismiss", json=request_data
-            )
+        response = authed_client.post("/bulk/recommendations/dismiss", json=request_data)
 
     assert response.status_code == 200
     data = response.json()
     assert data["dismissed_count"] == 3
 
 
-def test_bulk_review_idle_resources_success(client_with_db, mock_admin_user):
+def test_bulk_review_idle_resources_success(authed_client):
     """Test successful bulk idle resource review."""
     request_data = {
         "idle_resource_ids": ["idle-1", "idle-2", "idle-3"],
@@ -254,12 +246,11 @@ def test_bulk_review_idle_resources_success(client_with_db, mock_admin_user):
         "idle_resource_ids": ["idle-1", "idle-2", "idle-3"],
     }
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_admin_user):
-        with patch("app.api.routes.bulk.BulkService") as MockBulkService:
-            mock_service = MockBulkService.return_value
-            mock_service.bulk_review_idle_resources.return_value = mock_response
+    with patch("app.api.routes.bulk.BulkService") as MockBulkService:
+        mock_service = MockBulkService.return_value
+        mock_service.bulk_review_idle_resources.return_value = mock_response
 
-            response = client_with_db.post("/api/v1/bulk/idle-resources/review", json=request_data)
+        response = authed_client.post("/bulk/idle-resources/review", json=request_data)
 
     assert response.status_code == 200
     data = response.json()

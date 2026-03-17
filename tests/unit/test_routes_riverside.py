@@ -154,18 +154,9 @@ def mock_riverside_service():
 class TestRiversideDashboardPage:
     """Tests for GET /riverside dashboard page."""
 
-    @patch("app.api.routes.riverside.get_current_user")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_riverside_dashboard_renders_successfully(
-        self, mock_get_user, client_with_db, mock_user
-    ):
+    def test_riverside_dashboard_renders_successfully(self, authed_client):
         """Riverside dashboard page renders for authenticated users."""
-        mock_get_user.return_value = mock_user
-
-        response = client_with_db.get(
-            "/riverside",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/riverside")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -186,28 +177,20 @@ class TestRiversideDashboardPage:
 class TestRiversideBadgePartial:
     """Tests for GET /partials/riverside-badge HTMX partial."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_riverside_badge_returns_critical_gaps_count(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Riverside badge partial returns critical gaps count."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/partials/riverside-badge",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/partials/riverside-badge")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -223,28 +206,20 @@ class TestRiversideBadgePartial:
 class TestRiversideSummaryEndpoint:
     """Tests for GET /api/v1/riverside/summary endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_summary_returns_executive_overview(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Summary endpoint returns executive compliance overview."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/summary",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/summary")
 
         assert response.status_code == 200
         data = response.json()
@@ -268,28 +243,20 @@ class TestRiversideSummaryEndpoint:
 class TestRiversideMFAStatusEndpoint:
     """Tests for GET /api/v1/riverside/mfa-status endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_mfa_status_returns_tenant_mfa_metrics(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """MFA status endpoint returns tenant-wide MFA metrics."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/mfa-status",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/mfa-status")
 
         assert response.status_code == 200
         data = response.json()
@@ -307,28 +274,20 @@ class TestRiversideMFAStatusEndpoint:
 class TestRiversideMaturityScoresEndpoint:
     """Tests for GET /api/v1/riverside/maturity-scores endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_maturity_scores_returns_domain_grades(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Maturity scores endpoint returns scores per security domain."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/maturity-scores",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/maturity-scores")
 
         assert response.status_code == 200
         data = response.json()
@@ -347,28 +306,20 @@ class TestRiversideMaturityScoresEndpoint:
 class TestRiversideRequirementsEndpoint:
     """Tests for GET /api/v1/riverside/requirements endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_requirements_returns_filtered_list(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Requirements endpoint returns list with optional filtering."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/requirements?category=IAM&priority=P0",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/requirements?category=IAM&priority=P0")
 
         assert response.status_code == 200
         data = response.json()
@@ -376,28 +327,20 @@ class TestRiversideRequirementsEndpoint:
         assert data["total"] == 2
         assert len(data["requirements"]) == 2
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_requirements_accepts_status_filter(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Requirements endpoint accepts status filter parameter."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/requirements?status=in_progress",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/requirements?status=in_progress")
 
         assert response.status_code == 200
         # Service should have been called with status filter
@@ -412,28 +355,20 @@ class TestRiversideRequirementsEndpoint:
 class TestRiversideGapsEndpoint:
     """Tests for GET /api/v1/riverside/gaps endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_gaps_returns_critical_security_gaps(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Gaps endpoint returns critical security gaps analysis."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.get(
-            "/api/v1/riverside/gaps",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/api/v1/riverside/gaps")
 
         assert response.status_code == 200
         data = response.json()
@@ -450,28 +385,20 @@ class TestRiversideGapsEndpoint:
 class TestRiversideSyncEndpoint:
     """Tests for POST /api/v1/riverside/sync endpoint."""
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
     @patch("app.api.routes.riverside.RiversideService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_succeeds_for_admin_users(
         self,
         mock_service_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_riverside_service,
     ):
         """Sync endpoint succeeds for users with admin/operator role."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_service_cls.return_value = mock_riverside_service
 
-        response = client_with_db.post(
-            "/api/v1/riverside/sync",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.post("/api/v1/riverside/sync")
 
         assert response.status_code == 200
         data = response.json()
@@ -479,27 +406,12 @@ class TestRiversideSyncEndpoint:
         assert "results" in data
         assert data["results"]["mfa"]["synced"] == 250
 
-    @patch("app.api.routes.riverside.get_current_user")
     @patch("app.api.routes.riverside.get_tenant_authorization")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_sync_forbidden_for_regular_users(self, mock_authz, mock_get_user, client_with_db):
+    def test_sync_forbidden_for_regular_users(self, mock_authz, client_with_db):
         """Sync endpoint returns 403 for users without admin/operator role."""
-        regular_user = User(
-            id="user-regular",
-            email="user@example.com",
-            name="Regular User",
-            roles=["user"],
-            tenant_ids=["riverside-tenant-123"],
-            is_active=True,
-            auth_provider="azure_ad",
-        )
-        mock_get_user.return_value = regular_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
 
-        response = client_with_db.post(
-            "/api/v1/riverside/sync",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = client_with_db.post("/api/v1/riverside/sync")
 
         assert response.status_code == 403
         assert "operator or admin role" in response.json()["detail"]

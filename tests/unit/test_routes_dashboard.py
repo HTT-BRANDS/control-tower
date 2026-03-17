@@ -182,7 +182,6 @@ class TestMainDashboardPage:
     @patch("app.api.routes.dashboard.ComplianceService")
     @patch("app.api.routes.dashboard.ResourceService")
     @patch("app.api.routes.dashboard.IdentityService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_root_dashboard_renders_successfully(
         self,
         mock_identity,
@@ -190,15 +189,12 @@ class TestMainDashboardPage:
         mock_compliance,
         mock_cost,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_services,
     ):
         """Root dashboard page renders with all summary data."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
-        mock_authz.return_value.accessible_tenant_ids = ["dashboard-tenant-123"]
+        mock_authz.return_value.accessible_tenant_ids = ["test-tenant-123"]
 
         # Setup service mocks
         mock_cost.return_value = mock_services["cost"]
@@ -206,10 +202,7 @@ class TestMainDashboardPage:
         mock_resource.return_value = mock_services["resource"]
         mock_identity.return_value = mock_services["identity"]
 
-        response = client_with_db.get(
-            "/",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -231,13 +224,11 @@ class TestMainDashboardPage:
 class TestDashboardAliasPage:
     """Tests for GET /dashboard (alias for root)."""
 
-    @patch("app.api.routes.dashboard.get_current_user")
     @patch("app.api.routes.dashboard.get_tenant_authorization")
     @patch("app.api.routes.dashboard.CostService")
     @patch("app.api.routes.dashboard.ComplianceService")
     @patch("app.api.routes.dashboard.ResourceService")
     @patch("app.api.routes.dashboard.IdentityService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_dashboard_alias_renders_same_as_root(
         self,
         mock_identity,
@@ -245,25 +236,19 @@ class TestDashboardAliasPage:
         mock_compliance,
         mock_cost,
         mock_authz,
-        mock_get_user,
-        client_with_db,
-        mock_user,
+        authed_client,
         mock_services,
     ):
         """Dashboard alias page renders same content as root."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
-        mock_authz.return_value.accessible_tenant_ids = ["dashboard-tenant-123"]
+        mock_authz.return_value.accessible_tenant_ids = ["test-tenant-123"]
 
         mock_cost.return_value = mock_services["cost"]
         mock_compliance.return_value = mock_services["compliance"]
         mock_resource.return_value = mock_services["resource"]
         mock_identity.return_value = mock_services["identity"]
 
-        response = client_with_db.get(
-            "/dashboard",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/dashboard")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -277,67 +262,53 @@ class TestDashboardAliasPage:
 class TestSyncDashboardPage:
     """Tests for GET /sync-dashboard page."""
 
-    @patch("app.api.routes.dashboard.get_current_user")
     @patch("app.api.routes.dashboard.get_tenant_authorization")
     @patch("app.api.routes.dashboard.MonitoringService")
     @patch("app.api.routes.dashboard.get_user_tenants")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_dashboard_renders_monitoring_data(
         self,
         mock_get_tenants,
         mock_monitoring_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
+        authed_client,
         mock_user,
         mock_services,
     ):
         """Sync dashboard page renders with monitoring data."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_authz.return_value.user = mock_user
-        mock_authz.return_value.accessible_tenant_ids = ["dashboard-tenant-123"]
+        mock_authz.return_value.accessible_tenant_ids = ["test-tenant-123"]
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
         # Mock tenant query
         mock_get_tenants.return_value = []
 
-        response = client_with_db.get(
-            "/sync-dashboard",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/sync-dashboard")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
         assert b"sync" in response.content.lower()
 
-    @patch("app.api.routes.dashboard.get_current_user")
     @patch("app.api.routes.dashboard.get_tenant_authorization")
     @patch("app.api.routes.dashboard.MonitoringService")
     @patch("app.api.routes.dashboard.get_user_tenants")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_dashboard_includes_alert_stats(
         self,
         mock_get_tenants,
         mock_monitoring_cls,
         mock_authz,
-        mock_get_user,
-        client_with_db,
+        authed_client,
         mock_user,
         mock_services,
     ):
         """Sync dashboard includes alert statistics."""
-        mock_get_user.return_value = mock_user
         mock_authz.return_value.ensure_at_least_one_tenant.return_value = None
         mock_authz.return_value.user = mock_user
-        mock_authz.return_value.accessible_tenant_ids = ["dashboard-tenant-123"]
+        mock_authz.return_value.accessible_tenant_ids = ["test-tenant-123"]
         mock_monitoring_cls.return_value = mock_services["monitoring"]
         mock_get_tenants.return_value = []
 
-        response = client_with_db.get(
-            "/sync-dashboard",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/sync-dashboard")
 
         assert response.status_code == 200
         # Should call alert stats method
@@ -352,16 +323,9 @@ class TestSyncDashboardPage:
 class TestDMARCDashboardPage:
     """Tests for GET /dmarc dashboard page."""
 
-    @patch("app.api.routes.dashboard.get_current_user")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_dmarc_dashboard_renders_successfully(self, mock_get_user, client_with_db, mock_user):
+    def test_dmarc_dashboard_renders_successfully(self, authed_client):
         """DMARC dashboard page renders for authenticated users."""
-        mock_get_user.return_value = mock_user
-
-        response = client_with_db.get(
-            "/dmarc",
-            headers={"Authorization": "Bearer fake-token"},
-        )
+        response = authed_client.get("/dmarc")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
@@ -383,25 +347,23 @@ class TestCostSummaryCardPartial:
     """Tests for GET /partials/cost-summary-card HTMX partial."""
 
     @patch("app.api.routes.dashboard.CostService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
-    def test_cost_summary_card_returns_html(self, mock_cost_cls, client_with_db, mock_services):
+    def test_cost_summary_card_returns_html(self, mock_cost_cls, authed_client, mock_services):
         """Cost summary card partial returns HTML."""
         mock_cost_cls.return_value = mock_services["cost"]
 
-        response = client_with_db.get("/partials/cost-summary-card")
+        response = authed_client.get("/partials/cost-summary-card")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
     @patch("app.api.routes.dashboard.CostService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_cost_summary_card_includes_cost_data(
-        self, mock_cost_cls, client_with_db, mock_services
+        self, mock_cost_cls, authed_client, mock_services
     ):
         """Cost summary card includes cost summary data."""
         mock_cost_cls.return_value = mock_services["cost"]
 
-        response = client_with_db.get("/partials/cost-summary-card")
+        response = authed_client.get("/partials/cost-summary-card")
 
         assert response.status_code == 200
         # Should call cost service
@@ -417,27 +379,25 @@ class TestComplianceGaugePartial:
     """Tests for GET /partials/compliance-gauge HTMX partial."""
 
     @patch("app.api.routes.dashboard.ComplianceService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_compliance_gauge_returns_html(
-        self, mock_compliance_cls, client_with_db, mock_services
+        self, mock_compliance_cls, authed_client, mock_services
     ):
         """Compliance gauge partial returns HTML."""
         mock_compliance_cls.return_value = mock_services["compliance"]
 
-        response = client_with_db.get("/partials/compliance-gauge")
+        response = authed_client.get("/partials/compliance-gauge")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
     @patch("app.api.routes.dashboard.ComplianceService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_compliance_gauge_includes_score(
-        self, mock_compliance_cls, client_with_db, mock_services
+        self, mock_compliance_cls, authed_client, mock_services
     ):
         """Compliance gauge includes compliance score."""
         mock_compliance_cls.return_value = mock_services["compliance"]
 
-        response = client_with_db.get("/partials/compliance-gauge")
+        response = authed_client.get("/partials/compliance-gauge")
 
         assert response.status_code == 200
         mock_services["compliance"].get_compliance_summary.assert_called_once()
@@ -452,27 +412,25 @@ class TestSyncStatusCardPartial:
     """Tests for GET /partials/sync-status-card HTMX partial."""
 
     @patch("app.api.routes.dashboard.MonitoringService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_status_card_returns_html(
-        self, mock_monitoring_cls, client_with_db, mock_services
+        self, mock_monitoring_cls, authed_client, mock_services
     ):
         """Sync status card partial returns HTML."""
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
-        response = client_with_db.get("/partials/sync-status-card")
+        response = authed_client.get("/partials/sync-status-card")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
     @patch("app.api.routes.dashboard.MonitoringService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_status_card_includes_metrics(
-        self, mock_monitoring_cls, client_with_db, mock_services
+        self, mock_monitoring_cls, authed_client, mock_services
     ):
         """Sync status card includes monitoring metrics."""
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
-        response = client_with_db.get("/partials/sync-status-card")
+        response = authed_client.get("/partials/sync-status-card")
 
         assert response.status_code == 200
         mock_services["monitoring"].get_overall_status.assert_called_once()
@@ -488,27 +446,25 @@ class TestSyncHistoryTablePartial:
     """Tests for GET /partials/sync-history-table HTMX partial."""
 
     @patch("app.api.routes.dashboard.MonitoringService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_history_table_returns_html(
-        self, mock_monitoring_cls, client_with_db, mock_services
+        self, mock_monitoring_cls, authed_client, mock_services
     ):
         """Sync history table partial returns HTML."""
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
-        response = client_with_db.get("/partials/sync-history-table")
+        response = authed_client.get("/partials/sync-history-table")
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
     @patch("app.api.routes.dashboard.MonitoringService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_history_table_accepts_limit_parameter(
-        self, mock_monitoring_cls, client_with_db, mock_services
+        self, mock_monitoring_cls, authed_client, mock_services
     ):
         """Sync history table accepts limit query parameter."""
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
-        response = client_with_db.get("/partials/sync-history-table?limit=20")
+        response = authed_client.get("/partials/sync-history-table?limit=20")
 
         assert response.status_code == 200
         mock_services["monitoring"].get_recent_logs.assert_called_once_with(
@@ -516,14 +472,13 @@ class TestSyncHistoryTablePartial:
         )
 
     @patch("app.api.routes.dashboard.MonitoringService")
-    @pytest.mark.xfail(reason="Needs authenticated test client fixture")
     def test_sync_history_table_uses_default_limit(
-        self, mock_monitoring_cls, client_with_db, mock_services
+        self, mock_monitoring_cls, authed_client, mock_services
     ):
         """Sync history table uses default limit when not specified."""
         mock_monitoring_cls.return_value = mock_services["monitoring"]
 
-        response = client_with_db.get("/partials/sync-history-table")
+        response = authed_client.get("/partials/sync-history-table")
 
         assert response.status_code == 200
         # Default limit should be 15
