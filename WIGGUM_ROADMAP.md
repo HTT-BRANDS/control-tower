@@ -20,6 +20,49 @@ python scripts/sync_roadmap.py --update --task 1.1.1
 
 ---
 
+## Current Sprint — Post-v1.3.2 Test Debt Cleanup
+
+**Status:** 🔄 In Progress  
+**Goal:** Fix 39 test failures + 47 xpass markers → Clean v1.3.3  
+**Started:** March 17, 2026  
+**Next:** Apply AsyncMock/MagicMock pattern fixes to route tests
+
+### Active Tasks
+
+#### Task X.1: Fix Route Test Fixtures (39 failures)
+- [ ] 1. `test_routes_dashboard.py` — 13 failures (AsyncMock/MagicMock mismatch)
+- [ ] 2. `test_routes_monitoring.py` — 9 failures
+- [ ] 3. `test_routes_exports.py` — 6 failures
+- [ ] 4. `test_routes_bulk.py` — 6 failures
+- [ ] 5. `test_routes_recommendations.py` — 5 failures
+
+**Pattern:** Check route implementation for `await service.method()` vs `service.method()`. Use:
+- `AsyncMock` when route uses `await`
+- `MagicMock` when route doesn't use `await`
+
+#### Task X.2: Clean XPASS Markers (47 xpass)
+- [ ] Remove xfail markers from tests now passing with authed_client fixture
+- [ ] Run: `pytest --runxfail` to identify which tests are unexpectedly passing
+
+#### Task X.3: Tag v1.3.3
+- [ ] Full test suite green
+- [ ] Update CHANGELOG.md
+- [ ] `git tag v1.3.3 && git push --tags`
+
+### Validation Commands
+```bash
+# Run specific failing test
+uv run pytest tests/unit/test_routes_dashboard.py::test_get_dashboard_data -v --tb=short
+
+# Check current state
+uv run pytest tests/ -q --ignore=tests/e2e --ignore=tests/smoke --tb=no 2>&1 | tail -5
+
+# Check xpass count
+uv run pytest tests/ -q --ignore=tests/e2e --ignore=tests/smoke --tb=no 2>&1 | grep xpass
+```
+
+---
+
 ## Phase 1: Foundation (Agent Catalog + Framework)
 
 ### 1.1 Agent Catalog Completion
