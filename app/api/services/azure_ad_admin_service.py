@@ -1,19 +1,8 @@
 """Azure AD Admin Role Service for collecting privileged access data.
 
-This module provides a comprehensive service for:
-- Querying Azure AD directory roles and role definitions
-- Fetching privileged role assignments for users and service principals
-- Identifying global admins, security admins, and other privileged roles
-- Tracking role assignments per user with support for both direct and PIM assignments
-- Caching results for improved performance
-- Supporting all Riverside tenants with proper error handling and retry logic
-
-Features:
-- Async functions for all operations
-- Error handling and retry logic with exponential backoff
-- Rate limiting compliance to respect Graph API throttling
-- Cache integration for performance optimization
-- Multi-tenant support
+Provides async querying of Azure AD directory roles, role assignments,
+PIM assignments, global/security admin identification with caching,
+retry logic, and multi-tenant support.
 """
 
 import logging
