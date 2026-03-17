@@ -13,6 +13,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.routes import (
     auth_router,
+    budgets_router,
     bulk_router,
     compliance_router,
     costs_router,
@@ -225,6 +226,7 @@ app.include_router(onboarding_router)
 app.include_router(public_router)
 app.include_router(dashboard_router)
 app.include_router(costs_router)
+app.include_router(budgets_router)
 app.include_router(compliance_router)
 app.include_router(resources_router)
 app.include_router(identity_router)

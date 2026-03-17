@@ -497,6 +497,16 @@ DMARC_SYNC_BREAKER = CircuitBreaker(
     ),
 )
 
+BUDGET_SYNC_BREAKER = CircuitBreaker(
+    name="budget_sync",
+    config=CircuitBreakerConfig(
+        failure_threshold=5,
+        recovery_timeout=300.0,
+        success_threshold=2,
+        expected_exception=(HttpResponseError, ConnectionError, TimeoutError),
+    ),
+)
+
 # Global registry instance
 circuit_breaker_registry = CircuitBreakerRegistry()
 
@@ -508,3 +518,4 @@ circuit_breaker_registry.register("identity_sync", IDENTITY_SYNC_BREAKER)
 circuit_breaker_registry.register("graph_api", GRAPH_API_BREAKER)
 circuit_breaker_registry.register("riverside_sync", RIVERSIDE_SYNC_BREAKER)
 circuit_breaker_registry.register("dmarc_sync", DMARC_SYNC_BREAKER)
+circuit_breaker_registry.register("budget_sync", BUDGET_SYNC_BREAKER)

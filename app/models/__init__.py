@@ -3,6 +3,18 @@
 # Brand configuration for multi-tenant theming
 from app.models.backfill_job import BackfillJob, BackfillStatus
 from app.models.brand_config import BrandConfig
+from app.models.budget import (
+    AlertStatus,
+    AlertType,
+    Budget,
+    BudgetAlert,
+    BudgetCategory,
+    BudgetNotification,
+    BudgetStatus,
+    BudgetSyncResult,
+    BudgetThreshold,
+    TimeGrain,
+)
 from app.models.compliance import ComplianceSnapshot, PolicyState
 from app.models.cost import CostAnomaly, CostSnapshot
 from app.models.dmarc import (
@@ -32,6 +44,17 @@ from app.models.tenant import Subscription, Tenant, UserTenant
 __all__ = [
     # Brand config
     "BrandConfig",
+    # Budget models
+    "Budget",
+    "BudgetAlert",
+    "BudgetCategory",
+    "BudgetNotification",
+    "BudgetStatus",
+    "BudgetSyncResult",
+    "BudgetThreshold",
+    "TimeGrain",
+    "AlertStatus",
+    "AlertType",
     # Tenants
     "Tenant",
     "Subscription",
