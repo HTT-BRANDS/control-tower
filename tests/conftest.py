@@ -76,13 +76,15 @@ def mock_user():
 
 
 @pytest.fixture(scope="function")
-def mock_authz():
+def mock_authz(mock_user):
     """Mock TenantAuthorization that grants access to the test tenant."""
     authz = MagicMock(spec=TenantAuthorization)
+    authz.user = mock_user
     authz.accessible_tenant_ids = [_TEST_TENANT_ID]
     authz.ensure_at_least_one_tenant = MagicMock()
     authz.filter_tenant_ids = MagicMock(return_value=[_TEST_TENANT_ID])
     authz.validate_access = MagicMock()
+    authz.validate_tenants_access = MagicMock()
     return authz
 
 

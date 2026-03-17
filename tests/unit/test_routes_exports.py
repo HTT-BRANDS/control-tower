@@ -8,7 +8,7 @@ Tests CSV export endpoints:
 
 import uuid
 from datetime import date, datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,8 +17,6 @@ from app.core.auth import User
 from app.core.database import get_db
 from app.main import app
 from app.models.tenant import Tenant, UserTenant
-
-
 
 
 @pytest.fixture
@@ -81,7 +79,10 @@ def mock_user():
 
 
 def test_export_costs_success(authed_client):
-    """Test successful cost export to CSV."""
+    """Test successful cost export to CSV.
+
+    NOTE: Route uses `await service.get_cost_trends(...)` — needs AsyncMock.
+    """
     mock_trends = [
         MagicMock(date=date.today() - timedelta(days=i), cost=1000 + i * 100) for i in range(5)
     ]
@@ -97,8 +98,8 @@ def test_export_costs_success(authed_client):
 
     with patch("app.api.routes.exports.CostService") as MockCostService:
         mock_service = MockCostService.return_value
-        mock_service.get_cost_trends.return_value = mock_trends
-        mock_service.get_costs_by_tenant.return_value = mock_tenant_costs
+        mock_service.get_cost_trends = AsyncMock(return_value=mock_trends)
+        mock_service.get_costs_by_tenant = AsyncMock(return_value=mock_tenant_costs)
 
         response = authed_client.get("/api/v1/exports/costs")
 
@@ -118,13 +119,10 @@ def test_export_costs_with_date_range(authed_client):
     start_date = date.today() - timedelta(days=7)
     end_date = date.today()
 
-    mock_trends = []
-    mock_tenant_costs = []
-
     with patch("app.api.routes.exports.CostService") as MockCostService:
         mock_service = MockCostService.return_value
-        mock_service.get_cost_trends.return_value = mock_trends
-        mock_service.get_costs_by_tenant.return_value = mock_tenant_costs
+        mock_service.get_cost_trends = AsyncMock(return_value=[])
+        mock_service.get_costs_by_tenant = AsyncMock(return_value=[])
 
         response = authed_client.get(
             f"/api/v1/exports/costs?start_date={start_date}&end_date={end_date}"
@@ -135,7 +133,10 @@ def test_export_costs_with_date_range(authed_client):
 
 
 def test_export_resources_success(authed_client):
-    """Test successful resource export to CSV."""
+    """Test successful resource export to CSV.
+
+    NOTE: Route uses `await service.get_resource_inventory(...)` — needs AsyncMock.
+    """
     mock_inventory = MagicMock()
     mock_inventory.resources = [
         MagicMock(
@@ -144,6 +145,7 @@ def test_export_resources_success(authed_client):
             resource_type="Microsoft.Compute/virtualMachines",
             tenant_id="test-tenant-123",
             tenant_name="Test Tenant",
+            subscription_id="sub-123",
             subscription_name="Production Sub",
             resource_group="rg-prod",
             location="eastus",
@@ -160,6 +162,7 @@ def test_export_resources_success(authed_client):
             resource_type="Microsoft.Sql/servers",
             tenant_id="test-tenant-123",
             tenant_name="Test Tenant",
+            subscription_id="sub-123",
             subscription_name="Production Sub",
             resource_group="rg-prod",
             location="eastus",
@@ -174,7 +177,7 @@ def test_export_resources_success(authed_client):
 
     with patch("app.api.routes.exports.ResourceService") as MockResourceService:
         mock_service = MockResourceService.return_value
-        mock_service.get_resource_inventory.return_value = mock_inventory
+        mock_service.get_resource_inventory = AsyncMock(return_value=mock_inventory)
 
         response = authed_client.get("/api/v1/exports/resources")
 
@@ -195,7 +198,7 @@ def test_export_resources_filter_by_type(authed_client):
 
     with patch("app.api.routes.exports.ResourceService") as MockResourceService:
         mock_service = MockResourceService.return_value
-        mock_service.get_resource_inventory.return_value = mock_inventory
+        mock_service.get_resource_inventory = AsyncMock(return_value=mock_inventory)
 
         response = authed_client.get(
             "/api/v1/exports/resources?resource_type=Microsoft.Compute/virtualMachines"
@@ -208,12 +211,17 @@ def test_export_resources_filter_by_type(authed_client):
 
 
 def test_export_compliance_success(authed_client):
-    """Test successful compliance export to CSV."""
+    """Test successful compliance export to CSV.
+
+    NOTE: Route uses `await service.get_compliance_summary()` — needs AsyncMock.
+    get_non_compliant_policies is SYNC (not awaited in route).
+    """
     mock_summary = MagicMock()
     mock_summary.scores_by_tenant = [
         MagicMock(
             tenant_id="test-tenant-123",
             tenant_name="Test Tenant",
+            subscription_id="sub-123",
             overall_compliance_percent=85.5,
             secure_score=650,
             compliant_resources=85,
@@ -230,14 +238,16 @@ def test_export_compliance_success(authed_client):
             policy_category="Security",
             compliance_state="NonCompliant",
             non_compliant_count=3,
+            subscription_id="sub-123",
             recommendation="Enable HTTPS-only traffic",
         )
     ]
 
     with patch("app.api.routes.exports.ComplianceService") as MockComplianceService:
         mock_service = MockComplianceService.return_value
-        mock_service.get_compliance_summary.return_value = mock_summary
-        mock_service.get_non_compliant_policies.return_value = mock_non_compliant
+        mock_service.get_compliance_summary = AsyncMock(return_value=mock_summary)
+        # get_non_compliant_policies is NOT awaited in the route — sync mock is fine
+        mock_service.get_non_compliant_policies = MagicMock(return_value=mock_non_compliant)
 
         response = authed_client.get("/api/v1/exports/compliance")
 
@@ -258,7 +268,7 @@ def test_export_compliance_exclude_non_compliant(authed_client):
 
     with patch("app.api.routes.exports.ComplianceService") as MockComplianceService:
         mock_service = MockComplianceService.return_value
-        mock_service.get_compliance_summary.return_value = mock_summary
+        mock_service.get_compliance_summary = AsyncMock(return_value=mock_summary)
 
         response = authed_client.get("/api/v1/exports/compliance?include_non_compliant=false")
 

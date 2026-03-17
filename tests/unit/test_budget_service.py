@@ -23,7 +23,7 @@ with patch("app.core.cache.cached", no_op_cache):
     # Remove from cache if already imported
     if "app.api.services.budget_service" in sys.modules:
         del sys.modules["app.api.services.budget_service"]
-    from app.api.services.budget_service import BudgetService, BudgetServiceError
+    from app.api.services.budget_service import BudgetService
 
 from app.models.budget import (
     AlertStatus,
@@ -31,7 +31,6 @@ from app.models.budget import (
     Budget,
     BudgetAlert,
     BudgetStatus,
-    BudgetThreshold,
 )
 from app.models.tenant import Tenant
 from app.schemas.budget import (

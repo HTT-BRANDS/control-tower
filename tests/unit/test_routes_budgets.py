@@ -14,8 +14,6 @@ Tests all budget endpoints with FastAPI TestClient:
 from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.schemas.budget import (
     BudgetAlertResponse,
     BudgetListItem,
@@ -23,7 +21,6 @@ from app.schemas.budget import (
     BudgetSummary,
     BudgetSyncResultResponse,
 )
-
 
 # =============================================================================
 # GET /api/v1/budgets Tests

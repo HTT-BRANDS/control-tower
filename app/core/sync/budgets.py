@@ -7,7 +7,7 @@ along with threshold monitoring and alert generation.
 import logging
 from datetime import datetime
 
-from app.api.services.budget_service import BudgetService, BudgetServiceError
+from app.api.services.budget_service import BudgetService
 from app.core.circuit_breaker import BUDGET_SYNC_BREAKER, circuit_breaker
 from app.core.database import get_db_context
 from app.core.retry import BUDGET_SYNC_POLICY, retry_with_backoff

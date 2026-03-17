@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-03-17
+
+### Fixed
+- **39 test failures resolved** across 5 route test files:
+  - Dashboard: Patched template rendering to avoid MagicMock/Jinja2 comparison errors; removed stray @patch decorator stealing authed_client fixture
+  - Monitoring: Corrected URL paths from /api/v1/monitoring/ to /monitoring/ (matching router prefix)
+  - Exports: Changed MagicMock to AsyncMock for awaited service methods (get_cost_trends, get_resource_inventory, etc.)
+  - Bulk: Fixed mock data to match BulkTagResponse Pydantic schema; fixed body vs query params; bypassed rate limiter in auth test
+  - Recommendations: Replaced MagicMock attributes with real Pydantic model instances for response_model validation
+- CSV export bug: heterogeneous dict rows (tenant_score + non_compliant_policy) now handled with unified fieldnames
+- conftest mock_authz now includes user attribute and validate_tenants_access mock
+- Budget model enums migrated from (str, Enum) to StrEnum (ruff UP042)
+- 22 lint errors fixed (import sorting, unused imports/variables, StrEnum migration)
+
+### Removed
+- 47 stale xfail markers from test_riverside_api.py and test_tenant_isolation.py (tests now pass)
+
+### Changed
+- Test count: 2,444 → 2,531 (47 xpassed tests now properly counted as passes)
+
+---
+
 ## [Unreleased]
 
 ### Completed (Post v1.2.0)

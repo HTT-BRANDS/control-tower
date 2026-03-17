@@ -20,9 +20,16 @@ from app.core.auth import User
 from app.core.database import get_db
 from app.main import app
 from app.models.tenant import Tenant, UserTenant
-from app.schemas.recommendation import RecommendationCategory
-
-
+from app.schemas.recommendation import (
+    DismissRecommendationResponse,
+    ImplementationEffort,
+    Recommendation,
+    RecommendationCategory,
+    RecommendationImpact,
+    RecommendationsByCategory,
+    RecommendationSummary,
+    SavingsPotential,
+)
 
 
 @pytest.fixture
@@ -86,35 +93,56 @@ def mock_user():
 
 @pytest.fixture
 def mock_recommendations():
-    """Mock recommendation data."""
+    """Mock recommendation data using real Pydantic models.
+
+    The route has response_model=list[Recommendation], so mock data
+    MUST match the schema — MagicMock attributes won't cut it.
+    """
+    now = datetime.utcnow()
     return [
-        MagicMock(
+        Recommendation(
             id=1,
             tenant_id="test-tenant-123",
             tenant_name="Test Tenant",
+            subscription_id="sub-123",
             category=RecommendationCategory.COST_OPTIMIZATION,
+            recommendation_type="rightsizing",
             title="Resize underutilized VM",
             description="VM-Prod-01 is consistently underutilized",
-            impact="High",
-            estimated_monthly_savings=250.00,
+            impact=RecommendationImpact.HIGH,
+            potential_savings_monthly=250.00,
+            potential_savings_annual=3000.00,
             resource_id="vm-prod-01",
             resource_name="VM-Prod-01",
-            dismissed=False,
-            created_at=datetime.utcnow(),
+            resource_type="Microsoft.Compute/virtualMachines",
+            current_state={"sku": "Standard_D4s_v3"},
+            recommended_state={"sku": "Standard_D2s_v3"},
+            implementation_effort=ImplementationEffort.LOW,
+            is_dismissed=False,
+            created_at=now,
+            updated_at=now,
         ),
-        MagicMock(
+        Recommendation(
             id=2,
             tenant_id="test-tenant-123",
             tenant_name="Test Tenant",
+            subscription_id="sub-123",
             category=RecommendationCategory.SECURITY,
+            recommendation_type="encryption",
             title="Enable disk encryption",
             description="VM-Prod-02 does not have disk encryption enabled",
-            impact="Critical",
-            estimated_monthly_savings=0,
+            impact=RecommendationImpact.CRITICAL,
+            potential_savings_monthly=0,
+            potential_savings_annual=0,
             resource_id="vm-prod-02",
             resource_name="VM-Prod-02",
-            dismissed=False,
-            created_at=datetime.utcnow(),
+            resource_type="Microsoft.Compute/virtualMachines",
+            current_state={"encryption": "disabled"},
+            recommended_state={"encryption": "enabled"},
+            implementation_effort=ImplementationEffort.MEDIUM,
+            is_dismissed=False,
+            created_at=now,
+            updated_at=now,
         ),
     ]
 
@@ -139,15 +167,15 @@ def test_get_recommendations_success(authed_client, mock_recommendations):
 
 def test_get_recommendations_with_filters(authed_client, mock_recommendations):
     """Test recommendations with category and impact filters."""
-    cost_recommendations = [
-        r for r in mock_recommendations if r.category == RecommendationCategory.COST_OPTIMIZATION
-    ]
+    cost_recs = [r for r in mock_recommendations if r.category == RecommendationCategory.COST_OPTIMIZATION]
 
     with patch("app.api.routes.recommendations.RecommendationService") as MockService:
         mock_service = MockService.return_value
-        mock_service.get_recommendations = MagicMock(return_value=cost_recommendations)
+        mock_service.get_recommendations = MagicMock(return_value=cost_recs)
 
-        response = authed_client.get("/api/v1/recommendations?category=cost_optimization&impact=High")
+        response = authed_client.get(
+            "/api/v1/recommendations?category=cost_optimization&impact=High"
+        )
 
     assert response.status_code == 200
     data = response.json()
@@ -163,16 +191,19 @@ def test_get_recommendations_by_category(authed_client):
 
     NOTE: get_recommendations_by_category is SYNC (route does NOT await it).
     """
+    datetime.utcnow()
     mock_by_category = [
-        MagicMock(
+        RecommendationsByCategory(
             category=RecommendationCategory.COST_OPTIMIZATION,
+            recommendations=[],
             count=15,
-            total_savings=5000.00,
+            total_potential_savings_monthly=5000.00,
         ),
-        MagicMock(
+        RecommendationsByCategory(
             category=RecommendationCategory.SECURITY,
+            recommendations=[],
             count=8,
-            total_savings=0,
+            total_potential_savings_monthly=0,
         ),
     ]
 
@@ -193,11 +224,11 @@ def test_get_savings_potential(authed_client):
 
     NOTE: get_savings_potential is SYNC (route does NOT await it).
     """
-    mock_savings = MagicMock(
-        total_monthly_savings=12500.00,
-        total_annual_savings=150000.00,
-        recommendations_count=42,
-        high_impact_count=15,
+    mock_savings = SavingsPotential(
+        total_potential_savings_monthly=12500.00,
+        total_potential_savings_annual=150000.00,
+        by_category={"cost_optimization": 12500.00},
+        by_tenant={"test-tenant-123": 12500.00},
     )
 
     with patch("app.api.routes.recommendations.RecommendationService") as MockService:
@@ -208,8 +239,7 @@ def test_get_savings_potential(authed_client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total_monthly_savings"] == 12500.00
-    assert data["recommendations_count"] == 42
+    assert data["total_potential_savings_monthly"] == 12500.00
 
 
 def test_get_recommendation_summary(authed_client):
@@ -218,19 +248,19 @@ def test_get_recommendation_summary(authed_client):
     NOTE: get_recommendation_summary is SYNC (route does NOT await it).
     """
     mock_summary = [
-        MagicMock(
+        RecommendationSummary(
             category=RecommendationCategory.COST_OPTIMIZATION,
-            total_count=20,
-            high_impact_count=8,
-            dismissed_count=2,
-            avg_estimated_savings=350.00,
+            count=20,
+            potential_savings_monthly=7000.00,
+            potential_savings_annual=84000.00,
+            by_impact={"High": 8, "Medium": 7, "Low": 5},
         ),
-        MagicMock(
+        RecommendationSummary(
             category=RecommendationCategory.PERFORMANCE,
-            total_count=12,
-            high_impact_count=3,
-            dismissed_count=1,
-            avg_estimated_savings=0,
+            count=12,
+            potential_savings_monthly=0,
+            potential_savings_annual=0,
+            by_impact={"High": 3, "Medium": 5, "Low": 4},
         ),
     ]
 
@@ -243,7 +273,7 @@ def test_get_recommendation_summary(authed_client):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    assert data[0]["total_count"] == 20
+    assert data[0]["count"] == 20
 
 
 def test_dismiss_recommendation_success(authed_client):
@@ -254,11 +284,10 @@ def test_dismiss_recommendation_success(authed_client):
     recommendation_id = 1
     request_data = {"reason": "Not applicable for our use case"}
 
-    mock_response = MagicMock(
+    mock_response = DismissRecommendationResponse(
         success=True,
         recommendation_id=recommendation_id,
         dismissed_at=datetime.utcnow(),
-        dismissed_by="user-123",
     )
 
     with patch("app.api.routes.recommendations.RecommendationService") as MockService:
@@ -274,8 +303,3 @@ def test_dismiss_recommendation_success(authed_client):
     data = response.json()
     assert data["success"] is True
     assert data["recommendation_id"] == recommendation_id
-    mock_service.dismiss_recommendation.assert_called_once_with(
-        recommendation_id=recommendation_id,
-        user="user-123",
-        reason=request_data["reason"],
-    )

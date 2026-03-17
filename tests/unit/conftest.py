@@ -6,9 +6,9 @@ from app.core.circuit_breaker import circuit_breaker_registry
 
 # Import fixtures from parent conftest to make authed_client available
 from tests.conftest import (  # noqa: F401
+    authed_client,
     mock_authz,
     mock_user,
-    authed_client,
 )
 
 

@@ -90,7 +90,7 @@ class BudgetService:
         if status:
             query = query.filter(Budget.status == status)
 
-        total = query.count()
+        query.count()
         budgets = query.order_by(Budget.created_at.desc()).offset(offset).limit(limit).all()
 
         # Build response with alert counts

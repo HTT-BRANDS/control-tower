@@ -1,11 +1,11 @@
 """Unit tests for bulk operations API routes.
 
 Tests bulk operation endpoints:
-- POST /api/v1/bulk/tags/apply
-- POST /api/v1/bulk/tags/remove
-- POST /api/v1/bulk/anomalies/acknowledge
-- POST /api/v1/bulk/recommendations/dismiss
-- POST /api/v1/bulk/idle-resources/review
+- POST /bulk/tags/apply
+- POST /bulk/tags/remove
+- POST /bulk/anomalies/acknowledge
+- POST /bulk/recommendations/dismiss
+- POST /bulk/idle-resources/review
 """
 
 import uuid
@@ -19,8 +19,7 @@ from app.core.auth import User
 from app.core.database import get_db
 from app.main import app
 from app.models.tenant import Tenant, UserTenant
-
-
+from app.schemas.resource import BulkTagResponse, TagOperationResult
 
 
 @pytest.fixture
@@ -69,34 +68,6 @@ def client_with_db(test_db_session):
 
 
 @pytest.fixture
-def mock_admin_user():
-    """Mock authenticated admin user."""
-    return User(
-        id="user-bulk-admin",
-        email="admin@bulk.test",
-        name="Bulk Admin",
-        roles=["admin"],
-        tenant_ids=["bulk-tenant-123"],
-        is_active=True,
-        auth_provider="azure_ad",
-    )
-
-
-@pytest.fixture
-def mock_operator_user():
-    """Mock authenticated operator user."""
-    return User(
-        id="user-bulk-operator",
-        email="operator@bulk.test",
-        name="Bulk Operator",
-        roles=["operator"],
-        tenant_ids=["bulk-tenant-123"],
-        is_active=True,
-        auth_provider="azure_ad",
-    )
-
-
-@pytest.fixture
 def mock_viewer_user():
     """Mock authenticated viewer user (no bulk permissions)."""
     return User(
@@ -110,6 +81,36 @@ def mock_viewer_user():
     )
 
 
+# ---------------------------------------------------------------------------
+# Helper: Build a BulkTagResponse-compatible return value
+# ---------------------------------------------------------------------------
+
+def _tag_response(resource_ids: list[str], *, success: bool = True) -> BulkTagResponse:
+    """Create a BulkTagResponse that passes Pydantic validation."""
+    results = [
+        TagOperationResult(
+            resource_id=rid,
+            resource_name=f"Resource-{rid}",
+            success=success,
+            message="OK" if success else "Failed",
+        )
+        for rid in resource_ids
+    ]
+    return BulkTagResponse(
+        success=True,
+        message="Bulk operation completed",
+        total_processed=len(resource_ids),
+        success_count=len(resource_ids) if success else 0,
+        failed_count=0 if success else len(resource_ids),
+        results=results,
+    )
+
+
+# ============================================================================
+# POST /bulk/tags/apply
+# ============================================================================
+
+
 def test_bulk_apply_tags_success(authed_client):
     """Test successful bulk tag application.
 
@@ -118,18 +119,9 @@ def test_bulk_apply_tags_success(authed_client):
     request_data = {
         "resource_ids": ["res-1", "res-2", "res-3"],
         "tags": {"Environment": "Production", "Owner": "DevOps"},
-        "operation": "merge",
     }
 
-    mock_response = {
-        "success_count": 3,
-        "failure_count": 0,
-        "results": [
-            {"resource_id": "res-1", "success": True},
-            {"resource_id": "res-2", "success": True},
-            {"resource_id": "res-3", "success": True},
-        ],
-    }
+    mock_response = _tag_response(["res-1", "res-2", "res-3"])
 
     with patch("app.api.routes.bulk.BulkService") as MockBulkService:
         mock_service = MockBulkService.return_value
@@ -140,22 +132,56 @@ def test_bulk_apply_tags_success(authed_client):
     assert response.status_code == 200
     data = response.json()
     assert data["success_count"] == 3
-    assert data["failure_count"] == 0
+    assert data["failed_count"] == 0
 
 
-def test_bulk_apply_tags_requires_operator_role(client_with_db, mock_viewer_user):
+def test_bulk_apply_tags_requires_operator_role(db_session, mock_viewer_user):
     """Test that bulk tag operations require operator or admin role."""
-    request_data = {
-        "resource_ids": ["res-1"],
-        "tags": {"Test": "Value"},
-        "operation": "merge",
-    }
+    from unittest.mock import MagicMock
 
-    with patch("app.api.routes.bulk.get_current_user", return_value=mock_viewer_user):
-        response = client_with_db.post("/bulk/tags/apply", json=request_data)
+    from app.core.auth import get_current_user
+    from app.core.authorization import TenantAuthorization, get_tenant_authorization
 
-    assert response.status_code == 403
-    assert "operator or admin role" in response.json()["detail"]
+    authz = MagicMock(spec=TenantAuthorization)
+    authz.user = mock_viewer_user
+    authz.accessible_tenant_ids = ["bulk-tenant-123"]
+    authz.ensure_at_least_one_tenant = MagicMock()
+
+    tenant = Tenant(
+        id="bulk-tenant-123",
+        tenant_id="bulk-tenant-123",
+        name="Bulk Test Tenant",
+        is_active=True,
+    )
+    db_session.add(tenant)
+    db_session.commit()
+
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: mock_viewer_user
+    app.dependency_overrides[get_tenant_authorization] = lambda: authz
+
+    try:
+        with patch("app.core.rate_limit.rate_limiter.check_rate_limit", new_callable=AsyncMock):
+            with TestClient(app) as test_client:
+                response = test_client.post(
+                    "/bulk/tags/apply",
+                    json={"resource_ids": ["res-1"], "tags": {"Test": "Value"}},
+                )
+        assert response.status_code == 403
+        assert "operator or admin role" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+# ============================================================================
+# POST /bulk/tags/remove
+# ============================================================================
 
 
 def test_bulk_remove_tags_success(authed_client):
@@ -163,15 +189,7 @@ def test_bulk_remove_tags_success(authed_client):
 
     NOTE: bulk_remove_tags is ASYNC (route uses await).
     """
-
-    mock_response = {
-        "success_count": 2,
-        "failure_count": 0,
-        "results": [
-            {"resource_id": "res-1", "success": True},
-            {"resource_id": "res-2", "success": True},
-        ],
-    }
+    mock_response = _tag_response(["res-1", "res-2"])
 
     with patch("app.api.routes.bulk.BulkService") as MockBulkService:
         mock_service = MockBulkService.return_value
@@ -179,7 +197,7 @@ def test_bulk_remove_tags_success(authed_client):
 
         response = authed_client.post(
             "/bulk/tags/remove",
-            params={
+            json={
                 "resource_ids": ["res-1", "res-2"],
                 "tag_names": ["OldTag", "DeprecatedTag"],
             },
@@ -188,6 +206,11 @@ def test_bulk_remove_tags_success(authed_client):
     assert response.status_code == 200
     data = response.json()
     assert data["success_count"] == 2
+
+
+# ============================================================================
+# POST /bulk/anomalies/acknowledge
+# ============================================================================
 
 
 def test_bulk_acknowledge_anomalies_success(authed_client):
@@ -215,6 +238,11 @@ def test_bulk_acknowledge_anomalies_success(authed_client):
     assert data["failed_count"] == 0
 
 
+# ============================================================================
+# POST /bulk/recommendations/dismiss
+# ============================================================================
+
+
 def test_bulk_dismiss_recommendations_success(authed_client):
     """Test successful bulk recommendation dismissal."""
     request_data = {
@@ -239,17 +267,22 @@ def test_bulk_dismiss_recommendations_success(authed_client):
     assert data["dismissed_count"] == 3
 
 
+# ============================================================================
+# POST /bulk/idle-resources/review
+# ============================================================================
+
+
 def test_bulk_review_idle_resources_success(authed_client):
     """Test successful bulk idle resource review."""
     request_data = {
-        "idle_resource_ids": ["idle-1", "idle-2", "idle-3"],
+        "idle_resource_ids": [1, 2, 3],
         "notes": "Resources are idle but needed for seasonal workloads",
     }
 
     mock_response = {
         "reviewed_count": 3,
         "failed_count": 0,
-        "idle_resource_ids": ["idle-1", "idle-2", "idle-3"],
+        "idle_resource_ids": [1, 2, 3],
     }
 
     with patch("app.api.routes.bulk.BulkService") as MockBulkService:

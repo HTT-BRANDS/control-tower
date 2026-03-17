@@ -30,7 +30,15 @@ def _generate_csv(data: list[dict[str, Any]], filename: str) -> StreamingRespons
     """Generate CSV streaming response from data."""
     output = io.StringIO()
     if data:
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        # Collect ALL unique keys across rows (supports heterogeneous dicts)
+        fieldnames: list[str] = []
+        seen: set[str] = set()
+        for row in data:
+            for key in row:
+                if key not in seen:
+                    fieldnames.append(key)
+                    seen.add(key)
+        writer = csv.DictWriter(output, fieldnames=fieldnames, restval="")
         writer.writeheader()
         writer.writerows(data)
 

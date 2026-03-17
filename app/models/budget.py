@@ -5,7 +5,7 @@ Integrates with Microsoft.CostManagement/budgets API.
 """
 
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, relationship
@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, relationship
 from app.core.database import Base
 
 
-class TimeGrain(str, Enum):
+class TimeGrain(StrEnum):
     """Budget time grain options from Azure Cost Management."""
 
     MONTHLY = "Monthly"
@@ -24,14 +24,14 @@ class TimeGrain(str, Enum):
     BILLING_ANNUAL = "BillingAnnual"
 
 
-class BudgetCategory(str, Enum):
+class BudgetCategory(StrEnum):
     """Budget category for cost allocation tracking."""
 
     COST = "Cost"
     USAGE = "Usage"
 
 
-class BudgetStatus(str, Enum):
+class BudgetStatus(StrEnum):
     """Budget status based on current spending."""
 
     ACTIVE = "active"  # Under budget
@@ -40,7 +40,7 @@ class BudgetStatus(str, Enum):
     EXCEEDED = "exceeded"  # Over budget amount
 
 
-class AlertType(str, Enum):
+class AlertType(StrEnum):
     """Type of budget alert."""
 
     WARNING = "warning"  # Approaching budget
@@ -49,7 +49,7 @@ class AlertType(str, Enum):
     FORECASTED = "forecasted"  # Forecasted to exceed
 
 
-class AlertStatus(str, Enum):
+class AlertStatus(StrEnum):
     """Status of a budget alert."""
 
     PENDING = "pending"  # Not yet acknowledged

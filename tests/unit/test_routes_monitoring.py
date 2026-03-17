@@ -1,17 +1,17 @@
 """Unit tests for monitoring API routes.
 
 Tests monitoring endpoints:
-- GET /api/v1/monitoring/performance
-- GET /api/v1/monitoring/cache
-- GET /api/v1/monitoring/sync-jobs
-- GET /api/v1/monitoring/queries
-- POST /api/v1/monitoring/reset
-- GET /api/v1/monitoring/health
+- GET /monitoring/performance
+- GET /monitoring/cache
+- GET /monitoring/sync-jobs
+- GET /monitoring/queries
+- POST /monitoring/reset
+- GET /monitoring/health
 """
 
 import uuid
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,8 +20,6 @@ from app.core.auth import User
 from app.core.database import get_db
 from app.main import app
 from app.models.tenant import Tenant, UserTenant
-
-
 
 
 @pytest.fixture
@@ -106,7 +104,7 @@ def test_get_performance_metrics_success(authed_client):
     with patch(
         "app.api.routes.monitoring.get_performance_dashboard", return_value=mock_dashboard
     ):
-        response = authed_client.get("/api/v1/monitoring/performance")
+        response = authed_client.get("/monitoring/performance")
 
     assert response.status_code == 200
     data = response.json()
@@ -126,7 +124,7 @@ def test_get_cache_metrics_success(authed_client):
     }
 
     with patch("app.api.routes.monitoring.get_cache_stats", return_value=mock_cache_stats):
-        response = authed_client.get("/api/v1/monitoring/cache")
+        response = authed_client.get("/monitoring/cache")
 
     assert response.status_code == 200
     data = response.json()
@@ -159,7 +157,7 @@ def test_get_sync_job_metrics_all_jobs(authed_client):
     with patch("app.api.routes.monitoring.performance_monitor") as mock_monitor:
         mock_monitor.get_sync_metrics.return_value = mock_sync_metrics
 
-        response = authed_client.get("/api/v1/monitoring/sync-jobs")
+        response = authed_client.get("/monitoring/sync-jobs")
 
     assert response.status_code == 200
     data = response.json()
@@ -183,7 +181,7 @@ def test_get_sync_job_metrics_with_filters(authed_client):
         mock_monitor.get_sync_metrics.return_value = mock_sync_metrics
 
         response = authed_client.get(
-            "/api/v1/monitoring/sync-jobs?job_type=resources&tenant_id=test-tenant-123&limit=50"
+            "/monitoring/sync-jobs?job_type=resources&tenant_id=test-tenant-123&limit=50"
         )
 
     assert response.status_code == 200
@@ -214,7 +212,7 @@ def test_get_query_metrics_all(authed_client):
     with patch("app.api.routes.monitoring.performance_monitor") as mock_monitor:
         mock_monitor.get_query_metrics.return_value = mock_query_metrics
 
-        response = authed_client.get("/api/v1/monitoring/queries")
+        response = authed_client.get("/monitoring/queries")
 
     assert response.status_code == 200
     data = response.json()
@@ -235,7 +233,7 @@ def test_get_query_metrics_slow_only(authed_client):
     with patch("app.api.routes.monitoring.performance_monitor") as mock_monitor:
         mock_monitor.get_query_metrics.return_value = mock_slow_queries
 
-        response = authed_client.get("/api/v1/monitoring/queries?slow_only=true&limit=50")
+        response = authed_client.get("/monitoring/queries?slow_only=true&limit=50")
 
     assert response.status_code == 200
     data = response.json()
@@ -247,7 +245,7 @@ def test_get_query_metrics_slow_only(authed_client):
 def test_reset_performance_metrics_success(authed_client):
     """Test resetting performance metrics."""
     with patch("app.api.routes.monitoring.reset_metrics") as mock_reset:
-        response = authed_client.post("/api/v1/monitoring/reset")
+        response = authed_client.post("/monitoring/reset")
 
     assert response.status_code == 200
     data = response.json()
@@ -276,7 +274,7 @@ def test_health_check_good_cache(authed_client):
             "app.api.routes.monitoring.get_performance_dashboard",
             return_value=mock_perf_summary,
         ):
-            response = authed_client.get("/api/v1/monitoring/health")
+            response = authed_client.get("/monitoring/health")
 
     assert response.status_code == 200
     data = response.json()
@@ -306,7 +304,7 @@ def test_health_check_poor_cache(authed_client):
             "app.api.routes.monitoring.get_performance_dashboard",
             return_value=mock_perf_summary,
         ):
-            response = authed_client.get("/api/v1/monitoring/health")
+            response = authed_client.get("/monitoring/health")
 
     assert response.status_code == 200
     data = response.json()

@@ -23,9 +23,6 @@ from app.main import app
 from app.models.riverside import RequirementStatus
 from tests.fixtures.riverside_fixtures import create_riverside_test_data
 
-# Mark all tests in this module as xfail - integration test fixtures need refinement
-pytestmark = pytest.mark.xfail(reason="Auth mocking incomplete (401s)", strict=False)
-
 # ============================================================================
 # Fixtures
 # ============================================================================
