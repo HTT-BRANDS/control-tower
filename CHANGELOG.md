@@ -28,6 +28,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-03-17
+
+### Added — Comprehensive Test Traceability Audit
+- **18 new test modules** covering all previously untested app modules (386 new tests)
+  - Riverside service: `test_riverside_queries`, `test_riverside_constants`, `test_riverside_service_models`, `test_riverside_requirements_service`
+  - Schemas: `test_schema_device`, `test_schema_enums`, `test_schema_requirements`, `test_schema_threat`
+  - Preflight: `test_azure_checks`, `test_mfa_checks`, `test_preflight_models`, `test_riverside_checks_preflight`
+  - Core: `test_graph_client`, `test_tenant_sync`, `test_sui_generis`, `test_pages_routes`, `test_main_app`
+  - Gap coverage: `test_resource_health` (RM-006), `test_remediation` (CM-005), `test_backfill_job_model`, `test_riverside_api_models`
+- **Traceability Matrix expanded** with Epics 12-16 mapping all 57 core product requirements (CO/CM/RM/IG/NF) to implementation code and test files
+- **Zero untested app modules** — all 70+ Python modules under `app/` now have corresponding test coverage
+
+### Fixed
+- 71 stale xfail markers cleaned up (tests were passing but marked as expected failures)
+- Architecture fitness function failure (`azure_ad_admin_service.py` trimmed from 603 to 592 lines)
+- 4 Riverside analytics enum-vs-string comparison bugs in `riverside_analytics.py`
+- MFA calculation test expectation corrected in `riverside_compliance_service`
+- 46 ruff linting errors resolved
+
+### Changed
+- STAGING_DEPLOYMENT.md rewritten — staging is operational (was stale "container failing" status)
+- HANDOFF.md updated to reflect staging operational state
+- TLL licensing issue closed (Entra ID P1 now available)
+
+### Quality
+- **Total test count**: 2,395 passed (from 1,842), 0 failures
+- **Untested modules**: 0 (from 19)
+- **Lint errors**: 0 (from 46)
+- **Architecture fitness**: 6/6 passing
+- **Traceability**: 152 requirement references mapped across 16 epics
+
+---
+
 ## [1.2.0] - 2026-03-09
 
 ### Added
