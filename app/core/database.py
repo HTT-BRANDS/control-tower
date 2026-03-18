@@ -179,7 +179,16 @@ def init_db() -> None:
     if _IS_SQLITE:
         Base.metadata.create_all(_get_engine(), checkfirst=True)
 
-    _create_indexes()
+    try:
+        _create_indexes()
+    except Exception as exc:  # pragma: no cover
+        # Index creation is a performance optimisation only — never fatal.
+        # A transient DB connectivity issue at startup must not prevent the
+        # application from coming up; Alembic manages correctness separately.
+        logger.warning(
+            "Index creation skipped during startup (will be retried on next deploy): %s",
+            exc,
+        )
 
 
 def _create_indexes() -> None:
