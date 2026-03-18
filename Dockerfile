@@ -134,7 +134,7 @@ ENTRYPOINT ["./scripts/entrypoint.sh"]
 # -----------------------------------------------------------------------------
 # Stage 3: Development image (optional - includes dev dependencies)
 # -----------------------------------------------------------------------------
-FROM python:3.11-slim-bookworm as development
+FROM builder as development
 
 LABEL maintainer="Cloud Governance Team" \
       application="Azure Governance Platform" \
