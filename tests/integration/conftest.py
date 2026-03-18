@@ -23,6 +23,18 @@ from app.models.identity import IdentitySnapshot, PrivilegedUser
 from app.models.resource import Resource, ResourceTag
 from app.models.tenant import Subscription, Tenant, UserTenant
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset in-memory rate limiter state before each test.
+
+    Prevents test ordering from causing 429 failures due to shared state.
+    """
+    from app.core.rate_limit import rate_limiter
+    rate_limiter._memory_cache.clear()
+    yield
+    rate_limiter._memory_cache.clear()
+
+
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 

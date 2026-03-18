@@ -450,16 +450,12 @@ class TestAcknowledgeAnomalyEndpoint:
         assert anomaly_in_db.acknowledged_by == "user-123"
         assert anomaly_in_db.acknowledged_at is not None
 
-    @pytest.mark.xfail(
-        reason="Integration test fixtures need refinement - tracked in follow-up issue"
-    )
     def test_acknowledge_nonexistent_anomaly(self, authenticated_client: TestClient):
-        """Acknowledging a non-existent anomaly returns success=False."""
+        """Acknowledging a non-existent anomaly returns 404."""
         response = authenticated_client.post("/api/v1/costs/anomalies/99999/acknowledge")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["success"] is False
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
 
     def test_acknowledge_anomaly_requires_auth(self, unauthenticated_client: TestClient):
         """Acknowledge anomaly endpoint requires authentication."""
@@ -506,12 +502,12 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
             assert anomaly_in_db.is_acknowledged is True
             assert anomaly_in_db.acknowledged_by == "user-123"
 
-    @pytest.mark.xfail(
-        reason="Integration test fixtures need refinement - tracked in follow-up issue"
-    )
     def test_bulk_acknowledge_partial_failure(self, authenticated_client: TestClient):
-        """Bulk acknowledge handles mix of valid and invalid IDs."""
-        # Get one valid anomaly
+        """Bulk acknowledge with any invalid ID returns 404 (fail-fast behavior).
+
+        The route validates ALL IDs exist before processing any. If any are
+        missing it returns 404 rather than partial success.
+        """
         response_anomalies = authenticated_client.get("/api/v1/costs/anomalies?acknowledged=false")
         anomalies = response_anomalies.json()
 
@@ -519,17 +515,12 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
             valid_id = anomalies[0]["id"]
             invalid_id = 99999
 
-            # Mix valid and invalid
             response = authenticated_client.post(
                 "/api/v1/costs/anomalies/bulk-acknowledge",
                 json={"anomaly_ids": [valid_id, invalid_id]},
             )
-
-            assert response.status_code == 200
-            data = response.json()
-
-            assert data["acknowledged_count"] == 1  # Only valid one succeeded
-            assert invalid_id in data["failed_ids"]
+            # Route validates all IDs first — any missing = 404
+            assert response.status_code == 404
 
     def test_bulk_acknowledge_requires_auth(self, unauthenticated_client: TestClient):
         """Bulk acknowledge endpoint requires authentication."""
@@ -538,9 +529,6 @@ class TestBulkAcknowledgeAnomaliesEndpoint:
         )
         assert response.status_code == 401
 
-    @pytest.mark.xfail(
-        reason="Integration test fixtures need refinement - tracked in follow-up issue"
-    )
     def test_bulk_acknowledge_empty_list(self, authenticated_client: TestClient):
         """Bulk acknowledge handles empty list gracefully."""
         response = authenticated_client.post(

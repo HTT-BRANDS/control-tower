@@ -22,9 +22,6 @@ from fastapi.testclient import TestClient
 class TestIdentitySummaryEndpoint:
     """Integration tests for GET /api/v1/identity/summary."""
 
-    @pytest.mark.xfail(
-        reason="Integration test fixtures need refinement - tracked in follow-up issue"
-    )
     def test_get_summary_success(self, authenticated_client: TestClient):
         """Identity summary returns aggregated data with proper structure."""
         response = authenticated_client.get("/api/v1/identity/summary")
@@ -36,20 +33,18 @@ class TestIdentitySummaryEndpoint:
         assert "total_users" in data
         assert "active_users" in data
         assert "guest_users" in data
-        assert "mfa_enabled_users" in data
-        assert "mfa_disabled_users" in data
+        assert "mfa_enabled_percent" in data
         assert "privileged_users" in data
-        assert "stale_accounts_30d" in data
-        assert "stale_accounts_90d" in data
 
         # Validate types
         assert isinstance(data["total_users"], int)
-        assert isinstance(data["mfa_enabled_users"], int)
+        assert isinstance(data["mfa_enabled_percent"], (int, float))
         assert isinstance(data["privileged_users"], int)
+        # stale_accounts live nested under by_tenant, not at top-level
 
         # Basic sanity checks
         assert data["total_users"] >= 0
-        assert data["mfa_enabled_users"] >= 0
+        assert data["mfa_enabled_percent"] >= 0
         assert data["privileged_users"] >= 0
 
     def test_get_summary_with_tenant_filter(
