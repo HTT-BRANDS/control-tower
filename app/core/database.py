@@ -34,16 +34,16 @@ if _IS_SQLITE:
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
 # Build engine kwargs — SQLite and SQL Server need different configs
-engine_args: dict[str, Any] = {
+_engine_args: dict[str, Any] = {
     "echo": settings.debug and settings.enable_query_logging,
 }
 
 if _IS_SQLITE:
     # SQLite: single-file, needs thread safety override
-    engine_args["connect_args"] = {"check_same_thread": False}
+    _engine_args["connect_args"] = {"check_same_thread": False}
 else:
     # SQL Server / PostgreSQL: use connection pool
-    engine_args.update(
+    _engine_args.update(
         {
             "pool_size": settings.database_pool_size,
             "max_overflow": settings.database_max_overflow,
@@ -53,46 +53,67 @@ else:
         }
     )
 
-engine = create_engine(settings.database_url, **engine_args)
+# Lazy engine: pyodbc is NOT imported until first actual DB use.
+# This prevents ImportError: libodbc.so.2 at module load time.
+_engine_instance = None
 
 
-# Query performance monitoring
-@event.listens_for(engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    """Capture query start time for performance monitoring."""
-    conn.info.setdefault("query_start_time", [])
-    conn.info["query_start_time"].append(time.perf_counter())
+def _get_engine():
+    """Return (or create) the singleton SQLAlchemy engine."""
+    global _engine_instance
+    if _engine_instance is None:
+        eng = create_engine(settings.database_url, **_engine_args)
+
+        # Query performance monitoring
+        @event.listens_for(eng, "before_cursor_execute")
+        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            conn.info.setdefault("query_start_time", [])
+            conn.info["query_start_time"].append(time.perf_counter())
+
+        @event.listens_for(eng, "after_cursor_execute")
+        def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            start_time = conn.info["query_start_time"].pop()
+            total_time = (time.perf_counter() - start_time) * 1000
+            if total_time > settings.slow_query_threshold_ms:
+                logger.warning(f"Slow query detected ({total_time:.2f}ms): {statement[:200]}...")
+            if settings.debug and settings.enable_query_logging:
+                logger.debug(f"Query executed in {total_time:.2f}ms: {statement[:100]}...")
+
+        # SQLite WAL mode — skip for SQL Server
+        if _IS_SQLITE:
+            @event.listens_for(eng, "connect")
+            def set_sqlite_pragma(dbapi_connection, connection_record):
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.execute("PRAGMA cache_size=10000")
+                cursor.execute("PRAGMA temp_store=MEMORY")
+                cursor.execute("PRAGMA mmap_size=30000000000")
+                cursor.close()
+
+        _engine_instance = eng
+    return _engine_instance
 
 
-@event.listens_for(engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    """Log slow queries based on configured threshold."""
-    start_time = conn.info["query_start_time"].pop()
-    total_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
+class _LazyEngine:
+    """Transparent proxy so code that imports `engine` directly keeps working."""
+    def __getattr__(self, name: str):
+        return getattr(_get_engine(), name)
 
-    if total_time > settings.slow_query_threshold_ms:
-        logger.warning(f"Slow query detected ({total_time:.2f}ms): {statement[:200]}...")
-
-    if settings.debug and settings.enable_query_logging:
-        logger.debug(f"Query executed in {total_time:.2f}ms: {statement[:100]}...")
+    def __call__(self, *a, **kw):
+        return _get_engine()(*a, **kw)
 
 
-# Enable WAL mode for SQLite only — skip for SQL Server / PostgreSQL
-if _IS_SQLITE:
-
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        """Set SQLite pragmas for performance."""
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.execute("PRAGMA cache_size=10000")
-        cursor.execute("PRAGMA temp_store=MEMORY")
-        cursor.execute("PRAGMA mmap_size=30000000000")  # Enable memory-mapped I/O
-        cursor.close()
+engine = _LazyEngine()
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def _make_session():
+    """Create a new SQLAlchemy session bound to the lazy engine."""
+    from sqlalchemy.orm import Session as _Session
+    return _Session(bind=_get_engine())
+
+
+SessionLocal = _make_session
 
 Base = declarative_base()
 
