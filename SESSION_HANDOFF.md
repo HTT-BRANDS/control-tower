@@ -81,3 +81,92 @@ uv run pytest tests/staging/ --staging-url=https://app-governance-staging-xnczpw
 ```
 
 **Plane Status: 🛬 LANDED CLEAN**
+
+---
+
+## Session: March 18, 2026 — Part 2 (code-puppy-5cc572)
+
+### What Happened This Session
+
+**Starting state:** v1.4.1, 0 test failures, staging live, CO-008 budget tracking done
+
+**Completed:**
+
+1. **`/api/v1/auth/staging-token` endpoint** (`app/api/routes/auth.py`)
+   - POST endpoint, hard-blocked in `environment=production` (404)
+   - Requires `x-staging-admin-key` header matching `STAGING_ADMIN_KEY` env var
+   - Issues 60-min admin JWT for E2E test runners
+   - `STAGING_ADMIN_KEY` stored in: Key Vault `kv-gov-staging-77zfjyem`, App Service, GitHub Secrets
+
+2. **Authenticated E2E test suite** (`tests/staging/test_authenticated_e2e.py`)
+   - 12 test classes, ~60 tests
+   - Auth, Tenants, Monitoring, Sync, Costs, Compliance, Identity,
+     Riverside, Budgets, Dashboard UI, Bulk Ops, Performance Baselines
+   - Skipped automatically when `STAGING_ADMIN_KEY` not set
+
+3. **Production infrastructure deployed** via `az cli`:
+   - `rg-governance-production` (eastus)
+   - `acrgovprod.azurecr.io` (Standard ACR)
+   - `sql-gov-prod-mylxq53d.database.windows.net` / `governance` db (S1, westus2)
+   - `kv-gov-prod.vault.azure.net` (DB URL + SQL password stored)
+   - `app-governance-prod.azurewebsites.net` (B2, Linux container)
+   - All app settings configured (same Azure AD creds as staging)
+
+4. **Production CI/CD** (`.github/workflows/deploy-production.yml`)
+   - Manual dispatch + `v*.*.*` tag trigger
+   - QA Gate → Trivy + pip-audit → ACR Build → Deploy (requires env approval) → Smoke → Teams
+
+5. **`infrastructure/parameters.production.json`** — production Bicep parameter file
+
+6. **Test isolation fix** (pre-existing bug, 7 intermittent failures in full suite)
+   - Root cause: `test_config.py` calls `get_settings.cache_clear()`, creating new `Settings()`
+     with different random `jwt_secret_key` than what `jwt_manager` was initialized with.
+   - Fix A: `tests/integration/auth_flow/conftest.py` — `create_test_token/refresh_token`
+     now use `jwt_manager.settings` directly (guarantees same key as validator uses).
+   - Fix B: `tests/unit/test_config.py` — pins `JWT_SECRET_KEY` env var before `cache_clear()`
+     and cleans up cache in `finally` block.
+   - Result: 2503 passed, 0 failures
+
+**Build status:**
+- Staging ACR `cab` → ✅ Succeeded
+- Production ACR `ca1` → ✅ Succeeded
+- Both App Services restarted (container pull in progress at session end)
+
+**Commit:** `2d0be31`
+
+### State at End of Session
+
+| Item | Status |
+|------|--------|
+| Tests | 2503 passed, 0 failures, 0 lint errors |
+| Staging app | 🔄 Restarting (cold-start ~3-4 min) |
+| Production app | 🔄 First boot (first container pull) |
+| Code pushed | ✅ `main` at `2d0be31` |
+| `bd ready` | ✅ No open issues |
+
+### Next Session Pickup
+
+1. **Verify staging-token endpoint works:**
+   ```bash
+   STAGING_KEY=$(az keyvault secret show --vault-name kv-gov-staging-77zfjyem --name staging-admin-key --query value -o tsv)
+   curl -X POST https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/auth/staging-token \
+     -H "x-staging-admin-key: $STAGING_KEY"
+   ```
+
+2. **Run authenticated E2E tests against staging:**
+   ```bash
+   STAGING_URL=https://app-governance-staging-xnczpwyv.azurewebsites.net \
+   STAGING_ADMIN_KEY="$STAGING_KEY" \
+   uv run pytest tests/staging/test_authenticated_e2e.py -v
+   ```
+
+3. **Production app first-boot check:**
+   ```bash
+   curl https://app-governance-prod.azurewebsites.net/health
+   # Expected: 200 {"status": "healthy", ...}
+   ```
+
+4. **Wire up GitHub Actions 'production' environment** (add required reviewers in repo settings)
+
+5. **Tag v1.5.0** once staging E2E passes green
+
