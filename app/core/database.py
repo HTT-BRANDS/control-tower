@@ -165,11 +165,20 @@ def get_db_bulk_context() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables."""
-    # Import models to register them with Base
-    from app import models  # noqa: F401
+    """Initialize database tables.
 
-    Base.metadata.create_all(_get_engine(), checkfirst=True)
+    For SQLite (local dev / test): create_all() creates the full schema.
+    For all other dialects (Azure SQL, PostgreSQL…): skip create_all and let
+    Alembic manage the schema.  The entrypoint runs `alembic upgrade head`
+    immediately after init_db(), so there is no gap.  Calling create_all
+    against a live Azure SQL database that already has the schema causes
+    42S01 'object already exists' errors that crash the process.
+    """
+    from app import models  # noqa: F401  — registers all models with Base
+
+    if _IS_SQLITE:
+        Base.metadata.create_all(_get_engine(), checkfirst=True)
+
     _create_indexes()
 
 
