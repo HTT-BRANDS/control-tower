@@ -1,6 +1,6 @@
 [project]
 name = "azure-governance-platform"
-version = "1.2.0"
+version = "1.4.1"
 description = "Multi-tenant Azure governance platform for cost optimization, compliance monitoring, resource management, and identity governance"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -107,13 +107,14 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "-v --tb=short --ignore=tests/e2e --ignore=tests/smoke"
+addopts = "-v --tb=short --ignore=tests/e2e --ignore=tests/smoke --ignore=tests/staging"
 markers = [
     "azure_creds_required: marks tests requiring Azure credentials",
     "auth_required: marks tests requiring authentication",
     "slow: marks tests as slow",
     "e2e: marks tests as end-to-end (require Playwright and running server)",
     "smoke: marks tests as smoke tests (require running server)",
+    "staging: marks tests as staging validation (require live staging URL)",
 ]
 
 [dependency-groups]
