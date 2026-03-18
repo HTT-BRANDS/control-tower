@@ -174,7 +174,7 @@ async def sync_all_tenants(
 
         try:
             # Get all active tenants
-            tenants = session.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+            tenants = session.query(Tenant).filter(Tenant.is_active == True).all()
             progress.set_total(len(tenants))
 
             logger.info(f"Found {len(tenants)} active tenants to sync")

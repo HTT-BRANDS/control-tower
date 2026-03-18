@@ -54,7 +54,7 @@ def get_riverside_summary(db) -> dict:
     today = date.today()
     days_to_deadline = (RIVERSIDE_DEADLINE - today).days
 
-    tenants = db.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
 
     tenant_summaries = []
     total_maturity = 0.0
@@ -201,7 +201,7 @@ def get_mfa_status(db) -> dict:
     Returns:
         Dict with MFA metrics.
     """
-    tenants = db.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
 
     tenant_mfa = []
     total_users = 0
@@ -270,7 +270,7 @@ def get_maturity_scores(db) -> dict:
     Returns:
         Dict with maturity scores.
     """
-    tenants = db.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
 
     tenant_scores = []
     domain_scores = {
