@@ -1,0 +1,143 @@
+{
+  "_metadata": {
+    "source": "Microsoft Learn — Azure Built-in Roles (official JSON definitions)",
+    "extracted_by": "web-puppy-78b68f",
+    "date": "2026-03-19",
+    "verification": "All 'name' (GUID) fields verified against rendered JSON on Microsoft Learn"
+  },
+
+  "cost_management_reader": {
+    "assignableScopes": ["/"],
+    "description": "Can view cost data and configuration (e.g. budgets, exports)",
+    "id": "/providers/Microsoft.Authorization/roleDefinitions/72fafb9e-0641-4937-9268-a91bfd8191a3",
+    "name": "72fafb9e-0641-4937-9268-a91bfd8191a3",
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Consumption/*/read",
+          "Microsoft.CostManagement/*/read",
+          "Microsoft.Billing/billingPeriods/read",
+          "Microsoft.Resources/subscriptions/read",
+          "Microsoft.Resources/subscriptions/resourceGroups/read",
+          "Microsoft.Support/*",
+          "Microsoft.Advisor/configurations/read",
+          "Microsoft.Advisor/recommendations/read",
+          "Microsoft.Management/managementGroups/read",
+          "Microsoft.Billing/billingProperty/read"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ],
+    "roleName": "Cost Management Reader",
+    "roleType": "BuiltInRole",
+    "type": "Microsoft.Authorization/roleDefinitions",
+    "_source_url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/management-and-governance#cost-management-reader",
+    "_notes": [
+      "Microsoft.Consumption/*/read wildcard INCLUDES Microsoft.Consumption/reservationSummaries/read",
+      "Zero Microsoft.Capacity permissions — does NOT grant reservation object access",
+      "assignableScopes: '/' means any subscription or management group (NOT Microsoft.Capacity scope)"
+    ]
+  },
+
+  "contributor": {
+    "assignableScopes": ["/"],
+    "description": "Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.",
+    "id": "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+    "name": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+    "permissions": [
+      {
+        "actions": ["*"],
+        "notActions": [
+          "Microsoft.Authorization/*/Delete",
+          "Microsoft.Authorization/*/Write",
+          "Microsoft.Authorization/elevateAccess/Action",
+          "Microsoft.Blueprint/blueprintAssignments/write",
+          "Microsoft.Blueprint/blueprintAssignments/delete",
+          "Microsoft.Compute/galleries/share/action",
+          "Microsoft.Purview/consents/write",
+          "Microsoft.Purview/consents/delete",
+          "Microsoft.Resources/deploymentStacks/manageDenySetting/action",
+          "Microsoft.Subscription/cancel/action",
+          "Microsoft.Subscription/enable/action"
+        ],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ],
+    "roleName": "Contributor",
+    "roleType": "BuiltInRole",
+    "type": "Microsoft.Authorization/roleDefinitions",
+    "_source_url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#contributor",
+    "_notes": [
+      "actions: ['*'] grants ALL management plane actions",
+      "NotActions does NOT include Microsoft.Capacity or Microsoft.Consumption — both are available",
+      "Contributor has Microsoft.Capacity/reservations/read (via *)",
+      "Contributor has Microsoft.Consumption/reservationSummaries/read (via *)",
+      "However Contributor cannot be used with Lighthouse (excluded from Lighthouse delegation per limitations doc)"
+    ]
+  },
+
+  "reservations_reader": {
+    "assignableScopes": ["/providers/Microsoft.Capacity"],
+    "description": "Lets one read all the reservations in a tenant",
+    "id": "/providers/Microsoft.Authorization/roleDefinitions/582fc458-8989-419f-a480-75249bc5db7e",
+    "name": "582fc458-8989-419f-a480-75249bc5db7e",
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Capacity/*/read",
+          "Microsoft.Authorization/roleAssignments/read"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ],
+    "roleName": "Reservations Reader",
+    "roleType": "BuiltInRole",
+    "type": "Microsoft.Authorization/roleDefinitions",
+    "_source_url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/management-and-governance#reservations-reader",
+    "_notes": [
+      "assignableScopes: '/providers/Microsoft.Capacity' — CANNOT be delegated via Azure Lighthouse",
+      "Microsoft.Capacity/*/read covers reservation objects, metadata, SKUs, terms",
+      "Does NOT grant Microsoft.Consumption/reservationSummaries/read — different namespace",
+      "This is NOT the same as Cost Management Reader (72fafb9e)",
+      "72fafb9e is Cost Management Reader; 582fc458 is Reservations Reader"
+    ]
+  },
+
+  "reservations_administrator": {
+    "assignableScopes": ["/providers/Microsoft.Capacity"],
+    "description": "Lets one read and manage all the reservations in a tenant",
+    "id": "/providers/Microsoft.Authorization/roleDefinitions/a8889054-8d42-49c9-bc1c-52486c10e7cd",
+    "name": "a8889054-8d42-49c9-bc1c-52486c10e7cd",
+    "permissions": [
+      {
+        "actions": [
+          "Microsoft.Capacity/*/read",
+          "Microsoft.Capacity/*/action",
+          "Microsoft.Capacity/*/write",
+          "Microsoft.Authorization/roleAssignments/read",
+          "Microsoft.Authorization/roleDefinitions/read",
+          "Microsoft.Authorization/roleAssignments/write",
+          "Microsoft.Authorization/roleAssignments/delete"
+        ],
+        "notActions": [],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ],
+    "roleName": "Reservations Administrator",
+    "roleType": "BuiltInRole",
+    "type": "Microsoft.Authorization/roleDefinitions",
+    "_source_url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#reservations-administrator",
+    "_notes": [
+      "assignableScopes: '/providers/Microsoft.Capacity' — CANNOT be delegated via Azure Lighthouse",
+      "Full CRUD on Microsoft.Capacity (read + action + write)",
+      "Can also delegate RBAC roles to other users (Authorization/roleAssignments/write)",
+      "Does NOT grant Microsoft.Consumption access"
+    ]
+  }
+}

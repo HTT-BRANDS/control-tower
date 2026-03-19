@@ -1,0 +1,144 @@
+{
+  "_metadata": {
+    "source": "Microsoft Learn — Azure Consumption REST API documentation",
+    "extracted_by": "web-puppy-78b68f",
+    "date": "2026-03-19",
+    "api_version": "2024-08-01",
+    "source_url": "https://learn.microsoft.com/en-us/rest/api/consumption/reservations-summaries"
+  },
+
+  "reservation_summaries_list": {
+    "operation": "Reservations Summaries - List",
+    "method": "GET",
+    "url_template": "https://management.azure.com/{resourceScope}/providers/Microsoft.Consumption/reservationSummaries?api-version=2024-08-01&grain={grain}",
+    "api_version": "2024-08-01",
+    "service": "Consumption",
+    "description": "Lists the reservations summaries for the defined scope daily or monthly grain.",
+    "warning": "ARM has a payload size limit of 12MB, so currently callers get 400 when the response size exceeds the ARM limit. In such cases, API call should be made with smaller date ranges.",
+    "uri_parameters": {
+      "resourceScope": {
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "description": "The fully qualified Azure Resource manager identifier of the resource."
+      },
+      "api-version": {
+        "in": "query",
+        "required": true,
+        "type": "string",
+        "minLength": 1,
+        "description": "The API version to use for this operation."
+      },
+      "grain": {
+        "in": "query",
+        "required": true,
+        "type": "Datagrain",
+        "description": "Can be daily or monthly",
+        "enum": ["daily", "monthly"]
+      },
+      "$filter": {
+        "in": "query",
+        "required": false,
+        "type": "string",
+        "description": "Required only for daily grain. The properties/UsageDate for start date and end date. The filter supports 'le' and 'ge'. Not applicable when querying with billing profile."
+      },
+      "endDate": {
+        "in": "query",
+        "required": false,
+        "type": "string",
+        "description": "End date. Only applicable when querying with billing profile."
+      },
+      "reservationId": {
+        "in": "query",
+        "required": false,
+        "type": "string",
+        "description": "Reservation Id GUID. Only valid if reservationOrderId is also provided. Filter to a specific reservation."
+      },
+      "reservationOrderId": {
+        "in": "query",
+        "required": false,
+        "type": "string",
+        "description": "Reservation Order Id GUID."
+      }
+    },
+    "security": {
+      "type": "oauth2",
+      "flow": "implicit",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+      "scopes": {
+        "user_impersonation": "impersonate your user account"
+      },
+      "_note": "No explicit RBAC action listed in OpenAPI spec. ARM enforces Microsoft.Consumption/reservationSummaries/read at the billing account scope."
+    },
+    "supported_scope_examples": [
+      {
+        "name": "ReservationSummariesDailyWithBillingAccountId",
+        "scope_pattern": "/providers/Microsoft.Billing/billingAccounts/{billingAccountId}",
+        "customer_type": "EA"
+      },
+      {
+        "name": "ReservationSummariesDailyWithBillingProfileId",
+        "scope_pattern": "/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/billingProfiles/{billingProfileId}",
+        "customer_type": "MCA"
+      },
+      {
+        "name": "ReservationSummariesMonthlyWithBillingAccountId",
+        "scope_pattern": "/providers/Microsoft.Billing/billingAccounts/{billingAccountId}",
+        "customer_type": "EA"
+      },
+      {
+        "name": "ReservationSummariesMonthlyWithBillingProfileId",
+        "scope_pattern": "/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/billingProfiles/{billingProfileId}",
+        "customer_type": "MCA"
+      },
+      {
+        "name": "ReservationSummariesMonthlyWithBillingProfileIdReservationId",
+        "scope_pattern": "/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/billingProfiles/{billingProfileId}",
+        "customer_type": "MCA"
+      }
+    ],
+    "subscription_scope_supported": false,
+    "lighthouse_delegatable": false,
+    "_note_ea_vs_non_ea": "If you're an EA customer, you can programmatically view how the reservations in your organization are being used via this endpoint. For other subscriptions, use the API Reservations Summaries - List By Reservation Order And Reservation."
+  },
+
+  "reservation_summaries_list_by_reservation_order": {
+    "operation": "Reservations Summaries - List By Reservation Order",
+    "method": "GET",
+    "url_template": "https://management.azure.com/providers/Microsoft.Capacity/reservationOrders/{reservationOrderId}/providers/Microsoft.Consumption/reservationSummaries?api-version=2024-08-01&grain={grain}",
+    "api_version": "2024-08-01",
+    "description": "Lists the reservations summaries for daily or monthly grain.",
+    "scope": "/providers/Microsoft.Capacity/reservationOrders/{reservationOrderId}",
+    "customer_type": "Non-EA (PAYG, MCA per-reservation)",
+    "required_permission": "Reservations Reader (582fc458) or higher at the reservation order scope",
+    "lighthouse_delegatable": false
+  },
+
+  "reservation_summaries_list_by_reservation_order_and_reservation": {
+    "operation": "Reservations Summaries - List By Reservation Order And Reservation",
+    "method": "GET",
+    "url_template": "https://management.azure.com/providers/Microsoft.Capacity/reservationOrders/{reservationOrderId}/reservations/{reservationId}/providers/Microsoft.Consumption/reservationSummaries?api-version=2024-08-01&grain={grain}",
+    "api_version": "2024-08-01",
+    "description": "Lists the reservations summaries for daily or monthly grain for a specific reservation within a reservation order.",
+    "scope": "/providers/Microsoft.Capacity/reservationOrders/{reservationOrderId}/reservations/{reservationId}",
+    "customer_type": "Non-EA (PAYG, MCA per-reservation)",
+    "required_permission": "Reservations Reader (582fc458) or higher at the reservation scope",
+    "lighthouse_delegatable": false
+  },
+
+  "lighthouse_compatibility_assessment": {
+    "list_endpoint_via_lighthouse": {
+      "compatible": false,
+      "reason": "Billing account scope (/providers/Microsoft.Billing/billingAccounts/...) is not within Lighthouse's subscription delegation scope"
+    },
+    "list_by_reservation_order_via_lighthouse": {
+      "compatible": false,
+      "reason": "Requires Reservations Reader role which has assignableScopes: ['/providers/Microsoft.Capacity'] — not delegatable via Lighthouse"
+    },
+    "cost_management_reader_via_lighthouse": {
+      "compatible": "partial",
+      "reason": "Cost Management Reader CAN be delegated via Lighthouse at subscription scope. The Microsoft.Consumption/*/read permission it grants works for subscription-level consumption. However the reservation summaries endpoint requires billing account scope, which Lighthouse cannot grant access to.",
+      "practical_result": "Lighthouse-delegated Cost Management Reader cannot access billing-account-scoped reservation summaries"
+    }
+  }
+}
