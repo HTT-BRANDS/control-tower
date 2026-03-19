@@ -81,6 +81,7 @@ def _get_engine():
 
         # SQLite WAL mode — skip for SQL Server
         if _IS_SQLITE:
+
             @event.listens_for(eng, "connect")
             def set_sqlite_pragma(dbapi_connection, connection_record):
                 cursor = dbapi_connection.cursor()
@@ -97,6 +98,7 @@ def _get_engine():
 
 class _LazyEngine:
     """Transparent proxy so code that imports `engine` directly keeps working."""
+
     def __getattr__(self, name: str):
         return getattr(_get_engine(), name)
 
@@ -117,8 +119,10 @@ def SessionLocal():
     global _session_factory
     if _session_factory is None:
         from sqlalchemy.orm import sessionmaker as _sm
+
         _session_factory = _sm(autocommit=False, autoflush=False, bind=_get_engine())
     return _session_factory()
+
 
 Base = declarative_base()
 

@@ -186,7 +186,9 @@ class TestResourceServiceGetResourceInventory:
     @pytest.mark.asyncio
     @patch("app.core.cache.cache_manager.get", return_value=None)
     @patch("app.core.cache.cache_manager.set", return_value=None)
-    async def test_get_resource_inventory_with_tenant_filter(self, mock_cache_set, mock_cache_get, service, mock_resources):
+    async def test_get_resource_inventory_with_tenant_filter(
+        self, mock_cache_set, mock_cache_get, service, mock_resources
+    ):
         """Test resource inventory with tenant_id filter.
 
         Cache is patched out to avoid decorator interference with tenant_id kwarg.

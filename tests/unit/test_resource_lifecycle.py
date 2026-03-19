@@ -1,4 +1,5 @@
 """Unit tests for ResourceLifecycleService — RM-004."""
+
 from unittest.mock import MagicMock
 
 
@@ -22,9 +23,9 @@ def _make_db():
 
 
 class TestResourceLifecycleServiceRecordEvent:
-
     def test_record_event_created(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         resource = _make_resource()
@@ -36,6 +37,7 @@ class TestResourceLifecycleServiceRecordEvent:
 
     def test_record_event_generates_uuid(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         resource = _make_resource()
@@ -45,6 +47,7 @@ class TestResourceLifecycleServiceRecordEvent:
 
     def test_record_event_survives_db_failure(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         db.commit.side_effect = Exception("DB error")
         svc = ResourceLifecycleService(db)
@@ -54,11 +57,13 @@ class TestResourceLifecycleServiceRecordEvent:
 
     def test_record_event_stores_changed_fields(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         resource = _make_resource()
         event = svc.record_event(
-            resource, "updated",
+            resource,
+            "updated",
             previous_state={"provisioning_state": "Succeeded"},
             current_state={"provisioning_state": "Deallocated"},
             changed_fields=["provisioning_state"],
@@ -67,9 +72,9 @@ class TestResourceLifecycleServiceRecordEvent:
 
 
 class TestResourceLifecycleServiceDetectChanges:
-
     def test_detect_no_changes(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         state = {"provisioning_state": "Succeeded", "location": "eastus"}
@@ -77,6 +82,7 @@ class TestResourceLifecycleServiceDetectChanges:
 
     def test_detect_provisioning_state_change(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         prev = {"provisioning_state": "Succeeded"}
@@ -86,6 +92,7 @@ class TestResourceLifecycleServiceDetectChanges:
 
     def test_detect_multiple_changes(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         prev = {"provisioning_state": "Succeeded", "location": "eastus", "is_orphaned": False}
@@ -95,6 +102,7 @@ class TestResourceLifecycleServiceDetectChanges:
 
     def test_detect_with_custom_tracked_fields(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         svc = ResourceLifecycleService(db)
         prev = {"sku": "B1", "tags_json": "{}"}
@@ -104,7 +112,6 @@ class TestResourceLifecycleServiceDetectChanges:
 
 
 class TestResourceLifecycleServiceQuery:
-
     def _setup_query(self, db, return_value):
         mock_q = MagicMock()
         mock_q.filter.return_value = mock_q
@@ -117,6 +124,7 @@ class TestResourceLifecycleServiceQuery:
 
     def test_get_history_returns_list(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         self._setup_query(db, [])
         svc = ResourceLifecycleService(db)
@@ -125,6 +133,7 @@ class TestResourceLifecycleServiceQuery:
 
     def test_get_history_limit_capped_at_200(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         mock_q = self._setup_query(db, [])
         svc = ResourceLifecycleService(db)
@@ -133,6 +142,7 @@ class TestResourceLifecycleServiceQuery:
 
     def test_get_tenant_events_returns_list(self):
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
         db = _make_db()
         self._setup_query(db, [])
         svc = ResourceLifecycleService(db)
@@ -141,7 +151,6 @@ class TestResourceLifecycleServiceQuery:
 
 
 class TestResourceHistoryRoute:
-
     def test_history_route_registered(self, client):
         """GET /api/v1/resources/{id}/history must be registered (not 404)."""
         response = client.get("/api/v1/resources/some-id/history")

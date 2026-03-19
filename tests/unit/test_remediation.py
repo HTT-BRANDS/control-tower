@@ -3,6 +3,7 @@
 Expands coverage of riverside_compliance.py from smoke-only to proper
 unit-level testing of calculate_compliance_summary() and analyze_mfa_gaps().
 """
+
 from datetime import date, datetime
 from unittest.mock import MagicMock
 
@@ -87,6 +88,7 @@ class TestCalculateComplianceSummary:
     def test_basic_summary_structure(self):
         """Result should contain all expected keys."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record("tenant-1")
         db = _make_db_with_compliance([record])
         result = calculate_compliance_summary(db)
@@ -100,6 +102,7 @@ class TestCalculateComplianceSummary:
     def test_empty_data_raises_value_error(self):
         """Should raise ValueError when no compliance records exist."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         db = _make_db_with_compliance([])
         with pytest.raises(ValueError, match="No compliance data"):
             calculate_compliance_summary(db)
@@ -107,6 +110,7 @@ class TestCalculateComplianceSummary:
     def test_compliance_percentage_calculation(self):
         """36/72 completed requirements → 50% compliance."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record(
             "tenant-1", requirements_total=72, requirements_completed=36
         )
@@ -117,6 +121,7 @@ class TestCalculateComplianceSummary:
     def test_trend_improving_above_70_percent(self):
         """>=70% completion → trend should be 'improving'."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record(
             "tenant-1", requirements_total=100, requirements_completed=75
         )
@@ -127,6 +132,7 @@ class TestCalculateComplianceSummary:
     def test_trend_critical_below_30_percent(self):
         """<30% completion → trend should be 'critical'."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record(
             "tenant-1", requirements_total=100, requirements_completed=20
         )
@@ -137,6 +143,7 @@ class TestCalculateComplianceSummary:
     def test_maturity_distribution_below_2(self):
         """Maturity 1.5 should land in 'below_2' bucket."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record("tenant-1", overall_maturity_score=1.5)
         db = _make_db_with_compliance([record])
         result = calculate_compliance_summary(db)
@@ -145,6 +152,7 @@ class TestCalculateComplianceSummary:
     def test_maturity_distribution_above_4(self):
         """Maturity 4.5 should land in 'above_4' bucket."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         record = _make_compliance_record("tenant-1", overall_maturity_score=4.5)
         db = _make_db_with_compliance([record])
         result = calculate_compliance_summary(db)
@@ -153,6 +161,7 @@ class TestCalculateComplianceSummary:
     def test_multiple_tenants_aggregation(self):
         """Two tenants should aggregate critical gaps and count correctly."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         records = [
             _make_compliance_record("tenant-1", critical_gaps_count=3),
             _make_compliance_record("tenant-2", critical_gaps_count=7),
@@ -165,6 +174,7 @@ class TestCalculateComplianceSummary:
     def test_tenants_analyzed_count(self):
         """tenants_analyzed should equal number of records returned."""
         from app.api.services.riverside_compliance import calculate_compliance_summary
+
         records = [_make_compliance_record(f"tenant-{i}") for i in range(4)]
         db = _make_db_with_compliance(records)
         result = calculate_compliance_summary(db)
@@ -177,6 +187,7 @@ class TestAnalyzeMfaGaps:
     def test_basic_result_structure(self):
         """Result should contain all expected keys."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         record = _make_mfa_record("tenant-1")
         db = _make_db_with_mfa([record])
         result = analyze_mfa_gaps(db)
@@ -191,6 +202,7 @@ class TestAnalyzeMfaGaps:
     def test_empty_data_raises_value_error(self):
         """Should raise ValueError when no MFA records exist."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         db = _make_db_with_mfa([])
         with pytest.raises(ValueError, match="No MFA data"):
             analyze_mfa_gaps(db)
@@ -198,6 +210,7 @@ class TestAnalyzeMfaGaps:
     def test_high_risk_tenant_below_50_percent(self):
         """Tenant with <50% MFA coverage should appear in high_risk_tenants."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         record = _make_mfa_record("tenant-1", mfa_coverage_percentage=30.0)
         db = _make_db_with_mfa([record])
         result = analyze_mfa_gaps(db)
@@ -206,6 +219,7 @@ class TestAnalyzeMfaGaps:
     def test_no_high_risk_tenants_above_80_percent(self):
         """Tenant with >80% MFA coverage should NOT appear in high_risk_tenants."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         record = _make_mfa_record("tenant-1", mfa_coverage_percentage=90.0)
         db = _make_db_with_mfa([record])
         result = analyze_mfa_gaps(db)
@@ -214,6 +228,7 @@ class TestAnalyzeMfaGaps:
     def test_unprotected_users_calculation(self):
         """total_unprotected_users = total_users - mfa_enabled_users."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         record = _make_mfa_record(
             "tenant-1", total_users=100, mfa_enabled_users=75, mfa_coverage_percentage=75.0
         )
@@ -224,6 +239,7 @@ class TestAnalyzeMfaGaps:
     def test_recommendations_list_not_empty(self):
         """Remediation recommendations should always be present."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         record = _make_mfa_record("tenant-1", mfa_coverage_percentage=50.0)
         db = _make_db_with_mfa([record])
         result = analyze_mfa_gaps(db)
@@ -233,6 +249,7 @@ class TestAnalyzeMfaGaps:
     def test_tenant_breakdown_per_tenant(self):
         """tenant_breakdown should have one entry per tenant."""
         from app.api.services.riverside_compliance import analyze_mfa_gaps
+
         records = [
             _make_mfa_record("tenant-1", mfa_coverage_percentage=80.0),
             _make_mfa_record("tenant-2", mfa_coverage_percentage=40.0),

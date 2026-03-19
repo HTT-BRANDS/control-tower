@@ -304,7 +304,9 @@ def test_jwt_secret_required_in_production(monkeypatch):
 
 def test_jwt_secret_accepted_when_set_in_production(monkeypatch):
     """JWT_SECRET_KEY should be accepted when explicitly set in production."""
-    monkeypatch.setenv("JWT_SECRET_KEY", "a-very-secure-production-secret-key-here")  # pragma: allowlist secret
+    monkeypatch.setenv(
+        "JWT_SECRET_KEY", "a-very-secure-production-secret-key-here"
+    )  # pragma: allowlist secret
     monkeypatch.setenv("ENVIRONMENT", "production")
     monkeypatch.setenv("DEBUG", "false")
 
@@ -314,7 +316,8 @@ def test_jwt_secret_accepted_when_set_in_production(monkeypatch):
     )
 
     assert (
-        settings.jwt_secret_key == "a-very-secure-production-secret-key-here"  # pragma: allowlist secret
+        settings.jwt_secret_key
+        == "a-very-secure-production-secret-key-here"  # pragma: allowlist secret
     )  # pragma: allowlist secret
     assert settings.environment == "production"
 
@@ -409,7 +412,9 @@ def test_get_cache_ttl_all_data_types(monkeypatch):
 def test_get_settings_returns_settings_instance(monkeypatch):
     """Test get_settings() returns a Settings instance."""
     # Pin secret so re-created Settings use the same key (prevents jwt_manager key mismatch)
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-key-32-chars-min-length!!")  # pragma: allowlist secret
+    monkeypatch.setenv(
+        "JWT_SECRET_KEY", "test-jwt-key-32-chars-min-length!!"
+    )  # pragma: allowlist secret
     get_settings.cache_clear()
     try:
         settings = get_settings()
@@ -421,7 +426,9 @@ def test_get_settings_returns_settings_instance(monkeypatch):
 def test_get_settings_returns_cached_singleton(monkeypatch):
     """Test get_settings() returns the same instance (singleton)."""
     # Pin secret so re-created Settings use the same key (prevents jwt_manager key mismatch)
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-key-32-chars-min-length!!")  # pragma: allowlist secret
+    monkeypatch.setenv(
+        "JWT_SECRET_KEY", "test-jwt-key-32-chars-min-length!!"
+    )  # pragma: allowlist secret
     get_settings.cache_clear()
     try:
         settings1 = get_settings()

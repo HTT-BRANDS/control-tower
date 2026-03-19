@@ -158,10 +158,7 @@ class AuditLogService:
             q = q.filter(AuditLogEntry.timestamp <= until)
 
         return (
-            q.order_by(AuditLogEntry.timestamp.desc())
-            .offset(offset)
-            .limit(min(limit, 500))
-            .all()
+            q.order_by(AuditLogEntry.timestamp.desc()).offset(offset).limit(min(limit, 500)).all()
         )
 
     def count(
