@@ -25,6 +25,7 @@ class Tenant(Base):
     tenant_id: Mapped[str] = Column(String(36), unique=True, nullable=False)
     client_id: Mapped[str | None] = Column(String(36))
     client_secret_ref: Mapped[str | None] = Column(String(500))  # Key Vault URI
+    billing_account_id: Mapped[str | None] = Column(String(255), nullable=True)
     description: Mapped[str | None] = Column(Text)
     is_active: Mapped[bool] = Column(Boolean, default=True)
     use_lighthouse: Mapped[bool] = Column(Boolean, default=False)
