@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import Index, create_engine, event, text
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.orm import Session, declarative_base
 
 from app.core.config import get_settings
 

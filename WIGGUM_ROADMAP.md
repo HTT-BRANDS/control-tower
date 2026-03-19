@@ -1,7 +1,7 @@
 # WIGGUM ROADMAP — Code Puppy Agile SDLC Implementation
 
 **Single Source of Truth for the `/wiggum ralph` Protocol**
-**Managed By:** Planning Agent 📋 (planning-agent-fde434) + Pack Leader 🐺
+**Managed By:** Planning Agent 📋 (planning-agent-8ae68e) + Pack Leader 🐺
 **Created:** March 6, 2026
 
 ---

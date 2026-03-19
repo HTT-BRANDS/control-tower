@@ -7,7 +7,7 @@
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| App Service | ✅ Running | v1.2.0 on `acrgovstaging19859.azurecr.io` |
+| App Service | ✅ Running | v1.5.1 on `acrgovstaging19859.azurecr.io` |
 | Health Endpoint | ✅ Healthy | DB, scheduler, cache, Azure all green |
 | Azure AD SSO | ✅ Configured | "Sign in with Microsoft" button live |
 | Scheduler | ✅ Running | 13 sync jobs registered |
@@ -94,4 +94,4 @@ The original staging 503 (2026-03-13 → 2026-03-16) was caused by missing `conf
 
 ---
 
-*Last updated: 2026-03-17 — Staging operational*
+*Last updated: 2026-03-19 — Staging operational, v1.5.1*

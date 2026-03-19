@@ -308,7 +308,7 @@ def get_riverside_metrics(db: Session) -> dict:
         ValueError: If no tenant data is available.
     """
     # Get all active tenants
-    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
 
     if not tenants:
         raise ValueError("No tenant data available for metrics calculation")

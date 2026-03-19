@@ -353,6 +353,11 @@ For comprehensive Riverside compliance documentation, see:
 - [x] Budget tracking (CO-008) — Azure Cost Management budgets, alerts, thresholds (v1.3.x)
 - [x] Test suite expanded 1,686 → 2,531 tests, 100% module coverage (v1.4.0)
 - [x] Zero test failures, zero lint errors (v1.4.0)
+- [x] Cleared all remaining xfail markers — 2,563 tests fully green (v1.4.1)
+- [x] Production infrastructure deployed (ACR, Azure SQL, Key Vault, App Service B2) (v1.5.0)
+- [x] Staging E2E validation suite — 74 tests (smoke, security, API coverage) (v1.5.0)
+- [x] Production CI/CD pipeline with QA gate, Trivy scanning, environment approval (v1.5.0)
+- [x] MSSQL compatibility + graceful startup resilience (v1.5.1)
 
 ### Planned
 

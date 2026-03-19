@@ -33,7 +33,7 @@ async def sync_riverside_mfa(db) -> dict:
     results = {}
     snapshot_date = datetime.utcnow()
 
-    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
 
     for tenant in tenants:
         try:
@@ -149,7 +149,7 @@ async def sync_riverside_device_compliance(db) -> dict:
     results = {}
     snapshot_date = datetime.utcnow()
 
-    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
 
     for tenant in tenants:
         try:
@@ -259,7 +259,7 @@ async def sync_riverside_requirements(db) -> dict:
         "errors": [],
     }
 
-    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
 
     for tenant in tenants:
         try:
@@ -315,7 +315,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
     results = {}
     snapshot_date = datetime.utcnow()
 
-    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()
+    tenants = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
 
     for tenant in tenants:
         try:

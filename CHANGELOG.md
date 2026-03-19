@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- `GET /auth/login` canonical login page route on public router
+- `GET /` root redirect now targets `/auth/login` (was `/login`)
+- `POST /api/v1/sync/trigger/{sync_type}` explicit trigger path alongside existing `POST /{sync_type}`
+- Removed duplicate `GET /` dashboard route from `dashboard.py` that shadowed the redirect
+
+### Fixed
+- Rate-limit state bleed between unit tests (`_memory_cache` not cleared between tests)
+- Dependency override leak between unit tests (snapshot/restore pattern via autouse fixture)
+- 3 remaining xfail markers removed (tests now pass)
+
+---
+
+## [1.5.1] - 2026-03-18
+
+### Fixed
+- **MSSQL compatibility**: Replaced `.is_(True)` with `== True` for MSSQL `bit` column compatibility across 4 files
+- **Startup resilience**: Alembic migration made non-fatal on DB connection failure (allows app to start with degraded DB)
+- **Startup resilience**: `_create_indexes()` made non-fatal on DB connection failure
+- **Logging**: Normalised `LOG_LEVEL` to lowercase for uvicorn compatibility
+
+### Changed
+- Version bumped to 1.5.1
+
+---
+
+## [1.5.0] - 2026-03-18
+
+### Added
+- **Production infrastructure**: Deployed `rg-governance-production` (eastus) with ACR, Azure SQL S1, Key Vault, App Service B2
+- **Staging token endpoint**: `POST /api/v1/auth/staging-token` for E2E test runners (hard-blocked in production)
+- **Authenticated E2E test suite**: `tests/staging/test_authenticated_e2e.py` — 12 test classes, ~60 tests covering auth, tenants, monitoring, sync, costs, compliance, identity, riverside, budgets, dashboards, bulk ops, performance
+- **Production CI/CD pipeline**: `.github/workflows/deploy-production.yml` — manual dispatch + tag trigger, QA gate, Trivy + pip-audit, ACR build, environment approval, smoke test, Teams notification
+- **Staging validation suite**: `tests/staging/` — 74 tests (smoke, security, API coverage, deployment)
+- **Staging CI/CD pipeline**: Rewrote `deploy-staging.yml` with correct app name, ACR registry, hard test gate
+
+### Fixed
+- **Test isolation**: `test_config.py` cache clear created new Settings with different JWT secret — now pins `JWT_SECRET_KEY` env var
+- **Test isolation**: `auth_flow/conftest.py` token helpers now use `jwt_manager.settings` directly
+- **Staging E2E**: Aligned test URLs to actual API routes + fixed fixture scope
+- **Migrations**: Made `001_add_backfill_job_table` idempotent
+- **Database**: Skip `create_all` for non-SQLite databases; `checkfirst=True` + lazy `SessionLocal` factory
+- **Database**: Lazy engine init — defers pyodbc import until first DB use
+- **Docker**: Use ACR-hosted Python base image to bypass Docker Hub rate limits
+- **Docker**: Pin to `python:3.11-slim-bookworm` + post-copy pyodbc smoke test
+- **Docker**: Restore `libodbc2+libodbccr2+unixodbc` before `msodbcsql18` install
+- **Monitoring**: Fixed critical alerts never sending notifications — `create_alert()` called async `send_alert_notification()` without `await`
+- 38 test warnings eliminated (36 Starlette deprecation, 1 RuntimeWarning, 1 ruff config migration)
+
+### Changed
+- Staging branch created — CI pipeline triggers on push
+- Production Bicep parameter file added (`infrastructure/parameters.production.json`)
+- Test count: 2,531 → 2,563 (xfails cleared)
+
+---
+
+## [1.4.1] - 2026-03-18
+
+### Fixed
+- Cleared all 32 remaining `xfail` markers — tests now pass:
+  - `test_routes_sync.py` (12): FastAPI DI via `dependency_overrides`
+  - `test_routes_auth.py` (6): Accept 401/422 for empty credentials
+  - `test_routes_preflight.py` (8): AsyncMock, CheckStatus enum, serializable fields
+  - `test_cost_api.py` (3): Fix xfail assumptions to match route behavior
+  - `test_identity_api.py` (1): Remove stale field assertions
+- Added `autouse reset_rate_limiter` fixture in `integration/conftest.py`
+
+### Changed
+- Test count: 2,531 → 2,563 passed, 0 failed, 0 xfailed, 0 xpassed
+
+---
+
 ## [1.4.0] - 2026-03-17
 
 ### Fixed
@@ -26,27 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Test count: 2,444 → 2,531 (47 xpassed tests now properly counted as passes)
-
----
-
-## [Unreleased]
-
-### Completed (Post v1.2.0)
-- Staging environment fully operational (health checks green, scheduler running, Azure AD SSO live)
-- Azure AD SSO authentication flow configured and tested
-- Admin role assignment from ADMIN_EMAILS + diagnostic logging for auth flow
-- TLL Entra ID P1 license — signInActivity and MFA reports now functional
-
-### Known Limitations
-- DCE tenant lacks Entra ID P1 — graceful degradation for signInActivity/MFA reports (business decision)
-
-### Planned
-- Custom compliance frameworks
-- Teams bot integration
-- Sui Generis device compliance integration (Phase 2)
-
-### Fixed
-- Dockerfile missing `config/`, `alembic/`, and `alembic.ini` in production stage (staging 503 root cause)
 
 ---
 
