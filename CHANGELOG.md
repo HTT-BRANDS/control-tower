@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No unreleased changes._
+
+---
+
+## [1.5.2] - 2026-03-19
+
 ### Added
 - `GET /auth/login` canonical login page route on public router
 - `GET /` root redirect now targets `/auth/login` (was `/login`)

@@ -375,20 +375,6 @@ class TestDMARCSummary:
     """Test suite for DMARC summary aggregation."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(
-        reason="Cache decorator causes conflicts in unit tests - covered by integration tests"
-    )
-    async def test_get_dmarc_summary_single_tenant(
-        self, dmarc_service, mock_db, sample_tenant, sample_dmarc_record, sample_dkim_record
-    ):
-        """Test DMARC summary for a single tenant.
-
-        Note: Skipped due to @cached decorator causing test issues.
-        The underlying logic is tested through other tests and covered in integration tests.
-        """
-        pass
-
-    @pytest.mark.asyncio
     async def test_get_dmarc_summary_no_tenants(self, dmarc_service, mock_db):
         """Test DMARC summary with no tenants."""
         # Setup mock queries to return empty lists

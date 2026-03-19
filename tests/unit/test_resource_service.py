@@ -183,14 +183,14 @@ class TestResourceServiceGetResourceInventory:
         assert "eastus" in result.resources_by_location
         assert "westus" in result.resources_by_location
 
-    @pytest.mark.skip(reason="Cache decorator has bug with tenant_id parameter conflict")
     @pytest.mark.asyncio
-    async def test_get_resource_inventory_with_tenant_filter(self, service, mock_resources):
+    @patch("app.core.cache.cache_manager.get", return_value=None)
+    @patch("app.core.cache.cache_manager.set", return_value=None)
+    async def test_get_resource_inventory_with_tenant_filter(self, mock_cache_set, mock_cache_get, service, mock_resources):
         """Test resource inventory with tenant_id filter.
 
-        NOTE: This test is currently skipped due to a naming conflict between
-        the method parameter 'tenant_id' and the cache decorator's tenant_id parameter.
-        This is a known issue in the cache implementation that needs to be fixed.
+        Cache is patched out to avoid decorator interference with tenant_id kwarg.
+        This matches the pattern used by other tests in this class.
         """
         # Use a unique cache-busting limit to avoid tenant_id parameter conflict
         mock_query = MagicMock()
