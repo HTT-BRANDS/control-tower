@@ -3,9 +3,10 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.api.services.chargeback_service import ChargebackService, ChargebackServiceError
 from app.api.services.cost_service import CostService
 from app.api.services.reservation_service import (
     ReservationAuthError,
@@ -20,6 +21,7 @@ from app.core.authorization import (
     get_tenant_authorization,
 )
 from app.core.database import get_db
+from app.schemas.chargeback import ChargebackReport, ExportedReport
 from app.schemas.cost import (
     BulkAcknowledgeRequest,
     BulkAcknowledgeResponse,
@@ -373,3 +375,128 @@ async def get_reservation_summaries(
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except ReservationServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+# ----------------------------------------------------------------------------
+# CO-010: Chargeback / Showback Reporting
+# ----------------------------------------------------------------------------
+
+
+@router.get(
+    "/chargeback/{tenant_id}",
+    response_model=ExportedReport,
+    summary="Single-tenant chargeback report",
+    description=(
+        "Return a chargeback report for a specific tenant over the given date range. "
+        "When ``format=csv`` the response also carries a "
+        "``Content-Disposition: attachment`` header so browsers trigger a download."
+    ),
+)
+async def get_tenant_chargeback(
+    tenant_id: str,
+    start_date: date = Query(..., description="Inclusive start of the reporting period"),
+    end_date: date = Query(..., description="Inclusive end of the reporting period"),
+    format: str = Query(  # noqa: A002
+        default="json",
+        pattern="^(json|csv)$",
+        description="Export format: 'json' or 'csv'",
+    ),
+    response: Response = None,  # type: ignore[assignment]
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+) -> ExportedReport:
+    """Chargeback report for a single tenant.
+
+    Args:
+        tenant_id: Internal tenant ID (must be accessible by the caller).
+        start_date: Inclusive start date.
+        end_date: Inclusive end date.
+        format: ``"json"`` (default) or ``"csv"``.
+        response: FastAPI response object used to set headers for CSV downloads.
+    """
+    authz.ensure_at_least_one_tenant()
+
+    if tenant_id not in authz.accessible_tenant_ids:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access denied: you do not have permission to access tenant {tenant_id!r}",
+        )
+
+    service = ChargebackService(db)
+    try:
+        exported = await service.export_report(
+            tenant_id=tenant_id,
+            start_date=start_date,
+            end_date=end_date,
+            format=format,
+        )
+    except ChargebackServiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if format == "csv" and response is not None:
+        response.headers["Content-Disposition"] = f"attachment; filename={exported.filename}"
+
+    return exported
+
+
+@router.get(
+    "/chargeback",
+    response_model=list[ExportedReport],
+    summary="Multi-tenant chargeback / showback report (admin only)",
+    description=(
+        "Aggregate chargeback reports across all tenants accessible to the caller. "
+        "Admin users see all tenants; non-admin users see only their assigned tenants."
+    ),
+)
+async def get_multi_tenant_chargeback(
+    start_date: date = Query(..., description="Inclusive start of the reporting period"),
+    end_date: date = Query(..., description="Inclusive end of the reporting period"),
+    format: str = Query(  # noqa: A002
+        default="json",
+        pattern="^(json|csv)$",
+        description="Export format: 'json' or 'csv'",
+    ),
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+) -> list[ExportedReport]:
+    """Multi-tenant showback report.
+
+    Admins receive reports for every active tenant; non-admin users are
+    restricted to their own tenant assignments.
+
+    Args:
+        start_date: Inclusive start date.
+        end_date: Inclusive end date.
+        format: ``"json"`` (default) or ``"csv"``.
+    """
+    authz.ensure_at_least_one_tenant()
+
+    tenant_ids = authz.accessible_tenant_ids
+    if not tenant_ids:
+        raise HTTPException(status_code=403, detail="No accessible tenants found")
+
+    service = ChargebackService(db)
+    try:
+        reports: list[ChargebackReport] = await service.get_multi_tenant_report(
+            tenant_ids=tenant_ids,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    except ChargebackServiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # Export each report in the requested format
+    results: list[ExportedReport] = []
+    for report in reports:
+        try:
+            exported = await service.export_report(
+                tenant_id=report.tenant_id,
+                start_date=start_date,
+                end_date=end_date,
+                format=format,
+            )
+            results.append(exported)
+        except ChargebackServiceError:
+            continue
+
+    return results
