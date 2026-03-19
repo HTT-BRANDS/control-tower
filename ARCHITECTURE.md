@@ -55,13 +55,13 @@
 |-------|------------|----------|
 | Backend | Python 3.11 + FastAPI | Fast, async, low resource |
 | Frontend | HTMX + Tailwind CSS | No build step, lightweight |
-| Database | SQLite | Zero cost, simple, portable |
+| Database | SQLite (dev) / Azure SQL S1 (prod) | Cost-effective dev, enterprise prod |
 | Charts | Chart.js | Client-side, no server load |
 | Auth | Azure AD / Entra ID | Native SSO integration |
 | APIs | Azure SDK + httpx | Official + async HTTP |
 | Caching | SQLite + in-memory | Reduce API calls |
 | Tasks | APScheduler | Background data sync |
-| Hosting | Azure App Service (B1) | $13/mo, adequate scale |
+| Hosting | Azure App Service (B2) | Production-grade, auto-scaling ready |
 
 ---
 
@@ -71,46 +71,87 @@
 
 ```
 app/
-├── main.py                 # FastAPI app entry
+├── main.py                       # FastAPI app entry — 22 routers registered
 ├── core/
-│   ├── config.py           # Settings & env vars
-│   ├── security.py         # Auth middleware
-│   ├── database.py         # SQLite connection
-│   └── scheduler.py        # Background jobs
+│   ├── config.py                 # Settings & env vars (Key Vault integration)
+│   ├── auth.py                   # JWT + Azure AD auth middleware
+│   ├── authorization.py          # RBAC + tenant authorization
+│   ├── database.py               # SQLite (dev) / Azure SQL (prod) connection
+│   ├── scheduler.py              # Background jobs (APScheduler)
+│   ├── rate_limit.py             # Sliding window rate limiting
+│   ├── cache.py                  # In-memory + Redis cache
+│   ├── circuit_breaker.py        # Circuit breaker for Azure API calls
+│   ├── theme_middleware.py       # Tenant → brand → CSS variables injection
+│   ├── design_tokens.py          # Pydantic brand/color/typography models
+│   ├── css_generator.py          # Server-side CSS custom property generation
+│   ├── color_utils.py            # WCAG color math (contrast, shades)
+│   └── sync/                     # Background sync workers
+│       ├── compliance.py
+│       ├── costs.py
+│       ├── identity.py
+│       ├── resources.py
+│       ├── dmarc.py
+│       └── riverside.py
 ├── api/
 │   ├── routes/
-│   │   ├── dashboard.py    # Main dashboard
-│   │   ├── costs.py        # Cost endpoints
-│   │   ├── compliance.py   # Compliance endpoints
-│   │   ├── resources.py    # Resource endpoints
-│   │   ├── identity.py     # Identity endpoints
-│   │   └── riverside.py    # Riverside compliance endpoints
+│   │   ├── auth.py               # Login, token, refresh
+│   │   ├── dashboard.py          # Main dashboard page
+│   │   ├── costs.py              # Cost endpoints
+│   │   ├── budgets.py            # Budget tracking
+│   │   ├── compliance.py         # Compliance endpoints
+│   │   ├── compliance_rules.py   # Custom compliance rules CRUD (CM-002)
+│   │   ├── resources.py          # Resource inventory + lifecycle history
+│   │   ├── identity.py           # Identity governance
+│   │   ├── tenants.py            # Tenant management
+│   │   ├── sync.py               # Sync trigger + status
+│   │   ├── riverside.py          # Riverside compliance dashboard
+│   │   ├── bulk.py               # Bulk operations
+│   │   ├── dmarc.py              # DMARC monitoring
+│   │   ├── exports.py            # CSV exports
+│   │   ├── monitoring.py         # Resource health aggregation
+│   │   ├── audit_logs.py         # Audit log aggregation (CM-010)
+│   │   ├── quotas.py             # Quota utilization monitoring (RM-007)
+│   │   ├── preflight.py          # Azure connectivity preflight checks
+│   │   ├── recommendations.py    # Right-sizing recommendations
+│   │   └── onboarding.py         # Self-service Lighthouse onboarding
 │   └── services/
-│       ├── azure_client.py # Azure SDK wrapper
-│       ├── graph_client.py # MS Graph wrapper
-│       ├── cost_service.py # Cost logic
-│       ├── compliance_svc.py# Compliance logic
-│       ├── resource_svc.py # Resource logic
-│       ├── identity_svc.py # Identity logic
-│       └── riverside_svc.py# Riverside compliance logic
+│       ├── azure_client.py       # Azure SDK wrapper
+│       ├── graph_client.py       # MS Graph wrapper
+│       ├── cost_service.py       # Cost aggregation + anomaly detection
+│       ├── compliance_service.py # Compliance + secure score
+│       ├── custom_rule_service.py# Custom rule CRUD + JSON Schema eval (CM-002)
+│       ├── resource_service.py   # Resource inventory + tagging
+│       ├── resource_lifecycle_service.py # Lifecycle event tracking (RM-004)
+│       ├── identity_service.py   # Identity governance
+│       ├── budget_service.py     # Budget tracking + alerting
+│       ├── audit_log_service.py  # Audit log aggregation (CM-010)
+│       ├── quota_service.py      # Quota utilization monitoring (RM-007)
+│       ├── monitoring_service.py # Health + performance monitoring
+│       ├── recommendation_service.py # Right-sizing recommendations
+│       ├── dmarc_service.py      # DMARC record analysis
+│       └── riverside_service/    # Riverside compliance logic
 ├── models/
-│   ├── tenant.py           # Tenant model
-│   ├── cost.py             # Cost models
-│   ├── compliance.py       # Compliance models
-│   ├── resource.py         # Resource models
-│   ├── identity.py         # Identity models
-│   └── riverside.py        # Riverside compliance models
-├── schemas/
-│   ├── cost.py             # Cost Pydantic schemas
-│   ├── compliance.py       # Compliance schemas
-│   ├── resource.py         # Resource schemas
-│   ├── identity.py         # Identity schemas
-│   └── riverside.py        # Riverside schemas
+│   ├── tenant.py
+│   ├── cost.py
+│   ├── compliance.py
+│   ├── resource.py
+│   ├── resource_lifecycle.py     # ResourceLifecycleEvent (RM-004)
+│   ├── identity.py
+│   ├── budget.py
+│   ├── audit_log.py              # AuditLogEntry (CM-010)
+│   ├── custom_rule.py            # CustomComplianceRule (CM-002)
+│   ├── monitoring.py
+│   ├── brand_config.py
+│   ├── backfill_job.py
+│   ├── recommendation.py
+│   ├── dmarc.py
+│   ├── notifications.py
+│   └── riverside.py
 └── templates/
-    ├── base.html           # Base template
-    ├── components/         # Reusable HTMX partials
-    │   └── riverside/      # Riverside-specific components
-    └── pages/              # Full page templates
+    ├── base.html                 # Base template with design token injection
+    ├── macros/ui.html            # Jinja2 component macro library
+    ├── components/               # Reusable HTMX partials
+    └── pages/                    # Full page templates (9 pages)
 ```
 
 ---

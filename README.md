@@ -21,6 +21,10 @@ A lightweight, cost-effective platform for managing Azure/M365 governance across
 - **Dark Mode**: System preference detection with manual toggle
 - **App Insights**: Request telemetry with optional OpenCensus exporter
 - **Data Retention**: Automated time-series cleanup with configurable periods
+- **Audit Log Aggregation**: Tamper-evident audit trail with full filtering, pagination, and summary endpoints
+- **Quota Utilization Monitoring**: Real-time Azure compute/network quota tracking with ok/warning/critical thresholds
+- **Resource Lifecycle Tracking**: Change detection and event history for all managed resources
+- **Custom Compliance Rules**: JSON Schema–based rule engine with tenant isolation, SSRF protection, and full CRUD API
 
 ## Quick Start
 

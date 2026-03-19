@@ -41,6 +41,20 @@ Version: 1.5.3 (pyproject.toml + app/__init__.py)
 
 ---
 
+## What v1.5.3 Did (this session — planning-agent-8ae68e)
+
+1. **CM-010** — Audit log aggregation: `AuditLogEntry` model + `AuditLogService` + `GET /api/v1/audit-logs` (22 unit tests)
+2. **RM-004** — Resource lifecycle tracking: `ResourceLifecycleEvent` model + `ResourceLifecycleService` + `GET /api/v1/resources/{id}/history` (14 unit tests)
+3. **RM-007** — Quota utilization monitoring: `QuotaService` (compute + network) + `GET /api/v1/resources/quotas` + `/summary` (29 unit tests)
+4. **CM-002** — Custom compliance rules: `CustomComplianceRule` model + `CustomRuleService` + full CRUD at `/api/v1/compliance/rules` (25 unit tests)
+5. **ADR-0005** — Architecture Decision Record for custom compliance rule engine (JSON Schema, SSRF prevention, DoS mitigation)
+6. **jsonschema>=4.20.0** added as production dependency
+7. **Alembic migrations 003–005**: resource_lifecycle_events, audit_log_entries, custom_compliance_rules
+8. **Net test delta**: +90 tests (2,559 → 2,649 passed)
+9. **Documentation sync**: TRACEABILITY_MATRIX, WIGGUM_ROADMAP, CHANGELOG all updated to v1.5.3 state
+
+---
+
 ## Previous Sessions
 
 ### v1.5.1 (March 19, 2026)
@@ -100,4 +114,4 @@ bd ready            # Any new issues?
 python scripts/sync_roadmap.py --verify --json
 ```
 
-**Plane Status: 🛬 LANDED CLEAN on v1.5.2**
+**Plane Status: 🛬 LANDED CLEAN on v1.5.3**
