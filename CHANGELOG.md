@@ -13,6 +13,22 @@ _No unreleased changes._
 
 ---
 
+## [1.5.3] - 2026-03-19
+
+### Added
+- **CM-010**: Audit log aggregation — `AuditLogEntry` model, `AuditLogService`, `GET /api/v1/audit-logs` with full filtering/pagination and `GET /api/v1/audit-logs/summary` (22 unit tests)
+- **RM-004**: Resource lifecycle tracking — `ResourceLifecycleEvent` model, `ResourceLifecycleService` with change detection, `GET /api/v1/resources/{id}/history` (14 unit tests)
+- **RM-007**: Quota utilization monitoring — `QuotaService` with compute/network quota fetching, ok/warning/critical thresholds, `GET /api/v1/resources/quotas` + `/summary` (29 unit tests)
+- **CM-002**: Custom compliance rules — `CustomComplianceRule` model, `CustomRuleService` with JSON Schema evaluation, full CRUD at `POST/GET/PUT/DELETE /api/v1/compliance/rules` (25 unit tests)
+- **ADR-0005**: Architecture Decision Record for custom compliance rule engine (JSON Schema approach, SSRF prevention, DoS mitigation)
+- `jsonschema>=4.20.0` added as production dependency for CM-002 rule evaluation
+- 5 Alembic migrations (003–005) for resource_lifecycle_events, audit_log_entries, custom_compliance_rules tables
+
+### Fixed
+- Phase 8 documentation: WIGGUM_ROADMAP Phase 8 populated, TRACEABILITY_MATRIX CM-002/CM-010/RM-004/RM-007 updated to ✅
+
+---
+
 ## [1.5.2] - 2026-03-19
 
 ### Added

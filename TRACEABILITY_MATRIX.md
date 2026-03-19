@@ -276,7 +276,7 @@ This epic maps the compliance monitoring requirements to their implementing code
 | Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
 |--------|------------|-----------|---------------|-----------|--------|
 | CM-001 | Azure Policy compliance across tenants | `app/api/services/compliance_service.py`, `app/core/sync/compliance.py` | `test_compliance_service`, `test_routes_compliance`, `sync/test_compliance` | Unit + Int + E2E | ✅ Implemented |
-| CM-002 | Custom compliance rule definitions | — | — | — | ⏳ Phase 2 (P1) |
+| CM-002 | Custom compliance rule definitions | `app/models/custom_rule.py`, `app/api/services/custom_rule_service.py`, `app/api/routes/compliance_rules.py` | `test_custom_rule_service` (25 unit tests) | Unit + Integration | ✅ Passed |
 | CM-003 | Regulatory framework mapping (SOC2, etc) | — | — | — | ⏳ Phase 2 (P2) |
 | CM-004 | Compliance drift detection | `app/api/services/compliance_service.py`, `app/models/compliance.py` | `test_compliance_service`, `test_routes_compliance` | Unit + Int | ✅ Implemented |
 | CM-005 | Automated remediation suggestions | `app/api/services/riverside_compliance.py` | `test_remediation` (16 unit tests), `test_azure_connectivity` (smoke) | Unit + Smoke | ✅ Passed |
@@ -289,15 +289,15 @@ This epic maps the compliance monitoring requirements to their implementing code
 | CM-007 | Non-compliant resource inventory | `app/api/services/compliance_service.py`, `app/api/routes/compliance.py` | `test_compliance_service`, `test_routes_compliance`, `test_mfa_alerts` | Unit + Int + E2E | ✅ Implemented |
 | CM-008 | Compliance trend reporting | `app/api/routes/compliance.py`, `app/api/services/compliance_service.py` | `test_compliance_service`, `test_routes_compliance`, `test_dmarc_service` | Unit + Int + E2E | ✅ Implemented |
 | CM-009 | Policy exemption management | `app/api/services/compliance_service.py`, `app/core/sync/compliance.py` | `test_compliance_service`, `test_routes_compliance`, `sync/test_compliance` | Unit + Int | ✅ Implemented |
-| CM-010 | Audit log aggregation | — | — | — | ⏳ Phase 2 (P1) |
+| CM-010 | Audit log aggregation | `app/models/audit_log.py`, `app/api/services/audit_log_service.py`, `app/api/routes/audit_logs.py` | `test_audit_log_service` (22 unit tests) | Unit + Integration | ✅ Passed |
 
 ### 13.3 CM-xxx Coverage Summary
 
 | Category | Total Reqs | Implemented | Tested | Phase 2 | Coverage |
 |----------|-----------|-------------|--------|---------|----------|
-| Policy & Drift (CM-001–005) | 5 | 3 | 3 | 2 | 60% (100% of MVP scope) |
-| Reporting & Inventory (CM-006–010) | 5 | 4 | 4 | 1 | 80% (100% of MVP scope) |
-| **TOTAL** | **10** | **7** | **7** | **3** | **70% (100% of MVP scope)** |
+| Policy & Drift (CM-001–005) | 5 | 4 | 4 | 1 | 80% (100% of MVP scope) |
+| Reporting & Inventory (CM-006–010) | 5 | 5 | 5 | 0 | 100% |
+| **TOTAL** | **10** | **9** | **9** | **1** | **90% (100% of MVP scope)** |
 
 
 ---
@@ -313,7 +313,7 @@ This epic maps the resource management requirements to their implementing code a
 | RM-001 | Cross-tenant resource inventory | `app/api/services/resource_service.py`, `app/core/sync/resources.py` | `test_resource_service`, `test_database`, `sync/test_resources`, `test_azure_client` | Unit | ✅ Implemented |
 | RM-002 | Resource tagging compliance | `app/api/services/resource_service.py`, `app/api/routes/resources.py` | `test_resource_service`, `test_routes_resources`, `test_compliance_service` | Unit + Int + E2E | ✅ Implemented |
 | RM-003 | Orphaned resource detection | `app/api/services/resource_service.py`, `app/core/sync/resources.py` | `test_resource_service`, `sync/test_resources`, `test_routes_resources` | Unit + Int + E2E | ✅ Implemented |
-| RM-004 | Resource lifecycle tracking | — | — | — | ⏳ Phase 2 (P1) |
+| RM-004 | Resource lifecycle tracking | `app/models/resource_lifecycle.py`, `app/api/services/resource_lifecycle_service.py` | `test_resource_lifecycle` (14 unit tests) | Unit + Integration | ✅ Passed |
 | RM-005 | Subscription/RG organization view | `app/api/services/resource_service.py`, `app/core/config.py` | `test_resource_service`, `test_routes_costs` | Unit | ✅ Implemented |
 
 ### 14.2 Health, Quotas & Enforcement (RM-006 → RM-010)
@@ -321,7 +321,7 @@ This epic maps the resource management requirements to their implementing code a
 | Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
 |--------|------------|-----------|---------------|-----------|--------|
 | RM-006 | Resource health aggregation | `app/api/routes/monitoring.py`, `app/services/lighthouse_client.py` | `test_resource_health` (13 unit tests) | Unit | ✅ Passed |
-| RM-007 | Quota utilization monitoring | — | — | — | ⏳ Phase 2 (P1) |
+| RM-007 | Quota utilization monitoring | `app/api/services/quota_service.py`, `app/api/routes/quotas.py` | `test_quota_service` (29 unit tests) | Unit + Integration | ✅ Passed |
 | RM-008 | Resource provisioning standards | — | — | — | ⏳ Phase 2 (P2) |
 | RM-009 | Tag enforcement reporting | `app/api/services/resource_service.py`, `app/api/routes/resources.py` | `test_resource_service`, `test_compliance_service`, `test_routes_resources` | Unit + Int | ✅ Implemented |
 | RM-010 | Resource change history | — | — | — | ⏳ Phase 2 (P2) |
@@ -330,9 +330,9 @@ This epic maps the resource management requirements to their implementing code a
 
 | Category | Total Reqs | Implemented | Tested | Phase 2 | Coverage |
 |----------|-----------|-------------|--------|---------|----------|
-| Inventory & Tagging (RM-001–005) | 5 | 4 | 4 | 1 | 80% (100% of MVP scope) |
-| Health & Enforcement (RM-006–010) | 5 | 2 | 2 | 3 | 40% (66% of implemented scope) |
-| **TOTAL** | **10** | **6** | **5** | **4** | **60% (83% of MVP scope)** |
+| Inventory & Tagging (RM-001–005) | 5 | 5 | 5 | 0 | 100% (100% of MVP scope) |
+| Health & Enforcement (RM-006–010) | 5 | 3 | 3 | 2 | 60% (100% of implemented scope) |
+| **TOTAL** | **10** | **8** | **8** | **2** | **80% (100% of implemented scope)** |
 
 
 ---
@@ -433,11 +433,11 @@ This epic maps the non-functional requirements (performance, security, availabil
 | Epic | Total Reqs | Implemented | With Tests | Multi-Layer | Phase 2 | Not Impl | Coverage |
 |------|-----------|-------------|------------|-------------|---------|----------|----------|
 | 12: Cost Optimization | 10 | 7 | 7 | 5 | 2 | 1 | 70% |
-| 13: Compliance Monitoring | 10 | 7 | 7 | 5 | 3 | 0 | 70% |
-| 14: Resource Management | 10 | 6 | 6 | 3 | 4 | 0 | 60% |
+| 13: Compliance Monitoring | 10 | 9 | 9 | 5 | 1 | 0 | 90% |
+| 14: Resource Management | 10 | 8 | 8 | 3 | 2 | 0 | 80% |
 | 15: Identity Governance | 10 | 10 | 10 | 5 | 0 | 0 | 100% |
 | 16: Non-Functional Reqs | 17 | 17 | 14 | 3 | 0 | 0 | 100% |
-| **TOTAL** | **57** | **47** | **43** | **21** | **9** | **1** | **82%** |
+| **TOTAL** | **57** | **49** | **49** | **21** | **5** | **1** | **86%** |
 
 ### Aggregate Metrics
 
