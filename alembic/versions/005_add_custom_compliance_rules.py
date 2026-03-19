@@ -54,12 +54,8 @@ def upgrade() -> None:
     op.create_index("ix_custom_compliance_rules_category", _TABLE, ["category"])
 
     # Composite indexes from __table_args__
-    op.create_index(
-        "ix_custom_rules_tenant_category", _TABLE, ["tenant_id", "category"]
-    )
-    op.create_index(
-        "ix_custom_rules_tenant_enabled", _TABLE, ["tenant_id", "is_enabled"]
-    )
+    op.create_index("ix_custom_rules_tenant_category", _TABLE, ["tenant_id", "category"])
+    op.create_index("ix_custom_rules_tenant_enabled", _TABLE, ["tenant_id", "is_enabled"])
 
 
 def downgrade() -> None:

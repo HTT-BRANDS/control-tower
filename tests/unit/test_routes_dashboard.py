@@ -221,9 +221,7 @@ class TestMainDashboardPage:
             f"Expected a redirect from GET /, got {response.status_code}"
         )
         location = response.headers.get("location", "")
-        assert "login" in location, (
-            f"Expected redirect to a login URL, got location={location!r}"
-        )
+        assert "login" in location, f"Expected redirect to a login URL, got location={location!r}"
 
     def test_root_is_publicly_accessible(self, client_with_db):
         """Root endpoint does not return 401/403 — it is a public redirect."""

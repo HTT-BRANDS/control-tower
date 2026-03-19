@@ -70,9 +70,7 @@ async def get_quota_summary(
 
     # Collect compute quotas — graceful degradation if Azure is unavailable
     summaries = []
-    compute = quota_svc.get_compute_quotas(
-        "00000000-0000-0000-0000-000000000000", "all", location
-    )
+    compute = quota_svc.get_compute_quotas("00000000-0000-0000-0000-000000000000", "all", location)
     summaries.append(compute)
 
     return quota_svc.aggregate_quotas(summaries)

@@ -200,9 +200,7 @@ class QuotaService:
                     summary.quotas.append(item)
         except Exception as exc:
             summary.error = str(exc)
-            logger.warning(
-                "Network quota fetch failed for sub %s: %s", subscription_id, exc
-            )
+            logger.warning("Network quota fetch failed for sub %s: %s", subscription_id, exc)
         return summary
 
     def aggregate_quotas(self, summaries: list[QuotaSummary]) -> dict[str, Any]:

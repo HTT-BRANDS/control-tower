@@ -1,54 +1,66 @@
 """Unit tests for QuotaService — RM-007."""
+
 from unittest.mock import MagicMock, patch
 
 
 class TestQuotaItem:
-
     def test_utilization_pct_normal(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=50, limit=100)
         assert item.utilization_pct == 50.0
 
     def test_utilization_pct_zero_limit(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=0, limit=0)
         assert item.utilization_pct == 0.0
 
     def test_status_ok(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=10, limit=100)
         assert item.status == "ok"
 
     def test_status_warning_at_75_pct(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=75, limit=100)
         assert item.status == "warning"
 
     def test_status_critical_at_90_pct(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=90, limit=100)
         assert item.status == "critical"
 
     def test_status_critical_at_100_pct(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=100, limit=100)
         assert item.status == "critical"
 
     def test_available_calculation(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=30, limit=100)
         assert item.available == 70
 
     def test_available_never_negative(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(name="cores", current_value=110, limit=100)
         assert item.available == 0
 
     def test_to_dict_structure(self):
         from app.api.services.quota_service import QuotaItem
+
         item = QuotaItem(
-            name="vCPUs", current_value=5, limit=20,
-            provider="compute", location="eastus",
+            name="vCPUs",
+            current_value=5,
+            limit=20,
+            provider="compute",
+            location="eastus",
         )
         d = item.to_dict()
         assert d["name"] == "vCPUs"
@@ -58,9 +70,9 @@ class TestQuotaItem:
 
 
 class TestQuotaSummary:
-
     def _make_summary(self, sub="sub-1", tenant="t-1", quotas=None):
         from app.api.services.quota_service import QuotaSummary
+
         s = QuotaSummary(subscription_id=sub, tenant_id=tenant, location="eastus")
         if quotas:
             s.quotas = quotas
@@ -72,6 +84,7 @@ class TestQuotaSummary:
 
     def test_overall_status_critical(self):
         from app.api.services.quota_service import QuotaItem
+
         s = self._make_summary()
         s.quotas = [QuotaItem(name="cores", current_value=92, limit=100)]
         assert s.overall_status == "critical"
@@ -79,6 +92,7 @@ class TestQuotaSummary:
 
     def test_overall_status_warning(self):
         from app.api.services.quota_service import QuotaItem
+
         s = self._make_summary()
         s.quotas = [QuotaItem(name="cores", current_value=77, limit=100)]
         assert s.overall_status == "warning"
@@ -99,10 +113,10 @@ class TestQuotaSummary:
 
 
 class TestQuotaServiceComputeQuotas:
-
     def test_get_compute_quotas_not_installed(self):
         """Should return error summary when azure-mgmt-compute not installed."""
         from app.api.services.quota_service import QuotaService
+
         svc = QuotaService(credential=MagicMock())
         # Patch the module-level name to None (simulates missing SDK)
         with patch("app.api.services.quota_service.ComputeManagementClient", None):
@@ -165,6 +179,7 @@ class TestQuotaServiceComputeQuotas:
     def test_get_network_quotas_not_installed(self):
         """Should return error summary when azure-mgmt-network not installed."""
         from app.api.services.quota_service import QuotaService
+
         svc = QuotaService(credential=MagicMock())
         with patch("app.api.services.quota_service.NetworkManagementClient", None):
             summary = svc.get_network_quotas("sub-1", "tenant-1")
@@ -172,9 +187,9 @@ class TestQuotaServiceComputeQuotas:
 
 
 class TestQuotaServiceAggregate:
-
     def test_aggregate_quotas_empty(self):
         from app.api.services.quota_service import QuotaService
+
         svc = QuotaService(credential=MagicMock())
         result = svc.aggregate_quotas([])
         assert result["overall_status"] == "ok"
@@ -182,6 +197,7 @@ class TestQuotaServiceAggregate:
 
     def test_aggregate_quotas_critical_surfaces(self):
         from app.api.services.quota_service import QuotaItem, QuotaService, QuotaSummary
+
         svc = QuotaService(credential=MagicMock())
         s = QuotaSummary(subscription_id="sub-crit", tenant_id="t-1", location="eastus")
         s.quotas = [QuotaItem(name="cores", current_value=95, limit=100)]
@@ -191,6 +207,7 @@ class TestQuotaServiceAggregate:
 
     def test_aggregate_quotas_warning_surfaces(self):
         from app.api.services.quota_service import QuotaItem, QuotaService, QuotaSummary
+
         svc = QuotaService(credential=MagicMock())
         s = QuotaSummary(subscription_id="sub-warn", tenant_id="t-1", location="eastus")
         s.quotas = [QuotaItem(name="cores", current_value=80, limit=100)]
@@ -200,6 +217,7 @@ class TestQuotaServiceAggregate:
 
     def test_aggregate_quotas_top_sorted_by_utilization(self):
         from app.api.services.quota_service import QuotaItem, QuotaService, QuotaSummary
+
         svc = QuotaService(credential=MagicMock())
         s = QuotaSummary(subscription_id="sub-1", tenant_id="t-1", location="eastus")
         s.quotas = [
@@ -212,6 +230,7 @@ class TestQuotaServiceAggregate:
 
     def test_aggregate_total_quota_metrics(self):
         from app.api.services.quota_service import QuotaItem, QuotaService, QuotaSummary
+
         svc = QuotaService(credential=MagicMock())
         s = QuotaSummary(subscription_id="sub-1", tenant_id="t-1", location="eastus")
         s.quotas = [
@@ -224,7 +243,6 @@ class TestQuotaServiceAggregate:
 
 
 class TestQuotaRoutes:
-
     def test_quota_route_registered(self, client):
         """GET /api/v1/resources/quotas must be mounted (not 404)."""
         response = client.get("/api/v1/resources/quotas")

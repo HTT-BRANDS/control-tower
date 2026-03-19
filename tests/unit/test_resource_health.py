@@ -3,6 +3,7 @@
 Covers the get_health_status() path in LighthouseAzureClient, which was
 flagged as having ZERO test coverage in the traceability matrix.
 """
+
 from unittest.mock import MagicMock
 
 
@@ -15,6 +16,7 @@ class TestLighthouseHealthStatus:
         Uses __new__ to bypass __init__ entirely — no Azure SDK calls made.
         """
         from app.services.lighthouse_client import LighthouseAzureClient
+
         client = LighthouseAzureClient.__new__(LighthouseAzureClient)
         # Inject mock resilience objects directly
         client._arm_resilience = MagicMock()
@@ -22,7 +24,10 @@ class TestLighthouseHealthStatus:
         client._cost_resilience = MagicMock()
         client._cost_resilience.get_state.return_value = {"status": "closed", "failure_count": 0}
         client._security_resilience = MagicMock()
-        client._security_resilience.get_state.return_value = {"status": "closed", "failure_count": 0}
+        client._security_resilience.get_state.return_value = {
+            "status": "closed",
+            "failure_count": 0,
+        }
         client.credential = MagicMock()
         return client
 
@@ -85,9 +90,11 @@ class TestLighthouseHealthStatus:
     def test_reset_lighthouse_client(self):
         """reset_lighthouse_client() should clear the singleton."""
         from app.services.lighthouse_client import reset_lighthouse_client
+
         # Should not raise
         reset_lighthouse_client()
         from app.services.lighthouse_client import _lighthouse_client
+
         assert _lighthouse_client is None
 
 

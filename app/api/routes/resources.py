@@ -341,13 +341,17 @@ async def get_resource_changes(
 
     authz.ensure_at_least_one_tenant()
 
-    # Enforce tenant isolation — validate access if caller scopes to one tenant
+    # Enforce tenant isolation — validate explicit scope, then derive effective list
     if tenant_id:
         authz.validate_access(tenant_id)
 
+    accessible_tenants = authz.accessible_tenant_ids
+    # Scope to specified tenant or fall back to all accessible ones for this user
+    effective_tenant_ids = [tenant_id] if tenant_id else list(accessible_tenants)
+
     svc = ResourceLifecycleService(db)
     events, total = svc.get_changes(
-        tenant_id=tenant_id,
+        tenant_ids=effective_tenant_ids,
         resource_type=resource_type,
         event_type=event_type,
         since=since,

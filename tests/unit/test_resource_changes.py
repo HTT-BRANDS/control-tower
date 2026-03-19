@@ -2,7 +2,8 @@
 
 Covers:
 - ResourceLifecycleService.get_changes() — all filter paths + limit cap
-- GET /api/v1/resources/changes — registration, auth, happy path, filter params
+- GET /api/v1/resources/changes — registration, auth, happy path, filter params,
+  and tenant isolation (events scoped to accessible tenants only)
 """
 
 from datetime import UTC, datetime
@@ -174,7 +175,7 @@ class TestGetChangesService:
         mock_q.offset.assert_called_with(100)
 
     def test_all_filters_combined(self):
-        """All filters active → 4 filter calls (tenant + type + event + since + until)."""
+        """All filters active → 5 filter calls (tenant + resource_type + event_type + since + until)."""
         from app.api.services.resource_lifecycle_service import ResourceLifecycleService
 
         db = _make_db()
@@ -244,9 +245,7 @@ class TestResourceChangesRoute:
     def test_changes_route_accepts_date_filters(self, authed_client):
         """ISO datetime since/until params are accepted."""
         response = authed_client.get(
-            "/api/v1/resources/changes"
-            "?since=2026-01-01T00:00:00"
-            "&until=2026-12-31T23:59:59"
+            "/api/v1/resources/changes?since=2026-01-01T00:00:00&until=2026-12-31T23:59:59"
         )
         assert response.status_code == 200
 
@@ -265,6 +264,26 @@ class TestResourceChangesRoute:
         assert len(data["events"]) == 1
         assert data["events"][0]["resource_id"] == "res-xyz"
         assert data["events"][0]["event_type"] == "deleted"
+
+    @patch("app.api.services.resource_lifecycle_service.ResourceLifecycleService")
+    def test_changes_scoped_to_accessible_tenants(self, mock_svc_cls, authed_client):
+        """Without tenant_id, events are scoped to accessible tenants — not the whole DB.
+
+        The authed_client fixture sets accessible_tenant_ids = ["test-tenant-123"].
+        Verifies get_changes is called with tenant_ids=["test-tenant-123"], ensuring
+        events from other tenants are never returned.
+        """
+        mock_svc = MagicMock()
+        mock_svc.get_changes.return_value = ([], 0)
+        mock_svc_cls.return_value = mock_svc
+
+        response = authed_client.get("/api/v1/resources/changes")
+        assert response.status_code == 200
+
+        call_kwargs = mock_svc.get_changes.call_args.kwargs
+        assert "tenant_ids" in call_kwargs, "Route must pass tenant_ids for isolation"
+        # The mock_authz fixture exposes accessible_tenant_ids = ["test-tenant-123"]
+        assert call_kwargs["tenant_ids"] == ["test-tenant-123"]
 
     def test_changes_route_limit_le_200_enforced(self, authed_client):
         """Requesting limit > 200 should return 422 (FastAPI validation)."""

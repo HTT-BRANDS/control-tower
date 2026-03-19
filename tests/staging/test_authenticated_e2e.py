@@ -319,8 +319,7 @@ class TestDashboardUI:
         assert "text/html" in resp.headers.get("content-type", "")
         # Should contain governance platform markup
         assert any(
-            marker in resp.text
-            for marker in ["governance", "dashboard", "Azure", "tenant"]
+            marker in resp.text for marker in ["governance", "dashboard", "Azure", "tenant"]
         ), "Dashboard HTML missing expected content"
 
     def test_login_page_unauthenticated(self, staging_url):
@@ -369,6 +368,4 @@ class TestPerformance:
         resp = authed.get(f"{staging_url}{path}", timeout=max_ms / 1000 + 5)
         elapsed_ms = (time.monotonic() - start) * 1000
         assert resp.status_code in (200, 401, 403), f"{path} returned {resp.status_code}"
-        assert elapsed_ms < max_ms, (
-            f"{path} took {elapsed_ms:.0f}ms — budget is {max_ms}ms"
-        )
+        assert elapsed_ms < max_ms, f"{path} took {elapsed_ms:.0f}ms — budget is {max_ms}ms"

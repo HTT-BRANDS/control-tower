@@ -61,12 +61,8 @@ def upgrade() -> None:
     op.create_index("ix_audit_log_entries_tenant_id", _TABLE, ["tenant_id"])
 
     # Composite indexes
-    op.create_index(
-        "ix_audit_log_timestamp_actor", _TABLE, ["timestamp", "actor_id"]
-    )
-    op.create_index(
-        "ix_audit_log_action_tenant", _TABLE, ["action", "tenant_id"]
-    )
+    op.create_index("ix_audit_log_timestamp_actor", _TABLE, ["timestamp", "actor_id"])
+    op.create_index("ix_audit_log_action_tenant", _TABLE, ["action", "tenant_id"])
 
 
 def downgrade() -> None:

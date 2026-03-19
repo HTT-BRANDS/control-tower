@@ -117,9 +117,7 @@ class CustomRuleService:
         offset: int = 0,
     ) -> list[CustomComplianceRule]:
         """List rules for a tenant with optional filters."""
-        q = self.db.query(CustomComplianceRule).filter(
-            CustomComplianceRule.tenant_id == tenant_id
-        )
+        q = self.db.query(CustomComplianceRule).filter(CustomComplianceRule.tenant_id == tenant_id)
         if category:
             q = q.filter(CustomComplianceRule.category == category)
         if enabled_only:
@@ -189,9 +187,7 @@ class CustomRuleService:
             logger.error("Failed to delete custom rule %s: %s", rule_id, exc)
             return False
 
-    def evaluate(
-        self, rule: CustomComplianceRule, resource_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def evaluate(self, rule: CustomComplianceRule, resource_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate a rule's schema against a resource data dict.
 
         Uses jsonschema Draft 2020-12 for evaluation.

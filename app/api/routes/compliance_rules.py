@@ -26,9 +26,7 @@ class CreateRuleRequest(BaseModel):
     tenant_id: str = Field(..., description="Tenant UUID this rule belongs to")
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=2000)
-    category: str = Field(
-        ..., description="resource_property | compliance_score | mfa_coverage"
-    )
+    category: str = Field(..., description="resource_property | compliance_score | mfa_coverage")
     severity: str = Field(default="medium", description="low | medium | high | critical")
     rule_schema: dict = Field(..., description="JSON Schema definition for this rule")
 
@@ -60,14 +58,10 @@ async def create_rule(
         category=body.category,
         severity=body.severity,
         rule_schema=body.rule_schema,
-        created_by=(
-            getattr(current_user, "email", None) or getattr(current_user, "id", None)
-        ),
+        created_by=(getattr(current_user, "email", None) or getattr(current_user, "id", None)),
     )
     if errors:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=errors
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=errors)
     return rule.to_dict()
 
 

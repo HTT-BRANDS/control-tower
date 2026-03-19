@@ -1,4 +1,5 @@
 """Unit tests for AuditLogService — CM-010."""
+
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
@@ -74,8 +75,8 @@ class TestAuditLogServiceWriteEntry:
         db = _make_db()
         service = AuditLogService(db)
         mock_req = MagicMock()
-        mock_req.headers.get.side_effect = (
-            lambda k, d=None: "1.2.3.4, 5.6.7.8" if k == "X-Forwarded-For" else None
+        mock_req.headers.get.side_effect = lambda k, d=None: (
+            "1.2.3.4, 5.6.7.8" if k == "X-Forwarded-For" else None
         )
         mock_req.client = None
         entry = service.write_entry("auth.login.success", request=mock_req)
@@ -124,8 +125,8 @@ class TestAuditLogServiceWriteEntry:
         db = _make_db()
         service = AuditLogService(db)
         mock_req = MagicMock()
-        mock_req.headers.get.side_effect = (
-            lambda k, d=None: "TestBrowser/1.0" if k == "User-Agent" else None
+        mock_req.headers.get.side_effect = lambda k, d=None: (
+            "TestBrowser/1.0" if k == "User-Agent" else None
         )
         mock_req.client = None
         entry = service.write_entry("auth.logout", request=mock_req)
@@ -138,12 +139,10 @@ class TestAuditLogServiceWriteEntry:
         db = _make_db()
         service = AuditLogService(db)
         mock_req = MagicMock()
-        mock_req.headers.get.side_effect = (
-            lambda k, d=None: "9.9.9.9" if k == "X-Forwarded-For" else None
+        mock_req.headers.get.side_effect = lambda k, d=None: (
+            "9.9.9.9" if k == "X-Forwarded-For" else None
         )
-        entry = service.write_entry(
-            "auth.login.success", ip_address="1.1.1.1", request=mock_req
-        )
+        entry = service.write_entry("auth.login.success", ip_address="1.1.1.1", request=mock_req)
         assert entry.ip_address == "1.1.1.1"
 
 

@@ -121,6 +121,7 @@ class ResourceLifecycleService:
         self,
         *,
         tenant_id: str | None = None,
+        tenant_ids: list[str] | None = None,
         resource_type: str | None = None,
         event_type: str | None = None,
         since: datetime | None = None,
@@ -131,10 +132,15 @@ class ResourceLifecycleService:
         """Return cross-resource lifecycle events with optional filtering (RM-010).
 
         Supports filtering by tenant, resource type, event type, and date range.
+        Pass tenant_ids (list) for multi-tenant isolation; tenant_id (single string)
+        is kept for backward compatibility with direct service callers.
         Returns (events, total_count) for paginated responses.
         """
         q = self.db.query(ResourceLifecycleEvent)
-        if tenant_id:
+        # tenant_ids (list) takes priority — used by the route for proper isolation
+        if tenant_ids is not None:
+            q = q.filter(ResourceLifecycleEvent.tenant_id.in_(tenant_ids))
+        elif tenant_id:
             q = q.filter(ResourceLifecycleEvent.tenant_id == tenant_id)
         if resource_type:
             q = q.filter(ResourceLifecycleEvent.resource_type == resource_type)

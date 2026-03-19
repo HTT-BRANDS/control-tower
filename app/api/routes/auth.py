@@ -683,6 +683,7 @@ async def auth_health_check() -> dict[str, Any]:
 # Staging-only: E2E test token endpoint
 # ============================================================================
 
+
 @router.post("/staging-token", include_in_schema=False)
 async def staging_test_token(
     x_staging_admin_key: str | None = None,
