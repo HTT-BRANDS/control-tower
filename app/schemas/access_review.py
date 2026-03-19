@@ -1,10 +1,10 @@
 """Pydantic schemas for Access Review Facilitation (IG-010).
 
 Data models for:
-- StaleAssignment  — a privileged role assignment with no recent sign-in activity
-- AccessReview     — a review task created for a stale assignment
-- ReviewAction     — the action a reviewer can take (approve / revoke)
-- ReviewActionRequest — request body for the action endpoint
+- StaleAssignment  -- a privileged role assignment with no recent sign-in activity
+- AccessReview     -- a review task created for a stale assignment
+- ReviewAction     -- the action a reviewer can take (approve / revoke)
+- ReviewActionRequest -- request body for the action endpoint
 """
 
 from __future__ import annotations
@@ -51,9 +51,9 @@ class StaleAssignment(BaseModel):
         default=None,
         description="Last sign-in timestamp; None means the user has never signed in",
     )
-    days_inactive: int = Field(
-        description="Days since last sign-in (0 when last_sign_in is None, meaning never)",
-        ge=0,
+    days_inactive: int | None = Field(
+        default=None,
+        description="Days since last sign-in; None when user has never signed in",
     )
 
 
@@ -81,6 +81,23 @@ class AccessReview(BaseModel):
     resolved_at: datetime | None = Field(
         default=None,
         description="When the review was resolved (approved or revoked)",
+    )
+    # User context -- populated from StaleAssignment at create time
+    user_id: str | None = Field(
+        default=None,
+        description="Azure AD user object ID of the assigned principal",
+    )
+    user_display_name: str | None = Field(
+        default=None,
+        description="Display name of the assigned user",
+    )
+    role_name: str | None = Field(
+        default=None,
+        description="Friendly name of the directory role being reviewed",
+    )
+    days_inactive: int | None = Field(
+        default=None,
+        description="Days since the user last signed in; None means never signed in",
     )
 
 

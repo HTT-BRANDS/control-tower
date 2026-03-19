@@ -165,7 +165,7 @@ class TestListStaleAssignments:
 
         assert len(results) == 1
         assert results[0].last_sign_in is None
-        assert results[0].days_inactive == 0  # never signed in → 0 days reported
+        assert results[0].days_inactive is None  # never signed in -> None (not 0)
 
     @pytest.mark.asyncio
     async def test_recent_sign_in_is_not_stale(self):
@@ -407,10 +407,10 @@ class TestHelpers:
         recent = datetime.utcnow() - timedelta(days=10)
         assert svc._is_stale(recent) is False
 
-    def test_days_inactive_none_returns_zero(self):
-        """days_inactive returns 0 for None (never signed in)."""
+    def test_days_inactive_none_returns_none(self):
+        """days_inactive returns None for None (never signed in)."""
         svc = _fresh_service()
-        assert svc._days_inactive(None) == 0
+        assert svc._days_inactive(None) is None
 
     def test_days_inactive_calculates_correctly(self):
         """days_inactive returns the approximate number of days since sign-in."""
@@ -516,3 +516,210 @@ class TestAccessReviewRoutes:
             json={"action": "approve"},
         )
         assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Tests: double-revoke guard (Fix 2)
+# ---------------------------------------------------------------------------
+
+
+class TestDoubleActionGuard:
+    """Tests that already-resolved reviews cannot be actioned again."""
+
+    @pytest.mark.asyncio
+    async def test_take_action_on_approved_review_raises_value_error(self):
+        """Acting on an already-approved review raises ValueError."""
+        svc = _fresh_service()
+        review = await svc.create_review(TENANT_ID, ASSIGNMENT_ID)
+
+        # First action: approve succeeds
+        await svc.take_action(TENANT_ID, review.id, "approve")
+
+        # Second action: should raise ValueError (not KeyError)
+        with pytest.raises(ValueError, match="already resolved"):
+            await svc.take_action(TENANT_ID, review.id, "approve")
+
+    @pytest.mark.asyncio
+    async def test_take_action_on_revoked_review_raises_value_error(self):
+        """Acting on an already-revoked review raises ValueError."""
+        svc = _fresh_service()
+        review = await svc.create_review(TENANT_ID, ASSIGNMENT_ID)
+
+        with patch.object(svc, "_get_client", return_value=MagicMock(tenant_id=TENANT_ID)):
+            with patch.object(svc, "_delete_assignment", new_callable=AsyncMock):
+                await svc.take_action(TENANT_ID, review.id, "revoke")
+
+        with pytest.raises(ValueError, match="already resolved"):
+            with patch.object(svc, "_get_client", return_value=MagicMock(tenant_id=TENANT_ID)):
+                with patch.object(svc, "_delete_assignment", new_callable=AsyncMock):
+                    await svc.take_action(TENANT_ID, review.id, "revoke")
+
+    @patch("app.api.routes.identity.access_review_service")
+    def test_route_returns_409_on_double_action(self, mock_svc, authed_client):
+        """POST /access-reviews/{id}/action returns 409 when review is already resolved."""
+        review_id = str(uuid.uuid4())
+        mock_svc.take_action = AsyncMock(
+            side_effect=ValueError(f"Review {review_id!r} is already resolved (status='approved')")
+        )
+
+        response = authed_client.post(
+            f"/api/v1/identity/access-reviews/{review_id}/action?tenant_id=test-tenant-123",
+            json={"action": "approve"},
+        )
+
+        assert response.status_code == 409
+
+
+# ---------------------------------------------------------------------------
+# Tests: asyncio.gather for parallel Graph calls (Fix 1)
+# ---------------------------------------------------------------------------
+
+
+class TestParallelSignInFetch:
+    """Tests that list_stale_assignments uses asyncio.gather for parallel fetches."""
+
+    @pytest.mark.asyncio
+    async def test_gather_called_for_multiple_users(self):
+        """asyncio.gather is used to fetch sign-in activity for multiple users in parallel."""
+        svc = _fresh_service()
+        last_sign_in = datetime.utcnow() - timedelta(days=100)
+
+        two_assignments = [
+            _build_assignment(assignment_id="asgn-001", user_id="user-001"),
+            _build_assignment(assignment_id="asgn-002", user_id="user-002"),
+        ]
+
+        async def fake_gather(*coros, return_exceptions=False):
+            return [last_sign_in, last_sign_in]
+
+        with (
+            patch.object(
+                svc,
+                "_get_client",
+                return_value=MagicMock(
+                    _request=AsyncMock(return_value={"value": two_assignments}),
+                    tenant_id=TENANT_ID,
+                ),
+            ),
+            patch(
+                "app.api.services.access_review_service.asyncio.gather", side_effect=fake_gather
+            ) as mock_gather,
+        ):
+            results = await svc.list_stale_assignments(TENANT_ID)
+
+        mock_gather.assert_called_once()
+        # Verify two coroutines were passed (one per user assignment)
+        call_args = mock_gather.call_args
+        assert len(call_args.args) == 2
+        assert len(results) == 2
+
+    @pytest.mark.asyncio
+    async def test_multiple_stale_users_all_returned(self):
+        """All stale users are returned when multiple are fetched in parallel."""
+        svc = _fresh_service()
+        last_sign_in = datetime.utcnow() - timedelta(days=100)
+
+        two_assignments = [
+            _build_assignment(assignment_id="asgn-001", user_id="user-001"),
+            _build_assignment(assignment_id="asgn-002", user_id="user-002"),
+        ]
+
+        with (
+            patch.object(
+                svc,
+                "_get_client",
+                return_value=MagicMock(
+                    _request=AsyncMock(return_value={"value": two_assignments}),
+                    tenant_id=TENANT_ID,
+                ),
+            ),
+            patch.object(
+                svc,
+                "_get_sign_in_activity",
+                new_callable=AsyncMock,
+                return_value=last_sign_in,
+            ),
+        ):
+            results = await svc.list_stale_assignments(TENANT_ID)
+
+        assert len(results) == 2
+        ids = {r.assignment_id for r in results}
+        assert "asgn-001" in ids
+        assert "asgn-002" in ids
+
+
+# ---------------------------------------------------------------------------
+# Tests: user context stored in AccessReview (Fix 3)
+# ---------------------------------------------------------------------------
+
+
+class TestAccessReviewUserContext:
+    """Tests that AccessReview carries user context from StaleAssignment."""
+
+    @pytest.mark.asyncio
+    async def test_create_review_stores_user_context(self):
+        """create_review persists user_id, user_display_name, role_name, days_inactive."""
+        svc = _fresh_service()
+
+        review = await svc.create_review(
+            tenant_id=TENANT_ID,
+            assignment_id=ASSIGNMENT_ID,
+            user_id=USER_ID,
+            user_display_name=USER_NAME,
+            role_name=ROLE_NAME,
+            days_inactive=100,
+        )
+
+        assert review.user_id == USER_ID
+        assert review.user_display_name == USER_NAME
+        assert review.role_name == ROLE_NAME
+        assert review.days_inactive == 100
+
+    @pytest.mark.asyncio
+    async def test_create_review_stores_none_days_inactive_for_never_signed_in(self):
+        """days_inactive=None is correctly stored (user has never signed in)."""
+        svc = _fresh_service()
+
+        review = await svc.create_review(
+            tenant_id=TENANT_ID,
+            assignment_id=ASSIGNMENT_ID,
+            user_id=USER_ID,
+            user_display_name=USER_NAME,
+            role_name=ROLE_NAME,
+            days_inactive=None,
+        )
+
+        assert review.days_inactive is None
+        assert review.user_display_name == USER_NAME
+        assert review.role_name == ROLE_NAME
+
+    @patch("app.api.routes.identity.access_review_service")
+    def test_route_returns_user_context_in_review_response(self, mock_svc, authed_client):
+        """GET /access-reviews returns user_display_name and role_name in each review."""
+        mock_svc.list_stale_assignments = AsyncMock(return_value=[])
+        mock_svc.create_review = AsyncMock()
+        mock_svc.get_reviews = AsyncMock(
+            return_value=[
+                AccessReview(
+                    id=str(uuid.uuid4()),
+                    assignment_id="asgn-abc",
+                    tenant_id="test-tenant-123",
+                    status="pending",
+                    created_at=datetime.utcnow(),
+                    user_id="user-xyz",
+                    user_display_name="Alice Admin",
+                    role_name="Global Administrator",
+                    days_inactive=120,
+                ),
+            ]
+        )
+
+        response = authed_client.get("/api/v1/identity/access-reviews?tenant_id=test-tenant-123")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["user_display_name"] == "Alice Admin"
+        assert data[0]["role_name"] == "Global Administrator"
+        assert data[0]["days_inactive"] == 120
+        assert data[0]["user_id"] == "user-xyz"

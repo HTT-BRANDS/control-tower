@@ -535,6 +535,10 @@ async def list_access_reviews(
             await access_review_service.create_review(
                 tenant_id=tenant_id,
                 assignment_id=assignment.assignment_id,
+                user_id=assignment.user_id,
+                user_display_name=assignment.user_display_name,
+                role_name=assignment.role_name,
+                days_inactive=assignment.days_inactive,
             )
 
         reviews = await access_review_service.get_reviews(tenant_id=tenant_id)
@@ -601,6 +605,11 @@ async def take_review_action(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Review {review_id!r} not found for tenant {tenant_id!r}",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
         ) from exc
     except AccessReviewServiceError as exc:
         if exc.status_code == 401:

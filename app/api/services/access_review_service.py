@@ -17,6 +17,7 @@ Graph permissions required (app-only):
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -120,10 +121,10 @@ class AccessReviewService:
         return last_sign_in < threshold
 
     @staticmethod
-    def _days_inactive(last_sign_in: datetime | None) -> int:
-        """Return days since *last_sign_in*; 0 when last_sign_in is None (never signed in)."""
+    def _days_inactive(last_sign_in: datetime | None) -> int | None:
+        """Return days since *last_sign_in*; None when last_sign_in is None (never signed in)."""
         if last_sign_in is None:
-            return 0
+            return None
         delta = datetime.utcnow() - last_sign_in
         return max(0, delta.days)
 
@@ -270,25 +271,32 @@ class AccessReviewService:
         assignments: list[dict[str, Any]] = raw_data.get("value", [])
         stale_results: list[StaleAssignment] = []
 
-        for assignment in assignments:
+        # Filter to user principals only (skip service principals / groups)
+        user_assignments = [
+            a
+            for a in assignments
+            if "#microsoft.graph.user" in (a.get("principal") or {}).get("@odata.type", "").lower()
+            and (a.get("principal") or {}).get("id")
+        ]
+
+        # Fetch all sign-in activity in parallel — O(n) concurrent instead of O(n) serial
+        sign_in_times: list[datetime | None] = list(
+            await asyncio.gather(
+                *[
+                    self._get_sign_in_activity(client, a["principal"]["id"])
+                    for a in user_assignments
+                ],
+                return_exceptions=False,
+            )
+        )
+
+        for assignment, last_sign_in in zip(user_assignments, sign_in_times, strict=True):
             principal: dict[str, Any] = assignment.get("principal") or {}
-            odata_type: str = principal.get("@odata.type", "")
-
-            # Only evaluate user principals (skip service principals / groups)
-            if "#microsoft.graph.user" not in odata_type.lower():
-                continue
-
-            user_id: str = principal.get("id", "")
-            if not user_id:
-                continue
-
             role_def: dict[str, Any] = assignment.get("roleDefinition") or {}
             role_name: str = role_def.get("displayName", "Unknown Role")
             user_display_name: str = principal.get("displayName", "Unknown User")
+            user_id: str = principal.get("id", "")
             assignment_id: str = assignment.get("id", "")
-
-            # Fetch sign-in activity for this user
-            last_sign_in = await self._get_sign_in_activity(client, user_id)
 
             if not self._is_stale(last_sign_in):
                 continue
@@ -304,7 +312,7 @@ class AccessReviewService:
                 )
             )
 
-        stale_results.sort(key=lambda s: s.days_inactive, reverse=True)
+        stale_results.sort(key=lambda s: (s.days_inactive is None, -(s.days_inactive or 0)))
         logger.info(
             "Tenant %s: found %d stale privileged assignment(s) out of %d total",
             tenant_id,
@@ -313,15 +321,27 @@ class AccessReviewService:
         )
         return stale_results
 
-    async def create_review(self, tenant_id: str, assignment_id: str) -> AccessReview:
+    async def create_review(
+        self,
+        tenant_id: str,
+        assignment_id: str,
+        user_id: str | None = None,
+        user_display_name: str | None = None,
+        role_name: str | None = None,
+        days_inactive: int | None = None,
+    ) -> AccessReview:
         """Create a pending access review for *assignment_id*.
 
         If a pending review already exists for this assignment, the
         existing review is returned (idempotent).
 
         Args:
-            tenant_id:     Azure AD tenant ID.
-            assignment_id: Role assignment object ID to review.
+            tenant_id:         Azure AD tenant ID.
+            assignment_id:     Role assignment object ID to review.
+            user_id:           Azure AD user object ID (for display context).
+            user_display_name: User's display name (for display context).
+            role_name:         Directory role name (for display context).
+            days_inactive:     Days since last sign-in; None = never signed in.
 
         Returns:
             The (new or existing) :class:`AccessReview` in ``pending`` status.
@@ -339,6 +359,10 @@ class AccessReviewService:
             assignment_id=assignment_id,
             tenant_id=tenant_id,
             status="pending",
+            user_id=user_id,
+            user_display_name=user_display_name,
+            role_name=role_name,
+            days_inactive=days_inactive,
         )
         store[review.id] = review
         reviewed.add(assignment_id)
@@ -396,6 +420,10 @@ class AccessReviewService:
             raise KeyError(f"Review {review_id!r} not found for tenant {tenant_id!r}")
 
         review = store[review_id]
+
+        # Guard against double-action on already-resolved reviews
+        if review.status != "pending":
+            raise ValueError(f"Review {review_id!r} is already resolved (status={review.status!r})")
 
         if action == "revoke":
             client = self._get_client(tenant_id)
