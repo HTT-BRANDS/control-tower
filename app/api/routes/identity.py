@@ -3,6 +3,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.services.access_review_service import (
+    AccessReviewServiceError,
+    access_review_service,
+)
 from app.api.services.azure_ad_admin_service import azure_ad_admin_service
 from app.api.services.identity_service import IdentityService
 from app.api.services.license_service import LicenseServiceError, license_service
@@ -12,6 +16,7 @@ from app.core.authorization import (
     get_tenant_authorization,
 )
 from app.core.database import get_db
+from app.schemas.access_review import AccessReview, ReviewActionRequest, StaleAssignment
 from app.schemas.identity import (
     GuestAccount,
     IdentitySummary,
@@ -490,4 +495,139 @@ async def get_user_licenses(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch licenses for user {user_id}: {exc}",
+        ) from exc
+
+
+# ============================================================================
+# Access Review Facilitation Endpoints (IG-010)
+# ============================================================================
+
+
+@router.get("/access-reviews", response_model=list[AccessReview])
+async def list_access_reviews(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """List pending access reviews for a tenant.
+
+    Auto-creates a review for any stale privileged assignment that does
+    not yet have one.  An assignment is stale when the assigned user has
+    not signed in for >90 days, or has never signed in.
+
+    Requires Graph permissions: ``RoleManagement.Read.All``,
+    ``AuditLog.Read.All``.
+
+    Args:
+        tenant_id: Azure AD tenant ID to query.
+
+    Returns:
+        List of :class:`AccessReview` objects in ``pending`` status.
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        stale: list[StaleAssignment] = await access_review_service.list_stale_assignments(
+            tenant_id=tenant_id
+        )
+        # Auto-create reviews for any unreviewed stale assignments
+        for assignment in stale:
+            await access_review_service.create_review(
+                tenant_id=tenant_id,
+                assignment_id=assignment.assignment_id,
+                user_id=assignment.user_id,
+                user_display_name=assignment.user_display_name,
+                role_name=assignment.role_name,
+                days_inactive=assignment.days_inactive,
+            )
+
+        reviews = await access_review_service.get_reviews(tenant_id=tenant_id)
+        # Return only pending reviews
+        return [r for r in reviews if r.status == "pending"]
+
+    except AccessReviewServiceError as exc:
+        if exc.status_code == 401:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Graph API authentication failed for tenant {tenant_id}: {exc}",
+            ) from exc
+        if exc.status_code == 403:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient Graph API permissions for tenant {tenant_id}: {exc}",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list access reviews: {exc}",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list access reviews: {exc}",
+        ) from exc
+
+
+@router.post("/access-reviews/{review_id}/action", response_model=AccessReview)
+async def take_review_action(
+    review_id: str,
+    body: ReviewActionRequest,
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Approve or revoke a privileged role assignment under review.
+
+    - **approve** - keeps the assignment; marks the review resolved.
+    - **revoke**  - calls
+      ``DELETE /roleManagement/directory/roleAssignments/{id}`` on Graph,
+      then marks the review resolved.  Requires
+      ``RoleManagement.ReadWrite.Directory``.
+
+    Args:
+        review_id: UUID of the access review to action.
+        body:      JSON body with ``{"action": "approve" | "revoke"}``.
+        tenant_id: Azure AD tenant ID that owns the review.
+
+    Returns:
+        The updated :class:`AccessReview` with resolved status.
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        review = await access_review_service.take_action(
+            tenant_id=tenant_id,
+            review_id=review_id,
+            action=body.action,
+        )
+        return review
+
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Review {review_id!r} not found for tenant {tenant_id!r}",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except AccessReviewServiceError as exc:
+        if exc.status_code == 401:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Graph API authentication failed: {exc}",
+            ) from exc
+        if exc.status_code == 403:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient Graph API permissions: {exc}",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to take review action: {exc}",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to take review action: {exc}",
         ) from exc

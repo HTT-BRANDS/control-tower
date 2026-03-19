@@ -487,6 +487,7 @@ def test_file_size_limit():
         "app/api/services/dmarc_service.py",
         "app/core/cache.py",
         "app/api/services/budget_service.py",
+        "app/api/routes/identity.py",  # IG-010: access review routes added
     }
 
     for py_file in app_path.rglob("*.py"):
