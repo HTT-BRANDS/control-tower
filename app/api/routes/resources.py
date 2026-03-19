@@ -7,7 +7,7 @@ SECURITY FEATURES:
 """
 
 import re
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
@@ -309,3 +309,32 @@ async def get_tagging_compliance(
 
     service = ResourceService(db)
     return await service.get_tagging_compliance(required_tags=required_tags)
+
+
+# --- Resource Lifecycle History (RM-004) ---
+
+
+@router.get("/{resource_id}/history")
+async def get_resource_history(
+    resource_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Get lifecycle history for a specific resource.
+
+    Returns create/update/delete events detected during sync runs.
+    Ordered by detection time, newest first.
+    """
+    from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
+    svc = ResourceLifecycleService(db)
+    events = svc.get_history(resource_id, limit=limit, offset=offset)
+    return {
+        "resource_id": resource_id,
+        "events": [e.to_dict() for e in events],
+        "count": len(events),
+        "limit": limit,
+        "offset": offset,
+    }

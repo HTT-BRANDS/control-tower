@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.routes import (
+    audit_logs_router,
     auth_router,
     budgets_router,
     bulk_router,
@@ -217,6 +218,7 @@ Instrumentator(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Include routers - Auth router first (no auth required for login)
+app.include_router(audit_logs_router)
 app.include_router(auth_router)
 
 # Onboarding router (public for self-service)
