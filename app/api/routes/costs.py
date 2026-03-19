@@ -1,11 +1,19 @@
 """Cost management API routes."""
 
 from datetime import date
+from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.services.cost_service import CostService
+from app.api.services.reservation_service import (
+    ReservationAuthError,
+    ReservationForbiddenError,
+    ReservationRateLimitError,
+    ReservationService,
+    ReservationServiceError,
+)
 from app.core.auth import User, get_current_user
 from app.core.authorization import (
     TenantAuthorization,
@@ -19,6 +27,7 @@ from app.schemas.cost import (
     CostSummary,
     CostTrend,
 )
+from app.schemas.reservation import ReservationSummaryResponse
 
 router = APIRouter(
     prefix="/api/v1/costs",
@@ -303,3 +312,64 @@ async def bulk_acknowledge_anomalies(
 
     service = CostService(db)
     return await service.bulk_acknowledge_anomalies(request.anomaly_ids, user=current_user.id)
+
+
+# ----------------------------------------------------------------------------
+# CO-007: Reserved Instance Utilisation
+# ----------------------------------------------------------------------------
+
+
+@router.get("/reservations", response_model=ReservationSummaryResponse)
+async def get_reservation_summaries(
+    grain: Literal["daily", "monthly"] = Query(
+        default="monthly",
+        description="Granularity of reservation utilisation data",
+    ),
+    tenant_id: str | None = Query(
+        default=None,
+        description="Tenant ID to query; defaults to the first accessible tenant",
+    ),
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+) -> ReservationSummaryResponse:
+    """Return Reserved Instance utilisation data for a tenant.
+
+    Calls the Azure Consumption API ``reservationSummaries`` endpoint when the
+    tenant has a ``billing_account_id`` configured.  Returns
+    ``{"available": false, "reason": "billing_account_access_required"}`` with
+    setup guidance otherwise.
+
+    Args:
+        grain: Granularity -- ``monthly`` (default) or ``daily``.
+        tenant_id: Specific tenant to query.  When omitted, the first
+            accessible tenant is used.
+    """
+    authz.ensure_at_least_one_tenant()
+
+    # Resolve which tenant to query.
+    if tenant_id is not None:
+        if tenant_id not in authz.accessible_tenant_ids:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    f"Access denied: you do not have permission to access tenant {tenant_id!r}"
+                ),
+            )
+        effective_tenant_id = tenant_id
+    else:
+        effective_tenant_id = authz.accessible_tenant_ids[0]
+
+    service = ReservationService(db)
+    try:
+        return await service.get_reservation_summaries(
+            tenant_id=effective_tenant_id,
+            grain=grain,
+        )
+    except ReservationAuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except ReservationForbiddenError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ReservationRateLimitError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except ReservationServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
