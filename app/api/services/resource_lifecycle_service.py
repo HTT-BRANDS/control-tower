@@ -116,3 +116,39 @@ class ResourceLifecycleService:
             .limit(min(limit, 500))
             .all()
         )
+
+    def get_changes(
+        self,
+        *,
+        tenant_id: str | None = None,
+        resource_type: str | None = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[ResourceLifecycleEvent], int]:
+        """Return cross-resource lifecycle events with optional filtering (RM-010).
+
+        Supports filtering by tenant, resource type, event type, and date range.
+        Returns (events, total_count) for paginated responses.
+        """
+        q = self.db.query(ResourceLifecycleEvent)
+        if tenant_id:
+            q = q.filter(ResourceLifecycleEvent.tenant_id == tenant_id)
+        if resource_type:
+            q = q.filter(ResourceLifecycleEvent.resource_type == resource_type)
+        if event_type:
+            q = q.filter(ResourceLifecycleEvent.event_type == event_type)
+        if since:
+            q = q.filter(ResourceLifecycleEvent.detected_at >= since)
+        if until:
+            q = q.filter(ResourceLifecycleEvent.detected_at <= until)
+        total = q.count()
+        events = (
+            q.order_by(ResourceLifecycleEvent.detected_at.desc())
+            .offset(offset)
+            .limit(min(limit, 200))
+            .all()
+        )
+        return events, total

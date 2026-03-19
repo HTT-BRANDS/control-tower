@@ -7,6 +7,7 @@ SECURITY FEATURES:
 """
 
 import re
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -309,6 +310,57 @@ async def get_tagging_compliance(
 
     service = ResourceService(db)
     return await service.get_tagging_compliance(required_tags=required_tags)
+
+
+# --- Resource Change Feed (RM-010) ---
+
+
+@router.get(
+    "/changes",
+    dependencies=[Depends(rate_limit("default"))],
+)
+async def get_resource_changes(
+    tenant_id: ValidatedTenantId = None,
+    resource_type: str | None = Query(default=None, max_length=200),
+    event_type: str | None = Query(default=None, max_length=20),
+    since: datetime | None = Query(default=None, description="ISO 8601 start datetime"),
+    until: datetime | None = Query(default=None, description="ISO 8601 end datetime"),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+) -> dict[str, Any]:
+    """Get cross-resource change feed (RM-010).
+
+    Returns recent ResourceLifecycleEvents across ALL resources with
+    optional filtering by tenant, resource type, event type, and date range.
+    Ordered by detection time, newest first.
+    """
+    from app.api.services.resource_lifecycle_service import ResourceLifecycleService
+
+    authz.ensure_at_least_one_tenant()
+
+    # Enforce tenant isolation — validate access if caller scopes to one tenant
+    if tenant_id:
+        authz.validate_access(tenant_id)
+
+    svc = ResourceLifecycleService(db)
+    events, total = svc.get_changes(
+        tenant_id=tenant_id,
+        resource_type=resource_type,
+        event_type=event_type,
+        since=since,
+        until=until,
+        limit=limit,
+        offset=offset,
+    )
+    return {
+        "events": [e.to_dict() for e in events],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 # --- Resource Lifecycle History (RM-004) ---
