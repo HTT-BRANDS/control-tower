@@ -5,6 +5,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.budgets import router as budgets_router
 from app.api.routes.bulk import router as bulk_router
 from app.api.routes.compliance import router as compliance_router
+from app.api.routes.compliance_rules import router as compliance_rules_router
 from app.api.routes.costs import router as costs_router
 from app.api.routes.dashboard import public_router
 from app.api.routes.dashboard import router as dashboard_router
@@ -29,6 +30,7 @@ __all__ = [
     "budgets_router",
     "bulk_router",
     "compliance_router",
+    "compliance_rules_router",
     "costs_router",
     "dashboard_router",
     "public_router",

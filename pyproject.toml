@@ -45,6 +45,7 @@ dependencies = [
     "alembic>=1.18.4",
     "prometheus-fastapi-instrumentator>=7.1.0",
     "pyyaml>=6.0",
+    "jsonschema>=4.20.0",  # JSON Schema validation for custom compliance rules (CM-002)
     # Token blacklist & caching (optional but required for production)
     "redis>=5.0.0",
     # Azure SQL / ODBC support
