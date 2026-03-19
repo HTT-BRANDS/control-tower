@@ -400,7 +400,7 @@ async def root(request: Request):
     )
     if has_token:
         return RedirectResponse(url="/dashboard")
-    return RedirectResponse(url="/login")
+    return RedirectResponse(url="/auth/login")
 
 
 @app.exception_handler(401)
@@ -410,7 +410,7 @@ async def unauthorized_redirect(request: Request, exc):
 
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
-        return RedirectResponse(url="/login", status_code=302)
+        return RedirectResponse(url="/auth/login", status_code=302)
     # Preserve the original error detail from the HTTPException
     detail = getattr(exc, "detail", "Could not validate credentials")
     return JSONResponse(

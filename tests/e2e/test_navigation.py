@@ -18,7 +18,6 @@ def client(base_url: str) -> httpx.Client:
 class TestRootRedirect:
     """GET / should redirect to either /dashboard or /auth/login."""
 
-    @pytest.mark.xfail(reason="root redirect not yet configured")
     def test_root_redirects(self, client: httpx.Client) -> None:
         resp = client.get("/", follow_redirects=True)
         final_url = str(resp.url)
@@ -30,7 +29,6 @@ class TestRootRedirect:
 class TestLoginPage:
     """GET /auth/login should render a login form."""
 
-    @pytest.mark.xfail(reason="login page route not yet registered")
     def test_login_page_has_form(self, client: httpx.Client) -> None:
         resp = client.get("/auth/login")
         assert resp.status_code == 200

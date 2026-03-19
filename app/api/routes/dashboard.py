@@ -72,33 +72,13 @@ async def _get_dashboard_data(
     }
 
 
-@router.get("/", response_class=HTMLResponse)
-async def dashboard(
-    request: Request,
-    db: Session = Depends(get_db),
-    authz: TenantAuthorization = Depends(get_tenant_authorization),
-):
-    """Main dashboard page."""
-    data = await _get_dashboard_data(db, authz)
-    brand_context = get_brand_context_for_request(request)
-
-    return templates.TemplateResponse(
-        request,
-        "pages/dashboard.html",
-        {
-            **data,
-            **brand_context,
-        },
-    )
-
-
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(
     request: Request,
     db: Session = Depends(get_db),
     authz: TenantAuthorization = Depends(get_tenant_authorization),
 ):
-    """Main dashboard view - alias for root."""
+    """Main dashboard view."""
     data = await _get_dashboard_data(db, authz)
     brand_context = get_brand_context_for_request(request)
 
@@ -400,4 +380,10 @@ public_router = APIRouter(tags=["public"])
 @public_router.get("/login", response_class=HTMLResponse)
 async def login_page_public(request: Request):
     """Login page — publicly accessible."""
+    return templates.TemplateResponse(request, "login.html")
+
+
+@public_router.get("/auth/login", response_class=HTMLResponse)
+async def auth_login_page(request: Request):
+    """Login page at canonical /auth/login path — publicly accessible."""
     return templates.TemplateResponse(request, "login.html")

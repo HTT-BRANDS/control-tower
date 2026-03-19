@@ -52,6 +52,29 @@ async def trigger_sync(
     return {"status": "triggered", "sync_type": sync_type}
 
 
+@router.post(
+    "/trigger/{sync_type}",
+    dependencies=[Depends(rate_limit("sync"))],
+)
+async def trigger_sync_named(
+    sync_type: SyncType,
+    current_user: User = Depends(get_current_user),
+):
+    """Trigger a manual sync job at /trigger/{sync_type}.
+
+    Canonical endpoint for sync triggers — mirrors POST /{sync_type} but
+    sits at a more explicit path so API consumers can tell at a glance
+    that this is a write operation, not a resource path.
+    """
+    success = await trigger_manual_sync(sync_type)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown sync type: {sync_type}",
+        )
+    return {"status": "triggered", "sync_type": sync_type}
+
+
 @router.get(
     "/status",
     dependencies=[Depends(rate_limit("default"))],

@@ -38,10 +38,7 @@ class TestProtectedEndpointsRequireAuth:
         "path",
         [
             "/api/v1/preflight/run",
-            pytest.param(
-                "/api/v1/sync/trigger/costs",
-                marks=pytest.mark.xfail(reason="sync trigger endpoint not yet implemented"),
-            ),
+            "/api/v1/sync/trigger/costs",
         ],
     )
     def test_post_endpoint_rejects_unauthenticated_request(self, client, path):

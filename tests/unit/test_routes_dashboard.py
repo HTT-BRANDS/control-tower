@@ -207,45 +207,30 @@ def mock_services():
 
 
 class TestMainDashboardPage:
-    """Tests for GET / (root) dashboard page."""
+    """Tests for GET / (root) redirect behaviour.
 
-    @patch("app.api.routes.dashboard.templates")
-    @patch("app.api.routes.dashboard.get_tenant_authorization")
-    @patch("app.api.routes.dashboard.CostService")
-    @patch("app.api.routes.dashboard.ComplianceService")
-    @patch("app.api.routes.dashboard.ResourceService")
-    @patch("app.api.routes.dashboard.IdentityService")
-    def test_root_dashboard_renders_successfully(
-        self,
-        mock_identity,
-        mock_resource,
-        mock_compliance,
-        mock_cost,
-        mock_authz,
-        mock_templates,
-        authed_client,
-        mock_services,
-    ):
-        """Root dashboard page renders with all summary data."""
-        mock_templates.TemplateResponse.return_value = _html()
+    GET / is a public redirect — no auth required.  Unauthenticated requests
+    are sent to /auth/login; the actual dashboard HTML lives at /dashboard
+    (covered by TestDashboardAliasPage).
+    """
 
-        # Setup service mocks
-        mock_cost.return_value = mock_services["cost"]
-        mock_compliance.return_value = mock_services["compliance"]
-        mock_resource.return_value = mock_services["resource"]
-        mock_identity.return_value = mock_services["identity"]
+    def test_root_redirects_unauthenticated_to_login(self, client_with_db):
+        """Root endpoint redirects unauthenticated users to /auth/login."""
+        response = client_with_db.get("/", follow_redirects=False)
+        assert response.status_code in (301, 302, 307, 308), (
+            f"Expected a redirect from GET /, got {response.status_code}"
+        )
+        location = response.headers.get("location", "")
+        assert "login" in location, (
+            f"Expected redirect to a login URL, got location={location!r}"
+        )
 
-        response = authed_client.get("/")
-
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-        assert b"dashboard" in response.content.lower()
-
-    def test_root_dashboard_requires_authentication(self, client_with_db):
-        """Root dashboard returns 401 without authentication."""
-        response = client_with_db.get("/")
-
-        assert response.status_code == 401
+    def test_root_is_publicly_accessible(self, client_with_db):
+        """Root endpoint does not return 401/403 — it is a public redirect."""
+        response = client_with_db.get("/", follow_redirects=False)
+        assert response.status_code not in (401, 403), (
+            "GET / should be publicly accessible (redirect), not require auth"
+        )
 
 
 # ============================================================================
