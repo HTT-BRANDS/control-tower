@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.services.azure_ad_admin_service import azure_ad_admin_service
 from app.api.services.identity_service import IdentityService
+from app.api.services.license_service import LicenseServiceError, license_service
 from app.core.auth import get_current_user
 from app.core.authorization import (
     TenantAuthorization,
@@ -17,6 +18,7 @@ from app.schemas.identity import (
     PrivilegedAccount,
     StaleAccount,
 )
+from app.schemas.license import UserLicense, UserLicenseSummary
 
 router = APIRouter(
     prefix="/api/v1/identity",
@@ -389,3 +391,103 @@ async def invalidate_admin_roles_cache(
         "data_type": data_type,
         "cache_entries_invalidated": count,
     }
+
+
+# ============================================================================
+# Per-User License Tracking Endpoints (IG-009)
+# ============================================================================
+
+
+@router.get("/licenses", response_model=list[UserLicenseSummary])
+async def list_tenant_licenses(
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """List all user license assignments for a tenant.
+
+    Returns an aggregated view of every licensed user in the tenant,
+    enriched with SKU part numbers (e.g. 'ENTERPRISEPREMIUM' for E5).
+    Uses ``GET /users?$select=assignedLicenses`` plus
+    ``GET /subscribedSkus`` for SKU name resolution.
+
+    Args:
+        tenant_id: Azure AD tenant ID to query.
+
+    Returns:
+        List of UserLicenseSummary objects — one per licensed user.
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        summaries = await license_service.list_tenant_licenses(tenant_id=tenant_id)
+        return summaries
+    except LicenseServiceError as exc:
+        if exc.status_code == 401:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Graph API authentication failed for tenant {tenant_id}: {exc}",
+            ) from exc
+        if exc.status_code == 429:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Graph API rate limit exceeded: {exc}",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list tenant licenses: {exc}",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list tenant licenses: {exc}",
+        ) from exc
+
+
+@router.get("/licenses/{user_id}", response_model=list[UserLicense])
+async def get_user_licenses(
+    user_id: str,
+    tenant_id: str = Query(..., description="Azure tenant ID"),
+    authz: TenantAuthorization = Depends(get_tenant_authorization),
+):
+    """Get license details for a specific user.
+
+    Fetches the full SKU and service-plan breakdown for *user_id* via
+    ``GET /users/{user_id}/licenseDetails``.
+
+    Args:
+        user_id:   Azure AD object ID of the user.
+        tenant_id: Azure AD tenant ID the user belongs to.
+
+    Returns:
+        List of UserLicense objects — one per assigned SKU.
+    """
+    authz.ensure_at_least_one_tenant()
+    authz.validate_access(tenant_id)
+
+    try:
+        licenses = await license_service.get_user_licenses(
+            tenant_id=tenant_id,
+            user_id=user_id,
+        )
+        return licenses
+    except LicenseServiceError as exc:
+        if exc.status_code == 401:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Graph API authentication failed for tenant {tenant_id}: {exc}",
+            ) from exc
+        if exc.status_code == 429:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Graph API rate limit exceeded: {exc}",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch licenses for user {user_id}: {exc}",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch licenses for user {user_id}: {exc}",
+        ) from exc
