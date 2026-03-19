@@ -12,6 +12,20 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+# Single source of truth for the billing-account onboarding message.
+# The ReservationService imports this constant so the schema's unavailable()
+# classmethod and the service use exactly the same string.
+SETUP_INSTRUCTIONS: str = (
+    "To enable Reserved Instance utilisation tracking, provide a "
+    "billing_account_id in the tenant configuration. "
+    "The billing account must be an Enterprise Agreement (EA) or "
+    "Microsoft Customer Agreement (MCA) account. "
+    "Grant the platform service principal 'Cost Management Reader' at the "
+    "billing account scope, then update the tenant record with the billing "
+    "account ID (found under Cost Management \u2192 Billing accounts in the "
+    "Azure portal)."
+)
+
 # ---------------------------------------------------------------------------
 # Individual reservation summary entry
 # ---------------------------------------------------------------------------
@@ -98,14 +112,7 @@ class ReservationSummaryResponse(BaseModel):
     def unavailable(
         cls,
         reason: str = "billing_account_access_required",
-        setup_instructions: str = (
-            "To enable Reserved Instance utilisation tracking, provide a "
-            "billing_account_id in the tenant configuration. "
-            "The billing account must be an Enterprise Agreement (EA) or "
-            "Microsoft Customer Agreement (MCA) account. "
-            "Grant the platform's service principal 'Cost Management Reader' "
-            "at the billing account scope, then update the tenant record."
-        ),
+        setup_instructions: str = SETUP_INSTRUCTIONS,
     ) -> ReservationSummaryResponse:
         """Return a graceful-degradation response with available=False."""
         return cls(

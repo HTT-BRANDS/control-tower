@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 from app.api.services.azure_client import azure_client_manager
 from app.models.tenant import Tenant
 from app.schemas.reservation import (
+    SETUP_INSTRUCTIONS,
     ReservationSummary,
     ReservationSummaryResponse,
 )
@@ -41,17 +42,6 @@ logger = logging.getLogger(__name__)
 # Azure Consumption API version that includes reservationSummaries at
 # billing-account scope (confirmed 2025-07).
 RESERVATION_API_VERSION = "2024-08-01"
-
-SETUP_INSTRUCTIONS = (
-    "To enable Reserved Instance utilisation tracking, provide a "
-    "billing_account_id in the tenant configuration. "
-    "The billing account must be an Enterprise Agreement (EA) or "
-    "Microsoft Customer Agreement (MCA) account. "
-    "Grant the platform service principal 'Cost Management Reader' at the "
-    "billing account scope, then update the tenant record with the billing "
-    "account ID (found under Cost Management → Billing accounts in the "
-    "Azure portal)."
-)
 
 
 class ReservationServiceError(Exception):
@@ -156,11 +146,7 @@ class ReservationService:
         try:
             token = self._get_bearer_token(azure_tenant_id)
             raw_items = await self._call_api(url=url, bearer_token=token)
-        except ReservationAuthError:
-            raise
-        except ReservationForbiddenError:
-            raise
-        except ReservationRateLimitError:
+        except (ReservationAuthError, ReservationForbiddenError, ReservationRateLimitError):
             raise
         except Exception as exc:
             logger.error(
@@ -208,39 +194,45 @@ class ReservationService:
                 headers={"Authorization": f"Bearer {bearer_token}"},
             )
 
-        if resp.status_code == 401:
-            logger.error(
-                "ReservationService: 401 Unauthorized – token may be expired "
-                "or lacking billing scope"
-            )
-            raise ReservationAuthError("Azure returned 401 Unauthorized for reservationSummaries")
+            if resp.status_code == 401:
+                logger.error(
+                    "ReservationService: 401 Unauthorized – token may be expired "
+                    "or lacking billing scope"
+                )
+                raise ReservationAuthError(
+                    "Azure returned 401 Unauthorized for reservationSummaries"
+                )
 
-        if resp.status_code == 403:
-            logger.error(
-                "ReservationService: 403 Forbidden – service principal lacks "
-                "Cost Management Reader at billing account scope"
-            )
-            raise ReservationForbiddenError(
-                "Azure returned 403 Forbidden for reservationSummaries. "
-                "Ensure Cost Management Reader is granted at billing account scope."
-            )
+            if resp.status_code == 403:
+                logger.error(
+                    "ReservationService: 403 Forbidden – service principal lacks "
+                    "Cost Management Reader at billing account scope"
+                )
+                raise ReservationForbiddenError(
+                    "Azure returned 403 Forbidden for reservationSummaries. "
+                    "Ensure Cost Management Reader is granted at billing account scope."
+                )
 
-        if resp.status_code == 404:
-            # No reservations exist for this billing account – treat as empty.
-            logger.info("ReservationService: 404 – no reservations found for this billing account")
-            return []
+            if resp.status_code == 404:
+                # No reservations exist for this billing account – treat as empty.
+                logger.info(
+                    "ReservationService: 404 – no reservations found for this billing account"
+                )
+                return []
 
-        if resp.status_code == 429:
-            retry_after = resp.headers.get("Retry-After", "unknown")
-            logger.warning("ReservationService: 429 Rate Limited (Retry-After: %s)", retry_after)
-            raise ReservationRateLimitError(
-                f"Consumption API rate limit exceeded (Retry-After: {retry_after})"
-            )
+            if resp.status_code == 429:
+                retry_after = resp.headers.get("Retry-After", "unknown")
+                logger.warning(
+                    "ReservationService: 429 Rate Limited (Retry-After: %s)", retry_after
+                )
+                raise ReservationRateLimitError(
+                    f"Consumption API rate limit exceeded (Retry-After: {retry_after})"
+                )
 
-        resp.raise_for_status()
+            resp.raise_for_status()
 
-        payload: dict[str, Any] = resp.json()
-        return payload.get("value", [])
+            payload: dict[str, Any] = resp.json()
+            return payload.get("value", [])
 
     @staticmethod
     def _parse_items(items: list[dict[str, Any]]) -> list[ReservationSummary]:
