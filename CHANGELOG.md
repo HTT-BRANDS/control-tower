@@ -13,6 +13,18 @@ _No unreleased changes._
 
 ---
 
+## [1.5.6] - 2026-03-20
+
+### Added
+- **RC-031–RC-035 (Device Security)**: Dedicated `DeviceSecurityService` + 5 REST endpoints under `/api/v1/device-security/` for EDR coverage, device encryption, asset inventory, compliance scoring, and non-compliant device alerting (placeholder, awaiting Sui Generis API credentials)
+- 22 new unit tests for device security service and route layer
+- Router wired into FastAPI app (`app.include_router(device_security_router)`)
+
+### Changed
+- Test count: 2,826 → 2,848 passed
+
+---
+
 ## [1.5.5] - 2026-03-19
 
 ### Added

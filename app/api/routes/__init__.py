@@ -10,6 +10,7 @@ from app.api.routes.compliance_rules import router as compliance_rules_router
 from app.api.routes.costs import router as costs_router
 from app.api.routes.dashboard import public_router
 from app.api.routes.dashboard import router as dashboard_router
+from app.api.routes.device_security import router as device_security_router
 from app.api.routes.dmarc import router as dmarc_router
 from app.api.routes.exports import router as exports_router
 from app.api.routes.identity import router as identity_router
@@ -37,6 +38,7 @@ __all__ = [
     "compliance_rules_router",
     "costs_router",
     "dashboard_router",
+    "device_security_router",
     "public_router",
     "dmarc_router",
     "exports_router",
