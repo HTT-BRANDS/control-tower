@@ -1,19 +1,16 @@
 """Background job scheduler for data synchronization."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.config import get_settings
-from app.core.sync.compliance import sync_compliance
-from app.core.sync.costs import sync_costs
-from app.core.sync.dmarc import sync_dmarc_dkim
-from app.core.sync.identity import sync_identity
-from app.core.sync.resources import sync_resources
-from app.core.sync.riverside import sync_riverside
-from app.services.riverside_sync import sync_all_tenants
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -22,15 +19,42 @@ settings = get_settings()
 scheduler: AsyncIOScheduler | None = None
 
 
+def _get_sync_functions() -> dict:
+    """Lazy-import sync functions to avoid circular imports.
+
+    The sync modules import from app.api.services which import from
+    app.core (circuit_breaker, etc.), creating a cycle when
+    app.core.__init__.py eagerly imports this module.
+    """
+    from app.core.sync.compliance import sync_compliance
+    from app.core.sync.costs import sync_costs
+    from app.core.sync.dmarc import sync_dmarc_dkim
+    from app.core.sync.identity import sync_identity
+    from app.core.sync.resources import sync_resources
+    from app.core.sync.riverside import sync_riverside
+
+    return {
+        "costs": sync_costs,
+        "compliance": sync_compliance,
+        "resources": sync_resources,
+        "identity": sync_identity,
+        "riverside": sync_riverside,
+        "dmarc": sync_dmarc_dkim,
+    }
+
+
 def init_scheduler() -> AsyncIOScheduler:
     """Initialize and configure the background scheduler."""
     global scheduler
 
     scheduler = AsyncIOScheduler()
 
+    # Lazy-import sync functions to break circular import chain
+    sync_fns = _get_sync_functions()
+
     # Cost sync job
     scheduler.add_job(
-        sync_costs,
+        sync_fns["costs"],
         trigger=IntervalTrigger(hours=settings.cost_sync_interval_hours),
         id="sync_costs",
         name="Sync Cost Data",
@@ -39,7 +63,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Compliance sync job
     scheduler.add_job(
-        sync_compliance,
+        sync_fns["compliance"],
         trigger=IntervalTrigger(hours=settings.compliance_sync_interval_hours),
         id="sync_compliance",
         name="Sync Compliance Data",
@@ -48,7 +72,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Resource sync job
     scheduler.add_job(
-        sync_resources,
+        sync_fns["resources"],
         trigger=IntervalTrigger(hours=settings.resource_sync_interval_hours),
         id="sync_resources",
         name="Sync Resource Inventory",
@@ -57,7 +81,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Identity sync job
     scheduler.add_job(
-        sync_identity,
+        sync_fns["identity"],
         trigger=IntervalTrigger(hours=settings.identity_sync_interval_hours),
         id="sync_identity",
         name="Sync Identity Data",
@@ -66,7 +90,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Riverside compliance sync job (every 4 hours)
     scheduler.add_job(
-        sync_riverside,
+        sync_fns["riverside"],
         trigger=IntervalTrigger(hours=4),
         id="sync_riverside",
         name="Sync Riverside Compliance Data",
@@ -75,7 +99,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # DMARC/DKIM sync job (daily at 2 AM)
     scheduler.add_job(
-        sync_dmarc_dkim,
+        sync_fns["dmarc"],
         trigger=CronTrigger(hour=2, minute=0),
         id="sync_dmarc",
         name="Sync DMARC/DKIM Data",
@@ -132,6 +156,8 @@ def get_scheduler() -> AsyncIOScheduler | None:
 
 async def hourly_mfa_sync() -> None:
     """Hourly MFA data refresh for all tenants."""
+    from app.services.riverside_sync import sync_all_tenants
+
     logger.info("Starting hourly MFA sync job")
     try:
         result = await sync_all_tenants(
@@ -151,6 +177,8 @@ async def hourly_mfa_sync() -> None:
 
 async def daily_full_sync() -> None:
     """Daily full compliance sync at 1 AM -- MFA, devices, requirements, maturity."""
+    from app.services.riverside_sync import sync_all_tenants
+
     logger.info("Starting daily full compliance sync job")
     try:
         result = await sync_all_tenants(
@@ -171,6 +199,8 @@ async def daily_full_sync() -> None:
 
 async def weekly_threat_sync() -> None:
     """Weekly threat data sync -- devices, requirements. Sundays at 3 AM."""
+    from app.services.riverside_sync import sync_all_tenants
+
     logger.info("Starting weekly threat data sync job")
     try:
         result = await sync_all_tenants(
@@ -190,6 +220,8 @@ async def weekly_threat_sync() -> None:
 
 async def monthly_report_sync() -> None:
     """Monthly report sync on the 1st at 4 AM -- full data for month-end reports."""
+    from app.services.riverside_sync import sync_all_tenants
+
     logger.info("Starting monthly report sync job")
     try:
         result = await sync_all_tenants(
@@ -210,18 +242,15 @@ async def monthly_report_sync() -> None:
 
 async def trigger_manual_sync(sync_type: str) -> bool:
     """Trigger a manual sync job."""
-    sync_functions: dict[str, object] = {
-        "costs": sync_costs,
-        "compliance": sync_compliance,
-        "resources": sync_resources,
-        "identity": sync_identity,
-        "riverside": sync_riverside,
-        "dmarc": sync_dmarc_dkim,
+    sync_functions = _get_sync_functions()
+
+    # Add riverside wrapper functions
+    sync_functions.update({
         "hourly_mfa": hourly_mfa_sync,
         "daily_full": daily_full_sync,
         "weekly_threat": weekly_threat_sync,
         "monthly_report": monthly_report_sync,
-    }
+    })
 
     if sync_type not in sync_functions:
         return False
