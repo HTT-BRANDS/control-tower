@@ -13,6 +13,26 @@ _No unreleased changes._
 
 ---
 
+## [1.5.7] - 2026-03-20
+
+### Added
+- **RM-008 (Resource Provisioning Standards)**: `ProvisioningStandardsService` + YAML config + 4 REST endpoints at `/api/v1/resources/provisioning-standards/*` for naming, region, tag, and SKU validation (34 unit tests)
+- **NF-P03 (Load Testing)**: Locust load test suite at `tests/load/locustfile.py` with realistic traffic distribution (10 weighted tasks), SLA assertions (p50 < 500ms, p95 < 2000ms, error rate < 5%), and CI-friendly headless mode
+- **CO-007 (Billing RBAC)**: Alembic migration 006 adding `billing_account_id` to tenants table + `scripts/setup_billing_rbac.sh` self-service setup script
+- `locust>=2.29.0` added as dev dependency for load testing
+- `config/provisioning_standards.yaml`: Naming conventions, allowed regions, mandatory/recommended tags, SKU restrictions, network/encryption standards
+
+### Fixed
+- Alembic schema drift: `tenants.billing_account_id` column now exists in DB (was in model only)
+- Stale trace matrix risk items for IG-009 and IG-010 corrected (both fully implemented, not stubs)
+
+### Changed
+- Test count: 2,848 → 2,882 passed (+34 provisioning standards tests)
+- Roadmap: 110 → 115 tasks (Phase 10 added, all complete)
+- TRACEABILITY_MATRIX: RM-008 moved from ⏳ Phase 2 to ✅ Implemented; IG-009/IG-010/NF-P03 risk items closed
+
+---
+
 ## [1.5.6] - 2026-03-20
 
 ### Added

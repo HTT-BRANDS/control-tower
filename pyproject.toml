@@ -1,6 +1,6 @@
 [project]
 name = "azure-governance-platform"
-version = "1.5.6"
+version = "1.5.7"
 description = "Multi-tenant Azure governance platform for cost optimization, compliance monitoring, resource management, and identity governance"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -112,7 +112,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "-v --tb=short --ignore=tests/e2e --ignore=tests/smoke --ignore=tests/staging"
+addopts = "-v --tb=short --ignore=tests/e2e --ignore=tests/load --ignore=tests/smoke --ignore=tests/staging"
 markers = [
     "azure_creds_required: marks tests requiring Azure credentials",
     "auth_required: marks tests requiring authentication",
@@ -125,6 +125,7 @@ markers = [
 [dependency-groups]
 dev = [
     "aiosmtplib>=5.1.0",
+    "locust>=2.29.0",
     "mypy>=1.19.1",
     "playwright>=1.58.0",
     "pytest>=9.0.2",
