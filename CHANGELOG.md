@@ -31,6 +31,16 @@ _No unreleased changes._
 - Roadmap: 110 → 115 tasks (Phase 10 added, all complete)
 - TRACEABILITY_MATRIX: RM-008 moved from ⏳ Phase 2 to ✅ Implemented; IG-009/IG-010/NF-P03 risk items closed
 
+### Deployed
+- **Staging**: v1.5.7 deployed to `app-governance-staging-xnczpwyv.azurewebsites.net` — 74 E2E tests passed
+- **Production**: v1.5.7 deployed to `app-governance-prod.azurewebsites.net` — 167 routes, health check ✅
+
+### Infrastructure Fixed
+- Circular import in `app/core/scheduler.py` — sync module imports moved to lazy loading (broke Docker startup)
+- Staging ACR auth — `DOCKER_REGISTRY_SERVER_PASSWORD` was null after `config container set`
+- Staging App Service pinned to stale `v1.5.1` tag — updated to use rolling `staging` tag
+- Production App Service container config updated from `v1.5.1` to `v1.5.7`
+
 ---
 
 ## [1.5.6] - 2026-03-20
