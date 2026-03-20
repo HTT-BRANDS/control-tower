@@ -255,15 +255,15 @@ This epic maps the core cost management requirements to their implementing code 
 | CO-007 | Reserved instance utilization | — | — | — | ⏳ Phase 2 (P1) |
 | CO-008 | Budget tracking per tenant/sub | `app/models/budget.py`, `app/api/services/budget_service.py`, `app/api/routes/budgets.py` | `test_budget_service`, `test_routes_budgets` | Unit + Integration | ✅ Implemented |
 | CO-009 | Savings opportunities dashboard | `app/api/services/recommendation_service.py`, `app/api/services/resource_service.py` | `test_recommendation_service`, `test_routes_recommendations`, `test_resource_service` | Unit + Int + E2E | ✅ Implemented |
-| CO-010 | Chargeback/showback reporting | — | — | — | ⏳ Phase 2 (P2) |
+| CO-010 | Chargeback/showback reporting | `app/api/services/chargeback_service.py`, `app/api/routes/costs.py` | `test_chargeback_service` (13 unit tests) | Unit | ✅ Implemented |
 
 ### 12.3 CO-xxx Coverage Summary
 
 | Category | Total Reqs | Implemented | Tested | Phase 2 | Not Impl | Coverage |
 |----------|-----------|-------------|--------|---------|----------|----------|
 | Cost Aggregation (CO-001–004) | 4 | 4 | 4 | 0 | 0 | 100% |
-| Optimization (CO-005–010) | 6 | 3 | 3 | 2 | 1 | 50% (100% of MVP scope) |
-| **TOTAL** | **10** | **7** | **7** | **2** | **1** | **70% (100% of MVP scope)** |
+| Optimization (CO-005–010) | 6 | 5 | 5 | 1 | 0 | 83% (100% of MVP scope) |
+| **TOTAL** | **10** | **9** | **9** | **1** | **0** | **90% (100% of MVP scope)** |
 
 ---
 
@@ -277,7 +277,11 @@ This epic maps the compliance monitoring requirements to their implementing code
 |--------|------------|-----------|---------------|-----------|--------|
 | CM-001 | Azure Policy compliance across tenants | `app/api/services/compliance_service.py`, `app/core/sync/compliance.py` | `test_compliance_service`, `test_routes_compliance`, `sync/test_compliance` | Unit + Int + E2E | ✅ Implemented |
 | CM-002 | Custom compliance rule definitions | `app/models/custom_rule.py`, `app/api/services/custom_rule_service.py`, `app/api/routes/compliance_rules.py` | `test_custom_rule_service` (25 unit tests) | Unit + Integration | ✅ Passed |
-| CM-003 | Regulatory framework mapping (SOC2, etc) | — | — | — | ⏳ Phase 2 (P2) |
+| CM-003 | Regulatory framework mapping (SOC2, NIST CSF 2.0) | `app/api/services/compliance_frameworks_service.py`, `app/api/routes/compliance_frameworks.py`, `config/compliance_frameworks.yaml` | `test_compliance_frameworks` (43 unit tests) | Unit | ✅ Implemented |
+
+> **ADR References:**
+> - **ADR-0005**: Custom compliance rules — JSON Schema approach, SSRF prevention, DoS mitigation
+> - **ADR-0006**: Regulatory framework mapping — static YAML approach, tag-based mapping, SOC2 2017 (36 controls), NIST CSF 2.0 (45 controls), 5 fitness functions
 | CM-004 | Compliance drift detection | `app/api/services/compliance_service.py`, `app/models/compliance.py` | `test_compliance_service`, `test_routes_compliance` | Unit + Int | ✅ Implemented |
 | CM-005 | Automated remediation suggestions | `app/api/services/riverside_compliance.py` | `test_remediation` (16 unit tests), `test_azure_connectivity` (smoke) | Unit + Smoke | ✅ Passed |
 
