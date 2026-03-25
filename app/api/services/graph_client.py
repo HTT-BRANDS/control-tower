@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
+from azure.core.credentials import TokenCredential
 from azure.identity import ClientSecretCredential
 
 from app.core.circuit_breaker import GRAPH_API_BREAKER, circuit_breaker
@@ -146,25 +147,49 @@ class GraphClient:
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
         self._token: str | None = None
-        self._credential: ClientSecretCredential | None = None
+        self._credential: TokenCredential | None = None
 
-    def _get_credential(self) -> ClientSecretCredential:
-        """Get or create credential using per-tenant resolution.
+    def _get_credential(self) -> TokenCredential:
+        """Get or create credential for this tenant.
 
-        Uses AzureClientManager to resolve the correct client_id
-        and client_secret for this tenant (env var → Key Vault → settings fallback).
+        Supports two modes controlled by ``settings.use_oidc_federation``:
+
+        * **OIDC mode**: uses ``OIDCCredentialProvider`` backed by the App Service
+          Managed Identity — no client secret required.
+        * **Secret mode**: resolves ``client_id`` / ``client_secret`` via env vars,
+          Key Vault, or settings fallback through ``AzureClientManager``.
         """
         if not self._credential:
-            from app.api.services.azure_client import AzureClientManager
+            if settings.use_oidc_federation:
+                from app.core.oidc_credential import get_oidc_provider
+                from app.core.tenants_config import get_app_id_for_tenant
 
-            manager = AzureClientManager()
-            client_id, client_secret, _ = manager._resolve_credentials(self.tenant_id)
-            self._credential = ClientSecretCredential(
-                tenant_id=self.tenant_id,
-                client_id=client_id,
-                client_secret=client_secret,
-                connection_timeout=10,
-            )
+                client_id = get_app_id_for_tenant(self.tenant_id)
+                if not client_id:
+                    # Fall back to DB record
+                    from app.api.services.azure_client import AzureClientManager
+
+                    tenant_record = AzureClientManager()._get_tenant_from_db(self.tenant_id)
+                    client_id = tenant_record.client_id if tenant_record else None
+                if not client_id:
+                    raise ValueError(
+                        f"OIDC mode: could not resolve client_id for tenant {self.tenant_id}. "
+                        "Add it to tenants_config.py or the tenants DB table."
+                    )
+                self._credential = get_oidc_provider().get_credential_for_tenant(
+                    self.tenant_id, client_id
+                )
+            else:
+                from app.api.services.azure_client import AzureClientManager
+
+                manager = AzureClientManager()
+                client_id, client_secret, _ = manager._resolve_credentials(self.tenant_id)
+                self._credential = ClientSecretCredential(
+                    tenant_id=self.tenant_id,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    connection_timeout=10,
+                )
         return self._credential
 
     async def _get_token(self) -> str:

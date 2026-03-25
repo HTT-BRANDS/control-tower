@@ -172,15 +172,27 @@ def _parse_aad_error(error_message: str) -> tuple[str, list[str]]:
 def _get_credential(tenant_id: str) -> Any:
     """Get Azure credential for a tenant.
 
+    Supports two modes:
+
+    * **OIDC mode** (``settings.use_oidc_federation=True``): no client secret
+      required — delegates to ``azure_client_manager.get_credential()`` which
+      uses the App Service Managed Identity assertion.
+    * **Secret mode**: requires ``AZURE_CLIENT_ID`` and ``AZURE_CLIENT_SECRET``
+      to be configured.
+
     Args:
         tenant_id: Azure AD tenant ID
 
     Returns:
-        Configured ClientSecretCredential
+        TokenCredential ready to authenticate against the tenant
 
     Raises:
         AzureCheckError: If required credentials are not configured
     """
+    if settings.use_oidc_federation:
+        # OIDC mode: no client secret needed; azure_client_manager handles it.
+        return azure_client_manager.get_credential(tenant_id)
+
     if not all([settings.azure_client_id, settings.azure_client_secret]):
         raise AzureCheckError(
             message="Azure credentials not configured",
@@ -188,6 +200,7 @@ def _get_credential(tenant_id: str) -> Any:
             details={
                 "client_id_configured": bool(settings.azure_client_id),
                 "client_secret_configured": bool(settings.azure_client_secret),
+                "oidc_federation_enabled": False,
             },
         )
 
@@ -252,7 +265,7 @@ def _create_check_result(
 
 
 class AzureAuthCheck(BasePreflightCheck):
-    """Check Azure AD authentication using ClientSecretCredential."""
+    """Check Azure AD authentication (supports OIDC and ClientSecretCredential)."""
 
     def __init__(self):
         super().__init__(
@@ -671,7 +684,8 @@ async def check_azure_authentication(tenant_id: str) -> CheckResult:
             start_time=start_time,
             details=e.details,
             recommendations=[
-                "Set AZURE_CLIENT_ID and AZURE_CLIENT_SECRET environment variables",
+                "OIDC mode: Set USE_OIDC_FEDERATION=true and configure the Managed Identity",
+                "Secret mode: Set AZURE_CLIENT_ID and AZURE_CLIENT_SECRET environment variables",
                 "Or configure via .env file or key vault integration",
             ],
             error_code=e.error_code,

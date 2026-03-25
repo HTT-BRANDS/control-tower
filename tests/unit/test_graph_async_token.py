@@ -154,6 +154,7 @@ class TestGraphClientCredentialConfig:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
+        self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.graph_client.settings", self.mock_settings):
             from app.api.services.graph_client import GraphClient
@@ -430,6 +431,7 @@ class TestAzureClientConnectionTimeout:
             mock_settings.azure_client_id = "test-id"
             mock_settings.azure_client_secret = "test-secret"
             mock_settings.key_vault_url = None
+            mock_settings.use_oidc_federation = False  # secret mode under test
 
             # Mock the tenant lookup
             mock_tenant = MagicMock()

@@ -26,6 +26,7 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from azure.core.credentials import TokenCredential
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.policyinsights import PolicyInsightsClient
@@ -36,6 +37,7 @@ from dotenv import load_dotenv
 
 from app.core.config import get_settings
 from app.core.database import SessionLocal
+from app.core.tenants_config import get_app_id_for_tenant
 
 # Optional Key Vault import with graceful handling
 try:
@@ -70,7 +72,7 @@ class KeyVaultError(Exception):
 class CachedCredential:
     """Cached credential with expiration tracking."""
 
-    credential: ClientSecretCredential
+    credential: TokenCredential
     created_at: float
     expires_at: float
 
@@ -298,8 +300,16 @@ class AzureClientManager:
             f"Tried Key Vault secrets and settings fallback."
         )
 
-    def get_credential(self, tenant_id: str, force_refresh: bool = False) -> ClientSecretCredential:
+    def get_credential(self, tenant_id: str, force_refresh: bool = False) -> TokenCredential:
         """Get or create credential for a tenant with TTL-based caching.
+
+        Supports two credential modes controlled by ``settings.use_oidc_federation``:
+
+        * **OIDC mode** (``use_oidc_federation=True``): returns a
+          ``ClientAssertionCredential`` backed by the App Service Managed Identity.
+          No client secret is required.
+        * **Secret mode** (default): resolves credentials via Key Vault / env vars
+          and returns a ``ClientSecretCredential``.
 
         SECURITY: Credentials are cached with TTL and auto-refreshed before expiry.
 
@@ -308,7 +318,8 @@ class AzureClientManager:
             force_refresh: If True, ignore cache and create new credential
 
         Returns:
-            ClientSecretCredential for the tenant
+            TokenCredential for the tenant (ClientAssertionCredential in OIDC mode,
+            ClientSecretCredential in secret mode)
 
         Raises:
             ValueError: If credentials cannot be resolved
@@ -333,13 +344,35 @@ class AzureClientManager:
             logger.debug(f"Force refreshing credential for tenant {tenant_id}")
 
         # Create new credential
-        client_id, client_secret, _ = self._resolve_credentials(tenant_id)
-        new_credential = ClientSecretCredential(
-            tenant_id=tenant_id,
-            client_id=client_id,
-            client_secret=client_secret,
-            connection_timeout=10,
-        )
+        if self._settings.use_oidc_federation:
+            # OIDC path: resolve app_id from tenants_config, fall back to DB record
+            oidc_client_id = get_app_id_for_tenant(tenant_id)
+            if not oidc_client_id:
+                tenant_record = self._get_tenant_from_db(tenant_id)
+                oidc_client_id = tenant_record.client_id if tenant_record else None
+            if not oidc_client_id:
+                raise ValueError(
+                    f"OIDC mode: could not resolve client_id for tenant {tenant_id}. "
+                    "Add it to tenants_config.py or the tenants DB table."
+                )
+            from app.core.oidc_credential import get_oidc_provider  # lazy — avoids circular
+
+            new_credential = get_oidc_provider().get_credential_for_tenant(
+                tenant_id, oidc_client_id
+            )
+            logger.debug(
+                f"OIDC credential created for tenant {tenant_id} "
+                f"(client_id: {oidc_client_id[:8]}...)"
+            )
+        else:
+            # Secret path: resolve via Key Vault / env vars
+            client_id, client_secret, _ = self._resolve_credentials(tenant_id)
+            new_credential = ClientSecretCredential(
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                connection_timeout=10,
+            )
 
         # Cache with expiration
         self._credentials[tenant_id] = CachedCredential(

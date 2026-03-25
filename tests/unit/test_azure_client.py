@@ -246,6 +246,7 @@ class TestCredentialCaching:
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
         self.mock_settings.key_vault_url = None
+        self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
@@ -473,6 +474,7 @@ class TestClientCreation:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
+        self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
@@ -569,6 +571,7 @@ class TestCacheManagement:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
+        self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
@@ -742,6 +745,7 @@ class TestErrorHandling:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.key_vault_url = None
+        self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
