@@ -9,7 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+- **OIDC Workload Identity Federation**: Zero-secret tenant authentication via App Service Managed Identity
+  - `app/core/oidc_credential.py`: `OIDCCredentialProvider` with 3-tier credential resolution (App Service → Workload Identity → Dev fallback)
+  - `scripts/setup-federated-creds.sh`: One-time Azure CLI script to configure federated credentials on all 5 app registrations
+  - `scripts/verify-federated-creds.sh`: Read-only verification of federated credential configuration across all tenants
+  - `scripts/seed_riverside_tenants.py`: Seeds all 5 real Riverside tenants into the DB with `use_oidc=True` and no secrets
+  - `alembic/versions/007_add_oidc_federation.py`: Idempotent migration adding `use_oidc` boolean column to `tenants` table
+  - `docs/OIDC_TENANT_AUTH.md`: Complete setup, operational, and troubleshooting guide for OIDC tenant auth
+  - `USE_OIDC_FEDERATION` and `AZURE_MANAGED_IDENTITY_CLIENT_ID` config fields on `Settings`
+  - 39 new unit tests (`tests/unit/test_oidc_credential.py`) + 9 smoke tests (`tests/smoke/test_oidc_connectivity.py`) — total suite: 2,933 passed
+
+### Changed
+- `app/api/services/azure_client.py`: `get_credential()` uses OIDC `ClientAssertionCredential` when `USE_OIDC_FEDERATION=true`
+- `app/api/services/graph_client.py`: `_get_credential()` uses OIDC credential path when `USE_OIDC_FEDERATION=true`
+- `app/preflight/azure_checks.py`: Preflight auth check bypasses `client_secret` requirement in OIDC mode
+- `app/core/tenants_config.py`: `key_vault_secret_name` now optional (`None`); `oidc_enabled=True` for all 5 tenants; `get_app_id_for_tenant()` helper added; `validate_tenant_config()` skips secret-name check when OIDC enabled
+- `app/models/tenant.py`: Added `use_oidc: bool` column (default `False`)
+- `app/core/config.py`: `is_configured` property respects OIDC mode (no secret required when `use_oidc_federation=True`)
+- `.env.example`: Added OIDC section, updated stale `RIVERSIDE_*_APP_ID` values
+- Test suite: 2,888 → 2,933 (+45 tests)
+
+### Pending (Azure-side — code complete, awaiting manual execution)
+- Run `scripts/setup-federated-creds.sh` on all 5 tenant app registrations
+- Set `USE_OIDC_FEDERATION=true` on App Service config
+- Run `scripts/seed_riverside_tenants.py` against production DB
+- Execute smoke tests from staging App Service (`tests/smoke/test_oidc_connectivity.py`)
 
 ---
 

@@ -1,18 +1,18 @@
 # SESSION HANDOFF — Azure Governance Platform
 
-**Last session:** planning-agent-e4eab2 — Version: 1.5.7 — Production Validated
-**Status:** 🟢 ALL ENVIRONMENTS LIVE AT v1.5.7
+**Last session:** code-puppy-0e02df — Version: 1.5.7 + OIDC (pending release tag)
+**Status:** 🟢 ALL ENVIRONMENTS LIVE — OIDC implementation complete, pending Azure-side activation
 
 ---
 
-## Current State (Reality)
+## Current State
 
 ```
-2882 unit/integration tests passed, 0 failed
+2933 unit/integration tests passed, 0 failed
 74 staging E2E tests passed, 31 skipped (auth-gated)
-7 smoke tests passed, 0 failed
+9 smoke tests: SKIPPED (correct — no MI env on dev machine)
 ruff check: All checks passed (0 errors)
-Version: 1.5.7 (local, staging, production aligned)
+Version: 1.5.7 (code complete; OIDC changes unreleased, tagged as Unreleased in CHANGELOG)
 Requirements: 57/57 implemented (100%)
 ```
 
@@ -30,30 +30,76 @@ Requirements: 57/57 implemented (100%)
 
 ## What Was Done This Session
 
-### Phase 1: Feature Implementation (v1.5.6 → v1.5.7)
-1. **RC-031–035** — Device Security: 5 endpoints + 22 tests, router wired
-2. **RM-008** — Resource Provisioning Standards: YAML config + service + 4 endpoints + 34 tests
-3. **NF-P03** — Locust load test suite with SLA assertions
-4. **CO-007** — Alembic migration 006 + billing RBAC setup + Cost Management Reader on 4 tenants
+### OIDC Workload Identity Federation — Full Implementation
 
-### Phase 2: Production Validation & Deploy
-5. **Circular import fix** — `app/core/scheduler.py` lazy imports (blocked Docker startup)
-6. **Staging deploy fixed** — ACR auth, container tag pinning, OIDC federation
-7. **Staging validated** — 74 E2E tests, 7 smoke tests, 167 routes confirmed
-8. **Production deployed** — v1.5.7 live, health verified, auth wall confirmed, 167 routes
+Complete replacement of `ClientSecretCredential` (secret-based auth) with
+`ClientAssertionCredential` backed by App Service Managed Identity. No Key Vault,
+no client secrets, no rotation.
 
-### Phase 3: Documentation Audit
-9. **Traceability Matrix** — All 57 requirements confirmed ✅, stale summary tables corrected (100% coverage)
-10. **CHANGELOG/SESSION_HANDOFF** — Production deploy documented
+#### Code changes
+| File | Change |
+|------|--------|
+| `app/core/oidc_credential.py` | NEW — `OIDCCredentialProvider` with 3-tier resolution |
+| `app/core/config.py` | Added `use_oidc_federation`, `azure_managed_identity_client_id` fields; updated `is_configured` |
+| `app/core/tenants_config.py` | `key_vault_secret_name` optional; `oidc_enabled=True` all tenants; `get_app_id_for_tenant()` helper |
+| `app/models/tenant.py` | Added `use_oidc: bool` column |
+| `app/api/services/azure_client.py` | `get_credential()` OIDC path |
+| `app/api/services/graph_client.py` | `_get_credential()` OIDC path |
+| `app/preflight/azure_checks.py` | Preflight bypasses secret check in OIDC mode |
+| `.env.example` | OIDC section added |
 
-### Test Delta This Session
-- Unit/integration: 2,826 → 2,882 (+56)
-- Staging E2E: 74 passed (unchanged)
-- Smoke: 7 passed (unchanged)
+#### Scripts
+| Script | Purpose |
+|--------|---------|
+| `scripts/setup-federated-creds.sh` | One-time: creates federated credentials on all 5 app registrations |
+| `scripts/verify-federated-creds.sh` | Read-only: verifies federated cred config |
+| `scripts/seed_riverside_tenants.py` | Upserts all 5 tenants into DB with `use_oidc=True` |
+
+#### Migrations
+| Migration | Change |
+|-----------|--------|
+| `alembic/versions/007_add_oidc_federation.py` | Adds `use_oidc` bool column to `tenants` table |
+
+#### Tests
+| File | Tests | Status |
+|------|-------|--------|
+| `tests/unit/test_oidc_credential.py` | 39 | ✅ All pass |
+| `tests/smoke/test_oidc_connectivity.py` | 9 | ✅ Skip gracefully (no MI env) |
+| `tests/unit/test_config.py` | +6 OIDC tests appended | ✅ All pass |
+
+#### Docs
+| Doc | Purpose |
+|-----|---------|
+| `docs/OIDC_TENANT_AUTH.md` | Complete setup, operation, troubleshooting guide |
+| `CHANGELOG.md` | `[Unreleased]` section updated |
+
+#### Bug fixed along the way
+`test_graph_async_token.py` poisons `sys.modules["azure.identity"]` with a
+`MagicMock`, which caused `MagicMock(spec=<azure class>)` → `InvalidSpecError`
+in the full suite. Fixed by dropping `spec=` on 3 return-value mocks in
+`test_oidc_credential.py`.
 
 ---
 
-## Billing RBAC Status (CO-007)
+## Remaining Items (Azure-Side — Requires Manual Execution)
+
+Code is 100% complete and tested. These steps require Azure admin access and
+a running App Service. They cannot be done from a dev machine without the MI.
+
+| Step | Command | Status |
+|------|---------|--------|
+| 1. Get MI Object ID | `az webapp identity show --name app-governance-prod --resource-group rg-governance-production --query principalId -o tsv` | ⏳ Run first |
+| 2. Configure federated creds (all 5 tenants) | `./scripts/setup-federated-creds.sh --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 --mi-object-id <MI_OBJECT_ID>` | ⏳ Needs admin |
+| 3. Enable OIDC on App Service | `az webapp config appsettings set --name app-governance-prod --resource-group rg-governance-production --settings USE_OIDC_FEDERATION=true` | ⏳ Pending |
+| 4. Set MI client ID (user-assigned only) | `az webapp config appsettings set ... AZURE_MANAGED_IDENTITY_CLIENT_ID=<id>` | ⏳ If user-assigned |
+| 5. Apply DB migration (if not already) | `uv run alembic upgrade head` | ⏳ Pending |
+| 6. Seed tenant records | `uv run python scripts/seed_riverside_tenants.py` | ⏳ Pending |
+| 7. Verify federated creds | `./scripts/verify-federated-creds.sh --managing-tenant-id 0c0e35dc-... --mi-object-id <id>` | ⏳ Pending |
+| 8. Run smoke tests from staging | `uv run pytest tests/smoke/test_oidc_connectivity.py -v` | ⏳ Needs Azure env |
+
+---
+
+## Billing RBAC Status (CO-007, from previous session)
 
 | Tenant | Billing Account | RBAC Role | DB Config |
 |--------|----------------|-----------|-----------|
@@ -65,7 +111,7 @@ Requirements: 57/57 implemented (100%)
 
 ---
 
-## Remaining Items
+## Other Open Items
 
 | Item | Status | Blocker |
 |------|--------|---------|
@@ -79,11 +125,44 @@ Requirements: 57/57 implemented (100%)
 
 ```bash
 cd /Users/tygranlund/dev/azure-governance-platform
-git status && git log --oneline -3
+git status && git log --oneline -5
 uv run pytest -q --ignore=tests/e2e --ignore=tests/smoke --ignore=tests/staging --ignore=tests/load
 uv run ruff check .
 curl -s https://app-governance-prod.azurewebsites.net/health
 curl -s https://app-governance-staging-xnczpwyv.azurewebsites.net/health
 ```
 
-**Plane Status: 🛬 LANDED — Production v1.5.7 live, 57/57 requirements, 100% coverage**
+### Azure-side OIDC activation (run when ready)
+
+```bash
+# Step 1: Get the MI Object ID
+MI_OBJECT_ID=$(az webapp identity show \
+  --name app-governance-prod \
+  --resource-group rg-governance-production \
+  --query principalId -o tsv)
+echo "MI Object ID: $MI_OBJECT_ID"
+
+# Step 2: Configure federated credentials on all 5 tenants
+./scripts/setup-federated-creds.sh \
+  --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 \
+  --mi-object-id "$MI_OBJECT_ID"
+
+# Step 3: Enable OIDC mode on App Service
+az webapp config appsettings set \
+  --name app-governance-prod \
+  --resource-group rg-governance-production \
+  --settings USE_OIDC_FEDERATION=true
+
+# Step 4: Run migrations + seed
+uv run alembic upgrade head
+uv run python scripts/seed_riverside_tenants.py
+
+# Step 5: Verify
+./scripts/verify-federated-creds.sh \
+  --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 \
+  --mi-object-id "$MI_OBJECT_ID"
+```
+
+---
+
+**Plane Status: 🛬 LANDED — Code complete, tests green, docs written. Azure-side activation pending.**
