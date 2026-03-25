@@ -128,11 +128,23 @@ class OIDCCredentialProvider:
                 client_id=client_id,
             )
 
-        # Development fallback — warn loudly so nobody accidentally ships this
+        # Development fallback — guarded by explicit opt-in.
+        # In production, a missing WEBSITE_SITE_NAME means a misconfigured App Service;
+        # fail loud rather than silently using the wrong identity.
+        from app.core.config import get_settings  # lazy — avoids circular at import time
+
+        _settings = get_settings()
+        if not _settings.oidc_allow_dev_fallback:
+            raise RuntimeError(
+                f"OIDC: Neither App Service (WEBSITE_SITE_NAME) nor Workload Identity "
+                f"(AZURE_FEDERATED_TOKEN_FILE) environment detected for tenant={tenant_id}. "
+                f"Set OIDC_ALLOW_DEV_FALLBACK=true for local development. "
+                f"In production, ensure WEBSITE_SITE_NAME is set on the App Service."
+            )
         logger.warning(
-            "OIDC: No App Service or Workload Identity environment detected. "
-            "Falling back to DefaultAzureCredential for tenant=%s. "
-            "This is intended for local development only.",
+            "OIDC: Dev fallback active for tenant=%s (OIDC_ALLOW_DEV_FALLBACK=true). "
+            "This credential does not scope to the target tenant. "
+            "Do NOT use in production.",
             tenant_id,
         )
         return DefaultAzureCredential()

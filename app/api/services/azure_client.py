@@ -325,7 +325,26 @@ class AzureClientManager:
             ValueError: If credentials cannot be resolved
         """
         now = time.time()
-        cached = self._credentials.get(tenant_id)
+
+        # Create new credential
+        if self._settings.use_oidc_federation:
+            # OIDC path: resolve app_id from tenants_config, fall back to DB record.
+            # Cache key is composite (tenant_id:client_id) so a client_id rotation
+            # immediately invalidates the stale entry rather than waiting for TTL.
+            oidc_client_id = get_app_id_for_tenant(tenant_id)
+            if not oidc_client_id:
+                tenant_record = self._get_tenant_from_db(tenant_id)
+                oidc_client_id = tenant_record.client_id if tenant_record else None
+            if not oidc_client_id:
+                raise ValueError(
+                    f"OIDC mode: could not resolve client_id for tenant {tenant_id}. "
+                    "Add it to tenants_config.py or the tenants DB table."
+                )
+            cache_key = f"{tenant_id}:{oidc_client_id}"
+            cached = self._credentials.get(cache_key)
+        else:
+            cache_key = tenant_id
+            cached = self._credentials.get(cache_key)
 
         # Check if we can use cached credential
         if not force_refresh and cached:
@@ -343,18 +362,7 @@ class AzureClientManager:
         elif force_refresh:
             logger.debug(f"Force refreshing credential for tenant {tenant_id}")
 
-        # Create new credential
         if self._settings.use_oidc_federation:
-            # OIDC path: resolve app_id from tenants_config, fall back to DB record
-            oidc_client_id = get_app_id_for_tenant(tenant_id)
-            if not oidc_client_id:
-                tenant_record = self._get_tenant_from_db(tenant_id)
-                oidc_client_id = tenant_record.client_id if tenant_record else None
-            if not oidc_client_id:
-                raise ValueError(
-                    f"OIDC mode: could not resolve client_id for tenant {tenant_id}. "
-                    "Add it to tenants_config.py or the tenants DB table."
-                )
             from app.core.oidc_credential import get_oidc_provider  # lazy — avoids circular
 
             new_credential = get_oidc_provider().get_credential_for_tenant(
@@ -375,7 +383,7 @@ class AzureClientManager:
             )
 
         # Cache with expiration
-        self._credentials[tenant_id] = CachedCredential(
+        self._credentials[cache_key] = CachedCredential(
             credential=new_credential,
             created_at=now,
             expires_at=now + self._credential_ttl,
@@ -456,10 +464,16 @@ class AzureClientManager:
         stats = {"credentials_cleared": 0, "secrets_cleared": 0}
 
         if tenant_id:
-            # Clear specific tenant
-            if tenant_id in self._credentials:
-                del self._credentials[tenant_id]
-                stats["credentials_cleared"] = 1
+            # Clear all credential entries for this tenant.
+            # OIDC entries use composite "tenant_id:client_id" keys;
+            # secret-mode entries use plain tenant_id. Match both.
+            cred_keys = [
+                k for k in self._credentials
+                if k == tenant_id or k.startswith(f"{tenant_id}:")
+            ]
+            for key in cred_keys:
+                del self._credentials[key]
+            stats["credentials_cleared"] = len(cred_keys)
 
             # Clear Key Vault cache entries for this tenant
             keys_to_remove = [k for k in self._key_vault_cache if k.startswith(f"{tenant_id}:")]

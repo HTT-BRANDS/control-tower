@@ -161,24 +161,11 @@ class GraphClient:
         """
         if not self._credential:
             if settings.use_oidc_federation:
-                from app.core.oidc_credential import get_oidc_provider
-                from app.core.tenants_config import get_app_id_for_tenant
+                # Delegate to the global singleton so clear_cache() remains effective
+                # and TTL caching is shared across all callers.
+                from app.api.services.azure_client import azure_client_manager
 
-                client_id = get_app_id_for_tenant(self.tenant_id)
-                if not client_id:
-                    # Fall back to DB record
-                    from app.api.services.azure_client import AzureClientManager
-
-                    tenant_record = AzureClientManager()._get_tenant_from_db(self.tenant_id)
-                    client_id = tenant_record.client_id if tenant_record else None
-                if not client_id:
-                    raise ValueError(
-                        f"OIDC mode: could not resolve client_id for tenant {self.tenant_id}. "
-                        "Add it to tenants_config.py or the tenants DB table."
-                    )
-                self._credential = get_oidc_provider().get_credential_for_tenant(
-                    self.tenant_id, client_id
-                )
+                self._credential = azure_client_manager.get_credential(self.tenant_id)
             else:
                 from app.api.services.azure_client import AzureClientManager
 

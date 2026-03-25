@@ -34,6 +34,16 @@ warn() { echo -e "  ${YELLOW}⚠${RESET} $*"; }
 err()  { echo -e "  ${RED}✗${RESET} $*" >&2; }
 hdr()  { echo -e "\n${BOLD}${CYAN}$*${RESET}"; }
 
+validate_uuid() {
+    local val="$1"
+    local label="$2"
+    if ! [[ "$val" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+        err "$label must be a valid UUID (got: $val)"
+        echo "  Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" >&2
+        exit 1
+    fi
+}
+
 # ---------------------------------------------------------------------------
 # Tenant definitions (matches app/core/tenants_config.py)
 # ---------------------------------------------------------------------------
@@ -105,6 +115,9 @@ if [[ -n "$FILTER_TENANT" && -z "${TENANT_IDS[$FILTER_TENANT]+_}" ]]; then
     err "Unknown tenant code: $FILTER_TENANT. Valid: HTT BCC FN TLL DCE"
     exit 1
 fi
+
+validate_uuid "$MANAGING_TENANT_ID" "--managing-tenant-id"
+validate_uuid "$MI_OBJECT_ID" "--mi-object-id"
 
 # ---------------------------------------------------------------------------
 # Build work list

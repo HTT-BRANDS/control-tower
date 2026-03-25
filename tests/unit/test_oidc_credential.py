@@ -214,26 +214,60 @@ class TestDevFallbackPath:
         }
 
     def test_returns_default_azure_credential(self):
+        mock_settings = MagicMock()
+        mock_settings.oidc_allow_dev_fallback = True
         with patch.dict(os.environ, self._clean_env(), clear=True):
             with patch("app.core.oidc_credential.DefaultAzureCredential") as mock_dac:
-                mock_dac.return_value = MagicMock()
-                provider = _make_provider()
-                cred = provider.get_credential_for_tenant("tenant-dev", "client-dev")
+                with patch("app.core.config.get_settings", return_value=mock_settings):
+                    mock_dac.return_value = MagicMock()
+                    provider = _make_provider()
+                    cred = provider.get_credential_for_tenant("tenant-dev", "client-dev")
 
-                mock_dac.assert_called_once_with()
-                assert cred is mock_dac.return_value
+                    mock_dac.assert_called_once_with()
+                    assert cred is mock_dac.return_value
 
     def test_dev_fallback_emits_warning_log(self):
+        mock_settings = MagicMock()
+        mock_settings.oidc_allow_dev_fallback = True
         with patch.dict(os.environ, self._clean_env(), clear=True):
             with patch("app.core.oidc_credential.DefaultAzureCredential"):
-                with patch("app.core.oidc_credential.logger") as mock_logger:
-                    provider = _make_provider()
-                    provider.get_credential_for_tenant("tenant-dev", "client-dev")
+                with patch("app.core.config.get_settings", return_value=mock_settings):
+                    with patch("app.core.oidc_credential.logger") as mock_logger:
+                        provider = _make_provider()
+                        provider.get_credential_for_tenant("tenant-dev", "client-dev")
 
-                    mock_logger.warning.assert_called_once()
-                    warning_msg = mock_logger.warning.call_args[0][0]
-                    assert "DefaultAzureCredential" in warning_msg
-                    assert "local development" in warning_msg
+                        mock_logger.warning.assert_called_once()
+                        warning_msg = mock_logger.warning.call_args[0][0]
+                        assert "OIDC_ALLOW_DEV_FALLBACK" in warning_msg
+
+    def test_dev_fallback_raises_when_not_allowed(self):
+        """Kill switch: RuntimeError when OIDC_ALLOW_DEV_FALLBACK is False (the default)."""
+        mock_settings = MagicMock()
+        mock_settings.oidc_allow_dev_fallback = False
+        with patch.dict(os.environ, self._clean_env(), clear=True):
+            with patch("app.core.config.get_settings", return_value=mock_settings):
+                provider = _make_provider()
+                with pytest.raises(RuntimeError) as exc_info:
+                    provider.get_credential_for_tenant("fake-tenant", "fake-client")
+
+                msg = str(exc_info.value)
+                assert "WEBSITE_SITE_NAME" in msg
+                assert "AZURE_FEDERATED_TOKEN_FILE" in msg
+                assert "OIDC_ALLOW_DEV_FALLBACK" in msg
+                assert "fake-tenant" in msg
+
+    def test_dev_fallback_allowed_explicitly(self):
+        """When OIDC_ALLOW_DEV_FALLBACK=True, DefaultAzureCredential is returned."""
+        mock_settings = MagicMock()
+        mock_settings.oidc_allow_dev_fallback = True
+        with patch.dict(os.environ, self._clean_env(), clear=True):
+            with patch("app.core.oidc_credential.DefaultAzureCredential") as mock_dac:
+                with patch("app.core.config.get_settings", return_value=mock_settings):
+                    mock_dac.return_value = MagicMock()
+                    provider = _make_provider()
+                    cred = provider.get_credential_for_tenant("tenant-x", "client-x")
+
+                    assert cred is mock_dac.return_value
 
 
 # ===========================================================================
@@ -410,36 +444,31 @@ class TestAzureClientManagerOidcPath:
 
 
 class TestGraphClientOidcPath:
-    """GraphClient._get_credential() branches on use_oidc_federation."""
+    """GraphClient._get_credential() branches on use_oidc_federation.
+
+    After HIGH-3 fix: OIDC path delegates to azure_client_manager singleton
+    so clear_cache() takes effect and TTL caching is shared.
+    """
 
     def test_oidc_path_returned_when_oidc_enabled(self):
         mock_settings = MagicMock()
-        mock_settings.azure_client_id = "gc-client-id"
-        mock_settings.azure_client_secret = "gc-secret"
-        mock_settings.azure_tenant_id = "gc-tenant-id"
         mock_settings.use_oidc_federation = True
 
         mock_cred = MagicMock()
-        mock_provider = MagicMock()
-        mock_provider.get_credential_for_tenant.return_value = mock_cred
 
         with patch("app.api.services.graph_client.settings", mock_settings):
             with patch(
-                "app.core.oidc_credential.get_oidc_provider", return_value=mock_provider
-            ):
-                with patch(
-                    "app.core.tenants_config.get_app_id_for_tenant",
-                    return_value="gc-oidc-app-id",
-                ):
-                    from app.api.services.graph_client import GraphClient
+                "app.api.services.azure_client.azure_client_manager"
+            ) as mock_manager:
+                mock_manager.get_credential.return_value = mock_cred
 
-                    client = GraphClient("gc-tenant-id")
-                    cred = client._get_credential()
+                from app.api.services.graph_client import GraphClient
 
-                    mock_provider.get_credential_for_tenant.assert_called_once_with(
-                        "gc-tenant-id", "gc-oidc-app-id"
-                    )
-                    assert cred is mock_cred
+                client = GraphClient("gc-tenant-id")
+                cred = client._get_credential()
+
+                mock_manager.get_credential.assert_called_once_with("gc-tenant-id")
+                assert cred is mock_cred
 
     def test_secret_path_used_when_oidc_disabled(self):
         mock_settings = MagicMock()
@@ -475,24 +504,22 @@ class TestGraphClientOidcPath:
         mock_settings.use_oidc_federation = True
 
         mock_cred = MagicMock()
-        mock_provider = MagicMock()
-        mock_provider.get_credential_for_tenant.return_value = mock_cred
 
         with patch("app.api.services.graph_client.settings", mock_settings):
             with patch(
-                "app.core.oidc_credential.get_oidc_provider", return_value=mock_provider
-            ):
-                with patch(
-                    "app.core.tenants_config.get_app_id_for_tenant", return_value="app-id-123"
-                ):
-                    from app.api.services.graph_client import GraphClient
+                "app.api.services.azure_client.azure_client_manager"
+            ) as mock_manager:
+                mock_manager.get_credential.return_value = mock_cred
 
-                    client = GraphClient("tenant-xyz")
-                    cred1 = client._get_credential()
-                    cred2 = client._get_credential()
+                from app.api.services.graph_client import GraphClient
 
-                    assert cred1 is cred2
-                    assert mock_provider.get_credential_for_tenant.call_count == 1
+                client = GraphClient("tenant-xyz")
+                cred1 = client._get_credential()
+                cred2 = client._get_credential()
+
+                assert cred1 is cred2
+                # get_credential() on the manager called once (cached on GraphClient instance)
+                mock_manager.get_credential.assert_called_once_with("tenant-xyz")
 
 
 # ===========================================================================

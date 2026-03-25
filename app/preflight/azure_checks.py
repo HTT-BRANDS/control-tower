@@ -243,7 +243,8 @@ def _create_check_result(
     duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
     if error:
-        _sanitize_error(error)
+        sanitized = _sanitize_error(error)
+        details = {**(details or {}), **sanitized}
 
     return CheckResult(
         check_id=check_id,
@@ -693,7 +694,13 @@ async def check_azure_authentication(tenant_id: str) -> CheckResult:
         )
 
     except Exception as e:
-        logger.exception(f"Unexpected error in authentication check for tenant {tenant_id}")
+        logger.error(
+            "Unexpected error in authentication check",
+            extra={
+                "tenant_prefix": tenant_id[:8] if tenant_id else "unknown",
+                "error_type": type(e).__name__,
+            },
+        )
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -851,7 +858,13 @@ async def check_azure_subscriptions(tenant_id: str) -> CheckResult:
         raise
 
     except Exception as e:
-        logger.exception(f"Error listing subscriptions for tenant {tenant_id}")
+        logger.error(
+            "Error listing subscriptions",
+            extra={
+                "tenant_prefix": tenant_id[:8] if tenant_id else "unknown",
+                "error_type": type(e).__name__,
+            },
+        )
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -1010,8 +1023,12 @@ async def check_cost_management_access(tenant_id: str, subscription_id: str) -> 
         raise
 
     except Exception as e:
-        logger.exception(
-            f"Error checking cost management access for subscription {subscription_id}"
+        logger.error(
+            "Error checking cost management access",
+            extra={
+                "subscription_prefix": subscription_id[:8] if subscription_id else "unknown",
+                "error_type": type(e).__name__,
+            },
         )
         return _create_check_result(
             check_id=check_id,
@@ -1114,7 +1131,13 @@ async def check_policy_access(tenant_id: str, subscription_id: str) -> CheckResu
         raise
 
     except Exception as e:
-        logger.exception(f"Error checking policy access for subscription {subscription_id}")
+        logger.error(
+            "Error checking policy access",
+            extra={
+                "subscription_prefix": subscription_id[:8] if subscription_id else "unknown",
+                "error_type": type(e).__name__,
+            },
+        )
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -1212,8 +1235,12 @@ async def check_resource_manager_access(tenant_id: str, subscription_id: str) ->
         raise
 
     except Exception as e:
-        logger.exception(
-            f"Error checking resource manager access for subscription {subscription_id}"
+        logger.error(
+            "Error checking resource manager access",
+            extra={
+                "subscription_prefix": subscription_id[:8] if subscription_id else "unknown",
+                "error_type": type(e).__name__,
+            },
         )
         return _create_check_result(
             check_id=check_id,
@@ -1373,7 +1400,13 @@ async def check_graph_api_access(tenant_id: str) -> CheckResult:
         raise
 
     except Exception as e:
-        logger.exception(f"Error checking Graph API access for tenant {tenant_id}")
+        logger.error(
+            "Error checking Graph API access",
+            extra={
+                "tenant_prefix": tenant_id[:8] if tenant_id else "unknown",
+                "error_type": type(e).__name__,
+            },
+        )
         return _create_check_result(
             check_id=check_id,
             name=name,
@@ -1511,8 +1544,12 @@ async def check_security_center_access(tenant_id: str, subscription_id: str) -> 
         raise
 
     except Exception as e:
-        logger.exception(
-            f"Error checking security center access for subscription {subscription_id}"
+        logger.error(
+            "Error checking security center access",
+            extra={
+                "subscription_prefix": subscription_id[:8] if subscription_id else "unknown",
+                "error_type": type(e).__name__,
+            },
         )
         return _create_check_result(
             check_id=check_id,
@@ -1673,7 +1710,13 @@ async def check_rbac_permissions(tenant_id: str, subscription_id: str) -> CheckR
         raise
 
     except Exception as e:
-        logger.exception(f"Error checking RBAC permissions for subscription {subscription_id}")
+        logger.error(
+            "Error checking RBAC permissions",
+            extra={
+                "subscription_prefix": subscription_id[:8] if subscription_id else "unknown",
+                "error_type": type(e).__name__,
+            },
+        )
         return _create_check_result(
             check_id=check_id,
             name=name,

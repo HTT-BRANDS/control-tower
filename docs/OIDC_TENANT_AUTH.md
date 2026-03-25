@@ -275,7 +275,23 @@ These values are the source of truth in `app/core/tenants_config.py`.
 
 OIDC federation requires an actual Azure Managed Identity, so it cannot be used
 locally. The `OIDCCredentialProvider` falls back to `DefaultAzureCredential`
-automatically when not running on App Service.
+when `OIDC_ALLOW_DEV_FALLBACK=true` is set.
+
+> **Production kill switch:** When neither `WEBSITE_SITE_NAME` nor
+> `AZURE_FEDERATED_TOKEN_FILE` is present, the provider raises a `RuntimeError`
+> **unless** `OIDC_ALLOW_DEV_FALLBACK=true` is explicitly set. This prevents a
+> misconfigured App Service from silently using the wrong identity.
+>
+> Production App Services always have `WEBSITE_SITE_NAME` set automatically by
+> the platform — you never need `OIDC_ALLOW_DEV_FALLBACK` in production.
+
+Add to your local `.env` (already in `.env.example`):
+
+```bash
+OIDC_ALLOW_DEV_FALLBACK=true
+```
+
+Then log in to Azure:
 
 ```bash
 # Log in to Azure
@@ -288,6 +304,11 @@ az login --tenant 0c0e35dc-188a-4eb3-b8ba-61752154b407
 `DefaultAzureCredential` will pick up your `az login` session and authenticate
 to each tenant using your own account's cross-tenant permissions (subject to
 Conditional Access policies in each tenant).
+
+> ⚠️ `DefaultAzureCredential` does **not** scope to the target `tenant_id` /
+> `client_id` the way `ClientAssertionCredential` does. It authenticates as
+> *you* to whichever tenant your `az login` session covers. This is fine for
+> local development but must **never** reach production.
 
 ### Testing against real tenants from a local machine
 

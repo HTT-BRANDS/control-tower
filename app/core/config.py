@@ -116,6 +116,14 @@ class Settings(BaseSettings):
         alias="AZURE_MANAGED_IDENTITY_CLIENT_ID",
         description="Client ID of user-assigned managed identity. Leave empty for system-assigned.",
     )
+    oidc_allow_dev_fallback: bool = Field(
+        default=False,
+        alias="OIDC_ALLOW_DEV_FALLBACK",
+        description=(
+            "Allow DefaultAzureCredential fallback when not on App Service. "
+            "Set to true for local development only. NEVER enable in production."
+        ),
+    )
 
     # Azure Lighthouse Configuration
     managed_identity_object_id: str | None = Field(
