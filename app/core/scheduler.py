@@ -245,12 +245,14 @@ async def trigger_manual_sync(sync_type: str) -> bool:
     sync_functions = _get_sync_functions()
 
     # Add riverside wrapper functions
-    sync_functions.update({
-        "hourly_mfa": hourly_mfa_sync,
-        "daily_full": daily_full_sync,
-        "weekly_threat": weekly_threat_sync,
-        "monthly_report": monthly_report_sync,
-    })
+    sync_functions.update(
+        {
+            "hourly_mfa": hourly_mfa_sync,
+            "daily_full": daily_full_sync,
+            "weekly_threat": weekly_threat_sync,
+            "monthly_report": monthly_report_sync,
+        }
+    )
 
     if sync_type not in sync_functions:
         return False

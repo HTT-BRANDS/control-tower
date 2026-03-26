@@ -105,8 +105,7 @@ class OIDCCredentialProvider:
         """
         if self._is_app_service():
             logger.debug(
-                "OIDC: App Service path → ClientAssertionCredential "
-                "(tenant=%s, client=%s)",
+                "OIDC: App Service path → ClientAssertionCredential (tenant=%s, client=%s)",
                 tenant_id,
                 client_id,
             )
@@ -118,8 +117,7 @@ class OIDCCredentialProvider:
 
         if self._is_workload_identity():
             logger.debug(
-                "OIDC: Workload Identity path → WorkloadIdentityCredential "
-                "(tenant=%s, client=%s)",
+                "OIDC: Workload Identity path → WorkloadIdentityCredential (tenant=%s, client=%s)",
                 tenant_id,
                 client_id,
             )

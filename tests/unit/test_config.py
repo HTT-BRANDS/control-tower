@@ -642,6 +642,7 @@ def test_is_configured_requires_tenant_id_in_oidc_mode(monkeypatch):
     # No tenant_id → not configured even if credential source present
     assert settings.is_configured is False
 
+
 def test_is_configured_oidc_with_app_service(monkeypatch):
     """MEDIUM-4: is_configured True when WEBSITE_SITE_NAME set (App Service path)."""
     monkeypatch.setenv("USE_OIDC_FEDERATION", "true")

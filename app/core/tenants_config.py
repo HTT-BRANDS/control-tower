@@ -280,6 +280,7 @@ def get_app_id_for_tenant(tenant_id: str) -> str | None:
     config = get_tenant_by_id(tenant_id)
     return config.app_id if config else None
 
+
 def validate_tenant_config() -> list[str]:
     """Validate all tenant configurations and return list of issues."""
     issues = []
@@ -294,7 +295,9 @@ def validate_tenant_config() -> list[str]:
 
         # When OIDC is enabled, key_vault_secret_name is not required
         if not config.oidc_enabled and config.key_vault_secret_name in ("TBD", "", None):
-            issues.append(f"{code}: key_vault_secret_name is not set (required when oidc_enabled=False)")
+            issues.append(
+                f"{code}: key_vault_secret_name is not set (required when oidc_enabled=False)"
+            )
 
         # Validate UUID format
         import uuid

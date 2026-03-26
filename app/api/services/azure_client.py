@@ -468,8 +468,7 @@ class AzureClientManager:
             # OIDC entries use composite "tenant_id:client_id" keys;
             # secret-mode entries use plain tenant_id. Match both.
             cred_keys = [
-                k for k in self._credentials
-                if k == tenant_id or k.startswith(f"{tenant_id}:")
+                k for k in self._credentials if k == tenant_id or k.startswith(f"{tenant_id}:")
             ]
             for key in cred_keys:
                 del self._credentials[key]

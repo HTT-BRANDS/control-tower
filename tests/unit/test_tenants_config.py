@@ -103,9 +103,7 @@ class TestKeyVaultSecretNames:
 
     @pytest.mark.parametrize("code", EXPECTED_CODES)
     def test_oidc_enabled_is_true(self, code: str) -> None:
-        assert RIVERSIDE_TENANTS[code].oidc_enabled is True, (
-            f"{code}: oidc_enabled should be True"
-        )
+        assert RIVERSIDE_TENANTS[code].oidc_enabled is True, f"{code}: oidc_enabled should be True"
 
     @pytest.mark.parametrize("code", EXPECTED_CODES)
     def test_secret_name_is_none_when_oidc_enabled(self, code: str) -> None:

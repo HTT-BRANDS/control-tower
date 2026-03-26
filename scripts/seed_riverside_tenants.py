@@ -61,12 +61,13 @@ def seed(dry_run: bool = False, reset: bool = False) -> None:
         # ------------------------------------------------------------------
         if reset:
             riverside_tenant_ids = [c.tenant_id for c in RIVERSIDE_TENANTS.values()]
-            existing = (
-                db.query(Tenant).filter(Tenant.tenant_id.in_(riverside_tenant_ids)).all()
-            )
+            existing = db.query(Tenant).filter(Tenant.tenant_id.in_(riverside_tenant_ids)).all()
             for t in existing:
-                print(f"  🗑  Would delete: {t.name} ({t.tenant_id})" if dry_run
-                      else f"  🗑  Deleting: {t.name} ({t.tenant_id})")
+                print(
+                    f"  🗑  Would delete: {t.name} ({t.tenant_id})"
+                    if dry_run
+                    else f"  🗑  Deleting: {t.name} ({t.tenant_id})"
+                )
                 if not dry_run:
                     db.delete(t)
                 deleted += 1

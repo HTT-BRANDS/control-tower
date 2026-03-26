@@ -423,9 +423,7 @@ class TestAzureClientManagerOidcPath:
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
-                with patch(
-                    "app.api.services.azure_client.ClientSecretCredential"
-                ) as mock_csc:
+                with patch("app.api.services.azure_client.ClientSecretCredential") as mock_csc:
                     mock_csc.return_value = MagicMock()
 
                     from app.api.services.azure_client import AzureClientManager
@@ -457,9 +455,7 @@ class TestGraphClientOidcPath:
         mock_cred = MagicMock()
 
         with patch("app.api.services.graph_client.settings", mock_settings):
-            with patch(
-                "app.api.services.azure_client.azure_client_manager"
-            ) as mock_manager:
+            with patch("app.api.services.azure_client.azure_client_manager") as mock_manager:
                 mock_manager.get_credential.return_value = mock_cred
 
                 from app.api.services.graph_client import GraphClient
@@ -478,9 +474,7 @@ class TestGraphClientOidcPath:
         mock_settings.use_oidc_federation = False
 
         with patch("app.api.services.graph_client.settings", mock_settings):
-            with patch(
-                "app.api.services.graph_client.ClientSecretCredential"
-            ) as mock_csc:
+            with patch("app.api.services.graph_client.ClientSecretCredential") as mock_csc:
                 with patch("app.api.services.azure_client.AzureClientManager") as mock_mgr:
                     mock_mgr.return_value._resolve_credentials.return_value = (
                         "client-id",
@@ -506,9 +500,7 @@ class TestGraphClientOidcPath:
         mock_cred = MagicMock()
 
         with patch("app.api.services.graph_client.settings", mock_settings):
-            with patch(
-                "app.api.services.azure_client.azure_client_manager"
-            ) as mock_manager:
+            with patch("app.api.services.azure_client.azure_client_manager") as mock_manager:
                 mock_manager.get_credential.return_value = mock_cred
 
                 from app.api.services.graph_client import GraphClient

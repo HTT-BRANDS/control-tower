@@ -34,8 +34,7 @@ _HAS_OIDC_ENV = bool(
     or (
         os.environ.get("USE_OIDC_FEDERATION", "").lower() == "true"
         and (
-            os.environ.get("AZURE_MANAGED_IDENTITY_CLIENT_ID")
-            or os.environ.get("AZURE_CLIENT_ID")
+            os.environ.get("AZURE_MANAGED_IDENTITY_CLIENT_ID") or os.environ.get("AZURE_CLIENT_ID")
         )
     )
 )
@@ -114,9 +113,7 @@ def test_credential_for_htt_tenant(oidc_provider):
     from azure.core.credentials import TokenCredential
 
     cred = oidc_provider.get_credential_for_tenant(HTT_TENANT_ID, HTT_APP_ID)
-    assert isinstance(cred, TokenCredential), (
-        f"Expected TokenCredential, got {type(cred).__name__}"
-    )
+    assert isinstance(cred, TokenCredential), f"Expected TokenCredential, got {type(cred).__name__}"
 
 
 @pytest.mark.parametrize("code,tenant_id,app_id", ACTIVE_TENANTS)
