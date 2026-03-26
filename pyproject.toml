@@ -50,6 +50,10 @@ dependencies = [
     "redis>=5.0.0",
     # Azure SQL / ODBC support
     "pyodbc>=4.0.39",
+    "opentelemetry-api>=1.40.0",
+    "opentelemetry-sdk>=1.40.0",
+    "opentelemetry-instrumentation-fastapi>=0.61b0",
+    "opentelemetry-exporter-otlp>=1.40.0",
 ]
 
 [project.optional-dependencies]

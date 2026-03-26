@@ -15,6 +15,7 @@ from app.api.routes.device_security import router as device_security_router
 from app.api.routes.dmarc import router as dmarc_router
 from app.api.routes.exports import router as exports_router
 from app.api.routes.identity import router as identity_router
+from app.api.routes.metrics import router as metrics_router
 from app.api.routes.monitoring import router as monitoring_router
 from app.api.routes.onboarding import router as onboarding_router
 from app.api.routes.pages import router as pages_router
@@ -47,6 +48,7 @@ __all__ = [
     "dmarc_router",
     "exports_router",
     "identity_router",
+    "metrics_router",
     "monitoring_router",
     "onboarding_router",
     "pages_router",

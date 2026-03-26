@@ -26,6 +26,7 @@ from app.api.routes import (
     dmarc_router,
     exports_router,
     identity_router,
+    metrics_router,
     monitoring_router,
     onboarding_router,
     pages_router,
@@ -51,6 +52,12 @@ from app.core.scheduler import init_scheduler
 from app.core.tenant_context import register_template_filters
 from app.core.token_blacklist import get_blacklist_backend, get_blacklist_size
 from app.core.gpc_middleware import GPCMiddleware
+from app.core.tracing import setup_tracing
+from app.core.logging_config import set_correlation_id
+import uuid
+
+# Initialize tracing if enabled
+tracer = setup_tracing(app) if settings.enable_tracing else None
 
 # Initialize Jinja2 templates and register custom filters
 templates = Jinja2Templates(directory="app/templates")
@@ -136,6 +143,22 @@ app.add_middleware(
 # GPC (Global Privacy Control) middleware - Legal compliance for CCPA/GDPR
 # Must be after CORS but before security headers to properly set privacy-related headers
 app.add_middleware(GPCMiddleware, log_all_requests=False)
+
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Add correlation ID to all requests for distributed tracing."""
+    # Get or generate correlation ID
+    cid = request.headers.get('X-Correlation-ID') or str(uuid.uuid4())[:8]
+    set_correlation_id(cid)
+
+    # Process request
+    response = await call_next(request)
+
+    # Add to response headers
+    response.headers['X-Correlation-ID'] = cid
+
+    return response
 
 
 @app.middleware("http")
@@ -265,6 +288,7 @@ app.include_router(preflight_router)
 app.include_router(privacy_router)
 app.include_router(search_router)
 app.include_router(provisioning_standards_router)
+app.include_router(metrics_router)
 app.include_router(monitoring_router)
 app.include_router(recommendations_router)
 

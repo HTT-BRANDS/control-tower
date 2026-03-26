@@ -208,6 +208,11 @@ class Settings(BaseSettings):
     enable_parallel_sync: bool = Field(default=True, alias="ENABLE_PARALLEL_SYNC")
     max_parallel_tenants: int = Field(default=5, alias="MAX_PARALLEL_TENANTS")
 
+    # OpenTelemetry Tracing
+    enable_tracing: bool = Field(default=False, alias="ENABLE_TRACING")
+    otel_exporter_endpoint: str | None = Field(default=None, alias="OTEL_EXPORTER_ENDPOINT")
+    otel_exporter_headers: str | None = Field(default=None, alias="OTEL_EXPORTER_HEADERS")
+
     # =========================================================================
     # Security Validators
     # =========================================================================

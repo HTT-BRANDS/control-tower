@@ -28,6 +28,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Real-time debounced search
   - Result categorization with icons
 
+### Observability
+- **Distributed Tracing**: OpenTelemetry integration
+  - Automatic FastAPI instrumentation with span propagation
+  - Console exporter for development, OTLP for production
+  - Trace context correlation across service boundaries
+  - Manual span creation via `TracedContext` context manager
+  - Configurable via `ENABLE_TRACING` and `OTEL_EXPORTER_ENDPOINT`
+- **Structured Logging**: JSON-formatted logs with correlation IDs
+  - Correlation ID middleware (`X-Correlation-ID` header)
+  - Context-scoped correlation tracking across async boundaries
+  - Reduced noise from uvicorn/sqlalchemy in production
+- **Metrics Endpoint**: `/api/v1/metrics/*` for system observability
+  - `/health` - basic health with version
+  - `/cache` - cache hit/miss statistics
+  - `/database` - connection pool metrics
+
 ### Performance Foundation
 - **HTTP Timeouts**: Timeout utilities for Azure SDK calls
   - `with_timeout()` async context manager with operation-specific timeouts
