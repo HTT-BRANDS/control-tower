@@ -1,0 +1,21 @@
+# =============================================================================
+# Trivy Ignore List — Azure Governance Platform
+# =============================================================================
+# Only CVEs with no available fix or in components outside our control.
+# Review monthly and remove when patches become available.
+# =============================================================================
+
+# ecdsa 0.19.x — Minerva timing attack (CVE-2024-23342)
+# Mitigated: ecdsa is only used by python-jose for JWT signing key parsing.
+# Our JWT signing uses HS256 (HMAC/symmetric), not ECDSA curves.
+# Azure AD token validation uses RS256 via JWKS, handled by python-jose's
+# cryptography backend (not ecdsa). No ECDSA signing paths in our app.
+# TODO: Migrate from python-jose to PyJWT to eliminate ecdsa dependency entirely.
+CVE-2024-23342
+
+# uv binary — container tooling only, not in app runtime path
+CVE-2026-31812
+
+# wheel/setuptools bundled deps — build-time only, not in runtime
+CVE-2026-24049
+CVE-2026-23949
