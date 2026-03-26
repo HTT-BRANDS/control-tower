@@ -431,9 +431,7 @@ async def azure_oauth_callback(
 
     if response.status_code != 200:
         error_body = response.text[:500]
-        logger.error(
-            f"Azure AD token exchange failed (HTTP {response.status_code}): {error_body}"
-        )
+        logger.error(f"Azure AD token exchange failed (HTTP {response.status_code}): {error_body}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Failed to authenticate with Azure AD",
@@ -444,9 +442,7 @@ async def azure_oauth_callback(
     # ── Step 2: Validate the ID token ───────────────────────────
     id_token = token_data.get("id_token")
     if not id_token:
-        logger.error(
-            f"No ID token in Azure AD response. Keys received: {list(token_data.keys())}"
-        )
+        logger.error(f"No ID token in Azure AD response. Keys received: {list(token_data.keys())}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No ID token received from Azure AD",
@@ -457,9 +453,7 @@ async def azure_oauth_callback(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"ID token validation failed with unexpected error: {type(e).__name__}: {e}"
-        )
+        logger.error(f"ID token validation failed with unexpected error: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Failed to validate Azure AD token",
@@ -601,21 +595,15 @@ async def _sync_user_tenant_mappings(db: Session, token_data: TokenData) -> list
 
                 logger.info(f"Created user tenant mapping: {token_data.sub} -> {tenant_id}")
         except OperationalError as e:
-            logger.error(
-                f"Database connection error syncing tenant {tenant_id}: {e}"
-            )
+            logger.error(f"Database connection error syncing tenant {tenant_id}: {e}")
             db.rollback()
             continue
         except SQLAlchemyError as e:
-            logger.error(
-                f"Database error syncing tenant mapping for {tenant_id}: {e}"
-            )
+            logger.error(f"Database error syncing tenant mapping for {tenant_id}: {e}")
             db.rollback()
             continue
         except Exception as e:
-            logger.error(
-                f"Failed to sync tenant mapping for {tenant_id}: {type(e).__name__}: {e}"
-            )
+            logger.error(f"Failed to sync tenant mapping for {tenant_id}: {type(e).__name__}: {e}")
             db.rollback()
             continue
 
