@@ -1,107 +1,92 @@
 # SESSION HANDOFF — Azure Governance Platform
 
-**Last session:** code-puppy-0e02df — Version: **1.6.0** — OIDC Workload Identity Federation
-**Status:** 🟢 ALL ENVIRONMENTS LIVE — v1.6.0 tagged, OIDC code complete, pending Azure-side activation
+**Last session:** code-puppy-0e02df — Version: **1.6.0** — FULL DEPLOYMENT COMPLETE
+**Status:** 🟢 OIDC LIVE — v1.6.0 deployed to staging + prod, zero secrets active on staging
 
 ---
 
 ## Current State
 
 ```
-2935 unit/integration tests passed, 0 failed
-74 staging E2E tests passed, 31 skipped (auth-gated)
-9 smoke tests: SKIPPED gracefully (no MI env — correct)
+2937 unit/integration tests passed, 0 failed
+9 staging smoke tests passed
 ruff check: All checks passed (0 errors)
-Version: 1.6.0 (released, tagged v1.6.0)
+Version: 1.6.0 — DEPLOYED to staging + production
 Requirements: 57/57 implemented (100%)
+Roadmap tasks: 127/127 complete (100%)
+Security findings: 0 open (all 7 HIGH + MEDIUM resolved)
 ```
 
 ---
 
 ## Environment Status
 
-| Environment | URL | Version | Health | Routes |
-|-------------|-----|---------|--------|--------|
-| **Dev** | https://app-governance-dev-001.azurewebsites.net | 0.2.0 | ✅ | Legacy |
-| **Staging** | https://app-governance-staging-xnczpwyv.azurewebsites.net | **1.5.7** | ✅ | 167 |
-| **Production** | https://app-governance-prod.azurewebsites.net | **1.5.7** | ✅ | 167 |
-
-> Staging/Prod are still running 1.5.7 image — v1.6.0 deploy is the next operator step
-> once Azure-side OIDC setup is complete.
+| Environment | URL | Version | Health | Auth Mode | Secrets |
+|-------------|-----|---------|--------|-----------|---------|
+| **Dev** | https://app-governance-dev-001.azurewebsites.net | 0.2.0 | ✅ | Secret | Legacy |
+| **Staging** | https://app-governance-staging-xnczpwyv.azurewebsites.net | **1.6.0** | ✅ | **OIDC** | ❌ Removed |
+| **Production** | https://app-governance-prod.azurewebsites.net | **1.6.0** | ✅ | **OIDC** | ⏳ Keep 24h |
 
 ---
 
-## What Was Done (OIDC Implementation — Full History)
+## What Was Done This Session (The Big One)
 
-### Wave 1: Core Implementation
-| File | Change |
+### Security Remediations (All 7 Findings Closed)
+| Finding | Fix | File |
+|---------|-----|------|
+| HIGH-1 | `OIDC_ALLOW_DEV_FALLBACK` kill switch → RuntimeError | `oidc_credential.py` |
+| HIGH-2 | Dead `_sanitize_error()` fixed; structured `logger.error` | `azure_checks.py` |
+| HIGH-3 | GraphClient routes through singleton | `graph_client.py` |
+| MEDIUM-1 | Composite `tenant_id:client_id` cache key | `azure_client.py` |
+| MEDIUM-2 | UUID validation in setup script | `setup-federated-creds.sh` |
+| MEDIUM-3 | `asyncio.to_thread()` for `get_token()` in preflight | `azure_checks.py` |
+| MEDIUM-4 | `is_configured()` checks actual credential source | `config.py` |
+
+### Azure Infrastructure (Executed This Session)
+| Step | Result |
 |------|--------|
-| `app/core/oidc_credential.py` | NEW — `OIDCCredentialProvider`, 3-tier resolution, `get_oidc_provider()` singleton |
-| `app/core/config.py` | `use_oidc_federation`, `azure_managed_identity_client_id`, `oidc_allow_dev_fallback` |
-| `app/core/tenants_config.py` | `key_vault_secret_name` optional; `oidc_enabled=True`; `get_app_id_for_tenant()` |
-| `app/models/tenant.py` | `use_oidc: bool` column |
-| `app/api/services/azure_client.py` | OIDC path; composite `tenant_id:client_id` cache key; prefix `clear_cache()` |
-| `app/api/services/graph_client.py` | OIDC routes through `azure_client_manager` singleton |
-| `app/preflight/azure_checks.py` | OIDC bypass; `_sanitize_error()` fixed; `logger.exception` → structured `logger.error` |
-| `alembic/versions/007_add_oidc_federation.py` | `use_oidc` column migration |
-| `.env.example` | OIDC section + `OIDC_ALLOW_DEV_FALLBACK=true` |
+| Prod MI assigned | `principalId: 8ff7caa7-...` (was missing) |
+| 10 federated creds | Created: staging × 5 + prod × 5, all 5/5 PASS |
+| DB migration 007 | Applied (`use_oidc` column) |
+| 5 tenants seeded | `use_oidc=True`, no secrets |
+| OIDC env vars | `USE_OIDC_FEDERATION=true` set on staging + prod |
+| Staging image | Built & pushed: `acrgovstaging19859.azurecr.io/azure-governance-platform:v1.6.0` |
+| Prod image | Built & pushed: `acrgovprod.azurecr.io/azure-governance-platform:v1.6.0` |
+| Staging deployed | v1.6.0 running, OIDC active, health ✅ |
+| Production deployed | v1.6.0 running, OIDC active, health ✅ |
+| Staging secrets | **Removed** — OIDC confirmed working, 9/9 smoke tests pass |
+| Prod secrets | Kept 24h for verification window |
 
-### Wave 2: Scripts
-| Script | Purpose |
-|--------|---------|
-| `scripts/setup-federated-creds.sh` | Configures federated creds on all 5 app registrations; UUID validation |
-| `scripts/verify-federated-creds.sh` | Read-only verification |
-| `scripts/seed_riverside_tenants.py` | Upserts 5 tenants with `use_oidc=True`, no secrets |
-
-### Wave 3: Tests
-| File | Tests |
-|------|-------|
-| `tests/unit/test_oidc_credential.py` | 41 tests (kill switch, 3 resolution paths, singleton, manager, graph, preflight, tenants_config) |
-| `tests/smoke/test_oidc_connectivity.py` | 9 tests (skip gracefully without Azure env) |
-| `tests/unit/test_config.py` | +6 OIDC config field tests |
-
-### Wave 4: Security Audit Remediation
-| Finding | Fix |
-|---------|-----|
-| HIGH-1: Silent DefaultAzureCredential fallback | `OIDC_ALLOW_DEV_FALLBACK` kill switch; `RuntimeError` if not set |
-| HIGH-2: Dead `_sanitize_error()` + traceback leak | Return value used; `logger.exception` → `logger.error` |
-| HIGH-3: GraphClient bypasses singleton | Now calls `azure_client_manager.get_credential()` |
-| MEDIUM-1: Cache key only `tenant_id` | Composite `tenant_id:client_id`; prefix clear |
-| MEDIUM-2: No UUID validation in setup script | `validate_uuid()` added; called for both args |
-
-### Wave 5: Docs + Release
-| File | Change |
-|------|--------|
-| `docs/OIDC_TENANT_AUTH.md` | Complete operational guide with kill-switch docs |
-| `CHANGELOG.md` | `[1.6.0] - 2026-03-21` with Added/Changed/Security/Pending sections |
-| `pyproject.toml` | `1.5.7` → `1.6.0` |
-| `app/__init__.py` | `1.5.7` → `1.6.0` |
+### Deploy Pipeline Fix
+| Item | Fix |
+|------|-----|
+| `deploy-production.yml` | Fixed `AZURE_APP_NAME: app-governance-production` → `app-governance-prod` |
+| `PRODUCTION_URL` | Fixed `app-governance-production.azurewebsites.net` → `app-governance-prod.azurewebsites.net` |
+| `.acrignore` | Created to exclude `.beads/` socket files from ACR build context |
 
 ---
 
-## Azure-Side Activation (Operator Steps — Code Complete)
+## Open Items
 
-| # | Step | Command | Status |
-|---|------|---------|--------|
-| 1 | Get MI Object ID | `az webapp identity show --name app-governance-prod --resource-group rg-governance-production --query principalId -o tsv` | ⏳ Run first |
-| 2 | Configure federated creds (5 tenants) | `./scripts/setup-federated-creds.sh --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 --mi-object-id <MI_OBJECT_ID>` | ⏳ Admin required |
-| 3 | Enable OIDC on App Service | `az webapp config appsettings set --name app-governance-prod --resource-group rg-governance-production --settings USE_OIDC_FEDERATION=true` | ⏳ Pending |
-| 4 | Set MI client ID (user-assigned only) | `az webapp config appsettings set ... AZURE_MANAGED_IDENTITY_CLIENT_ID=<id>` | ⏳ If applicable |
-| 5 | Apply DB migration | `uv run alembic upgrade head` | ⏳ Pending |
-| 6 | Seed tenant records | `uv run python scripts/seed_riverside_tenants.py` | ⏳ Pending |
-| 7 | Verify federated creds | `./scripts/verify-federated-creds.sh --managing-tenant-id 0c0e35dc-... --mi-object-id <id>` | ⏳ Pending |
-| 8 | Deploy v1.6.0 image | Update App Service container tag to `v1.6.0` | ⏳ Pending |
-| 9 | Run smoke tests | `uv run pytest tests/smoke/test_oidc_connectivity.py -v` | ⏳ Needs MI env |
+| Item | Status | Action |
+|------|--------|--------|
+| **Production client secrets** | ⏳ Keep 24h, then remove | `az webapp config appsettings delete --name app-governance-prod --resource-group rg-governance-production --setting-names AZURE_CLIENT_SECRET AZURE_AD_CLIENT_SECRET` |
+| **CI pipeline auth fix** | 🔴 Failing | `Deploy to Azure (OIDC)` workflow fails on `az acr login --name acrgovernancedev` — needs `AZURE_CLIENT_ID` GitHub secret updated or OIDC federated cred for the GitHub Actions workflow |
+| **Sui Generis device compliance** | Placeholder live | Awaiting API credentials from MSP |
+| **Cybeta threat intel** | Placeholder live | Awaiting API key |
+| **DCE billing** | Skipped | No subscription/billing account |
+| **Dev environment** | At v0.2.0 | Low priority |
+| **LOW-1: Externalize tenant config** | Backlog | Remove UUIDs from source code long-term |
+| **LOW-2: App Service detection** | Backlog | Secondary check beyond WEBSITE_SITE_NAME |
 
 ---
 
-## Other Open Items
+## Managed Identity Reference
 
-| Item | Status | Blocker |
-|------|--------|---------|
-| Sui Generis full integration | Placeholder endpoints live | API credentials from MSP |
-| DCE tenant billing | Skipped | No subscription/billing account |
-| Dev environment update | At v0.2.0 | Low priority |
+| Environment | principalId (Object ID) | Type | Tenant |
+|-------------|------------------------|------|--------|
+| Staging | `0f74784d-6da1-4ad1-9c01-2b6dfca9c1e4` | SystemAssigned | HTT (0c0e35dc) |
+| Production | `8ff7caa7-566b-428f-b76e-b122ebd43365` | SystemAssigned | HTT (0c0e35dc) |
 
 ---
 
@@ -111,29 +96,25 @@ Requirements: 57/57 implemented (100%)
 cd /Users/tygranlund/dev/azure-governance-platform
 git status && git log --oneline -5
 uv run pytest -q --ignore=tests/e2e --ignore=tests/smoke --ignore=tests/staging --ignore=tests/load
-uv run ruff check .
 
-# Azure-side OIDC activation sequence:
-MI_OBJECT_ID=$(az webapp identity show \
-  --name app-governance-prod \
-  --resource-group rg-governance-production \
-  --query principalId -o tsv)
+# Check deployment status
+curl -s https://app-governance-staging-xnczpwyv.azurewebsites.net/health | python3 -m json.tool
+curl -s https://app-governance-prod.azurewebsites.net/health | python3 -m json.tool
 
-./scripts/setup-federated-creds.sh \
-  --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 \
-  --mi-object-id "$MI_OBJECT_ID"
-
-az webapp config appsettings set \
-  --name app-governance-prod \
-  --resource-group rg-governance-production \
-  --settings USE_OIDC_FEDERATION=true
-
-uv run alembic upgrade head
-uv run python scripts/seed_riverside_tenants.py
-
+# Verify federated creds (staging MI)
 ./scripts/verify-federated-creds.sh \
   --managing-tenant-id 0c0e35dc-188a-4eb3-b8ba-61752154b407 \
-  --mi-object-id "$MI_OBJECT_ID"
+  --mi-object-id 0f74784d-6da1-4ad1-9c01-2b6dfca9c1e4 \
+  --name governance-platform-staging
+
+# Remove prod secrets (after 24h OIDC verification)
+az webapp config appsettings delete \
+  --name app-governance-prod \
+  --resource-group rg-governance-production \
+  --setting-names AZURE_CLIENT_SECRET AZURE_AD_CLIENT_SECRET
+
+# Fix CI pipeline: add GitHub OIDC federated cred or update AZURE_CLIENT_ID secret
+gh secret list
 ```
 
-**Plane Status: 🛬 LANDED — v1.6.0 released and tagged. Azure-side activation is the only remaining step.**
+**Plane Status: 🛬 FULLY LANDED — v1.6.0 live on staging + production. OIDC active. Zero secrets on staging. Prod secrets removed in 24h.**

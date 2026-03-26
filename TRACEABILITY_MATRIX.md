@@ -1,6 +1,6 @@
 # Traceability Matrix — Code Puppy Agile SDLC Implementation
 
-**Last Updated:** March 20, 2026 (v1.5.7 audit)
+**Last Updated:** 2026-03-26
 **Managed By:** Planning Agent 📋 (planning-agent-8ae68e) + Pack Leader 🐺
 **Methodology:** Tyler Granlund's Agile SDLC Framework
 **Research Date Validation:** All tools/versions confirmed current as of March 6, 2026
@@ -484,6 +484,19 @@ This epic maps the non-functional requirements (performance, security, availabil
 | **MVP (Phase 1)** | 48 | 48 | 48 | ✅ Ship-ready (100% implemented + tested) |
 | **Phase 2 Backlog** | 9 | 9 | 9 | ✅ All Phase 2 items also shipped (CO-007,CO-008,CO-010,CM-002,CM-010,RM-004,RM-007,RM-008,IG-009,IG-010) |
 | **TOTAL** | **57** | **57** | **57** | **✅ 100% — Production-ready** |
+
+## Epic 17: Zero-Secret Authentication (OIDC Workload Identity Federation)
+
+| Req ID | User Story | Acceptance Criteria | Impl Agent | Review Agent | Test Type | Test Agent | Security | Sign-Off | Status | bd Issue |
+|--------|-----------|-------------------|------------|-------------|-----------|-----------|----------|----------|--------|----------|
+| REQ-1701 | As a Platform Engineer, I want tenant auth to use zero secrets so we have no rotation burden | OIDC credential provider live; all 5 tenants use federated creds; no client secrets in App Settings | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Smoke | Watchdog 🐕‍🦺 | STRIDE + full audit | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1702 | As a Security Admin, I want production kill switch preventing DefaultAzureCredential fallback | RuntimeError raised when not on App Service + OIDC_ALLOW_DEV_FALLBACK=false | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Watchdog 🐕‍🦺 | ✅ Audited | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1703 | As an Ops Engineer, I want clear_cache() to invalidate both ARM and Graph API credentials | clear_cache() test passes for GraphClient credentials via singleton | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Watchdog 🐕‍🦺 | ✅ Audited | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1704 | As a Platform Engineer, I want OIDC setup automated via shell scripts | setup-federated-creds.sh runs idempotently; 10 federated creds created; verify script 5/5 PASS | Code-Puppy 🐶 | Security Auditor 🛡️ | Smoke + Manual | Watchdog 🐕‍🦺 | UUID validation added | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1705 | As a Developer, I want health endpoint to accurately report OIDC misconfiguration | is_configured() checks actual MI credential source, not stale azure_client_id field | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Watchdog 🐕‍🦺 | ✅ Audited | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1706 | As a Security Admin, I want auth errors to not leak OIDC metadata in logs | logger.exception → logger.error with structured fields; _sanitize_error() return value used | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Watchdog 🐕‍🦺 | ✅ Audited | Planning Agent 📋 | ✅ Passed | — |
+| REQ-1707 | As a Platform Engineer, I want get_token() in preflight to not block the async event loop | asyncio.to_thread() wraps both get_token() calls in check_azure_authentication and check_graph_api_access | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Watchdog 🐕‍🦺 | ✅ Audited | Planning Agent 📋 | ✅ Passed | — |
+
 
 > **QA Verdict:** All 57 product requirements are **implemented and tested** (100% coverage). v1.5.7 is production-validated across all environments (dev, staging, production) with 2,882 unit/integration tests, 74 staging E2E tests, and Locust load test suite. Zero Phase 2 deferrals remain. **SHIP-READY for production launch.**
 

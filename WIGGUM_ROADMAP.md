@@ -781,6 +781,92 @@ None of these mask production bugs.
   - Note: Billing account configuration pending Tyler's RBAC grants (auth-gated)
   - Signed off by: Planning Agent 📋
 
+
+## Phase 11: OIDC Zero-Secret Authentication + Security Hardening (v1.6.0)
+
+**Status:** ✅ COMPLETE — 12/12 tasks
+**Goal:** Replace ClientSecretCredential with OIDC Workload Identity Federation across all 5 tenants
+**Released:** 2026-03-21 | **Deployed:** 2026-03-26
+
+### 11.1 OIDC Core Implementation
+- [x] 11.1.1 Create `app/core/oidc_credential.py` — `OIDCCredentialProvider` with 3-tier resolution (Code-Puppy 🐶)
+  - App Service MI → Workload Identity → Dev fallback with kill switch (OIDC_ALLOW_DEV_FALLBACK)
+  - Validation: `uv run python -c "from app.core.oidc_credential import get_oidc_provider; print('OK')"`
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.1.2 Add OIDC config fields to `app/core/config.py` (Code-Puppy 🐶)
+  - Fields: `use_oidc_federation`, `azure_managed_identity_client_id`, `oidc_allow_dev_fallback`
+  - `is_configured()` checks WEBSITE_SITE_NAME/AZURE_FEDERATED_TOKEN_FILE not stale azure_client_id
+  - Validation: `uv run python -c "from app.core.config import get_settings; s=get_settings(); print(s.use_oidc_federation)"`
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.1.3 Add `use_oidc` column to tenant model + Alembic migration 007 (Code-Puppy 🐶)
+  - Files: `app/models/tenant.py`, `alembic/versions/007_add_oidc_federation.py`
+  - Validation: `uv run alembic upgrade head`
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.1.4 Update `app/core/tenants_config.py` with OIDC config + `get_app_id_for_tenant()` (Code-Puppy 🐶)
+  - `oidc_enabled=True` on all 5 tenants; `key_vault_secret_name` optional
+  - Validation: `get_app_id_for_tenant(HTT_TENANT_ID)` returns correct app ID
+  - Signed off by: Planning Agent 📋
+
+### 11.2 Credential Call Site Wiring
+- [x] 11.2.1 Wire OIDC into `app/api/services/azure_client.py` (Code-Puppy 🐶)
+  - Dual path: OIDC → `ClientAssertionCredential` / Secret → `ClientSecretCredential`
+  - Composite cache key `tenant_id:client_id`, prefix-aware `clear_cache()`
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.2.2 Wire OIDC into `app/api/services/graph_client.py` (Code-Puppy 🐶)
+  - Routes through `azure_client_manager` singleton (cache-coherent, clear_cache() effective)
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.2.3 Wire OIDC bypass into `app/preflight/azure_checks.py` (Code-Puppy 🐶)
+  - Secret guard skipped; structured logging; `_sanitize_error()` fixed; `asyncio.to_thread()` for get_token()
+  - Signed off by: Planning Agent 📋
+
+### 11.3 Azure-Side Setup + Scripts
+- [x] 11.3.1 Create `scripts/setup-federated-creds.sh` (Code-Puppy 🐶)
+  - UUID validation; bash 3.2 compatible; idempotent; configures all 5 tenants
+  - Ran: 10 federated creds created (staging + prod MI × 5 tenants), 5/5 PASS
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.3.2 Create `scripts/verify-federated-creds.sh` (Code-Puppy 🐶)
+  - Read-only; 5/5 tenants PASS on first run; full validation of issuer/subject/audience
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.3.3 Create `scripts/seed_riverside_tenants.py` (Code-Puppy 🐶)
+  - 5/5 tenants seeded with `use_oidc=True`, no secrets; --dry-run and --reset flags
+  - Signed off by: Planning Agent 📋
+
+### 11.4 Security Audit + Remediation (All 7 Findings Closed)
+- [x] 11.4.1 Security audit by security-auditor (Security Auditor 🛡️)
+  - Verdict: APPROVED WITH CONDITIONS
+  - Findings: 3 HIGH, 4 MEDIUM
+  - Signed off by: Planning Agent 📋
+
+- [x] 11.4.2 Resolve all HIGH + MEDIUM findings (Code-Puppy 🐶)
+  - HIGH-1: `OIDC_ALLOW_DEV_FALLBACK` kill switch — RuntimeError when no credential source
+  - HIGH-2: Dead `_sanitize_error()` fixed; `logger.exception` → structured `logger.error`
+  - HIGH-3: GraphClient routes through `azure_client_manager` singleton
+  - MEDIUM-1: Composite `tenant_id:client_id` cache key prevents stale creds
+  - MEDIUM-2: UUID validation in setup-federated-creds.sh
+  - MEDIUM-3: `asyncio.to_thread()` for `get_token()` in preflight (event loop unblocked)
+  - MEDIUM-4: `is_configured()` checks actual MI credential source not stale azure_client_id
+  - Signed off by: Planning Agent 📋
+
+### 11.5 Tests + Docs
+- [x] 11.5.1 41+ unit tests in `tests/unit/test_oidc_credential.py` (Code-Puppy 🐶)
+  - All 3 resolution paths, kill switch, singleton, cache, manager, graph, preflight, tenants_config
+  - Signed off by: Pack Leader 🐺
+
+- [x] 11.5.2 9 smoke tests in `tests/smoke/test_oidc_connectivity.py` (Code-Puppy 🐶)
+  - Graceful skip when no Azure MI env; real token acquisition when on Azure
+  - Signed off by: Pack Leader 🐺
+
+- [x] 11.5.3 `docs/OIDC_TENANT_AUTH.md` operational guide (Code-Puppy 🐶)
+  - ASCII flow diagram, credential resolution table, troubleshooting, 5-tenant details table
+  - Signed off by: Planning Agent 📋
+
 ## Progress Summary
 
 | Phase | Total Tasks | Completed | Remaining | Status |
@@ -795,8 +881,9 @@ None of these mask production bugs.
 | Phase 8: Phase 2 P1 Features | 15 | 15 | 0 | ✅ Complete |
 | Phase 9: Phase 2 Backlog Sprint | 9 | 9 | 0 | ✅ Complete |
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
+| Phase 11: OIDC + Security Hardening | 12 | 12 | 0 | ✅ Complete |
 
-| **TOTAL** | **115** | **115** | **0** | **✅ Complete** |
+| **TOTAL** | **127** | **127** | **0** | **✅ All Complete** |
 
 ---
 

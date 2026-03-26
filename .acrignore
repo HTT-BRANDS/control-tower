@@ -1,0 +1,144 @@
+# =============================================================================
+# Docker Ignore File
+# =============================================================================
+# This file specifies which files and directories should be excluded
+# from the Docker build context to keep the image small.
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+# Note: README.md is required for hatchling build - keep it!
+# Exclude other docs
+docs/
+CHANGELOG.md
+LICENSE.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# CI/CD
+.github/
+azure-pipelines.yml
+.gitlab-ci.yml
+.travis.yml
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+tests/
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# Local data (will be mounted as volume)
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# Infrastructure
+infrastructure/
+*.bicep
+*.json
+!package.json
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Secrets
+*.pem
+*.key
+*.crt
+secrets/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+
+# Azure
+.azure/
+*.publishsettings
+
+# Backup files
+backups/
+*.backup
+
+# IDE specific
+*.sublime-*
+*.code-workspace
+
+# Issue tracking (beads)
+.beads/
+*.sock
+
+# ACR-specific: exclude socket files and beads runtime
+.beads/
+*.sock
+.acrignore

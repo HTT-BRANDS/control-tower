@@ -49,9 +49,9 @@ env:
   IMAGE_REPO:       azure-governance-platform
   IMAGE_TAG:        latest
   # Production App Service (populated after infra deploy)
-  AZURE_APP_NAME:       app-governance-production
+  AZURE_APP_NAME:       app-governance-prod
   AZURE_RESOURCE_GROUP: rg-governance-production
-  PRODUCTION_URL:       https://app-governance-production.azurewebsites.net
+  PRODUCTION_URL:       https://app-governance-prod.azurewebsites.net
 
 permissions:
   id-token: write

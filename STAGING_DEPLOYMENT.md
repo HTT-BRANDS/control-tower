@@ -1,20 +1,22 @@
 # Staging Deployment — Operational
 
-## ✅ Status: OPERATIONAL (since 2026-03-16)
+## ✅ Status: OPERATIONAL — v1.6.0 (OIDC live since 2026-03-26)
 
 **URL**: https://app-governance-staging-xnczpwyv.azurewebsites.net
 **Health**: https://app-governance-staging-xnczpwyv.azurewebsites.net/health
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| App Service | ✅ Running | v1.5.1 on `acrgovstaging19859.azurecr.io` |
+| App Service | ✅ Running | v1.6.0 on `acrgovstaging19859.azurecr.io` — **OIDC auth active** |
 | Health Endpoint | ✅ Healthy | DB, scheduler, cache, Azure all green |
 | Azure AD SSO | ✅ Configured | "Sign in with Microsoft" button live |
 | Scheduler | ✅ Running | 13 sync jobs registered |
 | Resource Sync | ✅ Working | 79 resources synced |
 | Compliance Sync | ✅ Working | 78 policy states synced |
 | JWT Auth | ✅ Set | Production-safe random key |
-| All 25 env vars | ✅ Configured | Including AZURE_AD_* OAuth2 settings |
+| All env vars | ✅ Configured | Including AZURE_AD_* OAuth2 settings |
+| **OIDC Auth** | ✅ **ACTIVE** | USE_OIDC_FEDERATION=true; client secrets removed |
+| **Federated Creds** | ✅ **5/5** | governance-platform-staging on all 5 tenant app registrations |
 
 ---
 
@@ -94,4 +96,4 @@ The original staging 503 (2026-03-13 → 2026-03-16) was caused by missing `conf
 
 ---
 
-*Last updated: 2026-03-19 — Staging operational, v1.5.1*
+*Last updated: 2026-03-19 — Staging operational, v1.6.0*
