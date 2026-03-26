@@ -1,10 +1,11 @@
 name: Accessibility Testing
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  # Run after staging deploy or manually — requires a running app
+  workflow_run:
+    workflows: ["Deploy to Staging"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
   axe-core-check:
@@ -23,30 +24,18 @@ jobs:
       - name: Install axe-core CLI
         run: npm install -g @axe-core/cli@4.11.1
       
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       
-      - name: Install dependencies
+      - name: Check staging is reachable
         run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv sync
-      
-      - name: Start FastAPI application
-        run: |
-          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-          curl -f http://localhost:8000/health || exit 1
-      
-      - name: Run axe-core scans
+          curl -sf https://app-governance-staging-xnczpwyv.azurewebsites.net/health || (echo "Staging not reachable" && exit 1)
+
+      - name: Run axe-core scans against staging
         run: |
           mkdir -p test-results/axe
-          axe http://localhost:8000 \
+          axe https://app-governance-staging-xnczpwyv.azurewebsites.net \
             --tags wcag2a,wcag2aa,wcag22aa \
             --save test-results/axe/home.json || true
-          axe http://localhost:8000/docs \
+          axe https://app-governance-staging-xnczpwyv.azurewebsites.net/docs \
             --tags wcag2a,wcag2aa,wcag22aa \
             --save test-results/axe/docs.json || true
       
@@ -74,30 +63,18 @@ jobs:
       - name: Install Pa11y
         run: npm install -g pa11y@9.1.1
       
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       
-      - name: Install dependencies
+      - name: Check staging is reachable
         run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv sync
-      
-      - name: Start FastAPI application
-        run: |
-          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-          curl -f http://localhost:8000/health || exit 1
-      
-      - name: Run Pa11y scans
+          curl -sf https://app-governance-staging-xnczpwyv.azurewebsites.net/health || (echo "Staging not reachable" && exit 1)
+
+      - name: Run Pa11y scans against staging
         run: |
           mkdir -p test-results/pa11y
-          pa11y http://localhost:8000 \
+          pa11y https://app-governance-staging-xnczpwyv.azurewebsites.net \
             --config tests/accessibility/pa11y-config.json \
             --reporter json > test-results/pa11y/home.json || true
-          pa11y http://localhost:8000/docs \
+          pa11y https://app-governance-staging-xnczpwyv.azurewebsites.net/docs \
             --config tests/accessibility/pa11y-config.json \
             --reporter json > test-results/pa11y/docs.json || true
       
