@@ -1,5 +1,6 @@
 """API routes module."""
 
+from app.api.routes.accessibility import router as accessibility_router
 from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.budgets import router as budgets_router
@@ -24,12 +25,14 @@ from app.api.routes.quotas import router as quotas_router
 from app.api.routes.recommendations import router as recommendations_router
 from app.api.routes.resources import router as resources_router
 from app.api.routes.riverside import router as riverside_router
+from app.api.routes.search import router as search_router
 from app.api.routes.sui_generis import router as sui_generis_router
 from app.api.routes.sync import router as sync_router
 from app.api.routes.tenants import router as tenants_router
 from app.api.routes.threats import router as threats_router
 
 __all__ = [
+    "accessibility_router",
     "audit_logs_router",
     "quotas_router",
     "auth_router",
@@ -41,7 +44,6 @@ __all__ = [
     "costs_router",
     "dashboard_router",
     "device_security_router",
-    "public_router",
     "dmarc_router",
     "exports_router",
     "identity_router",
@@ -51,11 +53,13 @@ __all__ = [
     "preflight_router",
     "privacy_router",
     "provisioning_standards_router",
+    "public_router",
     "recommendations_router",
     "resources_router",
     "riverside_router",
+    "search_router",
     "sui_generis_router",
-    "tenants_router",
     "sync_router",
+    "tenants_router",
     "threats_router",
 ]

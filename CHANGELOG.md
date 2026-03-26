@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Accessibility & UX
+- **Manual Testing Documentation**: WCAG 2.2 AA checklist
+  - Comprehensive testing guide at `docs/accessibility/MANUAL_TESTING_CHECKLIST.md`
+  - 10 major categories: keyboard, screen reader, contrast, touch targets, motion, forms
+  - Browser/AT compatibility matrix
+  - JavaScript snippets for automated checks
+- **Touch Target Verification**: WCAG 2.5.8 compliance
+  - API endpoint `/api/v1/accessibility/touch-targets`
+  - Client-side scanner in `accessibility.js`
+  - Checks interactive elements ≥ 24×24 CSS pixels
+  - Focus obscured detection (sticky headers)
+  - Auto-runs in dev/staging environments
+- **Global Search**: Unified search across entities
+  - Search service supporting tenants, users, resources, alerts
+  - API endpoints: `/api/v1/search/` and `/api/v1/search/suggestions`
+  - Client-side modal with keyboard shortcuts (Cmd+K)
+  - Real-time debounced search
+  - Result categorization with icons
+
 ### Performance Foundation
 - **HTTP Timeouts**: Timeout utilities for Azure SDK calls
   - `with_timeout()` async context manager with operation-specific timeouts

@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.routes import (
+    accessibility_router,
     audit_logs_router,
     auth_router,
     budgets_router,
@@ -36,6 +37,7 @@ from app.api.routes import (
     recommendations_router,
     resources_router,
     riverside_router,
+    search_router,
     sui_generis_router,
     sync_router,
     tenants_router,
@@ -256,10 +258,12 @@ app.include_router(sui_generis_router)
 app.include_router(threats_router)
 app.include_router(bulk_router)
 app.include_router(dmarc_router)
+app.include_router(accessibility_router)
 app.include_router(exports_router)
 app.include_router(pages_router)
 app.include_router(preflight_router)
 app.include_router(privacy_router)
+app.include_router(search_router)
 app.include_router(provisioning_standards_router)
 app.include_router(monitoring_router)
 app.include_router(recommendations_router)

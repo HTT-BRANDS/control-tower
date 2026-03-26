@@ -1,0 +1,176 @@
+{# Global Search Component #}
+{# Keyboard shortcut: Cmd+K or Ctrl+K #}
+
+{% macro global_search() %}
+<div id="global-search" class="relative">
+    <button 
+        id="search-trigger"
+        class="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-500 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+        aria-label="Open search (Cmd+K)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span>Search</span>
+        <kbd class="hidden sm:inline px-1.5 py-0.5 text-xs bg-slate-200 rounded">⌘K</kbd>
+    </button>
+    
+    {# Search Modal #}
+    <div id="search-modal" class="fixed inset-0 bg-black/50 z-50 hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-x-4 top-20 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[600px] max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
+            <div class="p-4 border-b">
+                <input 
+                    type="text"
+                    id="search-input"
+                    placeholder="Search tenants, users, resources..."
+                    class="w-full px-4 py-2 text-lg border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autocomplete="off"
+                >
+            </div>
+            <div id="search-results" class="max-h-96 overflow-y-auto">
+                <div class="p-8 text-center text-slate-500">
+                    Type to search...
+                </div>
+            </div>
+            <div class="p-2 bg-slate-50 text-xs text-slate-500 flex justify-between">
+                <span><kbd>↑</kbd> <kbd>↓</kbd> to navigate</span>
+                <span><kbd>Enter</kbd> to select</span>
+                <span><kbd>Esc</kbd> to close</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const trigger = document.getElementById('search-trigger');
+    const modal = document.getElementById('search-modal');
+    const input = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+    
+    let searchTimeout = null;
+    let selectedIndex = -1;
+    
+    // Open modal
+    function openModal() {
+        modal.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+        selectedIndex = -1;
+    }
+    
+    // Close modal
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+    
+    // Trigger click
+    trigger?.addEventListener('click', openModal);
+    
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            openModal();
+        }
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+    
+    // Close on backdrop click
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Search debounce
+    input?.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+        
+        if (query.length < 2) {
+            results.innerHTML = '<div class="p-8 text-center text-slate-500">Type at least 2 characters...</div>';
+            return;
+        }
+        
+        results.innerHTML = '<div class="p-8 text-center"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div></div>';
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/v1/search/?q=${encodeURIComponent(query)}&limit=10`);
+                const data = await response.json();
+                renderResults(data);
+            } catch (err) {
+                results.innerHTML = '<div class="p-8 text-center text-red-500">Search failed</div>';
+            }
+        }, 150);
+    });
+    
+    // Render results
+    function renderResults(items) {
+        if (items.length === 0) {
+            results.innerHTML = '<div class="p-8 text-center text-slate-500">No results found</div>';
+            return;
+        }
+        
+        const html = items.map((item, i) => `
+            <a href="${item.url}" 
+               class="block px-4 py-3 hover:bg-slate-50 ${i === selectedIndex ? 'bg-blue-50' : ''}"
+               data-index="${i}">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">${getIcon(item.type)}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-slate-900 truncate">${escapeHtml(item.title)}</div>
+                        <div class="text-sm text-slate-500">${escapeHtml(item.description || '')}</div>
+                    </div>
+                    <span class="text-xs text-slate-400 uppercase">${item.type}</span>
+                </div>
+            </a>
+        `).join('');
+        
+        results.innerHTML = html;
+    }
+    
+    function getIcon(type) {
+        const icons = {
+            tenant: '🏢',
+            user: '👤',
+            resource: '☁️',
+            alert: '⚠️',
+            compliance: '✅'
+        };
+        return icons[type] || '📄';
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Keyboard navigation
+    input?.addEventListener('keydown', (e) => {
+        const items = results.querySelectorAll('a');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            items[selectedIndex]?.click();
+        }
+    });
+    
+    function updateSelection(items) {
+        items.forEach((item, i) => {
+            item.classList.toggle('bg-blue-50', i === selectedIndex);
+        });
+        items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+})();
+</script>
+{% endmacro %}
