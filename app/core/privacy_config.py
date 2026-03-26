@@ -9,7 +9,7 @@ from enum import Enum
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ConsentCategory(str, Enum):
+class ConsentCategory(Enum):
     """Consent categories per GDPR/CCPA requirements."""
 
     NECESSARY = "necessary"  # Essential for site function

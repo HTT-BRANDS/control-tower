@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 
-class SearchResultType(str, Enum):
+class SearchResultType(Enum):
     TENANT = "tenant"
     USER = "user"
     RESOURCE = "resource"

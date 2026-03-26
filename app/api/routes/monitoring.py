@@ -151,7 +151,7 @@ async def health_check_deep(db: Session = Depends(get_db)) -> dict[str, Any]:
         first_tenant = list(RIVERSIDE_TENANTS.keys())[0]
 
         # Just verify we can get a credential (don't actually call API)
-        credential = azure_client_manager.get_credential(first_tenant)
+        _ = azure_client_manager.get_credential(first_tenant)
         checks["azure_auth"] = {"status": "healthy"}
     except Exception as e:
         checks["azure_auth"] = {"status": "degraded", "error": str(e)}
