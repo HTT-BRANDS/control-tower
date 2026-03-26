@@ -1,7 +1,7 @@
 # SESSION HANDOFF — Azure Governance Platform
 
-**Last session:** code-puppy-0e02df — Version: **1.6.0** — FULL DEPLOYMENT + CI/CD FIX COMPLETE
-**Status:** 🟢 v1.6.0 deployed to staging + prod, OIDC active, CI pipeline green
+**Last session:** code-puppy-ecf058 — Version: **1.6.0** — P1 SECRETS REMOVED + OPERATIONAL CLEANUP
+**Status:** 🟢 v1.6.0 deployed to staging + prod, OIDC active, prod secrets removed, CI green
 
 ---
 
@@ -26,7 +26,7 @@ CI/CD: 4 workflows green, 1 dispatch-only ready
 |-------------|-----|---------|--------|-----------|---------|
 | **Dev** | https://app-governance-dev-001.azurewebsites.net | 0.2.0 | ✅ | Secret | Legacy |
 | **Staging** | https://app-governance-staging-xnczpwyv.azurewebsites.net | **1.6.0** | ✅ | **OIDC** | ❌ Removed |
-| **Production** | https://app-governance-prod.azurewebsites.net | **1.6.0** | ✅ | **OIDC** | ⏳ Remove after 24h |
+| **Production** | https://app-governance-prod.azurewebsites.net | **1.6.0** | ✅ | **OIDC** | ✅ Removed (2026-03-26 15:15 UTC) |
 
 ---
 
