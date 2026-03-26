@@ -9,7 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Fixed
+- **CI/CD Pipeline Overhaul**: 6 workflows diagnosed, 4 fixed, 2 legacy deleted (-967 lines)
+  - `deploy-oidc.yml`: Deleted — replaced by dedicated `ci.yml` + fixed `deploy-staging.yml`
+  - `deploy.yml`: Deleted — used non-existent `AZURE_CREDENTIALS` secret (legacy)
+  - `deploy-staging.yml`: Fixed trigger from `staging` branch (unused) to `main` branch
+  - `deploy-production.yml`: Fixed 4 bugs — `secrets` context in `if`, missing `needs` chain, boolean string default, tag trigger removed
+  - `multi-tenant-sync.yml`: Updated `azure/login@v1` to `v2`, added cross-tenant `continue-on-error`
+  - `accessibility.yml`: Now tests deployed staging URL instead of trying to start app locally
+  - New `ci.yml`: Dedicated lint + test + security scan workflow for every push
+- **MEDIUM-3**: Wrapped `credential.get_token()` in `asyncio.to_thread()` in preflight checks (unblocks event loop)
+- **MEDIUM-4**: `is_configured()` now checks actual OIDC credential source (WEBSITE_SITE_NAME, AZURE_FEDERATED_TOKEN_FILE) not stale azure_client_id field
+
+### Added
+- Azure RBAC: `AcrPush` on staging + prod ACRs for CI service principal
+- Azure RBAC: `Contributor` on staging + prod resource groups for CI deploys
+- 2 new GitHub Actions federated credentials on HTT app registration (`github-actions-staging`, `github-actions-production`)
+- `.acrignore` file to exclude build artifacts from ACR builds
+- 2 new unit tests for OIDC `is_configured()` scenarios
+
+### Changed
+- Test count: 2,935 to 2,937 (+2)
+- GitHub workflows: 6 to 5 (2 deleted + 1 created)
 
 ---
 

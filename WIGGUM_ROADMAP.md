@@ -784,7 +784,7 @@ None of these mask production bugs.
 
 ## Phase 11: OIDC Zero-Secret Authentication + Security Hardening (v1.6.0)
 
-**Status:** ✅ COMPLETE — 12/12 tasks
+**Status:** ✅ COMPLETE — 13/13 tasks
 **Goal:** Replace ClientSecretCredential with OIDC Workload Identity Federation across all 5 tenants
 **Released:** 2026-03-21 | **Deployed:** 2026-03-26
 
@@ -867,6 +867,15 @@ None of these mask production bugs.
   - ASCII flow diagram, credential resolution table, troubleshooting, 5-tenant details table
   - Signed off by: Planning Agent 📋
 
+- [x] 11.5.4 Fix CI/CD pipeline — 6 workflows diagnosed, 4 fixed, 2 legacy deleted (Code-Puppy 🐶)
+  - Added AcrPush + Contributor RBAC for CI service principal on staging + prod
+  - Added 2 GitHub Actions federated credentials (staging + production environments)
+  - Created dedicated ci.yml; deleted orphaned deploy-oidc.yml + deploy.yml (-967 lines)
+  - Fixed deploy-production.yml (secrets context, needs chain, boolean default, tag trigger)
+  - Fixed deploy-staging.yml trigger (staging branch → main); fixed multi-tenant-sync.yml (v1→v2)
+  - Validation: `gh run list` shows CI + Staging + Accessibility all green
+  - Signed off by: Planning Agent 📋
+
 ## Progress Summary
 
 | Phase | Total Tasks | Completed | Remaining | Status |
@@ -881,9 +890,9 @@ None of these mask production bugs.
 | Phase 8: Phase 2 P1 Features | 15 | 15 | 0 | ✅ Complete |
 | Phase 9: Phase 2 Backlog Sprint | 9 | 9 | 0 | ✅ Complete |
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
-| Phase 11: OIDC + Security Hardening | 12 | 12 | 0 | ✅ Complete |
+| Phase 11: OIDC + Security Hardening | 13 | 13 | 0 | ✅ Complete |
 
-| **TOTAL** | **127** | **127** | **0** | **✅ All Complete** |
+| **TOTAL** | **128** | **128** | **0** | **✅ All Complete** |
 
 ---
 
