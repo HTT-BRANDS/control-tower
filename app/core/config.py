@@ -354,11 +354,19 @@ class Settings(BaseSettings):
     def is_configured(self) -> bool:
         """Check if minimum Azure configuration is present.
 
-        When OIDC federation is enabled, client secret is not required —
-        the Managed Identity assertion provides authentication.
+        When OIDC federation is enabled, client secret is not required.
+        Instead we verify that at least one OIDC credential source is
+        detectable: App Service (WEBSITE_SITE_NAME), Workload Identity
+        (AZURE_FEDERATED_TOKEN_FILE), or explicit dev fallback flag.
+        Checking azure_client_id here is wrong — it's the managing-tenant
+        app ID, not the per-tenant OIDC identity.
         """
         if self.use_oidc_federation:
-            return bool(self.azure_tenant_id and self.azure_client_id)
+            has_app_service = bool(os.environ.get("WEBSITE_SITE_NAME"))
+            has_workload_identity = bool(os.environ.get("AZURE_FEDERATED_TOKEN_FILE"))
+            has_dev_fallback = self.oidc_allow_dev_fallback
+            has_credential_source = has_app_service or has_workload_identity or has_dev_fallback
+            return bool(self.azure_tenant_id and has_credential_source)
         return all(
             [
                 self.azure_tenant_id,

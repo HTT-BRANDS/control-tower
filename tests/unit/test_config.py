@@ -602,27 +602,81 @@ def test_azure_managed_identity_client_id_can_be_set(monkeypatch):
 
 
 def test_is_configured_returns_true_with_oidc_mode_no_secret(monkeypatch):
-    """is_configured returns True when use_oidc_federation=True even without a client secret."""
+    """is_configured returns True when use_oidc_federation=True with a credential source.
+
+    MEDIUM-4 fix: is_configured now checks actual credential source (WEBSITE_SITE_NAME,
+    AZURE_FEDERATED_TOKEN_FILE, or OIDC_ALLOW_DEV_FALLBACK), not azure_client_id.
+    Here we simulate dev fallback explicitly allowed.
+    """
     monkeypatch.setenv("USE_OIDC_FEDERATION", "true")
     monkeypatch.setenv("AZURE_TENANT_ID", "oidc-tenant-id")
-    monkeypatch.setenv("AZURE_CLIENT_ID", "oidc-client-id")
+    monkeypatch.setenv("OIDC_ALLOW_DEV_FALLBACK", "true")
     monkeypatch.delenv("AZURE_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("WEBSITE_SITE_NAME", raising=False)
+    monkeypatch.delenv("AZURE_FEDERATED_TOKEN_FILE", raising=False)
 
     settings = Settings(_env_file=None)
 
     assert settings.use_oidc_federation is True
     assert settings.azure_client_secret is None
+    assert settings.oidc_allow_dev_fallback is True
     assert settings.is_configured is True
 
 
-def test_is_configured_requires_tenant_and_client_id_in_oidc_mode(monkeypatch):
-    """is_configured returns False when tenant_id or client_id is missing in OIDC mode."""
+def test_is_configured_requires_tenant_id_in_oidc_mode(monkeypatch):
+    """is_configured returns False when azure_tenant_id is missing in OIDC mode.
+
+    MEDIUM-4: azure_client_id is no longer checked (it's the managing-tenant ID,
+    not per-tenant OIDC identity). Only tenant_id + a credential source are required.
+    """
     monkeypatch.setenv("USE_OIDC_FEDERATION", "true")
+    monkeypatch.setenv("OIDC_ALLOW_DEV_FALLBACK", "true")
     monkeypatch.delenv("AZURE_TENANT_ID", raising=False)
-    monkeypatch.delenv("AZURE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("AZURE_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("WEBSITE_SITE_NAME", raising=False)
+    monkeypatch.delenv("AZURE_FEDERATED_TOKEN_FILE", raising=False)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.use_oidc_federation is True
+    # No tenant_id → not configured even if credential source present
+    assert settings.is_configured is False
+
+def test_is_configured_oidc_with_app_service(monkeypatch):
+    """MEDIUM-4: is_configured True when WEBSITE_SITE_NAME set (App Service path)."""
+    monkeypatch.setenv("USE_OIDC_FEDERATION", "true")
+    monkeypatch.setenv("AZURE_TENANT_ID", "prod-tenant-id")
+    monkeypatch.setenv("WEBSITE_SITE_NAME", "app-governance-prod")
+    monkeypatch.delenv("AZURE_FEDERATED_TOKEN_FILE", raising=False)
+    monkeypatch.delenv("OIDC_ALLOW_DEV_FALLBACK", raising=False)
     monkeypatch.delenv("AZURE_CLIENT_SECRET", raising=False)
 
     settings = Settings(_env_file=None)
 
     assert settings.use_oidc_federation is True
+    assert settings.oidc_allow_dev_fallback is False
+    # WEBSITE_SITE_NAME alone is sufficient as credential source
+    assert settings.is_configured is True
+
+
+def test_is_configured_oidc_without_credential_source(monkeypatch):
+    """MEDIUM-4: is_configured False when no credential source is detectable in OIDC mode.
+
+    No WEBSITE_SITE_NAME, no AZURE_FEDERATED_TOKEN_FILE, no OIDC_ALLOW_DEV_FALLBACK.
+    Even with a valid tenant_id, is_configured returns False — this is the production
+    kill switch that prevents a misconfigured App Service from appearing healthy.
+    """
+    monkeypatch.setenv("USE_OIDC_FEDERATION", "true")
+    monkeypatch.setenv("AZURE_TENANT_ID", "prod-tenant-id")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "some-client-id")
+    monkeypatch.delenv("WEBSITE_SITE_NAME", raising=False)
+    monkeypatch.delenv("AZURE_FEDERATED_TOKEN_FILE", raising=False)
+    monkeypatch.delenv("OIDC_ALLOW_DEV_FALLBACK", raising=False)
+    monkeypatch.delenv("AZURE_CLIENT_SECRET", raising=False)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.use_oidc_federation is True
+    assert settings.oidc_allow_dev_fallback is False
+    # No credential source → not configured (MEDIUM-4 kill switch)
     assert settings.is_configured is False

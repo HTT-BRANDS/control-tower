@@ -613,7 +613,7 @@ async def check_azure_authentication(tenant_id: str) -> CheckResult:
 
     try:
         credential = _get_credential(tenant_id)
-        token = credential.get_token(AZURE_MANAGEMENT_SCOPE)
+        token = await asyncio.to_thread(credential.get_token, AZURE_MANAGEMENT_SCOPE)
 
         # Calculate token expiration time
         expires_at = datetime.fromtimestamp(token.expires_on)
@@ -1283,7 +1283,7 @@ async def check_graph_api_access(tenant_id: str) -> CheckResult:
     try:
         # Get credential for Graph API
         credential = _get_credential(tenant_id)
-        token = credential.get_token(*GRAPH_SCOPES)
+        token = await asyncio.to_thread(credential.get_token, *GRAPH_SCOPES)
 
         # Make a test request to Graph API
         async with httpx.AsyncClient() as client:
