@@ -61,3 +61,14 @@ async def identity_page(request: Request):
         "pages/identity.html",
         {**brand_context},
     )
+
+
+@router.get("/privacy", response_class=HTMLResponse)
+async def privacy_page(request: Request):
+    """Privacy policy page."""
+    brand_context = get_brand_context_for_request(request)
+    return templates.TemplateResponse(
+        request,
+        "pages/privacy.html",
+        {**brand_context},
+    )

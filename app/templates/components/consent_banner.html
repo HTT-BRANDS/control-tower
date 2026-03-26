@@ -1,0 +1,128 @@
+{#
+  Cookie Consent Banner
+  
+  Implements GDPR/CCPA-compliant layered consent.
+  Respects GPC signals (Global Privacy Control).
+#}
+
+{% macro consent_banner() %}
+<div id="consent-banner" 
+     class="fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-4 shadow-lg z-50 hidden"
+     role="dialog"
+     aria-labelledby="consent-title"
+     aria-describedby="consent-description">
+    
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex-1">
+            <h2 id="consent-title" class="text-lg font-semibold mb-1">Cookie Preferences</h2>
+            <p id="consent-description" class="text-sm text-slate-300">
+                We use cookies to enhance your experience. 
+                <a href="/privacy" class="underline hover:text-white">Learn more</a>
+            </p>
+        </div>
+        
+        <div class="flex flex-wrap gap-2">
+            <button id="consent-customize" 
+                    class="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded transition-colors">
+                Customize
+            </button>
+            <button id="consent-reject" 
+                    class="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded transition-colors">
+                Reject All
+            </button>
+            <button id="consent-accept" 
+                    class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 rounded transition-colors font-medium">
+                Accept All
+            </button>
+        </div>
+    </div>
+    
+    {# Expanded preferences panel #}
+    <div id="consent-preferences" class="hidden mt-4 pt-4 border-t border-slate-700 max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-4">
+            {% set categories = {
+                'necessary': {'name': 'Necessary', 'required': true, 'desc': 'Essential for the website to function. Cannot be disabled.'},
+                'functional': {'name': 'Functional', 'required': false, 'desc': 'Remember your preferences and settings.'},
+                'analytics': {'name': 'Analytics', 'required': false, 'desc': 'Help us understand how you use our site (anonymous).'},
+                'marketing': {'name': 'Marketing', 'required': false, 'desc': 'Used to deliver personalized advertisements.'}
+            } %}
+            
+            {% for key, cat in categories.items() %}
+            <div class="flex items-start gap-3 p-3 bg-slate-800 rounded">
+                <input type="checkbox" 
+                       id="consent-{{ key }}"
+                       name="{{ key }}"
+                       {% if cat.required %}checked disabled{% endif %}
+                       class="mt-1 w-4 h-4 rounded border-slate-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50">
+                <div>
+                    <label for="consent-{{ key }}" class="font-medium block">
+                        {{ cat.name }}
+                        {% if cat.required %}<span class="text-slate-400 text-sm">(Required)</span>{% endif %}
+                    </label>
+                    <p class="text-sm text-slate-400">{{ cat.desc }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-4 flex justify-end">
+            <button id="consent-save-preferences" 
+                    class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded font-medium transition-colors">
+                Save Preferences
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const banner = document.getElementById('consent-banner');
+    const preferences = document.getElementById('consent-preferences');
+    
+    // Check if GPC is enabled (server sets this header)
+    const gpcEnabled = document.querySelector('meta[name="gpc-enabled"]')?.content === 'true';
+    
+    // Check if user has already consented
+    function hasConsentCookie() {
+        return document.cookie.includes('consent_preferences=');
+    }
+    
+    // Show banner if no consent and no GPC
+    if (!hasConsentCookie() && !gpcEnabled) {
+        banner.classList.remove('hidden');
+    }
+    
+    // Button handlers
+    document.getElementById('consent-customize')?.addEventListener('click', () => {
+        preferences.classList.toggle('hidden');
+    });
+    
+    document.getElementById('consent-accept')?.addEventListener('click', async () => {
+        await fetch('/api/v1/privacy/consent/accept-all', {method: 'POST'});
+        banner.classList.add('hidden');
+    });
+    
+    document.getElementById('consent-reject')?.addEventListener('click', async () => {
+        await fetch('/api/v1/privacy/consent/reject-all', {method: 'POST'});
+        banner.classList.add('hidden');
+    });
+    
+    document.getElementById('consent-save-preferences')?.addEventListener('click', async () => {
+        const data = {
+            necessary: true,
+            functional: document.getElementById('consent-functional')?.checked || false,
+            analytics: document.getElementById('consent-analytics')?.checked || false,
+            marketing: document.getElementById('consent-marketing')?.checked || false
+        };
+        
+        await fetch('/api/v1/privacy/consent/preferences', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        banner.classList.add('hidden');
+    });
+})();
+</script>
+{% endmacro %}

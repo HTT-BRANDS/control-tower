@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Legal Compliance
+- **Privacy Framework**: Complete GDPR/CCPA compliance implementation
+  - `ConsentCategory` enum: Necessary, Functional, Analytics, Marketing
+  - `ConsentPreferences` Pydantic model with timestamp and GPC override tracking
+  - `PrivacyConfig` with category metadata and cookie configuration
+  - `PrivacyService` for cookie-based consent management with GPC integration
+  - 6 REST endpoints: `/api/v1/privacy/consent/*` (categories, preferences, accept-all, reject-all, status)
+  - Cookie consent banner UI with granular controls (`consent_banner.html`)
+  - Privacy policy page with CCPA/GDPR rights (`privacy.html`)
+  - 24 unit tests for privacy service and routes
+- **GPC (Global Privacy Control) Middleware**: CCPA/CPRA § 1798.135(b) compliance
+  - Detects `Sec-GPC:1` browser signal indicating user opt-out of data sale/sharing
+  - Sets `request.state.gpc_enabled` for downstream route handlers
+  - Logs GPC events for audit trail with user agent, path, and client IP
+  - Signals GPC status to frontend via `X-GPC-Detected` response header
+  - Applies restrictive `Permissions-Policy` when GPC enabled (blocks geolocation, microphone, camera, interest-cohort)
+  - `GPCConsentManager` class provides default consent settings for GPC users (analytics: false, marketing: false, functional: true, necessary: true)
+  - `get_gpc_status()` helper for checking GPC in routes
+  - 11 comprehensive unit tests covering signal detection, consent management, and logging
+  - Middleware integrated into FastAPI app between CORS and security headers
+
 ### Infrastructure
 - **Cost Optimization**: 75% reduction in Azure infrastructure costs ($225/mo savings)
   - Production: App Service B2→B1 (-$60/mo), SQL S2→S0 (-$45/mo)

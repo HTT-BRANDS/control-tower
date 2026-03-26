@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="gpc-enabled" content="{{ 'true' if request.state.gpc_enabled else 'false' }}">
     <title>{% block title %}Azure Governance Platform{% endblock %}</title>
     
     <!-- Google Fonts: Inter (microsoft-group-management design system) -->
@@ -197,11 +198,18 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Consent Banner -->
+    {% from 'components/consent_banner.html' import consent_banner %}
+    {{ consent_banner() }}
+
     <!-- Footer -->
     <footer class="bg-surface-secondary border-t mt-auto" style="border-color: var(--border-color);">
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center text-sm text-muted-theme">
-                <span>Azure Governance Platform v{{ app_version | default("1.0.0") }}</span>
+                <div class="flex items-center gap-4">
+                    <span>Azure Governance Platform v{{ app_version | default("1.0.0") }}</span>
+                    <a href="/privacy" class="hover:text-primary-theme underline">Privacy Policy</a>
+                </div>
                 <span>Last sync: <span id="last-sync">Never</span></span>
             </div>
         </div>

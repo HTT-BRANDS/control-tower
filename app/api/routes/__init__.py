@@ -18,6 +18,7 @@ from app.api.routes.monitoring import router as monitoring_router
 from app.api.routes.onboarding import router as onboarding_router
 from app.api.routes.pages import router as pages_router
 from app.api.routes.preflight import router as preflight_router
+from app.api.routes.privacy import router as privacy_router
 from app.api.routes.provisioning_standards import router as provisioning_standards_router
 from app.api.routes.quotas import router as quotas_router
 from app.api.routes.recommendations import router as recommendations_router
@@ -48,6 +49,7 @@ __all__ = [
     "onboarding_router",
     "pages_router",
     "preflight_router",
+    "privacy_router",
     "provisioning_standards_router",
     "recommendations_router",
     "resources_router",

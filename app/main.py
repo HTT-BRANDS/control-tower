@@ -29,6 +29,7 @@ from app.api.routes import (
     onboarding_router,
     pages_router,
     preflight_router,
+    privacy_router,
     provisioning_standards_router,
     public_router,
     quotas_router,
@@ -47,6 +48,7 @@ from app.core.rate_limit import rate_limiter
 from app.core.scheduler import init_scheduler
 from app.core.tenant_context import register_template_filters
 from app.core.token_blacklist import get_blacklist_backend, get_blacklist_size
+from app.core.gpc_middleware import GPCMiddleware
 
 # Initialize Jinja2 templates and register custom filters
 templates = Jinja2Templates(directory="app/templates")
@@ -128,6 +130,10 @@ app.add_middleware(
     allow_methods=settings.cors_allow_methods,
     allow_headers=settings.cors_allow_headers,
 )
+
+# GPC (Global Privacy Control) middleware - Legal compliance for CCPA/GDPR
+# Must be after CORS but before security headers to properly set privacy-related headers
+app.add_middleware(GPCMiddleware, log_all_requests=False)
 
 
 @app.middleware("http")
@@ -253,6 +259,7 @@ app.include_router(dmarc_router)
 app.include_router(exports_router)
 app.include_router(pages_router)
 app.include_router(preflight_router)
+app.include_router(privacy_router)
 app.include_router(provisioning_standards_router)
 app.include_router(monitoring_router)
 app.include_router(recommendations_router)
