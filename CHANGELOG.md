@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance Foundation
+- **HTTP Timeouts**: Timeout utilities for Azure SDK calls
+  - `with_timeout()` async context manager with operation-specific timeouts
+  - `@timeout_async` decorator for function-level timeouts
+  - `Timeouts` class with predefined values (AZURE_LIST, AZURE_GET, AZURE_CREATE, GRAPH_USER, etc.)
+  - 12 unit tests for timeout utilities
+- **Circuit Breaker**: Async-aware circuit breaker with threading fixes
+  - `AsyncCircuitBreaker` using `asyncio.Lock` for async contexts
+  - `SyncCircuitBreaker` using `threading.Lock` for sync contexts
+  - Base state machine with CLOSED/OPEN/HALF_OPEN states
+  - Pre-configured breakers for Azure services (cost_sync, compliance_sync, etc.)
+- **Deep Health Checks**: `/monitoring/health/deep` endpoint
+  - Database connectivity check with response time
+  - Cache read/write verification
+  - Azure credential validation (lightweight)
+  - Returns structured health status with per-service indicators
+
 ### Legal Compliance
 - **Privacy Framework**: Complete GDPR/CCPA compliance implementation
   - `ConsentCategory` enum: Necessary, Functional, Analytics, Marketing

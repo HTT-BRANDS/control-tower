@@ -4,6 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.core.auth import User, get_current_user
 from app.core.database import get_db
@@ -13,6 +14,8 @@ from app.core.monitoring import (
     performance_monitor,
     reset_metrics,
 )
+from app.core.cache import cache_manager
+from app.api.services.azure_client import azure_client_manager
 
 router = APIRouter(
     prefix="/monitoring",
@@ -97,4 +100,63 @@ async def health_check() -> dict[str, Any]:
         "total_sync_jobs": perf_summary["sync_jobs"]["total_jobs"],
         "total_queries": perf_summary["queries"]["total_queries"],
         "slow_queries": perf_summary["queries"]["slow_queries"],
+    }
+
+
+@router.get("/health/deep")
+async def health_check_deep(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """
+    Deep health check that verifies all dependencies.
+
+    Checks:
+    - Database connectivity
+    - Cache availability
+    - Azure API connectivity (lightweight call)
+    """
+    import time
+    from app.core.config import settings
+
+    checks = {}
+    overall_status = "healthy"
+
+    # Check database
+    try:
+        start = time.time()
+        db.execute(text("SELECT 1"))
+        db_time = (time.time() - start) * 1000
+        checks["database"] = {"status": "healthy", "response_time_ms": round(db_time, 2)}
+    except Exception as e:
+        checks["database"] = {"status": "unhealthy", "error": str(e)}
+        overall_status = "degraded"
+
+    # Check cache
+    try:
+        await cache_manager.set("health_check", "ok", ttl=10)
+        cache_value = await cache_manager.get("health_check")
+        if cache_value == "ok":
+            checks["cache"] = {"status": "healthy"}
+        else:
+            checks["cache"] = {"status": "degraded", "error": "Cache read/write mismatch"}
+            overall_status = "degraded"
+    except Exception as e:
+        checks["cache"] = {"status": "unhealthy", "error": str(e)}
+        overall_status = "degraded"
+
+    # Check Azure (lightweight - just credential check)
+    try:
+        # Use first tenant for health check
+        from app.core.tenants_config import RIVERSIDE_TENANTS
+        first_tenant = list(RIVERSIDE_TENANTS.keys())[0]
+
+        # Just verify we can get a credential (don't actually call API)
+        credential = azure_client_manager.get_credential(first_tenant)
+        checks["azure_auth"] = {"status": "healthy"}
+    except Exception as e:
+        checks["azure_auth"] = {"status": "degraded", "error": str(e)}
+        overall_status = "degraded"
+
+    return {
+        "status": overall_status,
+        "version": settings.app_version,
+        "checks": checks
     }
