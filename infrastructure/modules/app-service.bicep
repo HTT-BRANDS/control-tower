@@ -246,7 +246,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         }
         {
           name: 'JWT_SECRET_KEY'
-          value: jwtSecretKey
+          value: !empty(keyVaultName) ? '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/jwt-secret-key)' : jwtSecretKey
         }
         {
           name: 'CORS_ORIGINS'

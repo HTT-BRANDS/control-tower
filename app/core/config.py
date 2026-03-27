@@ -202,8 +202,8 @@ class Settings(BaseSettings):
     rate_limit_default: int = 100
 
     # Database Configuration
-    database_pool_size: int = Field(default=5, alias="DB_POOL_SIZE")
-    database_max_overflow: int = Field(default=10, alias="DB_MAX_OVERFLOW")
+    database_pool_size: int = Field(default=3, alias="DB_POOL_SIZE")
+    database_max_overflow: int = Field(default=2, alias="DB_MAX_OVERFLOW")
     database_pool_timeout: int = Field(default=30, alias="DB_POOL_TIMEOUT")
     slow_query_threshold_ms: float = Field(default=500.0, alias="SLOW_QUERY_THRESHOLD_MS")
     enable_query_logging: bool = Field(default=False, alias="ENABLE_QUERY_LOGGING")

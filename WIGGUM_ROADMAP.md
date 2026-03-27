@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **196** | **25** | **🔄 In Progress** |
+| **TOTAL** | **221** | **198** | **23** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1125,14 +1125,14 @@ None of these mask production bugs.
 
 ### 16.3 Week 3: Database + Scalability + Accessibility
 
-- [ ] 16.3.1 Fix Azure SQL connection pool sizing (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.3.1 Fix Azure SQL connection pool sizing (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - File: `app/core/config.py:214-215`
   - Action: Set pool_size=3, max_overflow=2 (S0 supports 6 connections); pool_recycle=1800
   - Validation: `uv run pytest tests/` pass; no connection errors under load
   - Reviewed by: Solutions Architect 🏛️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.3.2 Move JWT_SECRET_KEY to Key Vault (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.3.2 Move JWT_SECRET_KEY to Key Vault (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - Files: `app/core/config.py`, `infrastructure/modules/app-service.bicep`
   - Action: Store key in kv-gov-prod; reference via `@Microsoft.KeyVault(SecretUri=...)` in app settings
   - Validation: `az webapp config appsettings list` shows Key Vault reference; app starts successfully
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 18 | 25 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 20 | 23 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

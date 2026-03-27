@@ -49,7 +49,7 @@ else:
             "max_overflow": settings.database_max_overflow,
             "pool_timeout": settings.database_pool_timeout,
             "pool_pre_ping": True,  # Verify connections before using
-            "pool_recycle": 3600,  # Recycle connections after 1 hour
+            "pool_recycle": 1800,  # Recycle connections after 30 min (Azure SQL timeout safe)
         }
     )
 
