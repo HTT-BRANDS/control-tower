@@ -15,6 +15,12 @@ param adminUsername string
 @secure()
 param adminPassword string
 
+@description('Enable VNet integration for private connectivity')
+param enableVNetIntegration bool = false
+
+@description('VNet subnet ID for SQL server')
+param sqlSubnetId string = '' 
+
 @description('Database SKU name')
 param skuName string = 'Standard_S0'
 
@@ -37,7 +43,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = {
     administratorLoginPassword: adminPassword
     version: '12.0'
     minimalTlsVersion: '1.2'
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
     restrictOutboundNetworkAccess: 'Disabled'
   }
 }
@@ -71,15 +77,16 @@ resource tde 'Microsoft.Sql/servers/databases/transparentDataEncryption@2023-05-
   }
 }
 
-// Firewall rule - Allow Azure services
-resource allowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' = {
+// VNet rule for private connectivity
+resource vnetRule 'Microsoft.Sql/servers/virtualNetworkRules@2023-05-01-preview' = if (enableVNetIntegration && !empty(sqlSubnetId)) {
   parent: sqlServer
-  name: 'AllowAllAzureIps'
+  name: 'VNetRule'
   properties: {
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'
+    virtualNetworkSubnetId: sqlSubnetId
+    ignoreMissingVnetServiceEndpoint: false
   }
 }
+
 
 output serverId string = sqlServer.id
 output serverName string = sqlServer.name

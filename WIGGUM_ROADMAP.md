@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **181** | **40** | **🔄 In Progress** |
+| **TOTAL** | **221** | **182** | **39** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1016,7 +1016,7 @@ None of these mask production bugs.
   - Reviewed by: Solutions Architect 🏛️
   - Signed off by: Security Auditor 🛡️
 
-- [ ] 16.1.4 Disable SQL Server public network access + AllowAllAzureIPs (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.1.4 Disable SQL Server public network access + AllowAllAzureIPs (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - Files: `infrastructure/modules/sql-server.bicep:34,69-76`, `infrastructure/parameters.production.json`
   - Action: Set publicNetworkAccess=Disabled, remove AllowAllAzureIps firewall rule, enable VNet integration
   - Validation: `az sql server show --name sql-gov-prod-mylxq53d --query publicNetworkAccess -o tsv` returns "Disabled"
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 3 | 40 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 4 | 39 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

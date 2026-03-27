@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "3805318120371600193"
+      "templateHash": "2475450552354939112"
     }
   },
   "parameters": {
@@ -741,7 +741,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "623707492603491429"
+              "templateHash": "995903026071427023"
             }
           },
           "parameters": {
@@ -773,6 +773,20 @@
               "type": "securestring",
               "metadata": {
                 "description": "Administrator password"
+              }
+            },
+            "enableVNetIntegration": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable VNet integration for private connectivity"
+              }
+            },
+            "sqlSubnetId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "VNet subnet ID for SQL server"
               }
             },
             "skuName": {
@@ -816,7 +830,7 @@
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "version": "12.0",
                 "minimalTlsVersion": "1.2",
-                "publicNetworkAccess": "Enabled",
+                "publicNetworkAccess": "Disabled",
                 "restrictOutboundNetworkAccess": "Disabled"
               }
             },
@@ -855,12 +869,13 @@
               ]
             },
             {
-              "type": "Microsoft.Sql/servers/firewallRules",
+              "condition": "[and(parameters('enableVNetIntegration'), not(empty(parameters('sqlSubnetId'))))]",
+              "type": "Microsoft.Sql/servers/virtualNetworkRules",
               "apiVersion": "2023-05-01-preview",
-              "name": "[format('{0}/{1}', parameters('serverName'), 'AllowAllAzureIps')]",
+              "name": "[format('{0}/{1}', parameters('serverName'), 'VNetRule')]",
               "properties": {
-                "startIpAddress": "0.0.0.0",
-                "endIpAddress": "0.0.0.0"
+                "virtualNetworkSubnetId": "[parameters('sqlSubnetId')]",
+                "ignoreMissingVnetServiceEndpoint": false
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
