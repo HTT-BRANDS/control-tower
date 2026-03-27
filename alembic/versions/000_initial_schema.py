@@ -38,7 +38,7 @@ from alembic import op
 # Revision identifiers
 # ---------------------------------------------------------------------------
 revision: str = "000"
-down_revision: str | None = None   # root — nothing comes before this
+down_revision: str | None = None  # root — nothing comes before this
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
