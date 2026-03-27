@@ -7,9 +7,9 @@ and role-based access control helpers.
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import jwt
 import pytest
 from fastapi import HTTPException
-import jwt
 
 from app.core.auth import (
     AzureADTokenValidator,
@@ -536,23 +536,22 @@ class TestRequireRoles:
 
 class TestAlgorithmConfusionPrevention:
     """Tests for algorithm confusion attack prevention (ARCH-P0-4, CVSS 9.0 CRITICAL).
-    
-    These tests verify that token type detection uses issuer claim (iss) 
+
+    These tests verify that token type detection uses issuer claim (iss)
     instead of algorithm header (alg) to prevent algorithm confusion attacks.
-    
+
     See: https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
     """
-    
+
     def test_routing_by_issuer_detects_azure_ad_pattern(self):
         """Tokens with Azure AD issuer are routed to Azure AD validator.
-        
-        This test verifies the core fix: we route by issuer claim (iss), 
+
+        This test verifies the core fix: we route by issuer claim (iss),
         not algorithm header (alg). A forged token with Azure AD issuer
         but HS256 algorithm will be routed to Azure AD validator which
         will reject it (since it's not a valid Azure AD signature).
         """
-        import jwt as jose_jwt
-        
+
         # Create a forged token with Azure AD issuer but HS256 algorithm
         # This is the algorithm confusion attack pattern
         forged_payload = {
@@ -564,7 +563,7 @@ class TestAlgorithmConfusionPrevention:
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
         }
-        
+
         # Sign with HS256 (attacker trying to bypass validation)
         secret_key = "test-secret-key"
         forged_token = jwt.encode(
@@ -573,11 +572,11 @@ class TestAlgorithmConfusionPrevention:
             algorithm="HS256",
             headers={"typ": "JWT", "alg": "HS256"}
         )
-        
+
         # Verify token has HS256 algorithm in header
         header = jwt.get_unverified_header(forged_token)
         assert header["alg"] == "HS256"
-        
+
         # Verify token has Azure AD issuer in payload
         unverified_payload = jwt.decode(
             forged_token,
@@ -585,20 +584,19 @@ class TestAlgorithmConfusionPrevention:
             options={"verify_signature": False, "verify_aud": False}
         )
         assert unverified_payload["iss"].startswith("https://login.microsoftonline.com/")
-        
+
         # The fix: because issuer is Azure AD pattern, it will be routed to
         # Azure AD validator (not internal JWT validator)
         # This prevents algorithm confusion attack
         assert unverified_payload["iss"].startswith("https://login.microsoftonline.com/")
-    
+
     def test_routing_by_issuer_detects_internal_token(self):
         """Tokens without Azure AD issuer are routed to internal validator.
-        
+
         Verifies that tokens with custom/internal issuer are handled
         by the internal JWT validator.
         """
-        import jwt as jose_jwt
-        
+
         # Create internal token with custom issuer
         internal_payload = {
             "sub": "user-123",
@@ -608,14 +606,14 @@ class TestAlgorithmConfusionPrevention:
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
         }
-        
+
         secret_key = "test-secret-key"
         internal_token = jwt.encode(
             internal_payload,
             secret_key,
             algorithm="HS256"
         )
-        
+
         # Verify issuer is NOT Azure AD pattern
         unverified_payload = jwt.decode(
             internal_token,
@@ -623,6 +621,6 @@ class TestAlgorithmConfusionPrevention:
             options={"verify_signature": False}
         )
         assert not unverified_payload["iss"].startswith("https://login.microsoftonline.com/")
-        
+
         # Such tokens will be routed to internal JWT validator
         # where they must have valid signature to be accepted

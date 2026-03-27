@@ -4,9 +4,12 @@ Provides OAuth2 token endpoints, user info, and session management.
 Supports both internal JWT tokens and Azure AD OAuth2 integration.
 """
 
+import base64
+import hashlib
 import hmac
 import logging
 import os
+import secrets
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -253,7 +256,7 @@ async def token_endpoint(
     if grant_type == "refresh_token":
         return await _handle_refresh_token(refresh_token, db, request)
     elif grant_type == "authorization_code":
-        return await _handle_authorization_code(code, redirect_uri, client_id, client_secret)
+        return await _handle_authorization_code(code, redirect_uri, client_id, client_secret, request)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -347,6 +350,7 @@ async def _handle_authorization_code(
     redirect_uri: str | None,
     client_id: str | None,
     client_secret: str | None,
+    request: Request | None = None,
 ) -> TokenResponse:
     """Handle authorization code grant with Azure AD."""
     if not code:
@@ -473,6 +477,7 @@ async def azure_login_redirect() -> dict[str, str]:
 @router.post("/azure/callback", response_model=TokenResponse)
 async def azure_oauth_callback(
     request: AzureADLoginRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
 ) -> TokenResponse:
     """Handle Azure AD OAuth2 callback.

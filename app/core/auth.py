@@ -14,9 +14,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
+import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-import jwt
 from jwt.exceptions import InvalidTokenError as JWTError
 from pydantic import BaseModel
 
@@ -418,7 +418,7 @@ async def get_current_user(
         # Get unverified payload to check issuer (safe - only reads, doesn't validate signature)
         unverified_payload = jwt.decode(token, algorithms=["HS256", "RS256"], options={"verify_signature": False, "verify_exp": False})
         issuer = unverified_payload.get("iss", "")
-        
+
         # Azure AD tokens have issuer like: https://login.microsoftonline.com/{tenant}/v2.0
         if issuer.startswith("https://login.microsoftonline.com/"):
             # Azure AD token (asymmetric signing)

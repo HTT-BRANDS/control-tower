@@ -11,8 +11,8 @@ Tests cover:
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
 import jwt
+import pytest
 
 from app.core.token_blacklist import (
     TokenBlacklist,
