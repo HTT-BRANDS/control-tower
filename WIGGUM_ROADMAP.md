@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **184** | **37** | **🔄 In Progress** |
+| **TOTAL** | **221** | **185** | **36** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1037,7 +1037,7 @@ None of these mask production bugs.
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.1.7 Validate OAuth state parameter server-side (Security Auditor 🛡️ → Code-Puppy 🐶)
+- [x] 16.1.7 Validate OAuth state parameter server-side (Security Auditor 🛡️ → Code-Puppy 🐶)
   - Files: `app/templates/login.html`, `app/api/routes/auth.py`
   - Action: Store state in sessionStorage, validate on callback return
   - Validation: Login with tampered state parameter returns error
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 6 | 37 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 7 | 36 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

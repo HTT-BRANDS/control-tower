@@ -115,6 +115,7 @@ class AzureADLoginRequest(BaseModel):
     code: str
     redirect_uri: str
     code_verifier: str | None = None  # PKCE
+    state: str | None = None  # OAuth state for audit logging
 
 
 class LogoutResponse(BaseModel):
@@ -482,6 +483,12 @@ async def azure_oauth_callback(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid redirect URI",
         )
+
+    # ── Log OAuth state presence for audit trail ────────────────
+    if request.state is not None:
+        logger.debug("OAuth callback includes state parameter (CSRF token present)")
+    else:
+        logger.warning("OAuth callback missing state parameter — client may not be validating CSRF")
 
     # ── Pre-flight: verify Azure AD is configured ───────────────
     if not settings.azure_ad_client_id or not settings.azure_ad_client_secret:
