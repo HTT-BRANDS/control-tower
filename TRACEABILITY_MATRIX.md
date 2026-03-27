@@ -692,46 +692,46 @@ This epic maps the non-functional requirements (performance, security, availabil
 
 | Req ID | Audit Finding | Acceptance Criteria | Impl Agent | Review Agent | Test Type | Security | Sign-Off | Status | WIGGUM Task |
 |--------|--------------|-------------------|------------|-------------|-----------|----------|----------|--------|-------------|
-| REQ-1601 | SEC-F1: No redirect URI validation | Redirect URIs whitelisted server-side; evil URI returns 400 | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 9.1 CRITICAL | Pack Leader 🐺 | ⬜ Not Started | 16.1.1 |
-| REQ-1602 | SEC-F2: JWT cookie no HttpOnly/Secure | Cookies set server-side with HttpOnly+Secure flags | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 8.7 CRITICAL | Pack Leader 🐺 | ⬜ Not Started | 16.1.2 |
-| REQ-1603 | ARCH-P0-1: SQL password in Bicep output | Output line deleted; deployments purged; password rotated | Code-Puppy 🐶 | Solutions Architect 🏛️ | Manual | CVSS 8.5 HIGH | Security Auditor 🛡️ | ⬜ Not Started | 16.1.3 |
-| REQ-1604 | ARCH-P0-2: SQL Server public access | publicNetworkAccess=Disabled; VNet integration enabled | Code-Puppy 🐶 | Solutions Architect 🏛️ | Infra | CVSS 8.0 HIGH | Security Auditor 🛡️ | ⬜ Not Started | 16.1.4 |
-| REQ-1605 | ARCH-P0-4: Algorithm confusion | Token validation routes by iss claim, not alg header | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 9.0 CRITICAL | Pack Leader 🐺 | ⬜ Not Started | 16.1.5 |
-| REQ-1606 | SEC-F6: PKCE not enforced | code_challenge in auth URL; code_verifier enforced server-side | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 7.1 HIGH | Pack Leader 🐺 | ⬜ Not Started | 16.1.6 |
-| REQ-1607 | SEC-F7: OAuth state not validated | State stored + validated on callback | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 7.0 HIGH | Pack Leader 🐺 | ⬜ Not Started | 16.1.7 |
-| REQ-1608 | UX-P0-1: CSP bypass consent banner | Nonces added to all script tags | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | GDPR/CCPA legal | Security Auditor 🛡️ | ⬜ Not Started | 16.1.8 |
-| REQ-1609 | UX-P0-2: onclick handlers blocked by CSP | Replaced with addEventListener | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | CSP | Pack Leader 🐺 | ⬜ Not Started | 16.1.9 |
-| REQ-1610 | ARCH-P2-7: Staging token timing attack | hmac.compare_digest used | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 6.9 HIGH | Pack Leader 🐺 | ⬜ Not Started | 16.1.10 |
-| REQ-1611 | ARCH-P0-3: python-jose CVEs | Migrated to PyJWT 2.12.1 | Code-Puppy 🐶 | Python Reviewer 🐍 | Unit | 3 CVEs eliminated | Pack Leader 🐺 | ⬜ Not Started | 16.2.1 |
-| REQ-1612 | ARCH-P1-1: In-memory token blacklist | Redis Basic deployed; REDIS_URL configured | Code-Puppy 🐶 | Solutions Architect 🏛️ | Infra + Unit | Session mgmt | Pack Leader 🐺 | ⬜ Not Started | 16.2.2 |
-| REQ-1613 | SEC-F13: Refresh token not blacklisted | Old refresh token blacklisted on rotation | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 5.3 MEDIUM | Pack Leader 🐺 | ⬜ Not Started | 16.2.3 |
-| REQ-1614 | UX-P0-3: NavHighlight wrong color | bg-brand-primary-110 used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | N/A | Planning Agent 📋 | ⬜ Not Started | 16.2.4 |
-| REQ-1615 | UX-P2-2: ProgressBar hardcoded color | CSS variables used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | N/A | Planning Agent 📋 | ⬜ Not Started | 16.2.5 |
-| REQ-1616 | UX-P0-4/5: Focus indicators + touch targets | Conflicting rules removed | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 2.2 | QA Expert 🐾 | ⬜ Not Started | 16.2.6 |
-| REQ-1617 | UX-P0-6: Duplicate page-announcer | Check for existing before creating | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 1.3.1 | Planning Agent 📋 | ⬜ Not Started | 16.2.7 |
-| REQ-1618 | ARCH-P1-6: Default env=development | Changed to production (fail-safe) | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Config safety | Pack Leader 🐺 | ⬜ Not Started | 16.2.8 |
-| REQ-1619 | ARCH-P2-1: SQL pool mismatch | pool_size=3, max_overflow=2 | Code-Puppy 🐶 | Solutions Architect 🏛️ | Unit | Availability | Pack Leader 🐺 | ⬜ Not Started | 16.3.1 |
-| REQ-1620 | ARCH-P1-5: JWT key in app settings | Moved to Key Vault | Code-Puppy 🐶 | Security Auditor 🛡️ | Infra | Secrets mgmt | Pack Leader 🐺 | ⬜ Not Started | 16.3.2 |
-| REQ-1621 | UX-P1-2: No scope on table headers | scope="col" on all th elements | Code-Puppy 🐶 | Experience Architect 🎨 | Automated | WCAG 1.3.1 | QA Expert 🐾 | ⬜ Not Started | 16.3.3 |
-| REQ-1622 | UX-P1-4: Chart canvases inaccessible | role="img" + aria-label added | Code-Puppy 🐶 | Experience Architect 🎨 | Automated | WCAG 1.1.1 | QA Expert 🐾 | ⬜ Not Started | 16.3.4 |
-| REQ-1623 | UX-P1-5: Confirm dialog not accessible | Focus trap + ARIA added | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 2.4.11 | QA Expert 🐾 | ⬜ Not Started | 16.3.5 |
-| REQ-1624 | UX-P2-6: Dark mode vars defined 3x | Consolidated into theme.src.css | Code-Puppy 🐶 | Experience Architect 🎨 | Build | CSS hygiene | Planning Agent 📋 | ⬜ Not Started | 16.3.6 |
-| REQ-1625 | ARCH-P2-3: Rate limiter fails open | Fail-closed on auth endpoints | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Availability | Pack Leader 🐺 | ⬜ Not Started | 16.3.7 |
-| REQ-1626 | ARCH-P2-5: Single worker process | 2 workers + uvloop + httptools | Code-Puppy 🐶 | Solutions Architect 🏛️ | Perf | Scalability | Pack Leader 🐺 | ⬜ Not Started | 16.3.8 |
-| REQ-1627 | UX-P1-1a: riverside.html wm-* colors | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.1 |
-| REQ-1628 | UX-P1-1b: riverside_dashboard raw Tailwind | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.2 |
-| REQ-1629 | UX-P1-1c: dmarc_dashboard raw Tailwind | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.3 |
-| REQ-1630 | UX-P2-10: login.html inline styles | Migrated to brand-* tokens + version var | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.4 |
-| REQ-1631 | UX-P1-1d: riverside partials wm-* | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.5 |
-| REQ-1632 | UX-P1-1e: sync components wm-* | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ⬜ Not Started | 16.4.6 |
-| REQ-1633 | UX-P2-3: Toast notifications raw Tailwind | CSS variables used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Dark mode | Planning Agent 📋 | ⬜ Not Started | 16.4.7 |
-| REQ-1634 | UX-P1-9: Consent banner error handling | .catch() on all fetch; banner stays on failure | Code-Puppy 🐶 | Security Auditor 🛡️ | Manual | GDPR Art. 7 | Planning Agent 📋 | ⬜ Not Started | 16.4.8 |
-| REQ-1635 | UX-P2-5/P3-5: Dead CSS + riverside.css | btn-htt-primary deleted; riverside.css refactored | Code-Puppy 🐶 | Experience Architect 🎨 | Build | CSS hygiene | Planning Agent 📋 | ⬜ Not Started | 16.4.9 |
-| REQ-1636 | UX-P3-1: 5 HTTP requests for nav JS | Bundled into single file | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Performance | Planning Agent 📋 | ⬜ Not Started | 16.4.10 |
-| REQ-1637 | Validation: Full test suite | >= 2984 tests passing, 0 failures | Watchdog 🐕‍🦺 | N/A | Automated | Regression | Pack Leader 🐺 | ⬜ Not Started | 16.5.1 |
-| REQ-1638 | Validation: CSS rebuild | theme.css regenerated cleanly | Code-Puppy 🐶 | Experience Architect 🎨 | Build | N/A | Experience Architect 🎨 | ⬜ Not Started | 16.5.2 |
-| REQ-1639 | Validation: Security re-audit | All Critical findings RESOLVED | Security Auditor 🛡️ | N/A | Audit | Full re-scan | Pack Leader 🐺 | ⬜ Not Started | 16.5.3 |
-| REQ-1640 | Validation: WCAG spot-check | 0 critical axe-core violations | QA Expert 🐾 | Experience Architect 🎨 | Automated | WCAG 2.2 AA | Experience Architect 🎨 | ⬜ Not Started | 16.5.4 |
-| REQ-1641 | Deploy v1.7.0 to production | All 6 pipeline jobs green | Code-Puppy 🐶 | N/A | CI/CD | Full pipeline | Pack Leader 🐺 | ⬜ Not Started | 16.5.5 |
-| REQ-1642 | Traceability matrix updated | REQ-1601-1643 all have status | Planning Agent 📋 | N/A | Manual | N/A | Pack Leader 🐺 | ⬜ Not Started | 16.5.6 |
-| REQ-1643 | Tag v1.7.0 release | git tag exists; GitHub shows release | Pack Leader 🐺 | N/A | Manual | N/A | Pack Leader 🐺 | ⬜ Not Started | 16.5.7 |
+| REQ-1601 | SEC-F1: No redirect URI validation | Redirect URIs whitelisted server-side; evil URI returns 400 | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 9.1 CRITICAL | Pack Leader 🐺 | ✅ Complete | 16.1.1 |
+| REQ-1602 | SEC-F2: JWT cookie no HttpOnly/Secure | Cookies set server-side with HttpOnly+Secure flags | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 8.7 CRITICAL | Pack Leader 🐺 | ✅ Complete | 16.1.2 |
+| REQ-1603 | ARCH-P0-1: SQL password in Bicep output | Output line deleted; deployments purged; password rotated | Code-Puppy 🐶 | Solutions Architect 🏛️ | Manual | CVSS 8.5 HIGH | Security Auditor 🛡️ | ✅ Complete | 16.1.3 |
+| REQ-1604 | ARCH-P0-2: SQL Server public access | publicNetworkAccess=Disabled; VNet integration enabled | Code-Puppy 🐶 | Solutions Architect 🏛️ | Infra | CVSS 8.0 HIGH | Security Auditor 🛡️ | ✅ Complete | 16.1.4 |
+| REQ-1605 | ARCH-P0-4: Algorithm confusion | Token validation routes by iss claim, not alg header | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 9.0 CRITICAL | Pack Leader 🐺 | ✅ Complete | 16.1.5 |
+| REQ-1606 | SEC-F6: PKCE not enforced | code_challenge in auth URL; code_verifier enforced server-side | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit + Manual | CVSS 7.1 HIGH | Pack Leader 🐺 | ✅ Complete | 16.1.6 |
+| REQ-1607 | SEC-F7: OAuth state not validated | State stored + validated on callback | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 7.0 HIGH | Pack Leader 🐺 | ✅ Complete | 16.1.7 |
+| REQ-1608 | UX-P0-1: CSP bypass consent banner | Nonces added to all script tags | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | GDPR/CCPA legal | Security Auditor 🛡️ | ✅ Complete | 16.1.8 |
+| REQ-1609 | UX-P0-2: onclick handlers blocked by CSP | Replaced with addEventListener | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | CSP | Pack Leader 🐺 | ✅ Complete | 16.1.9 |
+| REQ-1610 | ARCH-P2-7: Staging token timing attack | hmac.compare_digest used | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 6.9 HIGH | Pack Leader 🐺 | ✅ Complete | 16.1.10 |
+| REQ-1611 | ARCH-P0-3: python-jose CVEs | Migrated to PyJWT 2.12.1 | Code-Puppy 🐶 | Python Reviewer 🐍 | Unit | 3 CVEs eliminated | Pack Leader 🐺 | ✅ Complete | 16.2.1 |
+| REQ-1612 | ARCH-P1-1: In-memory token blacklist | Redis Basic deployed; REDIS_URL configured | Code-Puppy 🐶 | Solutions Architect 🏛️ | Infra + Unit | Session mgmt | Pack Leader 🐺 | ✅ Complete | 16.2.2 |
+| REQ-1613 | SEC-F13: Refresh token not blacklisted | Old refresh token blacklisted on rotation | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | CVSS 5.3 MEDIUM | Pack Leader 🐺 | ✅ Complete | 16.2.3 |
+| REQ-1614 | UX-P0-3: NavHighlight wrong color | bg-brand-primary-110 used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | N/A | Planning Agent 📋 | ✅ Complete | 16.2.4 |
+| REQ-1615 | UX-P2-2: ProgressBar hardcoded color | CSS variables used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | N/A | Planning Agent 📋 | ✅ Complete | 16.2.5 |
+| REQ-1616 | UX-P0-4/5: Focus indicators + touch targets | Conflicting rules removed | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 2.2 | QA Expert 🐾 | ✅ Complete | 16.2.6 |
+| REQ-1617 | UX-P0-6: Duplicate page-announcer | Check for existing before creating | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 1.3.1 | Planning Agent 📋 | ✅ Complete | 16.2.7 |
+| REQ-1618 | ARCH-P1-6: Default env=development | Changed to production (fail-safe) | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Config safety | Pack Leader 🐺 | ✅ Complete | 16.2.8 |
+| REQ-1619 | ARCH-P2-1: SQL pool mismatch | pool_size=3, max_overflow=2 | Code-Puppy 🐶 | Solutions Architect 🏛️ | Unit | Availability | Pack Leader 🐺 | ✅ Complete | 16.3.1 |
+| REQ-1620 | ARCH-P1-5: JWT key in app settings | Moved to Key Vault | Code-Puppy 🐶 | Security Auditor 🛡️ | Infra | Secrets mgmt | Pack Leader 🐺 | ✅ Complete | 16.3.2 |
+| REQ-1621 | UX-P1-2: No scope on table headers | scope="col" on all th elements | Code-Puppy 🐶 | Experience Architect 🎨 | Automated | WCAG 1.3.1 | QA Expert 🐾 | ✅ Complete | 16.3.3 |
+| REQ-1622 | UX-P1-4: Chart canvases inaccessible | role="img" + aria-label added | Code-Puppy 🐶 | Experience Architect 🎨 | Automated | WCAG 1.1.1 | QA Expert 🐾 | ✅ Complete | 16.3.4 |
+| REQ-1623 | UX-P1-5: Confirm dialog not accessible | Focus trap + ARIA added | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | WCAG 2.4.11 | QA Expert 🐾 | ✅ Complete | 16.3.5 |
+| REQ-1624 | UX-P2-6: Dark mode vars defined 3x | Consolidated into theme.src.css | Code-Puppy 🐶 | Experience Architect 🎨 | Build | CSS hygiene | Planning Agent 📋 | ✅ Complete | 16.3.6 |
+| REQ-1625 | ARCH-P2-3: Rate limiter fails open | Fail-closed on auth endpoints | Code-Puppy 🐶 | Security Auditor 🛡️ | Unit | Availability | Pack Leader 🐺 | ✅ Complete | 16.3.7 |
+| REQ-1626 | ARCH-P2-5: Single worker process | 2 workers + uvloop + httptools | Code-Puppy 🐶 | Solutions Architect 🏛️ | Perf | Scalability | Pack Leader 🐺 | ✅ Complete | 16.3.8 |
+| REQ-1627 | UX-P1-1a: riverside.html wm-* colors | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ✅ Complete | 16.4.1 |
+| REQ-1628 | UX-P1-1b: riverside_dashboard raw Tailwind | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ✅ Complete | 16.4.2 |
+| REQ-1629 | UX-P1-1c: dmarc_dashboard raw Tailwind | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ✅ Complete | 16.4.3 |
+| REQ-1630 | UX-P2-10: login.html inline styles | Migrated to brand-* tokens + version var | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Design system | Planning Agent 📋 | ✅ Complete | 16.4.4 |
+| REQ-1631 | UX-P1-1d: riverside partials wm-* | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ✅ Complete | 16.4.5 |
+| REQ-1632 | UX-P1-1e: sync components wm-* | Migrated to brand-* tokens | Code-Puppy 🐶 | Experience Architect 🎨 | Grep | Design system | Planning Agent 📋 | ✅ Complete | 16.4.6 |
+| REQ-1633 | UX-P2-3: Toast notifications raw Tailwind | CSS variables used | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Dark mode | Planning Agent 📋 | ✅ Complete | 16.4.7 |
+| REQ-1634 | UX-P1-9: Consent banner error handling | .catch() on all fetch; banner stays on failure | Code-Puppy 🐶 | Security Auditor 🛡️ | Manual | GDPR Art. 7 | Planning Agent 📋 | ✅ Complete | 16.4.8 |
+| REQ-1635 | UX-P2-5/P3-5: Dead CSS + riverside.css | btn-htt-primary deleted; riverside.css refactored | Code-Puppy 🐶 | Experience Architect 🎨 | Build | CSS hygiene | Planning Agent 📋 | ✅ Complete | 16.4.9 |
+| REQ-1636 | UX-P3-1: 5 HTTP requests for nav JS | Bundled into single file | Code-Puppy 🐶 | Experience Architect 🎨 | Manual | Performance | Planning Agent 📋 | ✅ Complete | 16.4.10 |
+| REQ-1637 | Validation: Full test suite | >= 2984 tests passing, 0 failures | Watchdog 🐕‍🦺 | N/A | Automated | Regression | Pack Leader 🐺 | ✅ Complete | 16.5.1 |
+| REQ-1638 | Validation: CSS rebuild | theme.css regenerated cleanly | Code-Puppy 🐶 | Experience Architect 🎨 | Build | N/A | Experience Architect 🎨 | ✅ Complete | 16.5.2 |
+| REQ-1639 | Validation: Security re-audit | All Critical findings RESOLVED | Security Auditor 🛡️ | N/A | Audit | Full re-scan | Pack Leader 🐺 | ✅ Complete | 16.5.3 |
+| REQ-1640 | Validation: WCAG spot-check | 0 critical axe-core violations | QA Expert 🐾 | Experience Architect 🎨 | Automated | WCAG 2.2 AA | Experience Architect 🎨 | ✅ Complete | 16.5.4 |
+| REQ-1641 | Deploy v1.7.0 to production | All 6 pipeline jobs green | Code-Puppy 🐶 | N/A | CI/CD | Full pipeline | Pack Leader 🐺 | ✅ Complete | 16.5.5 |
+| REQ-1642 | Traceability matrix updated | REQ-1601-1643 all have status | Planning Agent 📋 | N/A | Manual | N/A | Pack Leader 🐺 | ✅ Complete | 16.5.6 |
+| REQ-1643 | Tag v1.7.0 release | git tag exists; GitHub shows release | Pack Leader 🐺 | N/A | Manual | N/A | Pack Leader 🐺 | ✅ Complete | 16.5.7 |

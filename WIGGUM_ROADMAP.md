@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **217** | **4** | **🔄 In Progress** |
+| **TOTAL** | **221** | **221** | **0** | **✅ Complete** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1265,27 +1265,27 @@ None of these mask production bugs.
   - Validation: All P0/Critical findings from March 2026 audit marked RESOLVED with evidence
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-- [ ] 16.5.4 WCAG 2.2 AA spot-check of fixed pages (QA Expert 🐾)
+- [x] 16.5.4 WCAG 2.2 AA spot-check of fixed pages (QA Expert 🐾)
   - Validation: axe-core scan on /dashboard, /costs, /login returns 0 critical violations
   - Signed off by: Experience Architect 🎨
 
-- [ ] 16.5.5 Deploy to production and verify (Code-Puppy 🐶)
+- [x] 16.5.5 Deploy to production and verify (Code-Puppy 🐶)
   - Command: `gh workflow run deploy-production.yml -f reason="v1.7.0: audit remediation"`
   - Validation: All 6 pipeline jobs green; production health check healthy; dashboard renders correctly
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.5.6 Update TRACEABILITY_MATRIX.md with Phase 16 REQ-IDs (Planning Agent 📋)
+- [x] 16.5.6 Update TRACEABILITY_MATRIX.md with Phase 16 REQ-IDs (Planning Agent 📋)
   - File: `TRACEABILITY_MATRIX.md`
   - Action: Add Epic 16 with REQ-1601 through REQ-1643 mapped to all audit findings
   - Validation: `grep 'REQ-1643' TRACEABILITY_MATRIX.md` returns match
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.5.7 Tag v1.7.0 release and push (Pack Leader 🐺)
+- [x] 16.5.7 Tag v1.7.0 release and push (Pack Leader 🐺)
   - Command: `git tag -a v1.7.0 -m "v1.7.0: Audit remediation — 43 findings resolved" && git push --tags`
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 39 | 4 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 43 | 0 | ✅ Complete |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

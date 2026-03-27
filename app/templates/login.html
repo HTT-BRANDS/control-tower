@@ -30,8 +30,7 @@
             <!-- Azure AD SSO Button (Primary for staging/production) -->
             <div id="azure-login-section">
                 <button id="azure-login-btn" type="button"
-                        class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
-                        class="bg-blue-600 hover:bg-blue-700"
+                        class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors bg-blue-600 hover:bg-blue-700"
                         >
                     <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
@@ -59,22 +58,19 @@
                 <div>
                     <label for="username" class="block text-sm font-medium text-secondary-theme">Username</label>
                     <input type="text" id="username" name="username" required
-                           class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                           class="border-theme"
+                           class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 border-theme"
                            placeholder="Enter username">
                 </div>
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-secondary-theme">Password</label>
                     <input type="password" id="password" name="password" required
-                           class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                           class="border-theme"
+                           class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 border-theme"
                            placeholder="Enter password">
                 </div>
 
                 <button type="submit" id="submit-btn"
-                        class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
-                        class="bg-brand-primary hover:bg-brand-primary-110">
+                        class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors bg-brand-primary hover:bg-brand-primary-110">
                     <span id="btn-text">Sign In</span>
                     <svg id="btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -83,14 +79,14 @@
                 </button>
             </form>
 
-            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4" class="text-brand-error bg-brand-error-5"></div>
+            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4 text-brand-error bg-brand-error-5"></div>
 
             <div class="mt-6 text-center">
-                <p class="text-xs" class="text-muted-theme">Access restricted to authorized users</p>
+                <p class="text-xs text-muted-theme">Access restricted to authorized users</p>
             </div>
         </div>
 
-        <p class="text-center text-xs mt-4" class="text-muted-theme">
+        <p class="text-center text-xs mt-4 text-muted-theme">
             Azure Governance Platform v1.2.0
         </p>
     </div>
