@@ -53,5 +53,7 @@ echo "--- Starting uvicorn on port ${PORT} ---"
 exec python -m uvicorn app.main:app \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --workers 1 \
+    --workers 2 \
+    --loop uvloop \
+    --http httptools \
     --log-level "$(echo ${LOG_LEVEL:-info} | tr A-Z a-z)"

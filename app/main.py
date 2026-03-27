@@ -200,8 +200,15 @@ async def rate_limit_middleware(request: Request, call_next):
         return response
 
     except Exception as e:
-        # Log error but don't block request if rate limiting fails
         logger.error(f"Rate limiting error: {e}")
+        # Fail-closed for auth endpoints (security-critical)
+        if "/auth/" in request.url.path:
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Rate limiting unavailable. Please try again later."},
+                headers={"Retry-After": "60"},
+            )
+        # Fail-open for non-auth endpoints (availability)
         return await call_next(request)
 
 

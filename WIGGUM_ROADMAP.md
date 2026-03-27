@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **201** | **20** | **🔄 In Progress** |
+| **TOTAL** | **221** | **204** | **17** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1160,21 +1160,21 @@ None of these mask production bugs.
   - Reviewed by: Experience Architect 🎨
   - Signed off by: QA Expert 🐾
 
-- [ ] 16.3.6 Consolidate dark mode CSS — single source of truth (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.3.6 Consolidate dark mode CSS — single source of truth (Experience Architect 🎨 → Code-Puppy 🐶)
   - Files: `app/static/css/theme.src.css`, `app/static/css/dark-mode.css`
   - Action: Move all dark mode variables from dark-mode.css into theme.src.css .dark block; delete dark-mode.css; remove import from base.html
   - Validation: Dark mode toggle works; `test ! -f app/static/css/dark-mode.css`; `npm run css:build` succeeds
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.3.7 Fix rate limiter fail-closed on auth endpoints (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.3.7 Fix rate limiter fail-closed on auth endpoints (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - Files: `app/core/rate_limit.py:204-207`, `app/main.py:193-196`
   - Action: On exception, fail-closed for /auth/ endpoints (return 429), fail-open for others
   - Validation: `uv run pytest tests/unit/test_rate_limit.py -v` passes
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.3.8 Increase uvicorn workers to 2 + add uvloop (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.3.8 Increase uvicorn workers to 2 + add uvloop (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - File: `scripts/entrypoint.sh`
   - Action: Change `--workers 1` to `--workers 2 --loop uvloop --http httptools`; add uvloop+httptools to pyproject.toml
   - Validation: `curl /health` returns correctly from both workers; performance improvement measurable
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 23 | 20 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 26 | 17 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 
