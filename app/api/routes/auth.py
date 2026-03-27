@@ -4,6 +4,7 @@ Provides OAuth2 token endpoints, user info, and session management.
 Supports both internal JWT tokens and Azure AD OAuth2 integration.
 """
 
+import hmac
 import logging
 import os
 from datetime import datetime, timedelta
@@ -874,8 +875,8 @@ async def staging_test_token(
 
     if settings.environment not in ("staging", "development"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Staging token endpoint only available in staging/development",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
         )
 
     # Check the admin key header (from header OR query param for flexibility)
@@ -885,14 +886,15 @@ async def staging_test_token(
 
     if not expected_key:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="STAGING_ADMIN_KEY not configured on this server",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
         )
 
-    if not provided_key or provided_key != expected_key:
+    # Constant-time comparison to prevent timing attacks
+    if not provided_key or not hmac.compare_digest(provided_key, expected_key):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid staging admin key",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
         )
 
     # Issue a 60-minute admin JWT

@@ -487,3 +487,67 @@ class TestRedirectURIWhitelist:
 
         assert response.status_code == 400
         assert response.json()["detail"] == "Invalid redirect URI"
+
+
+class TestStagingTokenEndpoint:
+    """Tests for /api/v1/auth/staging-token timing-safe key validation.
+
+    All rejection scenarios must return 404 to prevent information leakage
+    about why the request failed (wrong key, missing key, wrong env, etc.).
+    """
+
+    @patch.dict("os.environ", {"STAGING_ADMIN_KEY": "correct-staging-key"})
+    @patch("app.api.routes.auth.get_settings")
+    def test_staging_token_wrong_key_returns_404(self, mock_settings, client_with_db):
+        """Wrong key returns 404 (not 401) — no information leakage."""
+        settings = MagicMock()
+        settings.environment = "staging"
+        mock_settings.return_value = settings
+
+        resp = client_with_db.post(
+            "/api/v1/auth/staging-token",
+            headers={"x-staging-admin-key": "wrong-key"},
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Not found"
+
+    @patch.dict("os.environ", {"STAGING_ADMIN_KEY": "correct-staging-key"})
+    @patch("app.api.routes.auth.get_settings")
+    def test_staging_token_missing_key_returns_404(self, mock_settings, client_with_db):
+        """Missing key returns 404."""
+        settings = MagicMock()
+        settings.environment = "staging"
+        mock_settings.return_value = settings
+
+        resp = client_with_db.post("/api/v1/auth/staging-token")
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Not found"
+
+    @patch("app.api.routes.auth.get_settings")
+    def test_staging_token_production_returns_404(self, mock_settings, client_with_db):
+        """Production environment returns 404."""
+        settings = MagicMock()
+        settings.environment = "production"
+        mock_settings.return_value = settings
+
+        resp = client_with_db.post(
+            "/api/v1/auth/staging-token",
+            headers={"x-staging-admin-key": "any-key"},
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Not found"
+
+    @patch.dict("os.environ", {"STAGING_ADMIN_KEY": ""})
+    @patch("app.api.routes.auth.get_settings")
+    def test_staging_token_unconfigured_key_returns_404(self, mock_settings, client_with_db):
+        """Unconfigured STAGING_ADMIN_KEY returns 404 (not 503)."""
+        settings = MagicMock()
+        settings.environment = "staging"
+        mock_settings.return_value = settings
+
+        resp = client_with_db.post(
+            "/api/v1/auth/staging-token",
+            headers={"x-staging-admin-key": "any-key"},
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Not found"

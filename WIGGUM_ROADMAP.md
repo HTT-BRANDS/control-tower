@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **187** | **34** | **🔄 In Progress** |
+| **TOTAL** | **221** | **188** | **33** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1058,7 +1058,7 @@ None of these mask production bugs.
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.1.10 Fix staging token endpoint timing attack (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.1.10 Fix staging token endpoint timing attack (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - File: `app/api/routes/auth.py:542-570`
   - Action: Replace `!=` with `hmac.compare_digest()`; return 404 for all rejections
   - Validation: `uv run pytest tests/unit/test_routes_auth.py -v -k staging` passes
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 9 | 34 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 10 | 33 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 
