@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **216** | **5** | **🔄 In Progress** |
+| **TOTAL** | **221** | **217** | **4** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1260,7 +1260,7 @@ None of these mask production bugs.
   - Validation: `app/static/css/theme.css` regenerated; all pages load without style regressions
   - Signed off by: Experience Architect 🎨
 
-- [ ] 16.5.3 Security re-audit of Critical findings (Security Auditor 🛡️)
+- [x] 16.5.3 Security re-audit of Critical findings (Security Auditor 🛡️)
   - Output: Updated `docs/security/production-audit-v2.md`
   - Validation: All P0/Critical findings from March 2026 audit marked RESOLVED with evidence
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 38 | 5 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 39 | 4 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 
