@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "14543917764424255294"
+      "templateHash": "3805318120371600193"
     }
   },
   "parameters": {
@@ -150,6 +150,48 @@
       },
       "metadata": {
         "description": "Tags to apply to all resources"
+      }
+    },
+    "azureAdTenantId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure AD tenant ID for user authentication"
+      }
+    },
+    "azureAdClientId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure AD app registration client ID for OAuth2"
+      }
+    },
+    "azureAdClientSecret": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Azure AD app registration client secret"
+      }
+    },
+    "jwtSecretKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "JWT signing secret key (min 32 chars). Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+      }
+    },
+    "corsOrigins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Comma-separated CORS allowed origins (e.g. https://app-governance-prod.azurewebsites.net)"
+      }
+    },
+    "adminEmails": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Comma-separated admin email addresses for elevated access"
       }
     }
   },
@@ -699,7 +741,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "5389913133389850002"
+              "templateHash": "623707492603491429"
             }
           },
           "parameters": {
@@ -845,10 +887,6 @@
             "databaseName": {
               "type": "string",
               "value": "[parameters('databaseName')]"
-            },
-            "connectionString": {
-              "type": "string",
-              "value": "[format('Server=tcp:{0},1433;Database={1};User ID={2};Password={3};Encrypt=true;TrustServerCertificate=false;Connection Timeout=30;', reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2023-05-01-preview').fullyQualifiedDomainName, parameters('databaseName'), parameters('adminUsername'), parameters('adminPassword'))]"
             }
           }
         }
@@ -1410,6 +1448,24 @@
           },
           "useContainerDeployment": {
             "value": "[parameters('useContainerDeployment')]"
+          },
+          "azureAdTenantId": {
+            "value": "[parameters('azureAdTenantId')]"
+          },
+          "azureAdClientId": {
+            "value": "[parameters('azureAdClientId')]"
+          },
+          "azureAdClientSecret": {
+            "value": "[parameters('azureAdClientSecret')]"
+          },
+          "jwtSecretKey": {
+            "value": "[parameters('jwtSecretKey')]"
+          },
+          "corsOrigins": {
+            "value": "[parameters('corsOrigins')]"
+          },
+          "adminEmails": {
+            "value": "[parameters('adminEmails')]"
           }
         },
         "template": {
@@ -1419,7 +1475,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "5300438647286821113"
+              "templateHash": "1731866757924760610"
             }
           },
           "parameters": {
@@ -1528,6 +1584,48 @@
               "defaultValue": "",
               "metadata": {
                 "description": "Log Analytics workspace ID for diagnostics"
+              }
+            },
+            "azureAdTenantId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Azure AD tenant ID for user authentication"
+              }
+            },
+            "azureAdClientId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Azure AD app registration client ID"
+              }
+            },
+            "azureAdClientSecret": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Azure AD app registration client secret"
+              }
+            },
+            "jwtSecretKey": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "JWT signing secret key (min 32 chars)"
+              }
+            },
+            "corsOrigins": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Comma-separated CORS origins"
+              }
+            },
+            "adminEmails": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Comma-separated admin email addresses"
               }
             }
           },
@@ -1652,7 +1750,7 @@
                     },
                     {
                       "name": "DATABASE_URL",
-                      "value": "[if(parameters('enableAzureSql'), format('mssql+pyodbc://@{{sqlServerName}}.database.windows.net:1433/{0}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no', parameters('sqlDatabaseName')), 'sqlite:////home/data/governance.db')]"
+                      "value": "[if(parameters('enableAzureSql'), format('mssql+pyodbc://@{0}.database.windows.net:1433/{1}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no&Authentication=ActiveDirectoryMsi', parameters('sqlServerName'), parameters('sqlDatabaseName')), 'sqlite:////home/data/governance.db')]"
                     },
                     {
                       "name": "KEY_VAULT_URL",
@@ -1665,6 +1763,54 @@
                     {
                       "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
                       "value": "3"
+                    },
+                    {
+                      "name": "AZURE_AD_TENANT_ID",
+                      "value": "[parameters('azureAdTenantId')]"
+                    },
+                    {
+                      "name": "AZURE_AD_CLIENT_ID",
+                      "value": "[parameters('azureAdClientId')]"
+                    },
+                    {
+                      "name": "AZURE_AD_CLIENT_SECRET",
+                      "value": "[parameters('azureAdClientSecret')]"
+                    },
+                    {
+                      "name": "AZURE_AD_ISSUER",
+                      "value": "[if(empty(parameters('azureAdTenantId')), '', format('https://login.microsoftonline.com/{0}/v2.0', parameters('azureAdTenantId')))]"
+                    },
+                    {
+                      "name": "AZURE_AD_TOKEN_ENDPOINT",
+                      "value": "[if(empty(parameters('azureAdTenantId')), '', format('https://login.microsoftonline.com/{0}/oauth2/v2.0/token', parameters('azureAdTenantId')))]"
+                    },
+                    {
+                      "name": "AZURE_AD_AUTHORIZATION_ENDPOINT",
+                      "value": "[if(empty(parameters('azureAdTenantId')), '', format('https://login.microsoftonline.com/{0}/oauth2/v2.0/authorize', parameters('azureAdTenantId')))]"
+                    },
+                    {
+                      "name": "AZURE_AD_JWKS_URI",
+                      "value": "[if(empty(parameters('azureAdTenantId')), '', format('https://login.microsoftonline.com/{0}/discovery/v2.0/keys', parameters('azureAdTenantId')))]"
+                    },
+                    {
+                      "name": "JWT_SECRET_KEY",
+                      "value": "[parameters('jwtSecretKey')]"
+                    },
+                    {
+                      "name": "CORS_ORIGINS",
+                      "value": "[if(empty(parameters('corsOrigins')), format('https://{0}.azurewebsites.net', parameters('name')), parameters('corsOrigins'))]"
+                    },
+                    {
+                      "name": "ADMIN_EMAILS",
+                      "value": "[parameters('adminEmails')]"
+                    },
+                    {
+                      "name": "USE_OIDC_FEDERATION",
+                      "value": "true"
+                    },
+                    {
+                      "name": "OIDC_ALLOW_DEV_FALLBACK",
+                      "value": "[if(equals(parameters('environment'), 'development'), 'true', 'false')]"
                     }
                   ],
                   "connectionStrings": []

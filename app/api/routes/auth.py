@@ -221,6 +221,7 @@ async def login(
 
 @router.post("/token", response_model=TokenResponse)
 async def token_endpoint(
+    request: Request,
     grant_type: str = Form(...),
     code: str | None = Form(None),
     refresh_token: str | None = Form(None),
@@ -247,7 +248,7 @@ async def token_endpoint(
         TokenResponse with new tokens
     """
     if grant_type == "refresh_token":
-        return await _handle_refresh_token(refresh_token, db)
+        return await _handle_refresh_token(refresh_token, db, request)
     elif grant_type == "authorization_code":
         return await _handle_authorization_code(code, redirect_uri, client_id, client_secret)
     else:
@@ -260,6 +261,7 @@ async def token_endpoint(
 async def _handle_refresh_token(
     refresh_token: str | None,
     db: Session,
+    request: Request,
 ) -> TokenResponse:
     """Handle refresh token grant."""
     if not refresh_token:
@@ -749,7 +751,8 @@ async def get_current_user_info(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token_endpoint(
-    request: RefreshTokenRequest,
+    token_request: RefreshTokenRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> TokenResponse:
     """Refresh access token using refresh token.
@@ -760,7 +763,7 @@ async def refresh_token_endpoint(
     Returns:
         TokenResponse with new access and refresh tokens
     """
-    return await _handle_refresh_token(request.refresh_token, db)
+    return await _handle_refresh_token(token_request.refresh_token, db, request)
 
 
 @router.post("/logout", response_model=LogoutResponse)

@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **180** | **41** | **🔄 In Progress** |
+| **TOTAL** | **221** | **181** | **40** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1009,7 +1009,7 @@ None of these mask production bugs.
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Pack Leader 🐺
 
-- [ ] 16.1.3 Remove SQL password from Bicep outputs + rotate credential (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.1.3 Remove SQL password from Bicep outputs + rotate credential (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - File: `infrastructure/modules/sql-server.bicep:89`
   - Action: Delete `output connectionString` line; `az deployment group delete` old deployments; rotate SQL admin password
   - Validation: `grep -c "output connectionString" infrastructure/modules/sql-server.bicep` returns 0
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 2 | 41 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 3 | 40 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

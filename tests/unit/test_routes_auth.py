@@ -108,8 +108,10 @@ class TestLoginEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert data.get("cookies_set") is True
+        # Tokens sent as HttpOnly Secure cookies
+        assert "access_token" in response.cookies
+        assert "refresh_token" in response.cookies
         assert data["token_type"] == "bearer"
         assert data["expires_in"] == 30 * 60
 
@@ -194,8 +196,9 @@ class TestTokenEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert data.get("cookies_set") is True
+        assert "access_token" in response.cookies
+        assert "refresh_token" in response.cookies
         assert data["token_type"] == "bearer"
 
     def test_token_endpoint_fails_with_invalid_grant_type(self, client_with_db):
@@ -239,11 +242,12 @@ class TestRefreshEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert data.get("cookies_set") is True
+        assert "access_token" in response.cookies
+        assert "refresh_token" in response.cookies
         assert data["token_type"] == "bearer"
         # Token may or may not rotate — just verify a refresh_token is present
-        assert data["refresh_token"]
+        assert "refresh_token" in response.cookies
 
     def test_refresh_fails_with_expired_token(self, client_with_db):
         """Refresh endpoint returns 401 with expired refresh token."""
