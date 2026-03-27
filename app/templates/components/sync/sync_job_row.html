@@ -2,15 +2,15 @@
    Parameters:
    - log: The sync job log object
 #}
-<tr class="hover:bg-wm-gray-5 transition-colors {% if log.status == 'running' %}bg-wm-blue-5{% endif %}">
+<tr class="hover:bg-brand-gray-5 transition-colors {% if log.status == 'running' %}bg-brand-primary-5{% endif %}">
     {# Job Type #}
     <td class="px-6 py-4 whitespace-nowrap">
         <div class="flex items-center">
             <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center
-                {% if log.job_type == 'costs' %}bg-wm-blue-10 text-wm-blue-100
-                {% elif log.job_type == 'compliance' %}bg-wm-green-10 text-wm-green-100
-                {% elif log.job_type == 'resources' %}bg-wm-spark-10 text-wm-spark-140
-                {% else %}bg-wm-gray-10 text-wm-gray-130{% endif %}">
+                {% if log.job_type == 'costs' %}bg-brand-primary-10 text-brand-primary-100
+                {% elif log.job_type == 'compliance' %}bg-brand-success-10 text-brand-success-100
+                {% elif log.job_type == 'resources' %}bg-brand-warning-10 text-brand-warning-140
+                {% else %}bg-brand-gray-10 text-brand-gray-130{% endif %}">
                 {% if log.job_type == 'costs' %}
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -30,8 +30,8 @@
                 {% endif %}
             </div>
             <div class="ml-3">
-                <div class="text-sm font-medium text-wm-gray-160 capitalize">{{ log.job_type }}</div>
-                <div class="text-xs text-wm-gray-100">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
+                <div class="text-sm font-medium text-brand-gray-160 capitalize">{{ log.job_type }}</div>
+                <div class="text-xs text-brand-gray-100">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
             </div>
         </div>
     </td>
@@ -41,11 +41,11 @@
     </td>
     {# Records #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-wm-gray-160">
+        <div class="text-sm text-brand-gray-160">
             {{ "{:,}".format(log.records_processed) if log.records_processed else '-' }}
         </div>
         {% if log.records_created or log.records_updated %}
-        <div class="text-xs text-wm-gray-100">
+        <div class="text-xs text-brand-gray-100">
             +{{ log.records_created or 0 }} / ~{{ log.records_updated or 0 }}
         </div>
         {% endif %}
@@ -53,16 +53,16 @@
     {# Errors #}
     <td class="px-6 py-4 whitespace-nowrap">
         {% if log.errors_count and log.errors_count > 0 %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-wm-red-10 text-wm-red-100">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-error-10 text-brand-error-100">
             {{ log.errors_count }} error{{ 's' if log.errors_count != 1 }}
         </span>
         {% else %}
-        <span class="text-sm text-wm-gray-100">-</span>
+        <span class="text-sm text-brand-gray-100">-</span>
         {% endif %}
     </td>
     {# Duration #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-wm-gray-160">
+        <div class="text-sm text-brand-gray-160">
             {% if log.duration_seconds %}
                 {% if log.duration_seconds < 60 %}
                     {{ "{:.1f}".format(log.duration_seconds) }}s
@@ -70,7 +70,7 @@
                     {{ "{:.1f}".format(log.duration_seconds / 60) }}m
                 {% endif %}
             {% elif log.status == 'running' %}
-                <span class="text-wm-blue-100">In progress...</span>
+                <span class="text-brand-primary-100">In progress...</span>
             {% else %}
                 -
             {% endif %}
@@ -78,7 +78,7 @@
     </td>
     {# Started At #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-wm-gray-160" title="{{ log.started_at.isoformat() if log.started_at else '' }}">
+        <div class="text-sm text-brand-gray-160" title="{{ log.started_at.isoformat() if log.started_at else '' }}">
             {% if log.started_at %}
                 {% set delta = (now or last_refresh or current_time) - log.started_at %}
                 {% if delta.days > 0 %}
@@ -94,16 +94,16 @@
                 -
             {% endif %}
         </div>
-        <div class="text-xs text-wm-gray-100">{{ log.started_at.strftime('%H:%M') if log.started_at else '' }}</div>
+        <div class="text-xs text-brand-gray-100">{{ log.started_at.strftime('%H:%M') if log.started_at else '' }}</div>
     </td>
     {# Error Message (if failed) #}
     {% if log.status == 'failed' and log.error_message %}
-    <td colspan="6" class="px-6 py-3 bg-wm-red-5 border-t border-wm-red-10">
+    <td colspan="6" class="px-6 py-3 bg-brand-error-5 border-t border-brand-error-10">
         <div class="flex items-start">
-            <svg class="w-4 h-4 text-wm-red-100 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-brand-error-100 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <span class="text-sm text-wm-red-130">{{ log.error_message[:200] }}{{ '...' if log.error_message|length > 200 else '' }}</span>
+            <span class="text-sm text-brand-error-130">{{ log.error_message[:200] }}{{ '...' if log.error_message|length > 200 else '' }}</span>
         </div>
     </td>
     {% endif %}

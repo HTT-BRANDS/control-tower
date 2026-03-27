@@ -13,14 +13,14 @@
     {# Header with Refresh #}
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h2 class="text-lg font-semibold text-wm-gray-160">MFA Enrollment by Tenant</h2>
-            <p class="text-sm text-wm-gray-100">Multi-factor authentication coverage across all tenants</p>
+            <h2 class="text-lg font-semibold text-brand-gray-160">MFA Enrollment by Tenant</h2>
+            <p class="text-sm text-brand-gray-100">Multi-factor authentication coverage across all tenants</p>
         </div>
         <button 
             hx-get="/api/v1/riverside/mfa-status"
             hx-target="#riverside-mfa-table"
             hx-swap="outerHTML"
-            class="inline-flex items-center px-3 py-2 text-sm font-medium text-wm-blue-100 hover:text-wm-blue-110 transition-colors"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-brand-primary-100 hover:text-brand-primary-110 transition-colors"
             title="Refresh MFA data">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -34,22 +34,22 @@
     <div class="space-y-4">
         {% for t in tenants %}
         {% set coverage = t.coverage_percentage | default(0) %}
-        {% set color = 'wm-green' if coverage >= 90 else ('wm-spark' if coverage >= 70 else 'wm-red') %}
+        {% set color = 'brand-success' if coverage >= 90 else ('brand-warning' if coverage >= 70 else 'brand-error') %}
         <div class="flex items-center gap-4">
             {# Tenant Name #}
-            <div class="w-32 text-sm font-medium text-wm-gray-160 truncate" title="{{ t.tenant_name }}">
+            <div class="w-32 text-sm font-medium text-brand-gray-160 truncate" title="{{ t.tenant_name }}">
                 {{ t.tenant_name }}
             </div>
             
             {# Progress Bar #}
             <div class="flex-1">
                 <div class="flex justify-between text-xs mb-1">
-                    <span class="text-wm-gray-100">
+                    <span class="text-brand-gray-100">
                         {{ t.mfa_enabled_count | default(0) }} / {{ t.total_users | default(0) }} users
                     </span>
                     <span class="font-medium text-{{ color }}-100">{{ "%.1f"|format(coverage) }}%</span>
                 </div>
-                <div class="bg-wm-gray-10 rounded-full h-3">
+                <div class="bg-brand-gray-10 rounded-full h-3">
                     <div class="bg-{{ color }}-100 h-3 rounded-full transition-all duration-500" style="width: {{ [coverage, 100] | min }}%"></div>
                 </div>
             </div>
@@ -57,11 +57,11 @@
             {# Status Badge #}
             <div class="w-16 text-right">
                 {% if coverage >= 90 %}
-                <span class="text-xs px-2 py-1 rounded-full bg-wm-green-10 text-wm-green-100">Good</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-brand-success-10 text-brand-success-100">Good</span>
                 {% elif coverage >= 70 %}
-                <span class="text-xs px-2 py-1 rounded-full bg-wm-spark-10 text-wm-spark-130">Fair</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-brand-warning-10 text-brand-warning-130">Fair</span>
                 {% else %}
-                <span class="text-xs px-2 py-1 rounded-full bg-wm-red-10 text-wm-red-100">Poor</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-brand-error-10 text-brand-error-100">Poor</span>
                 {% endif %}
             </div>
         </div>
@@ -69,16 +69,16 @@
     </div>
     
     {# Footer Summary #}
-    <div class="mt-6 pt-4 border-t border-wm-gray-50">
+    <div class="mt-6 pt-4 border-t border-brand-gray-50">
         <div class="flex items-center justify-between">
-            <span class="text-sm text-wm-gray-100">Average Coverage</span>
-            <span class="text-lg font-bold text-wm-gray-160">{{ "%.1f"|format(average_coverage | default(0)) }}%</span>
+            <span class="text-sm text-brand-gray-100">Average Coverage</span>
+            <span class="text-lg font-bold text-brand-gray-160">{{ "%.1f"|format(average_coverage | default(0)) }}%</span>
         </div>
     </div>
     {% else %}
     {# Empty State #}
-    <div class="h-64 flex flex-col items-center justify-center text-wm-gray-100">
-        <svg class="w-12 h-12 mb-3 text-wm-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="h-64 flex flex-col items-center justify-center text-brand-gray-100">
+        <svg class="w-12 h-12 mb-3 text-brand-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>
         <p>No MFA enrollment data available</p>

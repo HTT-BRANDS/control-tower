@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **204** | **17** | **🔄 In Progress** |
+| **TOTAL** | **221** | **210** | **11** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1183,38 +1183,38 @@ None of these mask production bugs.
 
 ### 16.4 Week 4: Design System Migration + Polish
 
-- [ ] 16.4.1 Migrate riverside.html from wm-* to brand-* tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.1 Migrate riverside.html from wm-* to brand-* tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/templates/pages/riverside.html`
   - Validation: `grep -c 'wm-' app/templates/pages/riverside.html` returns 0
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.2 Migrate riverside_dashboard.html from raw Tailwind to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.2 Migrate riverside_dashboard.html from raw Tailwind to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/templates/pages/riverside_dashboard.html`
   - Validation: `grep -c 'bg-white\|text-gray-900\|bg-gray-' app/templates/pages/riverside_dashboard.html` returns 0
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.3 Migrate dmarc_dashboard.html from raw Tailwind to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.3 Migrate dmarc_dashboard.html from raw Tailwind to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/templates/pages/dmarc_dashboard.html`
   - Validation: `grep -c 'bg-white\|text-gray-900\|bg-gray-' app/templates/pages/dmarc_dashboard.html` returns 0
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.4 Migrate login.html from inline styles to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.4 Migrate login.html from inline styles to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/templates/login.html`
   - Action: Replace inline `style="background-color: #f3f4f6"` etc. with CSS variable classes; fix hardcoded version
   - Validation: Login page renders correctly in dark mode; version shows `{{ app_version }}`
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.5 Migrate 5 riverside partials from wm-* to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.5 Migrate 5 riverside partials from wm-* to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - Files: `app/templates/partials/riverside_*.html` (all 5)
   - Validation: `grep -c 'wm-' app/templates/partials/` returns 0
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.6 Migrate sync components from wm-* to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.6 Migrate sync components from wm-* to brand tokens (Experience Architect 🎨 → Code-Puppy 🐶)
   - Files: `app/templates/components/sync/*.html` (all 8)
   - Validation: `grep -c 'wm-' app/templates/components/sync/` returns 0
   - Reviewed by: Experience Architect 🎨
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 26 | 17 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 32 | 11 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

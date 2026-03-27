@@ -3,14 +3,14 @@
 {% block title %}DMARC/DKIM Security Dashboard{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100">
+<div class="min-h-screen bg-surface-tertiary">
     <!-- Header -->
-    <div class="bg-white shadow">
+    <div class="bg-surface-primary shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">DMARC/DKIM Security Dashboard</h1>
-                    <p class="mt-1 text-sm text-gray-500">Email Authentication Compliance for Riverside Tenants</p>
+                    <h1 class="text-3xl font-bold text-primary-theme">DMARC/DKIM Security Dashboard</h1>
+                    <p class="mt-1 text-sm text-muted-theme">Email Authentication Compliance for Riverside Tenants</p>
                 </div>
                 <div class="text-right">
                     <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-lg">
@@ -59,27 +59,27 @@
         </div>
 
         <!-- Tenant Details -->
-        <div class="bg-white rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Tenant Email Security Status</h2>
+        <div class="bg-surface-primary rounded-xl shadow mb-8">
+            <div class="px-6 py-4 border-b border-theme flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-primary-theme">Tenant Email Security Status</h2>
                 <div class="flex space-x-2">
                     <button data-filter-tenant="all" class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800">All</button>
-                    <button data-filter-tenant="riverside" class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">Riverside Only</button>
+                    <button data-filter-tenant="riverside" class="px-3 py-1 text-sm rounded-full bg-surface-tertiary text-muted-theme">Riverside Only</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-surface-secondary">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Security Score</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DMARC Policy</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DKIM Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domains</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Sync</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Security Score</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">DMARC Policy</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">DKIM Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Domains</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Last Sync</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="tenant-table">
+                    <tbody class="bg-surface-primary divide-y divide-gray-200" id="tenant-table">
                         <!-- Populated by JavaScript -->
                     </tbody>
                 </table>
@@ -89,15 +89,15 @@
         <!-- DMARC Policy Breakdown -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- DMARC Policies -->
-            <div class="bg-white rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">DMARC Policy Distribution</h2>
+            <div class="bg-surface-primary rounded-xl shadow">
+                <div class="px-6 py-4 border-b border-theme">
+                    <h2 class="text-lg font-semibold text-primary-theme">DMARC Policy Distribution</h2>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4" id="dmarc-policies">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <div class="mt-4 text-sm text-gray-500">
+                    <div class="mt-4 text-sm text-muted-theme">
                         <div class="flex items-center mb-1">
                             <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
                             <span><strong>Reject:</strong> Full protection, spoofed emails rejected</span>
@@ -115,15 +115,15 @@
             </div>
 
             <!-- DKIM Alignment -->
-            <div class="bg-white rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">DKIM Configuration Status</h2>
+            <div class="bg-surface-primary rounded-xl shadow">
+                <div class="px-6 py-4 border-b border-theme">
+                    <h2 class="text-lg font-semibold text-primary-theme">DKIM Configuration Status</h2>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4" id="dkim-status">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <div class="mt-4 text-sm text-gray-500">
+                    <div class="mt-4 text-sm text-muted-theme">
                         <div class="flex items-center mb-1">
                             <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
                             <span><strong>Enabled & Aligned:</strong> DKIM properly configured</span>
@@ -142,23 +142,23 @@
         </div>
 
         <!-- Compliance Trends Chart -->
-        <div class="bg-white rounded-xl shadow p-6 mb-8">
+        <div class="bg-surface-primary rounded-xl shadow p-6 mb-8">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-gray-900">Email Authentication Compliance Trends</h2>
+                <h2 class="text-lg font-semibold text-primary-theme">Email Authentication Compliance Trends</h2>
                 <select id="trend-days" class="border rounded px-2 py-1 text-sm" onchange="fetchTrends()">
                     <option value="7">Last 7 days</option>
                     <option value="30" selected>Last 30 days</option>
                     <option value="90">Last 90 days</option>
                 </select>
             </div>
-            <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center" id="trend-chart">
+            <div class="h-64 bg-surface-secondary rounded-lg flex items-center justify-center" id="trend-chart">
                 <canvas id="complianceChart" class="w-full h-full"></canvas>
             </div>
         </div>
 
         <!-- Active Alerts -->
-        <div class="bg-white rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+        <div class="bg-surface-primary rounded-xl shadow mb-8">
+            <div class="px-6 py-4 border-b border-theme bg-red-50">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-red-900">Active Security Alerts</h2>
                     <span class="px-3 py-1 bg-red-600 text-white text-sm font-medium rounded-full" id="alert-count">0</span>
@@ -166,17 +166,17 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-surface-secondary">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Severity</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Domain</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Message</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Created</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="alerts-table">
+                    <tbody class="bg-surface-primary divide-y divide-gray-200" id="alerts-table">
                         <!-- Populated by JavaScript -->
                     </tbody>
                 </table>
@@ -184,22 +184,22 @@
         </div>
 
         <!-- Recent Failures -->
-        <div class="bg-white rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Recent Authentication Failures</h2>
+        <div class="bg-surface-primary rounded-xl shadow mb-8">
+            <div class="px-6 py-4 border-b border-theme">
+                <h2 class="text-lg font-semibold text-primary-theme">Recent Authentication Failures</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-surface-secondary">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failure Rate</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Domain</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Failed</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Total</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Failure Rate</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="failures-table">
+                    <tbody class="bg-surface-primary divide-y divide-gray-200" id="failures-table">
                         <!-- Populated by JavaScript -->
                     </tbody>
                 </table>
@@ -305,11 +305,11 @@
             const color = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500';
             
             return `
-                <div class="bg-white rounded-xl shadow p-6">
+                <div class="bg-surface-primary rounded-xl shadow p-6">
                     <div class="flex items-center justify-between mb-2">
                         <div>
-                            <p class="text-sm font-medium text-gray-500">${t.tenant_name}</p>
-                            <p class="text-2xl font-bold text-gray-900">${score.toFixed(1)}</p>
+                            <p class="text-sm font-medium text-muted-theme">${t.tenant_name}</p>
+                            <p class="text-2xl font-bold text-primary-theme">${score.toFixed(1)}</p>
                         </div>
                         <div class="w-12 h-12 rounded-full ${color} flex items-center justify-center text-white text-xl font-bold">
                             ${grade}
@@ -318,7 +318,7 @@
                     <div class="mt-2 bg-gray-200 rounded-full h-2">
                         <div class="${color} h-2 rounded-full" style="width: ${score}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">
+                    <p class="text-xs text-muted-theme mt-2">
                         ${t.dmarc_records.filter(r => r.policy === 'reject').length}/${t.dmarc_records.length} domains protected
                     </p>
                 </div>
@@ -361,7 +361,7 @@
             return `
                 <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">${t.tenant_name}</div>
+                        <div class="text-sm font-medium text-primary-theme">${t.tenant_name}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
@@ -377,8 +377,8 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${dkimBadge}">${dkimText}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dmarcCount}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Just now</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${dmarcCount}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">Just now</td>
                 </tr>
             `;
         }).join('');
@@ -397,8 +397,8 @@
         container.innerHTML = `
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">Reject (Full Protection)</span>
-                    <span class="text-gray-500">${rejectCount} (${Math.round(rejectCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">Reject (Full Protection)</span>
+                    <span class="text-muted-theme">${rejectCount} (${Math.round(rejectCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-green-600 h-2.5 rounded-full transition-all duration-500" style="width: ${(rejectCount/total*100)}%"></div>
@@ -406,8 +406,8 @@
             </div>
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">Quarantine (Partial Protection)</span>
-                    <span class="text-gray-500">${quarantineCount} (${Math.round(quarantineCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">Quarantine (Partial Protection)</span>
+                    <span class="text-muted-theme">${quarantineCount} (${Math.round(quarantineCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-yellow-500 h-2.5 rounded-full transition-all duration-500" style="width: ${(quarantineCount/total*100)}%"></div>
@@ -415,8 +415,8 @@
             </div>
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">None (No Protection)</span>
-                    <span class="text-gray-500">${noneCount} (${Math.round(noneCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">None (No Protection)</span>
+                    <span class="text-muted-theme">${noneCount} (${Math.round(noneCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-red-500 h-2.5 rounded-full transition-all duration-500" style="width: ${(noneCount/total*100)}%"></div>
@@ -438,8 +438,8 @@
         container.innerHTML = `
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">Enabled & Aligned</span>
-                    <span class="text-gray-500">${alignedCount} (${Math.round(alignedCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">Enabled & Aligned</span>
+                    <span class="text-muted-theme">${alignedCount} (${Math.round(alignedCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-green-600 h-2.5 rounded-full transition-all duration-500" style="width: ${(alignedCount/total*100)}%"></div>
@@ -447,8 +447,8 @@
             </div>
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">Enabled Only</span>
-                    <span class="text-gray-500">${enabledOnlyCount} (${Math.round(enabledOnlyCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">Enabled Only</span>
+                    <span class="text-muted-theme">${enabledOnlyCount} (${Math.round(enabledOnlyCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-yellow-500 h-2.5 rounded-full transition-all duration-500" style="width: ${(enabledOnlyCount/total*100)}%"></div>
@@ -456,8 +456,8 @@
             </div>
             <div>
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-gray-700">Disabled</span>
-                    <span class="text-gray-500">${disabledCount} (${Math.round(disabledCount/total*100)}%)</span>
+                    <span class="font-medium text-secondary-theme">Disabled</span>
+                    <span class="text-muted-theme">${disabledCount} (${Math.round(disabledCount/total*100)}%)</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-2.5">
                     <div class="bg-red-500 h-2.5 rounded-full transition-all duration-500" style="width: ${(disabledCount/total*100)}%"></div>
@@ -481,12 +481,12 @@
         table.innerHTML = alerts.slice(0, 10).map(alert => `
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${severityColors[alert.severity] || 'bg-gray-100 text-gray-800'}">${alert.severity}</span>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${severityColors[alert.severity] || 'bg-surface-tertiary text-primary-theme'}">${alert.severity}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${alert.alert_type.replace(/_/g, ' ')}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${alert.domain || 'N/A'}</td>
-                <td class="px-6 py-4 text-sm text-gray-500 max-w-md truncate">${alert.message}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(alert.created_at).toLocaleDateString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-theme">${alert.alert_type.replace(/_/g, ' ')}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${alert.domain || 'N/A'}</td>
+                <td class="px-6 py-4 text-sm text-muted-theme max-w-md truncate">${alert.message}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(alert.created_at).toLocaleDateString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button data-action="acknowledge-alert" data-alert-id="${alert.id}" class="text-blue-600 hover:text-blue-900">Acknowledge</button>
                 </td>
@@ -499,10 +499,10 @@
         
         table.innerHTML = failures.slice(0, 10).map(f => `
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${f.domain}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(f.date).toLocaleDateString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${f.domain}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(f.date).toLocaleDateString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">${f.failed}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${f.total}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${f.total}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${f.failure_rate > 5 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">${f.failure_rate.toFixed(2)}%</span>
                 </td>

@@ -11,14 +11,14 @@
     {# Header with Refresh #}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h2 class="text-lg font-semibold text-wm-gray-160">Domain Maturity Scores</h2>
-            <p class="text-sm text-wm-gray-100">Target: 3.0/5.0 • Deadline: July 8, 2026</p>
+            <h2 class="text-lg font-semibold text-brand-gray-160">Domain Maturity Scores</h2>
+            <p class="text-sm text-brand-gray-100">Target: 3.0/5.0 • Deadline: July 8, 2026</p>
         </div>
         <button 
             hx-get="/api/v1/riverside/maturity-scores"
             hx-target="#riverside-maturity-gauge"
             hx-swap="outerHTML"
-            class="inline-flex items-center px-3 py-2 text-sm font-medium text-wm-blue-100 hover:text-wm-blue-110 transition-colors">
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-brand-primary-100 hover:text-brand-primary-110 transition-colors">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -28,18 +28,18 @@
     
     {# Maturity Gauges Grid #}
     {% set domains = [
-        {'key': 'iam', 'label': 'Identity & Access', 'color': 'wm-blue'},
-        {'key': 'gs', 'label': 'Governance & Security', 'color': 'wm-green'},
-        {'key': 'ds', 'label': 'Data Security', 'color': 'wm-spark'}
+        {'key': 'iam', 'label': 'Identity & Access', 'color': 'brand-primary'},
+        {'key': 'gs', 'label': 'Governance & Security', 'color': 'brand-success'},
+        {'key': 'ds', 'label': 'Data Security', 'color': 'brand-warning'}
     ] %}
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for domain in domains %}
         {% set score = summary[domain.key + '_average']|default(0) %}
         {% set percentage = (score / 5) * 100 %}
-        {% set gauge_color = domain.color if score >= 3 else ('wm-spark' if score >= 2 else 'wm-red') %}
+        {% set gauge_color = domain.color if score >= 3 else ('brand-warning' if score >= 2 else 'brand-error') %}
         
-        <div class="text-center p-4 bg-wm-gray-5 rounded-lg hover:shadow-md transition-shadow">
+        <div class="text-center p-4 bg-brand-gray-5 rounded-lg hover:shadow-md transition-shadow">
             {# SVG Gauge #}
             <div class="relative w-32 h-32 mx-auto mb-3">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -56,16 +56,16 @@
                 </svg>
                 {# Center Score #}
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-2xl font-bold text-wm-gray-160">{{ "%.1f"|format(score) }}</span>
+                    <span class="text-2xl font-bold text-brand-gray-160">{{ "%.1f"|format(score) }}</span>
                 </div>
             </div>
             
             {# Domain Label #}
-            <div class="text-sm font-medium text-wm-gray-160">{{ domain.label }}</div>
-            <div class="text-xs text-wm-gray-100 mt-1">Target: 3.0</div>
+            <div class="text-sm font-medium text-brand-gray-160">{{ domain.label }}</div>
+            <div class="text-xs text-brand-gray-100 mt-1">Target: 3.0</div>
             
             {# Linear Progress Bar #}
-            <div class="mt-3 bg-wm-gray-10 rounded-full h-2">
+            <div class="mt-3 bg-brand-gray-10 rounded-full h-2">
                 <div class="bg-{{ gauge_color }}-100 h-2 rounded-full transition-all duration-500" style="width: {{ percentage }}%"></div>
             </div>
         </div>
@@ -75,25 +75,25 @@
     {# Overall Score Summary #}
     {% set overall_score = ((summary.iam_average|default(0) + summary.gs_average|default(0) + summary.ds_average|default(0)) / 3) %}
     {% set overall_pct = (overall_score / 5) * 100 %}
-    {% set overall_color = 'wm-green' if overall_score >= 3 else ('wm-spark' if overall_score >= 2 else 'wm-red') %}
+    {% set overall_color = 'brand-success' if overall_score >= 3 else ('brand-warning' if overall_score >= 2 else 'brand-error') %}
     
-    <div class="mt-6 pt-6 border-t border-wm-gray-50">
+    <div class="mt-6 pt-6 border-t border-brand-gray-50">
         <div class="flex items-center justify-between">
             <div>
-                <span class="text-sm font-medium text-wm-gray-160">Overall Maturity</span>
-                <p class="text-xs text-wm-gray-100 mt-1">Average across all domains</p>
+                <span class="text-sm font-medium text-brand-gray-160">Overall Maturity</span>
+                <p class="text-xs text-brand-gray-100 mt-1">Average across all domains</p>
             </div>
             <div class="flex items-center gap-4">
                 <div class="w-48">
                     <div class="flex justify-between text-xs mb-1">
-                        <span class="text-wm-gray-100">Progress</span>
+                        <span class="text-brand-gray-100">Progress</span>
                         <span class="font-medium text-{{ overall_color }}-100">{{ "%.1f"|format(overall_pct) }}%</span>
                     </div>
-                    <div class="bg-wm-gray-10 rounded-full h-2">
+                    <div class="bg-brand-gray-10 rounded-full h-2">
                         <div class="bg-{{ overall_color }}-100 h-2 rounded-full transition-all duration-500" style="width: {{ overall_pct }}%"></div>
                     </div>
                 </div>
-                <span class="text-2xl font-bold text-{{ overall_color }}-100">{{ "%.1f"|format(overall_score) }}<span class="text-base text-wm-gray-100">/5.0</span></span>
+                <span class="text-2xl font-bold text-{{ overall_color }}-100">{{ "%.1f"|format(overall_score) }}<span class="text-base text-brand-gray-100">/5.0</span></span>
             </div>
         </div>
     </div>

@@ -3,37 +3,37 @@
    - alert: The alert object with properties: id, severity, title, message, job_type, alert_type, created_at
 #}
 <div class="p-4 rounded-lg border-l-4 
-    {% if alert.severity == 'critical' %}border-wm-red-100 bg-wm-red-5
-    {% elif alert.severity == 'error' %}border-wm-spark-100 bg-wm-spark-5
-    {% elif alert.severity == 'warning' %}border-wm-spark-50 bg-wm-spark-5
-    {% else %}border-wm-blue-100 bg-wm-blue-5{% endif %}
+    {% if alert.severity == 'critical' %}border-brand-error-100 bg-brand-error-5
+    {% elif alert.severity == 'error' %}border-brand-warning-100 bg-brand-warning-5
+    {% elif alert.severity == 'warning' %}border-brand-warning-50 bg-brand-warning-5
+    {% else %}border-brand-primary-100 bg-brand-primary-5{% endif %}
     hover:shadow-md transition-shadow">
     <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
                 {# Severity indicator dot #}
                 <span class="w-2.5 h-2.5 rounded-full flex-shrink-0
-                    {% if alert.severity == 'critical' %}bg-wm-red-100 animate-pulse
-                    {% elif alert.severity == 'error' %}bg-wm-spark-100
-                    {% elif alert.severity == 'warning' %}bg-wm-spark-50
-                    {% else %}bg-wm-blue-100{% endif %}">
+                    {% if alert.severity == 'critical' %}bg-brand-error-100 animate-pulse
+                    {% elif alert.severity == 'error' %}bg-brand-warning-100
+                    {% elif alert.severity == 'warning' %}bg-brand-warning-50
+                    {% else %}bg-brand-primary-100{% endif %}">
                 </span>
                 {# Title #}
-                <h4 class="font-semibold text-wm-gray-160 truncate">{{ alert.title }}</h4>
+                <h4 class="font-semibold text-brand-gray-160 truncate">{{ alert.title }}</h4>
             </div>
             {# Message #}
-            <p class="text-sm text-wm-gray-130 mb-2">{{ alert.message }}</p>
+            <p class="text-sm text-brand-gray-130 mb-2">{{ alert.message }}</p>
             {# Tags #}
             <div class="flex flex-wrap items-center gap-2">
                 {% if alert.job_type %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-wm-gray-130 border border-wm-gray-50 capitalize">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-brand-gray-130 border border-brand-gray-50 capitalize">
                     {{ alert.job_type }}
                 </span>
                 {% endif %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-wm-gray-130 border border-wm-gray-50">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-brand-gray-130 border border-brand-gray-50">
                     {{ alert.alert_type.replace('_', ' ').title() }}
                 </span>
-                <span class="text-xs text-wm-gray-100">
+                <span class="text-xs text-brand-gray-100">
                     {{ alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else 'Unknown' }}
                 </span>
             </div>
@@ -45,7 +45,7 @@
                 hx-swap="outerHTML"
                 hx-target="closest div.p-4"
                 hx-confirm="Resolve this alert?"
-                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-wm-green-100 rounded hover:bg-wm-green-110 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wm-green-100">
+                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-brand-success-100 rounded hover:bg-brand-success-110 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-success-100">
                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>

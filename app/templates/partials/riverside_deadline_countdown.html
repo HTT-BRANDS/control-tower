@@ -11,14 +11,14 @@
    - progress_percentage: float (0-100)
    - deadline_reached: boolean
 #}
-<div id="riverside-deadline-countdown" class="bg-gradient-to-r from-wm-blue-100 to-wm-blue-130 rounded-xl shadow-lg p-6 text-white">
+<div id="riverside-deadline-countdown" class="bg-gradient-to-r from-brand-primary-100 to-brand-primary-130 rounded-xl shadow-lg p-6 text-white">
     {# Header with Financial Risk Badge #}
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
         <div>
             <h2 class="text-lg font-semibold mb-1">Compliance Deadline Countdown</h2>
-            <p class="text-wm-blue-50 text-sm">Target: July 8, 2026</p>
+            <p class="text-brand-primary-50 text-sm">Target: July 8, 2026</p>
         </div>
-        <div class="inline-flex items-center px-3 py-1.5 bg-wm-red-100 text-white rounded-lg">
+        <div class="inline-flex items-center px-3 py-1.5 bg-brand-error-100 text-white rounded-lg">
             <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
@@ -28,7 +28,7 @@
     
     {% if deadline_reached %}
     {# Deadline Reached Alert #}
-    <div class="bg-wm-red-100 rounded-lg p-4 text-center">
+    <div class="bg-brand-error-100 rounded-lg p-4 text-center">
         <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
@@ -45,26 +45,26 @@
         <div id="countdown-values" class="contents">
             <div class="bg-white/10 rounded-lg p-3 min-w-[70px] backdrop-blur-sm">
                 <div class="text-2xl md:text-3xl font-bold">{{ days | default('--') }}</div>
-                <div class="text-xs text-wm-blue-50 uppercase tracking-wide mt-1">Days</div>
+                <div class="text-xs text-brand-primary-50 uppercase tracking-wide mt-1">Days</div>
             </div>
             <div class="bg-white/10 rounded-lg p-3 min-w-[70px] backdrop-blur-sm">
                 <div class="text-2xl md:text-3xl font-bold">{{ "%02d"|format(hours|default(0)) }}</div>
-                <div class="text-xs text-wm-blue-50 uppercase tracking-wide mt-1">Hours</div>
+                <div class="text-xs text-brand-primary-50 uppercase tracking-wide mt-1">Hours</div>
             </div>
             <div class="bg-white/10 rounded-lg p-3 min-w-[70px] backdrop-blur-sm">
                 <div class="text-2xl md:text-3xl font-bold">{{ "%02d"|format(minutes|default(0)) }}</div>
-                <div class="text-xs text-wm-blue-50 uppercase tracking-wide mt-1">Mins</div>
+                <div class="text-xs text-brand-primary-50 uppercase tracking-wide mt-1">Mins</div>
             </div>
             <div class="bg-white/10 rounded-lg p-3 min-w-[70px] backdrop-blur-sm">
                 <div class="text-2xl md:text-3xl font-bold">{{ "%02d"|format(seconds|default(0)) }}</div>
-                <div class="text-xs text-wm-blue-50 uppercase tracking-wide mt-1">Secs</div>
+                <div class="text-xs text-brand-primary-50 uppercase tracking-wide mt-1">Secs</div>
             </div>
         </div>
     </div>
     
     {# Progress Bar to Deadline #}
     <div class="mt-6">
-        <div class="flex justify-between text-xs mb-1 text-wm-blue-50">
+        <div class="flex justify-between text-xs mb-1 text-brand-primary-50">
             <span>Start: Jan 1, 2025</span>
             <span id="countdown-progress-text">{{ "%.1f"|format(progress_percentage|default(0)) }}% Elapsed</span>
             <span>Deadline: July 8, 2026</span>

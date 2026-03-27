@@ -4,20 +4,20 @@
 #}
 {% set t = tenant_data.tenant %}
 {% set health_colors = {
-    'healthy': 'border-wm-green-100 bg-wm-green-5',
-    'warning': 'border-wm-spark-100 bg-wm-spark-5',
-    'error': 'border-wm-red-100 bg-wm-red-5'
+    'healthy': 'border-brand-success-100 bg-brand-success-5',
+    'warning': 'border-brand-warning-100 bg-brand-warning-5',
+    'error': 'border-brand-error-100 bg-brand-error-5'
 } %}
-<div class="rounded-lg border-2 p-4 {{ health_colors.get(tenant_data.overall_health, 'border-wm-gray-50 bg-white') }}">
+<div class="rounded-lg border-2 p-4 {{ health_colors.get(tenant_data.overall_health, 'border-brand-gray-50 bg-white') }}">
     {# Header #}
     <div class="flex items-start justify-between mb-3">
         <div class="min-w-0 flex-1">
-            <h4 class="font-semibold text-wm-gray-160 truncate" title="{{ t.name }}">{{ t.name }}</h4>
-            <p class="text-xs text-wm-gray-100 truncate">{{ t.tenant_id }}</p>
+            <h4 class="font-semibold text-brand-gray-160 truncate" title="{{ t.name }}">{{ t.name }}</h4>
+            <p class="text-xs text-brand-gray-100 truncate">{{ t.tenant_id }}</p>
         </div>
         <div class="flex items-center gap-2 ml-2">
             {% if tenant_data.alert_count > 0 %}
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-wm-red-100 text-white text-xs font-bold" title="{{ tenant_data.alert_count }} active alert{{ 's' if tenant_data.alert_count != 1 }}">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-error-100 text-white text-xs font-bold" title="{{ tenant_data.alert_count }} active alert{{ 's' if tenant_data.alert_count != 1 }}">
                 {{ tenant_data.alert_count }}
             </span>
             {% endif %}
@@ -31,36 +31,36 @@
         <div class="flex items-center justify-between p-2 rounded bg-white/80 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 {% if sync.sync_type == 'costs' %}
-                <svg class="w-4 h-4 text-wm-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-brand-primary-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 {% elif sync.sync_type == 'compliance' %}
-                <svg class="w-4 h-4 text-wm-green-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-brand-success-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 {% elif sync.sync_type == 'resources' %}
-                <svg class="w-4 h-4 text-wm-spark-140" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-brand-warning-140" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                 </svg>
                 {% else %}
-                <svg class="w-4 h-4 text-wm-gray-130" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-brand-gray-130" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1H9"/>
                 </svg>
                 {% endif %}
-                <span class="text-xs font-medium text-wm-gray-160 capitalize">{{ sync.sync_type }}</span>
+                <span class="text-xs font-medium text-brand-gray-160 capitalize">{{ sync.sync_type }}</span>
             </div>
             <div class="flex items-center gap-1.5">
                 {% if sync.status == 'healthy' %}
-                <span class="w-2 h-2 rounded-full bg-wm-green-100"></span>
+                <span class="w-2 h-2 rounded-full bg-brand-success-100"></span>
                 {% elif sync.status == 'warning' %}
-                <span class="w-2 h-2 rounded-full bg-wm-spark-100"></span>
+                <span class="w-2 h-2 rounded-full bg-brand-warning-100"></span>
                 {% elif sync.status == 'error' or sync.status == 'stale' %}
-                <span class="w-2 h-2 rounded-full bg-wm-red-100"></span>
+                <span class="w-2 h-2 rounded-full bg-brand-error-100"></span>
                 {% elif sync.status == 'never_run' %}
-                <span class="w-2 h-2 rounded-full bg-wm-gray-100"></span>
+                <span class="w-2 h-2 rounded-full bg-brand-gray-100"></span>
                 {% endif %}
                 {% if sync.last_run %}
-                <span class="text-xs text-wm-gray-100">
+                <span class="text-xs text-brand-gray-100">
                     {% set hours_ago = ((last_refresh or now) - sync.last_run).total_seconds() / 3600 %}
                     {% if hours_ago < 1 %}
                         {{ (hours_ago * 60)|int }}m
@@ -71,7 +71,7 @@
                     {% endif %}
                 </span>
                 {% else %}
-                <span class="text-xs text-wm-gray-100">-</span>
+                <span class="text-xs text-brand-gray-100">-</span>
                 {% endif %}
             </div>
         </div>
@@ -79,18 +79,18 @@
     </div>
 
     {# Quick Actions #}
-    <div class="mt-3 pt-3 border-t border-wm-gray-50 flex justify-end gap-2">
+    <div class="mt-3 pt-3 border-t border-brand-gray-50 flex justify-end gap-2">
         <button
             hx-post="/api/v1/sync/costs"
             hx-swap="none"
             hx-vals='{"tenant_id": "{{ t.id }}"}'
-            class="p-1.5 rounded text-wm-blue-100 hover:bg-wm-blue-10 transition-colors"
+            class="p-1.5 rounded text-brand-primary-100 hover:bg-brand-primary-10 transition-colors"
             title="Trigger cost sync">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
         </button>
-        <a href="/tenants/{{ t.id }}" class="p-1.5 rounded text-wm-gray-100 hover:bg-wm-gray-10 transition-colors" title="View tenant details">
+        <a href="/tenants/{{ t.id }}" class="p-1.5 rounded text-brand-gray-100 hover:bg-brand-gray-10 transition-colors" title="View tenant details">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>

@@ -12,7 +12,7 @@
 {% set size_class = size_classes.get(size, size_classes['md']) %}
 
 {% if status == 'healthy' or status == 'completed' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-green-10 text-wm-green-100 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-success-10 text-brand-success-100 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -21,7 +21,7 @@
     {{ status.title() }}
 </span>
 {% elif status == 'warning' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-spark-10 text-wm-spark-140 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-warning-10 text-brand-warning-140 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -30,7 +30,7 @@
     {{ status.title() }}
 </span>
 {% elif status == 'error' or status == 'failed' or status == 'critical' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-red-10 text-wm-red-100 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-error-10 text-brand-error-100 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -39,7 +39,7 @@
     {{ status.title() }}
 </span>
 {% elif status == 'stale' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-gray-10 text-wm-gray-130 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-gray-10 text-brand-gray-130 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
@@ -48,7 +48,7 @@
     Stale
 </span>
 {% elif status == 'running' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-blue-10 text-wm-blue-100 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-primary-10 text-brand-primary-100 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -58,7 +58,7 @@
     Running
 </span>
 {% elif status == 'never_run' %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-gray-5 text-wm-gray-100 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-gray-5 text-brand-gray-100 font-medium">
     {% if show_icon|default(true) %}
     <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
@@ -67,7 +67,7 @@
     Never Run
 </span>
 {% else %}
-<span class="inline-flex items-center {{ size_class }} rounded-full bg-wm-gray-10 text-wm-gray-100 font-medium">
+<span class="inline-flex items-center {{ size_class }} rounded-full bg-brand-gray-10 text-brand-gray-100 font-medium">
     {{ status.title() if status else 'Unknown' }}
 </span>
 {% endif %}

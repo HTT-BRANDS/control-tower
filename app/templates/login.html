@@ -9,20 +9,20 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="/static/css/theme.css">
 </head>
-<body class="min-h-screen flex items-center justify-center" style="background-color: #f3f4f6; font-family: 'Inter', sans-serif;">
+<body class="min-h-screen flex items-center justify-center bg-surface-secondary" style="font-family: 'Inter', sans-serif;">
     <div class="max-w-md w-full mx-4">
         <div class="bg-white rounded-lg shadow-md p-8">
             <!-- Logo / Branding -->
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background-color: #500711;">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-brand-primary">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold" style="color: #500711;">
+                <h1 class="text-2xl font-bold text-brand-primary">
                     Riverside Capital
                 </h1>
-                <p class="text-sm mt-1" style="color: #6b7280;">
+                <p class="text-sm mt-1 text-muted-theme">
                     PE Governance Platform
                 </p>
             </div>
@@ -31,7 +31,7 @@
             <div id="azure-login-section">
                 <button id="azure-login-btn" type="button"
                         class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
-                        style="background-color: #0078d4;"
+                        class="bg-blue-600 hover:bg-blue-700"
                         >
                     <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
@@ -49,32 +49,32 @@
 
             <!-- Divider (shown when dev login is available) -->
             <div id="divider" class="hidden my-6 flex items-center">
-                <div class="flex-grow border-t" style="border-color: #e5e7eb;"></div>
-                <span class="px-3 text-xs" style="color: #9ca3af;">or</span>
-                <div class="flex-grow border-t" style="border-color: #e5e7eb;"></div>
+                <div class="flex-grow border-t border-theme"></div>
+                <span class="px-3 text-xs text-muted-theme">or</span>
+                <div class="flex-grow border-t border-theme"></div>
             </div>
 
             <!-- Dev Login Form (only shown in development) -->
             <form id="login-form" class="space-y-5 hidden">
                 <div>
-                    <label for="username" class="block text-sm font-medium" style="color: #374151;">Username</label>
+                    <label for="username" class="block text-sm font-medium text-secondary-theme">Username</label>
                     <input type="text" id="username" name="username" required
                            class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                           style="border-color: #d1d5db;"
+                           class="border-theme"
                            placeholder="Enter username">
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium" style="color: #374151;">Password</label>
+                    <label for="password" class="block text-sm font-medium text-secondary-theme">Password</label>
                     <input type="password" id="password" name="password" required
                            class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                           style="border-color: #d1d5db;"
+                           class="border-theme"
                            placeholder="Enter password">
                 </div>
 
                 <button type="submit" id="submit-btn"
                         class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors"
-                        style="background-color: #500711;">
+                        class="bg-brand-primary hover:bg-brand-primary-110">
                     <span id="btn-text">Sign In</span>
                     <svg id="btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -83,14 +83,14 @@
                 </button>
             </form>
 
-            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4" style="color: #991b1b; background-color: #fef2f2;"></div>
+            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4" class="text-brand-error bg-brand-error-5"></div>
 
             <div class="mt-6 text-center">
-                <p class="text-xs" style="color: #9ca3af;">Access restricted to authorized users</p>
+                <p class="text-xs" class="text-muted-theme">Access restricted to authorized users</p>
             </div>
         </div>
 
-        <p class="text-center text-xs mt-4" style="color: #9ca3af;">
+        <p class="text-center text-xs mt-4" class="text-muted-theme">
             Azure Governance Platform v1.2.0
         </p>
     </div>
