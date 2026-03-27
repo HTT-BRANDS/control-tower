@@ -98,13 +98,21 @@
     });
     
     document.getElementById('consent-accept')?.addEventListener('click', async () => {
-        await fetch('/api/v1/privacy/consent/accept-all', {method: 'POST'});
-        banner.classList.add('hidden');
+        try {
+            const resp = await fetch('/api/v1/privacy/consent/accept-all', {method: 'POST'});
+            if (resp.ok) banner.classList.add('hidden');
+        } catch (e) {
+            console.error('Consent API error:', e);
+        }
     });
     
     document.getElementById('consent-reject')?.addEventListener('click', async () => {
-        await fetch('/api/v1/privacy/consent/reject-all', {method: 'POST'});
-        banner.classList.add('hidden');
+        try {
+            const resp = await fetch('/api/v1/privacy/consent/reject-all', {method: 'POST'});
+            if (resp.ok) banner.classList.add('hidden');
+        } catch (e) {
+            console.error('Consent API error:', e);
+        }
     });
     
     document.getElementById('consent-save-preferences')?.addEventListener('click', async () => {
@@ -115,13 +123,16 @@
             marketing: document.getElementById('consent-marketing')?.checked || false
         };
         
-        await fetch('/api/v1/privacy/consent/preferences', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
-        
-        banner.classList.add('hidden');
+        try {
+            const resp = await fetch('/api/v1/privacy/consent/preferences', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (resp.ok) banner.classList.add('hidden');
+        } catch (e) {
+            console.error('Consent API error:', e);
+        }
     });
 })();
 </script>

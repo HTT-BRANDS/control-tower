@@ -137,12 +137,8 @@
 
     {% block extra_scripts %}{% endblock %}
 
-    <!-- Navigation JS (modular) -->
-    <script src="/static/js/navigation/progressBar.js" nonce="{{ request.state.csp_nonce }}"></script>
-    <script src="/static/js/navigation/toast.js" nonce="{{ request.state.csp_nonce }}"></script>
-    <script src="/static/js/navigation/navHighlight.js" nonce="{{ request.state.csp_nonce }}"></script>
-    <script src="/static/js/navigation/confirmDialog.js" nonce="{{ request.state.csp_nonce }}"></script>
-    <script src="/static/js/navigation/index.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <!-- Navigation JS (bundled: progressBar + toast + navHighlight + confirmDialog + index) -->
+    <script src="/static/js/navigation/navigation.bundle.js" nonce="{{ request.state.csp_nonce }}"></script>
     {% include 'components/loading.html' %}
     <script src="/static/js/darkMode.js" nonce="{{ request.state.csp_nonce }}"></script>
 

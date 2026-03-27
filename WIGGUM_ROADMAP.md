@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **210** | **11** | **🔄 In Progress** |
+| **TOTAL** | **221** | **214** | **7** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1220,28 +1220,28 @@ None of these mask production bugs.
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.7 Fix toast notifications to use CSS variables (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.7 Fix toast notifications to use CSS variables (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/static/js/navigation/toast.js:77-100`
   - Action: Replace raw Tailwind colors with CSS variable references
   - Validation: Toasts render correctly in both light and dark mode
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.8 Fix consent banner error handling (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.8 Fix consent banner error handling (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/templates/components/consent_banner.html:98-116`
   - Action: Add .catch() to all fetch calls; only hide banner on successful API response
   - Validation: Banner stays visible if API call fails
   - Reviewed by: Security Auditor 🛡️
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.9 Remove dead CSS (btn-htt-primary) + refactor riverside.css (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.9 Remove dead CSS (btn-htt-primary) + refactor riverside.css (Experience Architect 🎨 → Code-Puppy 🐶)
   - Files: `app/static/css/theme.src.css:340-360`, `app/static/css/riverside.css`
   - Action: Delete btn-htt-primary; refactor riverside.css to use CSS variables
   - Validation: `npm run css:build` succeeds; all pages render correctly
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.4.10 Bundle navigation JS into single file (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.4.10 Bundle navigation JS into single file (Experience Architect 🎨 → Code-Puppy 🐶)
   - Files: 5 files in `app/static/js/navigation/` → single `navigation.bundle.js`
   - Action: Concatenate in correct order; update base.html to load single file
   - Validation: Navigation works identically; 4 fewer HTTP requests
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 32 | 11 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 36 | 7 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

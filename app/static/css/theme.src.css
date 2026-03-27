@@ -411,38 +411,6 @@ body {
 .border-light { border-color: var(--border-light); }
 
 /* ==========================================================================
-   HTT Primary Button (from microsoft-group-management)
-   ========================================================================== */
-.btn-htt-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.5;
-  color: white;
-  background-color: var(--htt-primary, #500711);
-  border: 1px solid transparent;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 150ms ease-in-out;
-}
-
-.btn-htt-primary:hover {
-  background-color: var(--htt-primary-light, #6B1A24);
-}
-
-.btn-htt-primary:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(80, 7, 17, 0.3);
-}
-
-.btn-htt-primary:active {
-  background-color: var(--htt-primary-dark, #3A0509);
-}
-
-/* ==========================================================================
    Component Styles — Brand Button
    ========================================================================== */
 .btn-brand {

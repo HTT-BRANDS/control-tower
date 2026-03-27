@@ -49,6 +49,14 @@
   --rs-countdown-warning: #ffc220;
   --rs-countdown-safe: #2a8703;
   
+  /* Text & Background Tokens */
+  --rs-text-primary: #212121;
+  --rs-text-secondary: #616161;
+  --rs-text-muted: #9e9e9e;
+  --rs-bg-surface: white;
+  --rs-bg-hover: #fafafa;
+  --rs-border-light: #e5e7eb;
+
   /* Animation Durations */
   --rs-transition-fast: 150ms;
   --rs-transition-normal: 300ms;
@@ -148,12 +156,12 @@
 
 .rs-progress-label-text {
   font-weight: 500;
-  color: #212121;
+  color: var(--rs-text-primary);
 }
 
 .rs-progress-label-value {
   font-weight: 600;
-  color: #616161;
+  color: var(--rs-text-secondary);
 }
 
 /* ==========================================================================
@@ -236,7 +244,7 @@
 
 .rs-priority-badge.rs-priority-p1 {
   background-color: #ffc220;
-  color: #212121;
+  color: var(--rs-text-primary);
 }
 
 .rs-priority-badge.rs-priority-p2 {
@@ -259,20 +267,20 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem;
-  background-color: white;
+  background-color: var(--rs-bg-surface);
   border-radius: 0.5rem;
   transition: background-color var(--rs-transition-fast);
 }
 
 .rs-mfa-coverage:hover {
-  background-color: #fafafa;
+  background-color: var(--rs-bg-hover);
 }
 
 .rs-mfa-tenant-name {
   width: 8rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #212121;
+  color: var(--rs-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -291,7 +299,7 @@
 }
 
 .rs-mfa-progress-header-count {
-  color: #9e9e9e;
+  color: var(--rs-text-muted);
 }
 
 .rs-mfa-progress-header-percent {
@@ -346,7 +354,7 @@
 
 .rs-mfa-summary-label {
   font-size: 0.875rem;
-  color: #616161;
+  color: var(--rs-text-secondary);
 }
 
 .rs-mfa-summary-value {
@@ -366,7 +374,7 @@
   flex-direction: column;
   align-items: center;
   padding: 1.5rem;
-  background-color: #fafafa;
+  background-color: var(--rs-bg-hover);
   border-radius: 0.75rem;
   transition: transform var(--rs-transition-fast), box-shadow var(--rs-transition-fast);
 }
@@ -385,7 +393,7 @@
 
 .rs-gauge-track {
   fill: none;
-  stroke: #e5e7eb;
+  stroke: var(--rs-border-light);
   stroke-width: 8;
 }
 
@@ -420,14 +428,14 @@
   transform: translate(-50%, -50%);
   font-size: 1.5rem;
   font-weight: 700;
-  color: #212121;
+  color: var(--rs-text-primary);
 }
 
 .rs-gauge-value::after {
   content: '/5.0';
   font-size: 0.875rem;
   font-weight: 400;
-  color: #9e9e9e;
+  color: var(--rs-text-muted);
   margin-left: 0.25rem;
 }
 
@@ -436,13 +444,13 @@
   margin-top: 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #212121;
+  color: var(--rs-text-primary);
   text-align: center;
 }
 
 .rs-gauge-target {
   font-size: 0.75rem;
-  color: #9e9e9e;
+  color: var(--rs-text-muted);
   margin-top: 0.25rem;
 }
 
@@ -450,7 +458,7 @@
 .rs-maturity-bar {
   width: 100%;
   height: 0.5rem;
-  background-color: #e5e7eb;
+  background-color: var(--rs-border-light);
   border-radius: 9999px;
   margin-top: 0.75rem;
   overflow: hidden;
@@ -528,18 +536,18 @@
 
 .rs-alert-title {
   font-weight: 600;
-  color: #212121;
+  color: var(--rs-text-primary);
   margin-bottom: 0.25rem;
 }
 
 .rs-alert-message {
   font-size: 0.875rem;
-  color: #616161;
+  color: var(--rs-text-secondary);
 }
 
 /* Critical Alert Panel */
 .rs-critical-panel {
-  background-color: white;
+  background-color: var(--rs-bg-surface);
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-left: 4px solid #ea1100;
@@ -741,7 +749,7 @@
 
 .rs-countdown-progress-fill {
   height: 100%;
-  background-color: white;
+  background-color: var(--rs-bg-surface);
   border-radius: 9999px;
   transition: width var(--rs-transition-slow) ease;
 }
@@ -798,7 +806,7 @@
    ========================================================================== */
 
 .rs-summary-card {
-  background-color: white;
+  background-color: var(--rs-bg-surface);
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -837,13 +845,13 @@
 .rs-summary-title {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #616161;
+  color: var(--rs-text-secondary);
 }
 
 .rs-summary-value {
   font-size: 2rem;
   font-weight: 700;
-  color: #212121;
+  color: var(--rs-text-primary);
   line-height: 1;
 }
 
@@ -888,7 +896,7 @@
 }
 
 .rs-summary-progress-label {
-  color: #9e9e9e;
+  color: var(--rs-text-muted);
 }
 
 .rs-summary-progress-value {
@@ -911,16 +919,16 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #616161;
-  background-color: #fafafa;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--rs-text-secondary);
+  background-color: var(--rs-bg-hover);
+  border-bottom: 1px solid var(--rs-border-light);
 }
 
 .rs-table td {
   padding: 1rem;
   font-size: 0.875rem;
-  color: #212121;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--rs-text-primary);
+  border-bottom: 1px solid var(--rs-border-light);
 }
 
 .rs-table tbody tr {
@@ -928,7 +936,7 @@
 }
 
 .rs-table tbody tr:hover {
-  background-color: #fafafa;
+  background-color: var(--rs-bg-hover);
 }
 
 .rs-table .rs-table-overdue {
