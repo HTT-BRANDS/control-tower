@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # =========================================================================
 
     environment: Literal["development", "staging", "production"] = Field(
-        default="development",
+        default="production",
         alias="ENVIRONMENT",
     )
 

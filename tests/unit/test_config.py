@@ -22,6 +22,7 @@ def test_settings_loads_with_default_values(monkeypatch):
     for key in list(os.environ.keys()):
         if key.startswith(("AZURE_", "JWT_", "ENVIRONMENT", "DEBUG", "CORS_")):
             monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("ENVIRONMENT", "development")
 
     settings = Settings(_env_file=None)
 
@@ -457,17 +458,19 @@ def test_get_settings_uses_lru_cache(monkeypatch):
 # should always be set explicitly.
 
 
-def test_detect_environment_defaults_to_development(monkeypatch):
-    """Test environment defaults to development if no indicators."""
+def test_detect_environment_defaults_to_production(monkeypatch):
+    """Test environment defaults to production (fail-safe, not fail-open)."""
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     monkeypatch.delenv("PRODUCTION", raising=False)
     monkeypatch.delenv("PROD", raising=False)
     monkeypatch.delenv("STAGING", raising=False)
     monkeypatch.delenv("HOSTNAME", raising=False)
+    monkeypatch.delenv("DEBUG", raising=False)
+    monkeypatch.setenv("CORS_ORIGINS", '["https://app.example.com"]')
 
     settings = Settings(_env_file=None)
 
-    assert settings.environment == "development"
+    assert settings.environment == "production"
 
 
 # ============================================================================

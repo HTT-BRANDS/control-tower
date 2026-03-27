@@ -1,9 +1,6 @@
 /* WCAG 2.2 AA Accessibility (P5: n4e) */
 .skip-link { position:absolute; top:-40px; left:0; background:#000; color:#fff; padding:8px 16px; z-index:10000; font-size:14px; transition:top 0.2s; }
 .skip-link:focus { top:0; }
-:focus-visible { outline:3px solid #0053e2; outline-offset:2px; border-radius:2px; }
-a,button,[role="button"],input,select,textarea,summary { min-height:44px; min-width:44px; }
 nav a,nav button { display:inline-flex; align-items:center; min-height:44px; padding:8px 12px; }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; } }
 @media (forced-colors:active) { .nav-active { border:2px solid currentColor; } button,a { border:1px solid currentColor; } }
-[tabindex="0"]:focus-visible,[role="tab"]:focus-visible,[role="menuitem"]:focus-visible { outline:3px solid #0053e2; outline-offset:2px; }

@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **194** | **27** | **🔄 In Progress** |
+| **TOTAL** | **221** | **196** | **25** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1102,7 +1102,7 @@ None of these mask production bugs.
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.2.6 Fix accessibility.css conflicting focus indicators + overbroad touch targets (Experience Architect 🎨 → Code-Puppy 🐶)
+- [x] 16.2.6 Fix accessibility.css conflicting focus indicators + overbroad touch targets (Experience Architect 🎨 → Code-Puppy 🐶)
   - File: `app/static/css/accessibility.css`
   - Action: Remove `:focus-visible` rules (theme.src.css handles this); remove blanket 44px min-height on all a/button
   - Validation: `wc -l app/static/css/accessibility.css` shows reduced file; focus rings use brand color
@@ -1116,7 +1116,7 @@ None of these mask production bugs.
   - Reviewed by: Experience Architect 🎨
   - Signed off by: Planning Agent 📋
 
-- [ ] 16.2.8 Change default environment to production in config (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.2.8 Change default environment to production in config (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - File: `app/core/config.py:40`
   - Action: Change `default="development"` to `default="production"` (fail-safe not fail-open)
   - Validation: `uv run pytest tests/` still pass; app refuses to start without explicit ENVIRONMENT=development locally
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 16 | 27 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 18 | 25 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 
