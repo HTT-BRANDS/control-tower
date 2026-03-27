@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from jose import jwt
+import jwt
 
 from app.core.token_blacklist import (
     TokenBlacklist,

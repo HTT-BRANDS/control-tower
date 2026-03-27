@@ -892,7 +892,7 @@ None of these mask production bugs.
 | Phase 10: Completeness Sprint | 5 | 5 | 0 | ✅ Complete |
 | Phase 11: OIDC + Security Hardening | 16 | 16 | 0 | ✅ Complete |
 
-| **TOTAL** | **221** | **188** | **33** | **🔄 In Progress** |
+| **TOTAL** | **221** | **189** | **32** | **🔄 In Progress** |
 
 ## Phase 12: Legal Compliance (P1)
 
@@ -1067,7 +1067,7 @@ None of these mask production bugs.
 
 ### 16.2 Week 2: Critical Infrastructure + Auth Hardening
 
-- [ ] 16.2.1 Migrate python-jose to PyJWT (Solutions Architect 🏛️ → Code-Puppy 🐶)
+- [x] 16.2.1 Migrate python-jose to PyJWT (Solutions Architect 🏛️ → Code-Puppy 🐶)
   - Files: `app/core/auth.py`, `app/core/token_blacklist.py`, `pyproject.toml`, `uv.lock`
   - Action: Replace `from jose import jwt, JWTError` with `import jwt; from jwt.exceptions import *`; remove python-jose + ecdsa deps
   - Validation: `uv run pytest tests/ -q --tb=short` all pass; `pip show python-jose` returns "not found"
@@ -1285,7 +1285,7 @@ None of these mask production bugs.
   - Validation: `git tag -l v1.7.0` returns match; GitHub shows release
   - Signed off by: Pack Leader 🐺 + Planning Agent 📋
 
-| Phase 16: Audit Remediation Sprint | 43 | 10 | 33 | 🔄 In Progress |
+| Phase 16: Audit Remediation Sprint | 43 | 11 | 32 | 🔄 In Progress |
 | **TOTAL (P1-P5)** | **68** | **25** | **43** | **🟡 In Progress** |
 | **GRAND TOTAL** | **196** | **153** | **43** | **🟡 IN PROGRESS** |
 

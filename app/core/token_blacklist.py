@@ -11,7 +11,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from jose import jwt
+import jwt
 
 from app.core.config import get_settings
 
@@ -155,7 +155,7 @@ def blacklist_token(token: str) -> None:
     """
     ttl = TokenBlacklist.DEFAULT_TTL_SECONDS
     try:
-        payload = jwt.get_unverified_claims(token)
+        payload = jwt.decode(token, options={"verify_signature": False}, algorithms=["HS256", "RS256"])
         exp = payload.get("exp")
         if exp is not None:
             remaining = int(exp - datetime.now(UTC).timestamp())

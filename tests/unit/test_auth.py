@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-from jose import jwt
+import jwt
 
 from app.core.auth import (
     AzureADTokenValidator,
@@ -551,7 +551,7 @@ class TestAlgorithmConfusionPrevention:
         but HS256 algorithm will be routed to Azure AD validator which
         will reject it (since it's not a valid Azure AD signature).
         """
-        from jose import jwt as jose_jwt
+        import jwt as jose_jwt
         
         # Create a forged token with Azure AD issuer but HS256 algorithm
         # This is the algorithm confusion attack pattern
@@ -567,7 +567,7 @@ class TestAlgorithmConfusionPrevention:
         
         # Sign with HS256 (attacker trying to bypass validation)
         secret_key = "test-secret-key"
-        forged_token = jose_jwt.encode(
+        forged_token = jwt.encode(
             forged_payload,
             secret_key,
             algorithm="HS256",
@@ -575,13 +575,13 @@ class TestAlgorithmConfusionPrevention:
         )
         
         # Verify token has HS256 algorithm in header
-        header = jose_jwt.get_unverified_header(forged_token)
+        header = jwt.get_unverified_header(forged_token)
         assert header["alg"] == "HS256"
         
         # Verify token has Azure AD issuer in payload
-        unverified_payload = jose_jwt.decode(
-            forged_token, 
-            key="", 
+        unverified_payload = jwt.decode(
+            forged_token,
+            algorithms=["HS256", "RS256"],
             options={"verify_signature": False, "verify_aud": False}
         )
         assert unverified_payload["iss"].startswith("https://login.microsoftonline.com/")
@@ -597,7 +597,7 @@ class TestAlgorithmConfusionPrevention:
         Verifies that tokens with custom/internal issuer are handled
         by the internal JWT validator.
         """
-        from jose import jwt as jose_jwt
+        import jwt as jose_jwt
         
         # Create internal token with custom issuer
         internal_payload = {
@@ -610,16 +610,16 @@ class TestAlgorithmConfusionPrevention:
         }
         
         secret_key = "test-secret-key"
-        internal_token = jose_jwt.encode(
+        internal_token = jwt.encode(
             internal_payload,
             secret_key,
             algorithm="HS256"
         )
         
         # Verify issuer is NOT Azure AD pattern
-        unverified_payload = jose_jwt.decode(
-            internal_token, 
-            key="", 
+        unverified_payload = jwt.decode(
+            internal_token,
+            algorithms=["HS256"],
             options={"verify_signature": False}
         )
         assert not unverified_payload["iss"].startswith("https://login.microsoftonline.com/")

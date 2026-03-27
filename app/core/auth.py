@@ -15,7 +15,8 @@ from typing import Any
 import httpx
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError as JWTError
 from pydantic import BaseModel
 
 from app.core.config import get_settings
@@ -146,7 +147,7 @@ class AzureADTokenValidator:
             # Validate token
             payload = jwt.decode(
                 token,
-                signing_key,
+                jwt.PyJWK(signing_key).key,
                 algorithms=["RS256"],
                 audience=self.settings.azure_ad_client_id,
                 issuer=self.settings.azure_ad_issuer,
@@ -413,7 +414,7 @@ async def get_current_user(
     # Detect token type by issuer claim, NOT algorithm header (prevents algorithm confusion)
     try:
         # Get unverified payload to check issuer (safe - only reads, doesn't validate signature)
-        unverified_payload = jwt.decode(token, key="", options={"verify_signature": False, "verify_exp": False})
+        unverified_payload = jwt.decode(token, algorithms=["HS256", "RS256"], options={"verify_signature": False, "verify_exp": False})
         issuer = unverified_payload.get("iss", "")
         
         # Azure AD tokens have issuer like: https://login.microsoftonline.com/{tenant}/v2.0

@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from jose import jwt
+import jwt
 
 from app.core.auth import jwt_manager
 from app.core.token_blacklist import _token_blacklist
