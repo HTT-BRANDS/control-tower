@@ -57,8 +57,8 @@ def upgrade() -> None:
     print("  [000] 'tenants' table not found — creating full base schema via create_all().")
 
     # Import here to avoid circular imports at module load time.
-    from app.core.database import Base  # noqa: PLC0415
     import app.models  # noqa: F401, PLC0415  — registers all models with Base
+    from app.core.database import Base  # noqa: PLC0415
 
     # create_all with checkfirst=True is safe even if some tables exist
     # (handles partial-schema states gracefully).
