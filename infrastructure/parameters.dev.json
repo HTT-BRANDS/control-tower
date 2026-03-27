@@ -49,6 +49,9 @@
         "CostCenter": "IT-Dev",
         "Owner": "Dev-Team"
       }
+    },
+    "enableRedis": {
+      "value": false
     }
   }
 }

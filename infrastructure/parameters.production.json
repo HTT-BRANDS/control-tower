@@ -62,6 +62,9 @@
     },
     "adminEmails": {
       "value": ""
+    },
+    "enableRedis": {
+      "value": true
     }
   }
 }

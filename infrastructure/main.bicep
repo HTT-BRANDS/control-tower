@@ -58,6 +58,9 @@ param enableKeyVault bool = true
 @description('Enable VNet integration')
 param enableVNetIntegration bool = false
 
+@description('Enable Azure Cache for Redis')
+param enableRedis bool = false
+
 @description('Admin username for SQL Server')
 @secure()
 param sqlAdminUsername string = 'sqladmin'
@@ -118,6 +121,7 @@ var storageAccountName = 'stgov${environment}${take(resourceSuffix, 8)}'
 var sqlServerName = 'sql-governance-${environment}-${take(resourceSuffix, 8)}'
 var sqlDatabaseName = 'governance-db'
 var vnetName = 'vnet-governance-${environment}'
+var redisName = 'redis-gov-${environment}-${take(resourceSuffix, 8)}'
 
 // Validate resource names
 var validatedKeyVaultName = length(keyVaultName) > 24 ? take(keyVaultName, 24) : keyVaultName
@@ -221,6 +225,19 @@ module vnet 'modules/vnet.bicep' = if (enableVNetIntegration) {
 }
 
 // -----------------------------------------------------------------------------
+// Azure Cache for Redis (token blacklist, rate limiting, caching)
+// -----------------------------------------------------------------------------
+module redis 'modules/redis.bicep' = if (enableRedis) {
+  name: 'redisDeploy'
+  scope: resourceGroup
+  params: {
+    name: redisName
+    location: location
+    tags: tags
+  }
+}
+
+// -----------------------------------------------------------------------------
 // App Service Plan
 // -----------------------------------------------------------------------------
 module appServicePlan 'modules/app-service-plan.bicep' = {
@@ -262,11 +279,13 @@ module appService 'modules/app-service.bicep' = {
     jwtSecretKey: jwtSecretKey
     corsOrigins: corsOrigins
     adminEmails: adminEmails
+    redisUrl: enableRedis ? redis.outputs.redisUrl : ''
   }
   dependsOn: [
     storage
     keyVault
     sqlServer
+    redis
   ]
 }
 

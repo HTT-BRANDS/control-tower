@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "7840798618581670755"
+    }
+  },
+  "parameters": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Redis cache name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Basic_C0",
+      "allowedValues": [
+        "Basic_C0",
+        "Basic_C1",
+        "Standard_C0",
+        "Standard_C1"
+      ],
+      "metadata": {
+        "description": "SKU: Basic C0 for token blacklist + rate limiting"
+      }
+    }
+  },
+  "variables": {
+    "skuParts": "[split(parameters('skuName'), '_')]",
+    "family": "[if(or(equals(variables('skuParts')[0], 'Basic'), equals(variables('skuParts')[0], 'Standard')), 'C', 'P')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cache/redis",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "name": "[variables('skuParts')[0]]",
+          "family": "[variables('family')]",
+          "capacity": "[int(replace(variables('skuParts')[1], 'C', ''))]"
+        },
+        "enableNonSslPort": false,
+        "minimumTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled",
+        "redisConfiguration": {
+          "maxmemory-policy": "volatile-lru"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "hostName": {
+      "type": "string",
+      "metadata": {
+        "description": "Redis hostname"
+      },
+      "value": "[reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').hostName]"
+    },
+    "sslPort": {
+      "type": "int",
+      "metadata": {
+        "description": "Redis SSL port"
+      },
+      "value": "[reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').sslPort]"
+    },
+    "connectionString": {
+      "type": "string",
+      "metadata": {
+        "description": "Redis primary connection string"
+      },
+      "value": "[format('{0}:{1}', reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').hostName, reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').sslPort)]"
+    },
+    "primaryKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Redis primary access key"
+      },
+      "value": "[listKeys(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').primaryKey]"
+    },
+    "redisUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Full Redis URL for app configuration"
+      },
+      "value": "[format('rediss://:{0}@{1}:{2}/0', listKeys(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').primaryKey, reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').hostName, reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').sslPort)]"
+    }
+  }
+}

@@ -46,6 +46,9 @@
         "CostCenter": "IT-Operations",
         "Owner": "Cloud-Team"
       }
+    },
+    "enableRedis": {
+      "value": false
     }
   }
 }

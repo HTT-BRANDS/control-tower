@@ -66,6 +66,9 @@ param corsOrigins string = ''
 @description('Comma-separated admin email addresses')
 param adminEmails string = ''
 
+@description('Redis URL for caching and token blacklist')
+param redisUrl string = ''
+
 // Reference to storage account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -252,6 +255,10 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'ADMIN_EMAILS'
           value: adminEmails
+        }
+        {
+          name: 'REDIS_URL'
+          value: redisUrl
         }
         {
           name: 'USE_OIDC_FEDERATION'
