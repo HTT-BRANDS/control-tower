@@ -22,14 +22,24 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+def _column_exists(table: str, column: str) -> bool:
+    """Return True if the column already exists in the table."""
+    bind = op.get_bind()
+    insp = sa.inspect(bind)
+    columns = [col["name"] for col in insp.get_columns(table)]
+    return column in columns
+
+
 def upgrade() -> None:
-    """Add billing_account_id to the tenants table."""
-    op.add_column(
-        "tenants",
-        sa.Column("billing_account_id", sa.String(255), nullable=True),
-    )
+    """Add billing_account_id to the tenants table (idempotent)."""
+    if not _column_exists("tenants", "billing_account_id"):
+        op.add_column(
+            "tenants",
+            sa.Column("billing_account_id", sa.String(255), nullable=True),
+        )
 
 
 def downgrade() -> None:
     """Drop billing_account_id from the tenants table."""
-    op.drop_column("tenants", "billing_account_id")
+    if _column_exists("tenants", "billing_account_id"):
+        op.drop_column("tenants", "billing_account_id")
