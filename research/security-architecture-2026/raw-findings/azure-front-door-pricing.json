@@ -1,0 +1,62 @@
+{
+  "source": "https://azure.microsoft.com/en-us/pricing/details/frontdoor/",
+  "retrieved": "2026-07-XX",
+  "currency": "USD",
+  "tiers": {
+    "standard": {
+      "base_fee_monthly": 35,
+      "description": "Content delivery optimized, static + dynamic acceleration, global load balancing, SSL offload, basic security",
+      "outbound_data_transfer_per_gb": {
+        "north_america_first_10tb": 0.083,
+        "europe_first_10tb": 0.083,
+        "asia_pacific_first_10tb": 0.115
+      },
+      "requests_per_10k": {
+        "north_america_first_250m": 0.009,
+        "europe_first_250m": 0.009,
+        "asia_pacific_first_250m": 0.0108
+      },
+      "origin_data_transfer_per_gb": {
+        "north_america": 0.02,
+        "europe": 0.02,
+        "asia_pacific": 0.06
+      }
+    },
+    "premium": {
+      "base_fee_monthly": 330,
+      "description": "Standard + WAF, Bot Protection, Private Link, Microsoft Threat Intelligence, Security Analytics",
+      "includes_waf": true,
+      "includes_private_link": true,
+      "outbound_data_transfer_per_gb": "same as standard",
+      "requests_per_10k": {
+        "north_america_first_250m": 0.015,
+        "europe_first_250m": 0.015
+      },
+      "waf_addons": {
+        "captcha_per_1000_sessions": 0.40
+      }
+    }
+  },
+  "estimated_cost_for_platform": {
+    "assumptions": {
+      "users": 30,
+      "monthly_requests": 50000,
+      "monthly_outbound_gb": 2,
+      "region": "North America"
+    },
+    "standard_tier": {
+      "base_fee": 35.00,
+      "data_transfer": 0.17,
+      "requests": 0.045,
+      "total": 35.22,
+      "percent_of_73_budget": "48%"
+    },
+    "premium_tier": {
+      "base_fee": 330.00,
+      "data_transfer": 0.17,
+      "requests": 0.075,
+      "total": 330.25,
+      "percent_of_73_budget": "452%"
+    }
+  }
+}

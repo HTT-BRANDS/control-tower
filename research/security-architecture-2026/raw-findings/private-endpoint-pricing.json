@@ -1,0 +1,52 @@
+{
+  "source": "https://azure.microsoft.com/en-us/pricing/details/private-link/",
+  "retrieved": "2026-07-XX",
+  "currency": "USD",
+  "pricing": {
+    "private_link_service": "free",
+    "private_endpoint_per_hour": 0.01,
+    "private_endpoint_per_month": 7.30,
+    "inbound_data_processing": {
+      "0_to_1pb_per_gb": 0.01,
+      "1_to_5pb_per_gb": 0.006,
+      "5pb_plus_per_gb": 0.004
+    },
+    "outbound_data_processing": {
+      "0_to_1pb_per_gb": 0.01,
+      "1_to_5pb_per_gb": 0.006,
+      "5pb_plus_per_gb": 0.004
+    },
+    "notes": [
+      "Partial hours billed as full hours",
+      "Data transfer pricing still applies in addition to Private Link premium",
+      "No charge for accessing PE from peered network (only Private Link premium)"
+    ]
+  },
+  "estimated_cost_for_platform": {
+    "sql_server_endpoint": {
+      "monthly_pe_cost": 7.30,
+      "estimated_monthly_data_gb": 5,
+      "data_processing_cost": 0.05,
+      "total": 7.35
+    },
+    "key_vault_endpoint": {
+      "monthly_pe_cost": 7.30,
+      "estimated_monthly_data_gb": 0.1,
+      "data_processing_cost": 0.001,
+      "total": 7.31
+    },
+    "container_registry_endpoint": {
+      "monthly_pe_cost": 7.30,
+      "estimated_monthly_data_gb": 5,
+      "data_processing_cost": 0.05,
+      "total": 7.35
+    },
+    "private_dns_zones": {
+      "per_zone_monthly": 0.50,
+      "zones_needed": 3,
+      "total": 1.50
+    },
+    "total_all_endpoints": 23.51,
+    "percent_of_73_budget": "32%"
+  }
+}
