@@ -145,7 +145,10 @@ class MonitoringService:
         log_entry.ended_at = datetime.now(UTC)
 
         if log_entry.started_at:
-            duration = log_entry.ended_at - log_entry.started_at
+            started_at = log_entry.started_at
+            if started_at.tzinfo is None:
+                started_at = started_at.replace(tzinfo=UTC)
+            duration = log_entry.ended_at - started_at
             log_entry.duration_ms = int(duration.total_seconds() * 1000)
 
         if error_message:
@@ -390,7 +393,10 @@ class MonitoringService:
             expected_interval = timedelta(
                 hours=expected_hours * ALERT_THRESHOLDS["stale_sync_multiplier"]
             )
-            since_last_run = datetime.now(UTC) - metrics.last_run_at
+            last_run_at = metrics.last_run_at
+            if last_run_at.tzinfo is None:
+                last_run_at = last_run_at.replace(tzinfo=UTC)
+            since_last_run = datetime.now(UTC) - last_run_at
 
             if since_last_run > expected_interval:
                 # Check if alert already exists

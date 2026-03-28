@@ -104,7 +104,10 @@ class MFATenantDataCheck(BasePreflightCheck):
                 )
 
             # Check data freshness (data older than 7 days is stale)
-            data_age_days = (datetime.now(UTC) - latest_mfa.snapshot_date).total_seconds() / 86400
+            snapshot_date = latest_mfa.snapshot_date
+            if snapshot_date.tzinfo is None:
+                snapshot_date = snapshot_date.replace(tzinfo=UTC)
+            data_age_days = (datetime.now(UTC) - snapshot_date).total_seconds() / 86400
 
             is_stale = data_age_days > 7
 

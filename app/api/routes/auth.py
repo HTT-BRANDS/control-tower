@@ -221,7 +221,7 @@ async def login(
         expires_in=settings.jwt_access_token_expire_minutes * 60,
     )
 
-    return create_token_response_with_cookies(token_response, http_request)
+    return create_token_response_with_cookies(token_response, request)
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -334,7 +334,7 @@ async def _handle_refresh_token(
             expires_in=settings.jwt_access_token_expire_minutes * 60,
         )
 
-        return create_token_response_with_cookies(token_response, http_request)
+        return create_token_response_with_cookies(token_response, request)
 
     except HTTPException:
         raise

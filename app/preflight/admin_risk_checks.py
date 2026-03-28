@@ -380,8 +380,11 @@ class InactiveAdminCheck(BasePreflightCheck):
             unique_users: dict[str, dict[str, Any]] = {}
             for user in inactive_users:
                 if user.user_principal_name not in unique_users:
+                    last_sign_in = user.last_sign_in
+                    if last_sign_in and last_sign_in.tzinfo is None:
+                        last_sign_in = last_sign_in.replace(tzinfo=UTC)
                     days_inactive = (
-                        (datetime.now(UTC) - user.last_sign_in).days if user.last_sign_in else None
+                        (datetime.now(UTC) - last_sign_in).days if last_sign_in else None
                     )
 
                     unique_users[user.user_principal_name] = {
@@ -726,7 +729,10 @@ class AdminComplianceGapCheck(BasePreflightCheck):
             threshold_date = datetime.now(UTC) - timedelta(days=INACTIVE_ADMIN_DAYS)
             inactive_users = set()
             for user in users:
-                if user.last_sign_in and user.last_sign_in < threshold_date:
+                last_sign_in = user.last_sign_in
+                if last_sign_in and last_sign_in.tzinfo is None:
+                    last_sign_in = last_sign_in.replace(tzinfo=UTC)
+                if last_sign_in and last_sign_in < threshold_date:
                     inactive_users.add(user.user_principal_name)
 
             # Overprivileged accounts
