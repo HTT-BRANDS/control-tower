@@ -1,6 +1,6 @@
 # Session Handoff — Azure Governance Platform
 
-## Current State (v1.7.0) ✅ FULLY DEPLOYED + HARDENED
+## Current State (v1.8.0) ✅ FULLY DEPLOYED + HARDENED
 
 **Date:** 2026-03-27
 **Branch:** main (clean, fully pushed)

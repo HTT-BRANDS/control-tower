@@ -129,27 +129,29 @@
          * Run all accessibility checks and log results
          */
         runAllChecks: function() {
-            console.group('🔍 Accessibility Audit');
-            
             const touchTargets = this.checkTouchTargets();
-            console.log('Touch Targets (WCAG 2.5.8):', 
-                touchTargets.compliant ? '✅ PASS' : '❌ FAIL',
-                touchTargets
-            );
-            
             const focusObscured = this.checkFocusObscured();
-            console.log('Focus Not Obscured (WCAG 2.4.11):',
-                focusObscured.compliant ? '✅ PASS' : '❌ FAIL',
-                focusObscured
-            );
-            
-            console.groupEnd();
-            
-            return {
+            const results = {
                 touchTargets,
                 focusObscured,
                 timestamp: new Date().toISOString()
             };
+
+            // Only log to console when debug flag is set
+            if (window.__A11Y_DEBUG__ || document.querySelector('[data-a11y-debug]')) {
+                console.group('🔍 Accessibility Audit');
+                console.log('Touch Targets (WCAG 2.5.8):', 
+                    touchTargets.compliant ? '✅ PASS' : '❌ FAIL',
+                    touchTargets
+                );
+                console.log('Focus Not Obscured (WCAG 2.4.11):',
+                    focusObscured.compliant ? '✅ PASS' : '❌ FAIL',
+                    focusObscured
+                );
+                console.groupEnd();
+            }
+
+            return results;
         }
     };
     

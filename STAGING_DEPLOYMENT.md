@@ -1,13 +1,13 @@
 # Staging Deployment — Operational
 
-## ✅ Status: OPERATIONAL — v1.6.0 (OIDC live since 2026-03-26)
+## ✅ Status: OPERATIONAL — v1.8.0 (OIDC live since 2026-03-26)
 
 **URL**: https://app-governance-staging-xnczpwyv.azurewebsites.net
 **Health**: https://app-governance-staging-xnczpwyv.azurewebsites.net/health
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| App Service | ✅ Running | v1.6.0 on `acrgovstaging19859.azurecr.io` — **OIDC auth active** |
+| App Service | ✅ Running | v1.8.0 on `acrgovstaging19859.azurecr.io` — **OIDC auth active** |
 | Health Endpoint | ✅ Healthy | DB, scheduler, cache, Azure all green |
 | Azure AD SSO | ✅ Configured | "Sign in with Microsoft" button live |
 | Scheduler | ✅ Running | 13 sync jobs registered |
@@ -96,4 +96,4 @@ The original staging 503 (2026-03-13 → 2026-03-16) was caused by missing `conf
 
 ---
 
-*Last updated: 2026-03-19 — Staging operational, v1.6.0*
+*Last updated: 2026-03-19 — Staging operational, v1.8.0*

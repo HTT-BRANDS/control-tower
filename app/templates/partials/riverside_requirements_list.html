@@ -25,12 +25,13 @@
             {# Filter Controls #}
             <div class="flex flex-wrap gap-3">
                 <select 
-                    name="category" 
+                    name="category"
+                    aria-label="Filter by category"
                     hx-get="/api/v1/riverside/requirements"
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
                     <option value="">All Categories</option>
                     <option value="IAM">Identity & Access (IAM)</option>
                     <option value="GS">Governance & Security (GS)</option>
@@ -38,11 +39,12 @@
                 </select>
                 <select 
                     name="priority"
+                    aria-label="Filter by priority"
                     hx-get="/api/v1/riverside/requirements"
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
                     <option value="">All Priorities</option>
                     <option value="P0">P0 - Critical</option>
                     <option value="P1">P1 - High</option>
@@ -50,11 +52,12 @@
                 </select>
                 <select 
                     name="status"
+                    aria-label="Filter by status"
                     hx-get="/api/v1/riverside/requirements"
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
                     <option value="">All Statuses</option>
                     <option value="completed">Completed</option>
                     <option value="in_progress">In Progress</option>
