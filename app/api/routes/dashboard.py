@@ -1,6 +1,6 @@
 """Dashboard API routes."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -29,6 +29,32 @@ router = APIRouter(
 )
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["app_version"] = __import__("app").__version__
+
+
+def _timeago(dt):
+    """Jinja2 filter: convert datetime to relative 'time ago' string."""
+    if dt is None:
+        return "never"
+    from datetime import datetime
+
+    now = datetime.now(UTC)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    diff = now - dt
+    seconds = int(diff.total_seconds())
+    if seconds < 60:
+        return "just now"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    days = hours // 24
+    return f"{days}d ago"
+
+
+templates.env.filters["timeago"] = _timeago
 
 
 async def _get_dashboard_data(
@@ -64,11 +90,24 @@ async def _get_dashboard_data(
     ]
     resource_inventory.total_resources = len(resource_inventory.resources)
 
+    # Get last sync timestamps for data freshness indicators
+    sync_types = ["costs", "compliance", "resources", "identity"]
+    last_synced = {}
+    for stype in sync_types:
+        last_log = (
+            db.query(SyncJobLog)
+            .filter(SyncJobLog.job_type == stype, SyncJobLog.status == "success")
+            .order_by(SyncJobLog.started_at.desc())
+            .first()
+        )
+        last_synced[stype] = last_log.started_at if last_log else None
+
     return {
         "cost_summary": cost_summary,
         "compliance_summary": compliance_summary,
         "resource_inventory": resource_inventory,
         "identity_summary": identity_summary,
+        "last_synced": last_synced,
     }
 
 

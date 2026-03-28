@@ -312,6 +312,36 @@ body {
 }
 
 
+
+/* ==========================================================================
+   Skeleton Loading Screens
+   Replaces spinner-based loading with content-shaped placeholders
+   ========================================================================== */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-tertiary, #F3F4F6) 25%,
+        var(--bg-secondary, #E5E7EB) 50%,
+        var(--bg-tertiary, #F3F4F6) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 0.375rem;
+}
+
+@keyframes skeleton-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+        opacity: 0.7;
+    }
+}
+
 /* ==========================================================================
    Responsive Tables (Roselli pattern)
    Horizontal scroll on small screens, stacked cards on mobile
