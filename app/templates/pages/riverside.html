@@ -5,7 +5,7 @@
 {% block nav_riverside %}bg-brand-primary-110{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="riversideDashboard()">
+<div class="space-y-6">
     <!-- Page Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
@@ -24,6 +24,7 @@
             <button 
                 hx-post="/api/v1/riverside/sync" 
                 hx-swap="none"
+                aria-label="Sync Riverside compliance data"
                 class="inline-flex items-center px-4 py-2 bg-brand-primary-100 text-white rounded-lg hover:bg-brand-primary-110 transition-colors font-medium"
             >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,6 +100,7 @@
                 hx-get="/api/v1/riverside/mfa-status"
                 hx-target="#mfa-chart-container"
                 hx-swap="innerHTML"
+                aria-label="Refresh MFA enrollment data"
                 class="text-brand-primary-100 hover:text-brand-primary-110 text-sm font-medium">
                 Refresh
             </button>
@@ -124,6 +126,7 @@
                 hx-get="/api/v1/riverside/maturity-scores"
                 hx-target="#maturity-gauges"
                 hx-swap="innerHTML"
+                aria-label="Refresh domain maturity scores"
                 class="text-brand-primary-100 hover:text-brand-primary-110 text-sm font-medium">
                 Refresh
             </button>
@@ -152,10 +155,11 @@
                 <div class="flex flex-wrap gap-3">
                     <select 
                         name="category" 
+                        aria-label="Filter by category"
                         hx-get="/api/v1/riverside/requirements"
                         hx-target="#requirements-table-container"
                         hx-include="[name='category'],[name='priority'],[name='status']"
-                        class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100">
+                        class="border border-theme rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100">
                         <option value="">All Categories</option>
                         <option value="IAM">Identity & Access (IAM)</option>
                         <option value="GS">Governance & Security (GS)</option>
@@ -163,10 +167,11 @@
                     </select>
                     <select 
                         name="priority"
+                        aria-label="Filter by priority"
                         hx-get="/api/v1/riverside/requirements"
                         hx-target="#requirements-table-container"
                         hx-include="[name='category'],[name='priority'],[name='status']"
-                        class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100">
+                        class="border border-theme rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100">
                         <option value="">All Priorities</option>
                         <option value="P0">P0 - Critical</option>
                         <option value="P1">P1 - High</option>
@@ -174,10 +179,11 @@
                     </select>
                     <select 
                         name="status"
+                        aria-label="Filter by status"
                         hx-get="/api/v1/riverside/requirements"
                         hx-target="#requirements-table-container"
                         hx-include="[name='category'],[name='priority'],[name='status']"
-                        class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-100 focus:border-brand-primary-100">
+                        class="border border-theme rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100">
                         <option value="">All Statuses</option>
                         <option value="completed">Completed</option>
                         <option value="in_progress">In Progress</option>

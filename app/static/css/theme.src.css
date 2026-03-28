@@ -185,7 +185,7 @@ body {
     --bg-tertiary: #262626;
     --text-primary: #F9FAFB;
     --text-secondary: #D1D5DB;
-    --text-muted: #6B7280;
+    --text-muted: #9CA3AF;  /* gray-400: ~6.7:1 on #0F0F0F (WCAG AA) */
     --border-color: #374151;
     --sidebar-bg: #0F0F0F;
     --sidebar-border: #262626;
@@ -504,7 +504,7 @@ body {
   background-color: var(--brand-primary-110);
 }
 
-.btn-brand:focus {
+.btn-brand:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--brand-primary-50);
 }

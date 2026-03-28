@@ -5003,10 +5003,20 @@
       outline-style: none;
     }
   }
+  .focus-visible\:border-brand-primary-100 {
+    &:focus-visible {
+      border-color: var(--color-brand-primary-100);
+    }
+  }
   .focus-visible\:ring-2 {
     &:focus-visible {
       --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus-visible\:ring-brand-primary-100 {
+    &:focus-visible {
+      --tw-ring-color: var(--color-brand-primary-100);
     }
   }
   .focus-visible\:ring-offset-1 {
@@ -5364,7 +5374,7 @@ body {
     --bg-tertiary: #262626;
     --text-primary: #F9FAFB;
     --text-secondary: #D1D5DB;
-    --text-muted: #6B7280;
+    --text-muted: #9CA3AF;
     --border-color: #374151;
     --sidebar-bg: #0F0F0F;
     --sidebar-border: #262626;
@@ -5584,7 +5594,7 @@ body {
 .btn-brand:hover {
   background-color: var(--brand-primary-110);
 }
-.btn-brand:focus {
+.btn-brand:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--brand-primary-50);
 }

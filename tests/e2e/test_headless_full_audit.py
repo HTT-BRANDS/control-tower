@@ -1170,7 +1170,7 @@ class TestOpenAPIAndDocs:
         data = json.loads(pg.evaluate("() => document.body.innerText"))
         assert "paths" in data
         assert "info" in data
-        assert data["info"]["version"] == "1.7.0"
+        assert data["info"]["version"] == "1.8.0"
         pg.close()
         ctx.close()
 

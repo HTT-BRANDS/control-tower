@@ -22,10 +22,10 @@
 
     <!-- HTMX 2.0 — selfRequestsOnly:true is now default (security) -->
     <meta name="htmx-config" content='{"inlineScriptNonce":"{{ request.state.csp_nonce }}","selfRequestsOnly":true}'>
-    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>
 
     <!-- Alpine.js CSP build — no eval(), works with strict Content-Security-Policy -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.14.9/dist/cdn.min.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.14.9/dist/cdn.min.js" integrity="sha384-zaqGaLZBjCeXCLnYyKyAJrDaZcsW8AqZN7iDmFDw3TzHJvhjMckT1H52jWWza0w8" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret #}
@@ -130,7 +130,7 @@
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center text-sm text-muted-theme">
                 <div class="flex items-center gap-4">
-                    <span>Azure Governance Platform v{{ app_version | default("1.0.0") }}</span>
+                    <span>Azure Governance Platform v{{ app_version | default("1.8.0") }}</span>
                     <a href="/privacy" class="hover:text-primary-theme underline">Privacy Policy</a>
                 </div>
                 <span>Last sync: <span id="last-sync">Never</span></span>

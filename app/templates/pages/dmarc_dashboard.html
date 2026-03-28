@@ -145,14 +145,17 @@
         <div class="bg-surface-primary rounded-xl shadow p-6 mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-semibold text-primary-theme">Email Authentication Compliance Trends</h2>
-                <select id="trend-days" class="border rounded px-2 py-1 text-sm" onchange="fetchTrends()">
+                <select id="trend-days" class="border rounded px-2 py-1 text-sm" aria-label="Select trend period">
                     <option value="7">Last 7 days</option>
                     <option value="30" selected>Last 30 days</option>
                     <option value="90">Last 90 days</option>
                 </select>
             </div>
             <div class="h-64 bg-surface-secondary rounded-lg flex items-center justify-center" id="trend-chart">
-                <canvas id="complianceChart" class="w-full h-full"></canvas>
+                <canvas id="complianceChart" class="w-full h-full"
+                    role="img"
+                    aria-label="DMARC compliance trend chart showing pass/fail rates over time"
+                >Chart data is available in the alerts table below.</canvas>
             </div>
         </div>
 
@@ -670,6 +673,10 @@
             return;
         }
     });
+    // CSP-safe: trend days select change handler
+    var trendDays = document.getElementById('trend-days');
+    if (trendDays) { trendDays.addEventListener('change', fetchTrends); }
+
     // Initial load
     fetchDashboardData();
     // Refresh every 5 minutes

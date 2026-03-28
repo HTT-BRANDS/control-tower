@@ -739,7 +739,7 @@
             ConfirmDialog
         };
         
-        console.log('HTMX Navigation Enhancement initialized');
+        // Navigation initialized (debug log removed for production)
     }
 
     // Initialize when DOM is ready

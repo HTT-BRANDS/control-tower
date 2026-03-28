@@ -87,7 +87,7 @@
         </div>
 
         <p class="text-center text-xs mt-4 text-muted-theme">
-            Azure Governance Platform v1.2.0
+            Azure Governance Platform v{{ app_version }}
         </p>
     </div>
 
@@ -216,10 +216,7 @@
                     // Clear PKCE verifier on success
                     sessionStorage.removeItem('pkce_code_verifier');
                     const data = await resp.json();
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('refresh_token', data.refresh_token);
-                    const maxAge = data.expires_in || 1800;
-                    document.cookie = `access_token=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                    // Server sets HttpOnly cookies — no client-side token storage needed
                     window.location.href = '/dashboard';
                     return true;
                 } else {
@@ -263,10 +260,7 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('refresh_token', data.refresh_token);
-                    const maxAge = data.expires_in || 1800;
-                    document.cookie = `access_token=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                    // Server sets HttpOnly cookies — no client-side token storage needed
                     window.location.href = '/dashboard';
                 } else {
                     const err = await response.json().catch(() => ({}));
@@ -285,10 +279,7 @@
 
         // Hover effects
         const azureBtn = document.getElementById('azure-login-btn');
-        azureBtn.addEventListener('mouseenter', () => { azureBtn.style.backgroundColor = '#106ebe'; });
-        azureBtn.addEventListener('mouseleave', () => { azureBtn.style.backgroundColor = '#0078d4'; });
-        submitBtn.addEventListener('mouseenter', () => { submitBtn.style.backgroundColor = '#6B1A24'; });
-        submitBtn.addEventListener('mouseleave', () => { submitBtn.style.backgroundColor = '#500711'; });
+        // Hover colors handled via CSS classes (no inline JS needed)
         azureBtn.addEventListener('click', signInWithAzureAD);
 
         // ── Page Init ───────────────────────────────────────────

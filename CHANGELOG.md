@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0] - 2026-03-27
+
+### Added
+- HTMX 2.0 upgrade with selfRequestsOnly security
+- Alpine.js CSP build for client-side reactivity
+- DaisyUI 5.x design system integration
+- Tenant scope selector on dashboard
+- axe-core WCAG 2.2 AA automated CI testing
+- Dashboard 3-level information hierarchy (KPI bar → sections → details)
+- Skeleton loading screens with prefers-reduced-motion support
+- "Last synced" data freshness timestamps
+- Colorblind-safe chart palette (blue/amber/red-orange)
+- Data table fallbacks alongside all charts
+- Responsive table patterns (Roselli mobile stacking)
+- 14 architecture fitness tests (security + cost constraints)
+
+### Fixed
+- WCAG: text-gray-100 invisible text → proper contrast tokens
+- WCAG: text-gray-160 dead class references removed
+- WCAG: --text-muted contrast 2.54:1 → 4.64:1
+- WCAG: focus:outline-none on login inputs → focus-visible ring
+- WCAG: Heading hierarchy h1→h3 skip → proper h1→h2→h3
+- Security: Key Vault networkAcls defaultAction → Deny
+- Security: Storage account listKeys() annotated for RBAC migration
+- Infrastructure: Duplicate python-multipart dependency removed
+- CSP: dmarc_dashboard inline onchange → addEventListener
+- Dead localStorage/cookie token storage code removed
+- Undefined Alpine.js component in riverside.html removed
+
+### Changed
+- HTMX 1.9.12 → 2.0.4
+- Alpine.js → @alpinejs/csp@3.14.9 (no eval())
+- --text-muted color #9CA3AF → #6B7280 (WCAG AA compliant)
+- .btn-brand:focus → :focus-visible
+- Dark mode --text-muted #6B7280 → #9CA3AF (AA on dark backgrounds)
+- SRI hashes added to HTMX + Alpine.js CDN scripts
+- Production console.log statements removed from navigation JS
+
 ## [1.6.3] - 2026-03-27
 
 ### Fixed

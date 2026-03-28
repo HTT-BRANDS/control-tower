@@ -16,12 +16,12 @@
 | Resource | Name | SKU | Status | Runtime |
 |----------|------|-----|--------|---------|
 | App Service Plan | asp-governance-production | B1 (Basic) | Active | - |
-| Web App | app-governance-prod | - | Running | Docker v1.6.0 |
+| Web App | app-governance-prod | - | Running | Docker v1.8.0 |
 
 **Endpoints:**
 - URL: https://app-governance-prod.azurewebsites.net
 - HTTPS Only: Enabled
-- Linux Fx: Docker|acrgovprod.azurecr.io/azure-governance-platform:v1.6.0
+- Linux Fx: Docker|acrgovprod.azurecr.io/azure-governance-platform:v1.8.0
 
 ### SQL Database
 
@@ -37,7 +37,7 @@
 | ACR | acrgovprod | Standard | acrgovprod.azurecr.io |
 
 **Admin User:** Enabled  
-**Current Image:** azure-governance-platform:v1.6.0
+**Current Image:** azure-governance-platform:v1.8.0
 
 ### Key Vault
 
@@ -136,8 +136,8 @@
 
 | Environment | URL | Version |
 |-------------|-----|---------|
-| Production | https://app-governance-prod.azurewebsites.net | v1.6.0 |
-| Staging | https://app-governance-staging-xnczpwyv.azurewebsites.net | v1.6.2-dev |
+| Production | https://app-governance-prod.azurewebsites.net | v1.8.0 |
+| Staging | https://app-governance-staging-xnczpwyv.azurewebsites.net | v1.8.0 |
 
 ---
 
