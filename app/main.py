@@ -9,7 +9,6 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.routes import (
@@ -52,7 +51,6 @@ from app.core.gpc_middleware import GPCMiddleware
 from app.core.logging_config import set_correlation_id
 from app.core.rate_limit import rate_limiter
 from app.core.scheduler import init_scheduler
-from app.core.tenant_context import register_template_filters
 from app.core.token_blacklist import get_blacklist_backend, get_blacklist_size
 from app.core.tracing import setup_tracing
 
@@ -118,15 +116,6 @@ app = FastAPI(
 
 # Configure CORS — single middleware, no wildcards, no duplicates
 # SECURITY: Explicit origins, methods, and headers only (P1 fix)
-
-# Initialize Jinja2 templates and register custom filters
-templates = Jinja2Templates(directory="app/templates")
-register_template_filters(templates.env)
-
-# Expose app version to all templates as a global
-from app import __version__ as _app_version  # noqa: E402
-
-templates.env.globals["app_version"] = _app_version
 
 _cors_origins = list(settings.cors_origins)
 if settings.cors_allowed_origins:

@@ -9,7 +9,6 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.api.services.monitoring_service import MonitoringService
@@ -21,6 +20,7 @@ from app.core.authorization import (
 from app.core.database import get_db
 from app.core.rate_limit import rate_limit
 from app.core.scheduler import get_scheduler, trigger_manual_sync
+from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
 
 router = APIRouter(
@@ -28,8 +28,6 @@ router = APIRouter(
     tags=["sync"],
     dependencies=[Depends(get_current_user)],
 )
-templates = Jinja2Templates(directory="app/templates")
-templates.env.globals["app_version"] = __import__("app").__version__
 
 SyncType = Literal["costs", "compliance", "resources", "identity"]
 

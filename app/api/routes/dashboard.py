@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.api.services.compliance_service import ComplianceService
@@ -19,6 +18,7 @@ from app.core.authorization import (
     get_user_tenants,
 )
 from app.core.database import get_db
+from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
 from app.models.monitoring import Alert, SyncJobLog
 from app.models.tenant import Tenant
@@ -27,34 +27,6 @@ router = APIRouter(
     tags=["dashboard"],
     dependencies=[Depends(get_current_user)],
 )
-templates = Jinja2Templates(directory="app/templates")
-templates.env.globals["app_version"] = __import__("app").__version__
-
-
-def _timeago(dt):
-    """Jinja2 filter: convert datetime to relative 'time ago' string."""
-    if dt is None:
-        return "never"
-    from datetime import datetime
-
-    now = datetime.now(UTC)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=UTC)
-    diff = now - dt
-    seconds = int(diff.total_seconds())
-    if seconds < 60:
-        return "just now"
-    minutes = seconds // 60
-    if minutes < 60:
-        return f"{minutes}m ago"
-    hours = minutes // 60
-    if hours < 24:
-        return f"{hours}h ago"
-    days = hours // 24
-    return f"{days}d ago"
-
-
-templates.env.filters["timeago"] = _timeago
 
 
 async def _get_dashboard_data(

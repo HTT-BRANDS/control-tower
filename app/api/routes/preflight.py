@@ -5,7 +5,6 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.core.auth import User, get_current_user
@@ -14,6 +13,7 @@ from app.core.authorization import (
     get_tenant_authorization,
 )
 from app.core.database import get_db
+from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
 from app.preflight.models import (
     CategorySummary,
@@ -38,8 +38,6 @@ router = APIRouter(
     tags=["preflight"],
     dependencies=[Depends(get_current_user)],
 )
-templates = Jinja2Templates(directory="app/templates")
-templates.env.globals["app_version"] = __import__("app").__version__
 
 
 @router.get("", response_class=HTMLResponse)

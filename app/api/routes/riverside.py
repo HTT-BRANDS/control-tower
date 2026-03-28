@@ -6,7 +6,6 @@ tracking with the July 8, 2026 deadline and $4M financial risk.
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.api.services.riverside_service import RiversideService
@@ -16,14 +15,13 @@ from app.core.authorization import (
     get_tenant_authorization,
 )
 from app.core.database import get_db
+from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
 
 router = APIRouter(
     tags=["riverside"],
     dependencies=[Depends(get_current_user)],
 )
-templates = Jinja2Templates(directory="app/templates")
-templates.env.globals["app_version"] = __import__("app").__version__
 
 
 @router.get("/riverside", response_class=HTMLResponse)
