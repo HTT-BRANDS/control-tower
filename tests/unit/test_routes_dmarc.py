@@ -18,6 +18,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.auth import User, get_current_user
 from app.core.database import get_db
 from app.main import app
 from app.models.dmarc import DKIMRecord, DMARCAlert, DMARCRecord
@@ -72,7 +73,7 @@ def test_db_session(db_session):
 
 @pytest.fixture
 def client_with_db(test_db_session):
-    """Test client with database override."""
+    """Test client with database and auth overrides."""
 
     def override_get_db():
         try:
@@ -80,7 +81,15 @@ def client_with_db(test_db_session):
         finally:
             pass
 
+    mock_user = User(
+        id="test-user-id",
+        email="test@example.com",
+        name="Test User",
+        roles=["admin"],
+    )
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

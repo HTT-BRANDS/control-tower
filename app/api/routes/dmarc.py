@@ -10,9 +10,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.services.dmarc_service import DMARCService
+from app.core.auth import get_current_user
 from app.core.database import get_db
 
-router = APIRouter(prefix="/api/v1/dmarc", tags=["dmarc"])
+router = APIRouter(
+    prefix="/api/v1/dmarc",
+    tags=["dmarc"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/summary")

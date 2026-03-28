@@ -8,9 +8,14 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.services.search_service import SearchResult, SearchResultType, SearchService
+from app.core.auth import get_current_user
 from app.core.database import get_db
 
-router = APIRouter(prefix="/api/v1/search", tags=["search"])
+router = APIRouter(
+    prefix="/api/v1/search",
+    tags=["search"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/", response_model=list[SearchResult])

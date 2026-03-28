@@ -51,10 +51,10 @@
                             <h3 id="confirm-dialog-title" class="text-lg font-semibold text-gray-900">Confirm Action</h3>
                             <p class="text-sm text-gray-500 mt-1">${escapeHtml(message)}</p>
                             <div class="flex justify-end gap-3 mt-6">
-                                <button type="button" class="cancel-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <button type="button" class="cancel-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-primary-100">
                                     Cancel
                                 </button>
-                                <button type="button" class="confirm-btn px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <button type="button" class="confirm-btn px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-error-100">
                                     Confirm
                                 </button>
                             </div>

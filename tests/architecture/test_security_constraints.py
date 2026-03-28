@@ -117,22 +117,30 @@ class TestNoListKeysInBicep:
 class TestAuthMiddleware:
     """All API route files must import auth dependencies."""
 
-    PUBLIC_ROUTES = {"auth.py", "health.py", "privacy.py", "accessibility.py", "__init__.py"}
+    PUBLIC_ROUTES = {"auth.py", "health.py", "privacy.py", "accessibility.py", "onboarding.py", "__init__.py"}
 
-    def test_api_routes_import_auth(self):
+    def test_api_routes_require_auth(self):
+        """Every data-bearing API route must reference get_current_user or require_roles.
+
+        A route file that only uses Depends(get_db) is NOT protected.
+        """
         routes_dir = APP_DIR / "api" / "routes"
         if not routes_dir.exists():
             pytest.skip("Routes directory not found")
 
-        violations = []
+        unprotected = []
         for f in routes_dir.glob("*.py"):
             if f.name in self.PUBLIC_ROUTES:
                 continue
             content = f.read_text()
-            if "get_current_user" not in content and "Depends(" not in content:
-                violations.append(f.name)
+            has_auth = "get_current_user" in content or "require_roles" in content
+            if not has_auth:
+                unprotected.append(f.name)
 
-        assert not violations, f"Routes without auth dependency: {violations}"
+        assert not unprotected, (
+            f"Routes without authentication (get_current_user / require_roles): "
+            f"{unprotected}. Add dependencies=[Depends(get_current_user)] to the router."
+        )
 
 
 # ============================================================================
