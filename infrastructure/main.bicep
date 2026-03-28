@@ -211,6 +211,28 @@ module keyVault 'modules/key-vault.bicep' = if (enableKeyVault) {
 }
 
 // -----------------------------------------------------------------------------
+// Storage Key → Key Vault Secret (eliminates listKeys() from deployment history)
+// -----------------------------------------------------------------------------
+module storageKeySecret 'modules/storage-key-secret.bicep' = if (enableKeyVault) {
+  name: 'storageKeySecretDeploy'
+  scope: resourceGroup
+  params: {
+    keyVaultName: validatedKeyVaultName
+    storageAccountName: validatedStorageName
+  }
+  dependsOn: [
+    storage
+    keyVault
+  ]
+}
+
+// Reference Key Vault for secure parameter passing (getSecret)
+resource existingKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  scope: resourceGroup
+  name: validatedKeyVaultName
+}
+
+// -----------------------------------------------------------------------------
 // Virtual Network (optional, for private endpoints)
 // -----------------------------------------------------------------------------
 module vnet 'modules/vnet.bicep' = if (enableVNetIntegration) {
@@ -279,11 +301,13 @@ module appService 'modules/app-service.bicep' = {
     jwtSecretKey: jwtSecretKey
     corsOrigins: corsOrigins
     adminEmails: adminEmails
-    redisUrl: enableRedis ? redis.outputs.redisUrl : ''
+    redisUrl: enableRedis ? redis.outputs.connectionString : ''
+    storageAccessKey: enableKeyVault ? existingKeyVault.getSecret('storage-access-key') : ''
   }
   dependsOn: [
     storage
     keyVault
+    storageKeySecret
     sqlServer
     redis
   ]

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "2475450552354939112"
+      "templateHash": "3847238068488609825"
     }
   },
   "parameters": {
@@ -97,6 +97,13 @@
       "defaultValue": false,
       "metadata": {
         "description": "Enable VNet integration"
+      }
+    },
+    "enableRedis": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Azure Cache for Redis"
       }
     },
     "sqlAdminUsername": {
@@ -206,6 +213,7 @@
     "sqlServerName": "[format('sql-governance-{0}-{1}', parameters('environment'), take(parameters('resourceSuffix'), 8))]",
     "sqlDatabaseName": "governance-db",
     "vnetName": "[format('vnet-governance-{0}', parameters('environment'))]",
+    "redisName": "[format('redis-gov-{0}-{1}', parameters('environment'), take(parameters('resourceSuffix'), 8))]",
     "validatedKeyVaultName": "[if(greater(length(variables('keyVaultName')), 24), take(variables('keyVaultName'), 24), variables('keyVaultName'))]",
     "validatedStorageName": "[if(greater(length(replace(variables('storageAccountName'), '-', '')), 24), take(replace(variables('storageAccountName'), '-', ''), 24), replace(variables('storageAccountName'), '-', ''))]"
   },
@@ -479,7 +487,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "8048119609836313452"
+              "templateHash": "6959170002124421894"
             }
           },
           "parameters": {
@@ -595,7 +603,9 @@
                 "minimumTlsVersion": "TLS1_2",
                 "networkAcls": {
                   "defaultAction": "Deny",
-                  "bypass": "AzureServices"
+                  "bypass": "AzureServices",
+                  "ipRules": [],
+                  "virtualNetworkRules": []
                 },
                 "supportsHttpsTrafficOnly": true
               }
@@ -942,7 +952,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "16040126221452152861"
+              "templateHash": "3722834629204834357"
             }
           },
           "parameters": {
@@ -1041,6 +1051,88 @@
       },
       "dependsOn": [
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableKeyVault')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storageKeySecretDeploy",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[variables('validatedKeyVaultName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('validatedStorageName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "27547590730988499"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Key Vault"
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the storage account"
+              }
+            },
+            "secretName": {
+              "type": "string",
+              "defaultValue": "storage-access-key",
+              "metadata": {
+                "description": "Name for the secret"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('secretName'))]",
+              "properties": {
+                "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]",
+                "contentType": "Storage Account Access Key",
+                "attributes": {
+                  "enabled": true
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "secretName": {
+              "type": "string",
+              "value": "[parameters('secretName')]"
+            },
+            "secretUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('secretName')), '2023-07-01').secretUri]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'keyVaultDeploy')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'storageDeploy')]"
       ]
     },
     {
@@ -1205,6 +1297,135 @@
             "privateEndpointSubnetId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('name'), 'PrivateEndpointSubnet')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableRedis')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "redisDeploy",
+      "resourceGroup": "[variables('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('redisName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "9333622442809247753"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Redis cache name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags"
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "Basic_C0",
+              "allowedValues": [
+                "Basic_C0",
+                "Basic_C1",
+                "Standard_C0",
+                "Standard_C1"
+              ],
+              "metadata": {
+                "description": "SKU: Basic C0 for token blacklist + rate limiting"
+              }
+            }
+          },
+          "variables": {
+            "skuParts": "[split(parameters('skuName'), '_')]",
+            "family": "[if(or(equals(variables('skuParts')[0], 'Basic'), equals(variables('skuParts')[0], 'Standard')), 'C', 'P')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cache/redis",
+              "apiVersion": "2023-08-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "[variables('skuParts')[0]]",
+                  "family": "[variables('family')]",
+                  "capacity": "[int(replace(variables('skuParts')[1], 'C', ''))]"
+                },
+                "enableNonSslPort": false,
+                "minimumTlsVersion": "1.2",
+                "publicNetworkAccess": "Enabled",
+                "redisConfiguration": {
+                  "maxmemory-policy": "volatile-lru"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "hostName": {
+              "type": "string",
+              "metadata": {
+                "description": "Redis hostname"
+              },
+              "value": "[reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').hostName]"
+            },
+            "sslPort": {
+              "type": "int",
+              "metadata": {
+                "description": "Redis SSL port"
+              },
+              "value": "[reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').sslPort]"
+            },
+            "connectionString": {
+              "type": "string",
+              "metadata": {
+                "description": "Redis primary connection string"
+              },
+              "value": "[format('{0}:{1}', reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').hostName, reference(resourceId('Microsoft.Cache/redis', parameters('name')), '2023-08-01').sslPort)]"
+            },
+            "resourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Redis resource ID — use for Key Vault reference or RBAC assignment"
+              },
+              "value": "[resourceId('Microsoft.Cache/redis', parameters('name'))]"
             }
           }
         }
@@ -1481,7 +1702,9 @@
           },
           "adminEmails": {
             "value": "[parameters('adminEmails')]"
-          }
+          },
+          "redisUrl": "[if(parameters('enableRedis'), createObject('value', reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'redisDeploy'), '2025-04-01').outputs.connectionString.value), createObject('value', ''))]",
+          "storageAccessKey": "[if(parameters('enableKeyVault'), createObject('reference', createObject('keyVault', createObject('id', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.KeyVault/vaults', variables('validatedKeyVaultName'))), 'secretName', 'storage-access-key')), createObject('value', ''))]"
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -1490,7 +1713,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.41.2.15936",
-              "templateHash": "1731866757924760610"
+              "templateHash": "4918852675185779257"
             }
           },
           "parameters": {
@@ -1641,6 +1864,20 @@
               "defaultValue": "",
               "metadata": {
                 "description": "Comma-separated admin email addresses"
+              }
+            },
+            "redisUrl": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Redis URL for caching and token blacklist"
+              }
+            },
+            "storageAccessKey": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Storage account access key (passed securely via Key Vault). When empty, falls back to listKeys()."
               }
             }
           },
@@ -1809,7 +2046,7 @@
                     },
                     {
                       "name": "JWT_SECRET_KEY",
-                      "value": "[parameters('jwtSecretKey')]"
+                      "value": "[if(not(empty(parameters('keyVaultName'))), format('@Microsoft.KeyVault(SecretUri=https://{0}.vault.azure.net/secrets/jwt-secret-key)', parameters('keyVaultName')), parameters('jwtSecretKey'))]"
                     },
                     {
                       "name": "CORS_ORIGINS",
@@ -1818,6 +2055,10 @@
                     {
                       "name": "ADMIN_EMAILS",
                       "value": "[parameters('adminEmails')]"
+                    },
+                    {
+                      "name": "REDIS_URL",
+                      "value": "[parameters('redisUrl')]"
                     },
                     {
                       "name": "USE_OIDC_FEDERATION",
@@ -1842,15 +2083,43 @@
                   "shareName": "appdata",
                   "mountPath": "/home/data",
                   "accountName": "[parameters('storageAccountName')]",
-                  "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]"
+                  "accessKey": "[if(not(empty(parameters('storageAccessKey'))), parameters('storageAccessKey'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value)]"
                 },
                 "logsVolume": {
                   "type": "AzureFiles",
                   "shareName": "applogs",
                   "mountPath": "/home/logs",
                   "accountName": "[parameters('storageAccountName')]",
-                  "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value]"
+                  "accessKey": "[if(not(empty(parameters('storageAccessKey'))), parameters('storageAccessKey'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').keys[0].value)]"
                 }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('name')), '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2023-12-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), resourceId('Microsoft.Web/sites', parameters('name')), 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('name')), '2023-12-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('name'))]"
@@ -1950,9 +2219,11 @@
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'appServicePlanDeploy')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'keyVaultDeploy')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'redisDeploy')]",
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'sqlServerDeploy')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'storageDeploy')]"
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'storageDeploy')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('resourceGroupName')), 'Microsoft.Resources/deployments', 'storageKeySecretDeploy')]"
       ]
     }
   ],

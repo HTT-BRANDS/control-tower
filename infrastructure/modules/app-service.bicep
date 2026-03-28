@@ -69,6 +69,10 @@ param adminEmails string = ''
 @description('Redis URL for caching and token blacklist')
 param redisUrl string = ''
 
+@description('Storage account access key (passed securely via Key Vault). When empty, falls back to listKeys().') // #nosec — description only
+@secure()
+param storageAccessKey string = ''
+
 // Reference to storage account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
   name: storageAccountName
@@ -78,6 +82,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = if (!empty(keyVaultName)) {
   name: keyVaultName
 }
+
+// Use Key Vault-sourced key when available, fall back to listKeys() for backwards compatibility
+var effectiveStorageKey = !empty(storageAccessKey) ? storageAccessKey : storageAccount.listKeys().keys[0].value // #nosec — backwards-compat fallback; Key Vault path preferred
 
 // Determine kind based on deployment type
 var appKind = useContainerDeployment ? 'app,linux,container' : 'app,linux'
@@ -284,18 +291,43 @@ resource azureStorageConfig 'Microsoft.Web/sites/config@2023-12-01' = {
       shareName: 'appdata'
       mountPath: '/home/data'
       accountName: storageAccountName
-      // TODO: Migrate to Managed Identity for Azure Files access.
-      // listKeys() exposes secrets in ARM deployment history.
-      // See: https://learn.microsoft.com/azure/storage/files/storage-files-identity-auth-active-directory-enable
-      accessKey: storageAccount.listKeys().keys[0].value  // #nosec — tracked for MI migration
+      // SECURITY: Key is passed via @secure() param from Key Vault (redacted in deployment history).
+      // Fallback to listKeys() only when Key Vault is not configured.
+      // Future: Migrate to Managed Identity when Azure Files supports identity-based App Service mounts.
+      accessKey: effectiveStorageKey
     }
     logsVolume: {
       type: 'AzureFiles'
       shareName: 'applogs'
       mountPath: '/home/logs'
       accountName: storageAccountName
-      accessKey: storageAccount.listKeys().keys[0].value  // #nosec — tracked for MI migration
+      accessKey: effectiveStorageKey
     }
+  }
+}
+
+// RBAC: Storage File Data SMB Share Contributor — prepares for future Managed Identity migration
+// When Azure Files supports identity-based mounts for App Service, this role enables the transition
+// without redeployment. Role ID: 0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb
+resource storageFileRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAccount.id, appService.id, '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb')
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb')
+    principalId: appService.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// RBAC: Storage Blob Data Contributor — for backup container access via MI
+// Role ID: ba92f5b4-2d11-453d-a403-e96b0029c9fe
+resource storageBlobRbac 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(storageAccount.id, appService.id, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  scope: storageAccount
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+    principalId: appService.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
