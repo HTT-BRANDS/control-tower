@@ -10,7 +10,7 @@ patterns, and database persistence to riverside tables.
 """
 
 import logging
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING
 
 from azure.core.exceptions import HttpResponseError
@@ -156,7 +156,7 @@ async def sync_all_tenants(
         - results: detailed results by sync type
         - progress: progress tracking information
     """
-    logger.info(f"Starting batch sync for all tenants at {datetime.utcnow()}")
+    logger.info(f"Starting batch sync for all tenants at {datetime.now(UTC)}")
 
     progress = ProgressTracker()
     results = {
@@ -340,7 +340,7 @@ async def sync_tenant_mfa(
     Raises:
         SyncError: If sync fails and circuit breaker/retry exhausted
     """
-    snapshot_date = snapshot_date or datetime.utcnow()
+    snapshot_date = snapshot_date or datetime.now(UTC)
 
     logger.info(
         f"Syncing MFA data for tenant: {tenant_id} (include_details={include_method_details})"
@@ -539,7 +539,7 @@ async def sync_tenant_devices(
     Raises:
         SyncError: If sync fails and circuit breaker/retry exhausted
     """
-    snapshot_date = snapshot_date or datetime.utcnow()
+    snapshot_date = snapshot_date or datetime.now(UTC)
 
     logger.info(f"Syncing device compliance for tenant: {tenant_id}")
 
@@ -739,7 +739,7 @@ async def sync_requirement_status(
                 # Update if status changed
                 if new_status != old_status:
                     req.status = new_status
-                    req.updated_at = datetime.utcnow()
+                    req.updated_at = datetime.now(UTC)
                     requirements_updated += 1
                     updates.append(
                         {
@@ -814,7 +814,7 @@ async def sync_maturity_scores(
     Raises:
         SyncError: If sync fails and circuit breaker/retry exhausted
     """
-    snapshot_date = snapshot_date or datetime.utcnow()
+    snapshot_date = snapshot_date or datetime.now(UTC)
 
     logger.info(f"Syncing maturity scores for tenant: {tenant_id}")
 

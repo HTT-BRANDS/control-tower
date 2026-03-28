@@ -3,7 +3,7 @@
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func
@@ -68,7 +68,7 @@ class MonitoringService:
             job_type=job_type,
             tenant_id=tenant_id,
             status="running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             records_processed=0,
             records_created=0,
             records_updated=0,
@@ -142,7 +142,7 @@ class MonitoringService:
             raise ValueError(f"Sync job log with id {log_id} not found")
 
         log_entry.status = status
-        log_entry.ended_at = datetime.utcnow()
+        log_entry.ended_at = datetime.now(UTC)
 
         if log_entry.started_at:
             duration = log_entry.ended_at - log_entry.started_at
@@ -230,7 +230,7 @@ class MonitoringService:
                 metrics.last_failure_at = last_run.started_at
                 metrics.last_error_message = last_run.error_message
 
-        metrics.calculated_at = datetime.utcnow()
+        metrics.calculated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(metrics)
         return metrics
@@ -390,7 +390,7 @@ class MonitoringService:
             expected_interval = timedelta(
                 hours=expected_hours * ALERT_THRESHOLDS["stale_sync_multiplier"]
             )
-            since_last_run = datetime.utcnow() - metrics.last_run_at
+            since_last_run = datetime.now(UTC) - metrics.last_run_at
 
             if since_last_run > expected_interval:
                 # Check if alert already exists
@@ -455,7 +455,7 @@ class MonitoringService:
             message=message,
             details_json=json.dumps(details) if details else None,
             is_resolved=False,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         self.db.add(alert)
         self.db.commit()
@@ -488,7 +488,7 @@ class MonitoringService:
             raise ValueError(f"Alert with id {alert_id} not found")
 
         alert.is_resolved = True
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = datetime.now(UTC)
         alert.resolved_by = resolved_by
         self.db.commit()
         self.db.refresh(alert)
@@ -622,7 +622,7 @@ class MonitoringService:
                 "critical": len(critical_alerts),
                 "error": len(error_alerts),
             },
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
 
     # ==========================================================================
@@ -663,7 +663,7 @@ class MonitoringService:
             title=alert.title,
             message=alert.message,
             status="pending",
-            sent_at=datetime.utcnow(),
+            sent_at=datetime.now(UTC),
             metadata_json=json.dumps(
                 {
                     "alert_type": alert.alert_type,
@@ -709,7 +709,7 @@ class MonitoringService:
         log_entry.response_body = result.get("error") or json.dumps(result)
 
         if result.get("success"):
-            log_entry.delivered_at = datetime.utcnow()
+            log_entry.delivered_at = datetime.now(UTC)
             record_notification_sent(alert.alert_type, alert.job_type)
             logger.info(f"Notification sent for alert {alert.id}: {alert.title}")
         else:
@@ -766,7 +766,7 @@ class MonitoringService:
             self.db.query(NotificationLog)
             .filter(
                 NotificationLog.status == "failed",
-                NotificationLog.sent_at >= datetime.utcnow() - timedelta(hours=24),
+                NotificationLog.sent_at >= datetime.now(UTC) - timedelta(hours=24),
             )
             .count()
         )
