@@ -1,0 +1,129 @@
+{
+  "research_date": "2026-03-27",
+  "frameworks": {
+    "htmx": {
+      "latest_version": "2.0.7",
+      "npm_version": "2.0.8",
+      "initial_2_release": "2024-06-17",
+      "latest_release_date": "2025-09-11",
+      "github_stars": 47720,
+      "github_forks": 1600,
+      "open_issues": 602,
+      "open_prs": 56,
+      "bundle_size_min_gz": "17.6 kB",
+      "bundle_size_min": "59.1 kB",
+      "install_size": "863 kB",
+      "dependencies": 0,
+      "license": "BSD-2-Clause",
+      "created": "6 years ago (~2020)",
+      "project_uses": "1.9.12",
+      "migration_effort": "minimal — config defaults + extension separation",
+      "notes": "npm shows 2.0.8 but GitHub latest release tag is v2.0.7. Discrepancy may be a post-release patch."
+    },
+    "alpinejs": {
+      "latest_version": "3.15.9",
+      "release_date": "2026-03-26",
+      "github_stars": 31379,
+      "github_forks": 1400,
+      "open_issues": 13,
+      "open_prs": 13,
+      "bundle_size_min_gz": "~15 kB",
+      "install_size": "810 kB",
+      "dependencies": 0,
+      "license": "MIT",
+      "created": "6 years ago (~2020)",
+      "project_uses": "not loaded (x-data syntax in riverside.html without import)",
+      "notes": "Extremely active — released YESTERDAY. Only 13 open issues indicates excellent maintenance."
+    },
+    "react": {
+      "latest_version": "19.2.4",
+      "release_date": "~2026-01 (2 months ago)",
+      "github_stars": 244231,
+      "github_forks": 30700,
+      "open_issues": 1186,
+      "bundle_size_min_gz": "~42 kB (react + react-dom combined)",
+      "install_size": "168 kB (react only)",
+      "license": "MIT",
+      "created": "14 years ago (2012)",
+      "notes": "React 19 introduced Server Components, Actions, use() hook. Massive ecosystem but heavy."
+    },
+    "nextjs": {
+      "latest_stable": "16.2.1",
+      "latest_canary": "16.2.1-canary.11",
+      "release_date": "~2026-03-20 (last week)",
+      "github_stars": 139000,
+      "github_forks": 30700,
+      "open_issues": 2100,
+      "open_prs": 1500,
+      "license": "MIT",
+      "notes": "Very active development. Uses Turbopack. Server Components, App Router, ISR."
+    },
+    "vue": {
+      "latest_version": "3.5.31",
+      "release_date": "2026-03-24 (3 days ago)",
+      "github_stars": 53341,
+      "github_forks": 9100,
+      "open_issues": 639,
+      "open_prs": 337,
+      "bundle_size_min_gz": "~33 kB",
+      "install_size": "16.0 MB",
+      "license": "MIT",
+      "created": "12 years ago (2014)",
+      "notes": "Very stable, well-maintained. Composition API is the standard pattern."
+    },
+    "nuxt": {
+      "latest_version": "4.4.2",
+      "release_date": "~2026-03-13 (2 weeks ago)",
+      "github_stars": 59900,
+      "github_forks": 5600,
+      "open_issues": 797,
+      "open_prs": 125,
+      "license": "MIT",
+      "notes": "Nuxt 4 is current. Features createUseFetch, createUseAsyncData composables."
+    },
+    "svelte": {
+      "latest_version": "5.55.0",
+      "release_date": "2026-03-23 (4 days ago)",
+      "github_stars": 86147,
+      "github_forks": 4800,
+      "open_issues": 910,
+      "open_prs": 67,
+      "bundle_size_min_gz": "~2-4 kB (compiled, no runtime)",
+      "install_size": "4.89 MB",
+      "license": "MIT",
+      "created": "9 years ago (2017)",
+      "notes": "Svelte 5 uses 'runes' reactivity system ($state, $derived, $effect). Compiled approach = smallest runtime."
+    },
+    "sveltekit": {
+      "latest_version": "2.x (latest)",
+      "notes": "Meta-framework for Svelte. SSR, SSG, API routes. Equivalent to Next.js/Nuxt."
+    },
+    "solidjs": {
+      "latest_version": "1.9.0",
+      "npm_version": "1.9.12",
+      "release_date": "2024-09-24 (18 months ago)",
+      "github_stars": 35376,
+      "github_forks": 1100,
+      "open_issues": 98,
+      "open_prs": 19,
+      "bundle_size_min_gz": "~7 kB",
+      "install_size": "3.39 MB",
+      "license": "MIT",
+      "created": "8 years ago (2018)",
+      "notes": "Moving toward 2.0 but SLOW release cadence. Last major release 18 months ago. Fine-grained reactivity without Virtual DOM."
+    },
+    "qwik": {
+      "latest_version": "1.19.2 (create-qwik CLI)",
+      "release_date": "~2026-03-13 (2 weeks ago)",
+      "github_stars": 22000,
+      "github_forks": 1400,
+      "open_issues": 61,
+      "open_prs": 41,
+      "bundle_size_min_gz": "~1 kB initial (resumable)",
+      "install_size": "28.2 MB",
+      "license": "MIT",
+      "created": "5 years ago (2021)",
+      "notes": "Resumability concept is novel but ecosystem is smallest. 28 MB install size is huge. Qwik 2.0 in development."
+    }
+  }
+}
