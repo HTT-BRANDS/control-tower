@@ -332,16 +332,18 @@ def bulk_insert_chunks(
 
 # Allowed table names — explicit whitelist prevents SQL injection
 # even if this list is ever dynamically populated in the future.
-ALLOWED_STAT_TABLES = frozenset({
-    "cost_snapshots",
-    "cost_anomalies",
-    "compliance_snapshots",
-    "policy_states",
-    "identity_snapshots",
-    "privileged_users",
-    "sync_jobs",
-    "tenants",
-})
+ALLOWED_STAT_TABLES = frozenset(
+    {
+        "cost_snapshots",
+        "cost_anomalies",
+        "compliance_snapshots",
+        "policy_states",
+        "identity_snapshots",
+        "privileged_users",
+        "sync_jobs",
+        "tenants",
+    }
+)
 
 
 def get_db_stats(db: Session) -> dict[str, Any]:

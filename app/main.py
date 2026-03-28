@@ -345,10 +345,7 @@ async def detailed_health_check():
 
     return {
         "status": "healthy"
-        if all(
-            v in ("healthy", "running", True)
-            for v in components.values()
-        )
+        if all(v in ("healthy", "running", True) for v in components.values())
         else "degraded",
         "version": settings.app_version,
         "components": components,

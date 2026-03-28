@@ -62,7 +62,9 @@ class SyncJobMetrics(Base):
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
     job_type: Mapped[str] = Column(String(50), nullable=False, unique=True, index=True)
-    calculated_at: Mapped[datetime] = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    calculated_at: Mapped[datetime] = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False
+    )
 
     # Execution counts
     total_runs: Mapped[int] = Column(Integer, default=0)
