@@ -287,22 +287,16 @@
             // Check for OAuth callback first
             if (await handleOAuthCallback()) return;
 
-            // Only show dev login if direct login actually works (dev mode)
+            // Detect dev mode from /health endpoint (no auth, no rate limit cost)
             try {
-                const testForm = new URLSearchParams();
-                testForm.append('username', '__probe__');
-                testForm.append('password', '__probe__');
-                const resp = await fetch('/api/v1/auth/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: testForm
-                });
-                // In dev mode, bad creds return 401 (invalid credentials)
-                // In staging/prod, it returns 403 (direct login disabled)
-                if (resp.status === 401) {
-                    document.getElementById('login-form').classList.remove('hidden');
-                    document.getElementById('divider').classList.remove('hidden');
-                    document.getElementById('divider').style.display = 'flex';
+                const resp = await fetch('/health');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.environment === 'development') {
+                        document.getElementById('login-form').classList.remove('hidden');
+                        document.getElementById('divider').classList.remove('hidden');
+                        document.getElementById('divider').style.display = 'flex';
+                    }
                 }
             } catch (e) {
                 // Azure AD only — don't show dev form

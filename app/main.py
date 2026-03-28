@@ -182,21 +182,21 @@ async def rate_limit_middleware(request: Request, call_next):
     try:
         allowed, headers = await rate_limiter.is_allowed(request, limit_config)
 
-        response = await call_next(request)
-
-        # Apply rate limit headers
-        for key, value in headers.items():
-            response.headers[key] = str(value)
-
         if not allowed:
             return JSONResponse(
                 status_code=429,
                 content={"error": "Rate limit exceeded. Please try again later."},
                 headers={
-                    **headers,
+                    **{k: str(v) for k, v in headers.items()},
                     "Retry-After": str(limit_config.window_seconds),
                 },
             )
+
+        response = await call_next(request)
+
+        # Apply rate limit headers to successful responses
+        for key, value in headers.items():
+            response.headers[key] = str(value)
 
         return response
 
@@ -307,7 +307,11 @@ app.include_router(recommendations_router)
 @app.get("/health")
 async def health_check():
     """Basic health check endpoint."""
-    return {"status": "healthy", "version": settings.app_version}
+    return {
+        "status": "healthy",
+        "version": settings.app_version,
+        "environment": settings.environment,
+    }
 
 
 @app.get("/health/detailed")
@@ -353,7 +357,7 @@ async def detailed_health_check():
     return {
         "status": "healthy"
         if all(
-            v in ["healthy", "running", True] or v not in ["unhealthy", "not_running"]
+            v in ("healthy", "running", True)
             for v in components.values()
         )
         else "degraded",
