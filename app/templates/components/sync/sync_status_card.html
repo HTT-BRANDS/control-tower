@@ -4,8 +4,8 @@
     {# Header with Status #}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h2 class="text-xl font-bold text-brand-gray-160">Sync System Health</h2>
-            <p class="text-sm text-brand-gray-100 mt-1">Overall status: <span class="font-semibold capitalize">{{ status.status }}</span></p>
+            <h2 class="text-xl font-bold text-primary-theme">Sync System Health</h2>
+            <p class="text-sm text-muted-theme mt-1">Overall status: <span class="font-semibold capitalize">{{ status.status }}</span></p>
         </div>
         <div class="p-4 rounded-full 
             {{ 'bg-brand-success-10' if status.status == 'healthy' else ('bg-brand-error-10' if status.status == 'critical' else 'bg-brand-warning-10') }}">
@@ -40,7 +40,7 @@
                 <span class="px-2.5 py-1 text-xs font-bold bg-brand-error-100 text-white rounded-full">{{ status.alerts.critical }} Critical</span>
                 {% endif %}
                 {% if status.alerts.error > 0 %}
-                <span class="px-2.5 py-1 text-xs font-bold bg-brand-warning-100 text-brand-gray-160 rounded-full">{{ status.alerts.error }} Error</span>
+                <span class="px-2.5 py-1 text-xs font-bold bg-brand-warning-100 text-primary-theme rounded-full">{{ status.alerts.error }} Error</span>
                 {% endif %}
             </div>
         </div>
@@ -62,17 +62,17 @@
         <div class="p-4 rounded-lg border-2 transition-all hover:shadow-md
             {{ 'border-brand-success-100 bg-brand-success-5' if job.status == 'healthy' else ('border-brand-error-100 bg-brand-error-5' if job.status == 'degraded' else 'border-brand-gray-50 bg-brand-gray-5') }}">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-brand-gray-160 capitalize">{{ job_type }}</span>
+                <span class="font-semibold text-primary-theme capitalize">{{ job_type }}</span>
                 <span class="w-3 h-3 rounded-full
                     {{ 'bg-brand-success-100' if job.status == 'healthy' else ('bg-brand-error-100' if job.status == 'degraded' else 'bg-brand-gray-100') }}">
                 </span>
             </div>
             {% if job.last_run %}
-            <p class="text-xs text-brand-gray-100">
+            <p class="text-xs text-muted-theme">
                 Last: {{ job.last_run[:10] }} {{ job.last_run[11:16] if job.last_run|length > 10 else '' }}
             </p>
             {% else %}
-            <p class="text-xs text-brand-gray-100">Never run</p>
+            <p class="text-xs text-muted-theme">Never run</p>
             {% endif %}
             {% if job.success_rate is not none %}
             <p class="text-xs mt-1
@@ -98,7 +98,7 @@
             </svg>
             Sync Compliance
         </button>
-        <button hx-post="/api/v1/sync/resources" hx-swap="none" class="inline-flex items-center px-4 py-2 bg-brand-warning-100 text-brand-gray-160 text-sm font-medium rounded-lg hover:bg-brand-warning-110 transition-colors">
+        <button hx-post="/api/v1/sync/resources" hx-swap="none" class="inline-flex items-center px-4 py-2 bg-brand-warning-100 text-primary-theme text-sm font-medium rounded-lg hover:bg-brand-warning-110 transition-colors">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -113,7 +113,7 @@
     </div>
 
     {# Footer with refresh info and auto-refresh #}
-    <div class="flex items-center justify-between pt-4 border-t border-brand-gray-50 text-xs text-brand-gray-100">
+    <div class="flex items-center justify-between pt-4 border-t border-brand-gray-50 text-xs text-muted-theme">
         <span hx-get="/partials/sync-status-card" hx-trigger="every 30s" hx-swap="outerHTML" hx-target="#sync-status-card" class="cursor-pointer hover:text-brand-primary-100 flex items-center gap-1">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>

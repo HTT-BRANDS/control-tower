@@ -13,8 +13,8 @@
     {# Header with Refresh #}
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h2 class="text-lg font-semibold text-brand-gray-160">MFA Enrollment by Tenant</h2>
-            <p class="text-sm text-brand-gray-100">Multi-factor authentication coverage across all tenants</p>
+            <h2 class="text-lg font-semibold text-primary-theme">MFA Enrollment by Tenant</h2>
+            <p class="text-sm text-muted-theme">Multi-factor authentication coverage across all tenants</p>
         </div>
         <button 
             hx-get="/api/v1/riverside/mfa-status"
@@ -37,14 +37,14 @@
         {% set color = 'brand-success' if coverage >= 90 else ('brand-warning' if coverage >= 70 else 'brand-error') %}
         <div class="flex items-center gap-4">
             {# Tenant Name #}
-            <div class="w-32 text-sm font-medium text-brand-gray-160 truncate" title="{{ t.tenant_name }}">
+            <div class="w-32 text-sm font-medium text-primary-theme truncate" title="{{ t.tenant_name }}">
                 {{ t.tenant_name }}
             </div>
             
             {# Progress Bar #}
             <div class="flex-1">
                 <div class="flex justify-between text-xs mb-1">
-                    <span class="text-brand-gray-100">
+                    <span class="text-muted-theme">
                         {{ t.mfa_enabled_count | default(0) }} / {{ t.total_users | default(0) }} users
                     </span>
                     <span class="font-medium text-{{ color }}-100">{{ "%.1f"|format(coverage) }}%</span>
@@ -71,13 +71,13 @@
     {# Footer Summary #}
     <div class="mt-6 pt-4 border-t border-brand-gray-50">
         <div class="flex items-center justify-between">
-            <span class="text-sm text-brand-gray-100">Average Coverage</span>
-            <span class="text-lg font-bold text-brand-gray-160">{{ "%.1f"|format(average_coverage | default(0)) }}%</span>
+            <span class="text-sm text-muted-theme">Average Coverage</span>
+            <span class="text-lg font-bold text-primary-theme">{{ "%.1f"|format(average_coverage | default(0)) }}%</span>
         </div>
     </div>
     {% else %}
     {# Empty State #}
-    <div class="h-64 flex flex-col items-center justify-center text-brand-gray-100">
+    <div class="h-64 flex flex-col items-center justify-center text-muted-theme">
         <svg class="w-12 h-12 mb-3 text-brand-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>

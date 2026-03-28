@@ -187,6 +187,21 @@
                     data-values='{{ cost_summary.daily_costs | default([], true) | tojson }}'
                 >Cost trend data is available in the table below.</canvas>
             </div>
+            <details class="mt-2">
+                <summary class="text-sm text-muted-theme cursor-pointer">View data table</summary>
+                <table class="w-full text-sm mt-2 table-responsive-stack" role="table">
+                    <caption class="sr-only">Daily cost data for the last 30 days</caption>
+                    <thead><tr><th class="text-left py-1">Date</th><th class="text-right py-1">Cost</th></tr></thead>
+                    <tbody>
+                        {% for i in range(cost_summary.daily_labels|default([], true)|length) %}
+                        <tr>
+                            <td class="py-1" data-label="Date">{{ cost_summary.daily_labels[i] }}</td>
+                            <td class="py-1 text-right" data-label="Cost">${{ "{:,.2f}".format(cost_summary.daily_costs[i]) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </details>
         </div>
 
         <!-- Compliance by Tenant -->
@@ -200,6 +215,21 @@
                     data-values='{{ compliance_summary.tenant_scores | default([], true) | tojson }}'
                 >Compliance data is available in the table below.</canvas>
             </div>
+            <details class="mt-2">
+                <summary class="text-sm text-muted-theme cursor-pointer">View data table</summary>
+                <table class="w-full text-sm mt-2 table-responsive-stack" role="table">
+                    <caption class="sr-only">Compliance scores by tenant</caption>
+                    <thead><tr><th class="text-left py-1">Tenant</th><th class="text-right py-1">Score</th></tr></thead>
+                    <tbody>
+                        {% for i in range(compliance_summary.tenant_names|default([], true)|length) %}
+                        <tr>
+                            <td class="py-1" data-label="Tenant">{{ compliance_summary.tenant_names[i] }}</td>
+                            <td class="py-1 text-right" data-label="Score">{{ compliance_summary.tenant_scores[i] }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </details>
         </div>
     </div>
 

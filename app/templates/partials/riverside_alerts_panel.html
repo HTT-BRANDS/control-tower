@@ -59,16 +59,16 @@
             <tbody class="bg-white divide-y divide-brand-gray-50">
                 {% for gap in critical_gaps[:10] %}
                 <tr class="{{ 'bg-brand-error-5' if gap.is_overdue else '' }} hover:bg-brand-gray-5 transition-colors">
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-brand-gray-160">{{ gap.requirement_id }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-primary-theme">{{ gap.requirement_id }}</td>
                     <td class="px-4 py-3">
-                        <div class="text-sm text-brand-gray-160 font-medium">{{ gap.title }}</div>
+                        <div class="text-sm text-primary-theme font-medium">{{ gap.title }}</div>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-100">{{ gap.category }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-muted-theme">{{ gap.category }}</td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         {% if gap.priority == 'P0' %}
                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-error-100 text-white">{{ gap.priority }}</span>
                         {% elif gap.priority == 'P1' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-brand-gray-160">{{ gap.priority }}</span>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-primary-theme">{{ gap.priority }}</span>
                         {% else %}
                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-primary-100 text-white">{{ gap.priority }}</span>
                         {% endif %}
@@ -77,12 +77,12 @@
                         {% if gap.risk_level == 'Critical' %}
                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-error-100 text-white">{{ gap.risk_level }}</span>
                         {% elif gap.risk_level == 'High' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-brand-gray-160">{{ gap.risk_level }}</span>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-primary-theme">{{ gap.risk_level }}</span>
                         {% else %}
                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-gray-100 text-white">{{ gap.risk_level }}</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm {{ 'text-brand-error-100 font-bold' if gap.is_overdue else 'text-brand-gray-100' }}">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm {{ 'text-brand-error-100 font-bold' if gap.is_overdue else 'text-muted-theme' }}">
                         {{ gap.due_date if gap.due_date else 'N/A' }}
                         {% if gap.is_overdue %}
                         <span class="ml-1 text-xs bg-brand-error-100 text-white px-1.5 py-0.5 rounded">Overdue</span>
@@ -115,13 +115,13 @@
             </svg>
         </div>
         <h3 class="text-lg font-medium text-brand-success-100 mb-1">No Critical Alerts</h3>
-        <p class="text-sm text-brand-gray-100">All systems are operating normally.</p>
-        <p class="text-xs text-brand-gray-100 mt-2">Last checked: {{ last_check|default('Just now') }}</p>
+        <p class="text-sm text-muted-theme">All systems are operating normally.</p>
+        <p class="text-xs text-muted-theme mt-2">Last checked: {{ last_check|default('Just now') }}</p>
     </div>
     {% endif %}
     
     {# Auto-refresh indicator #}
-    <div class="px-6 py-2 border-t border-brand-gray-50 bg-brand-gray-5 text-xs text-brand-gray-100 flex items-center justify-between">
+    <div class="px-6 py-2 border-t border-brand-gray-50 bg-brand-gray-5 text-xs text-muted-theme flex items-center justify-between">
         <span class="flex items-center gap-1">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>

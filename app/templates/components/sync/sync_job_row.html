@@ -30,8 +30,8 @@
                 {% endif %}
             </div>
             <div class="ml-3">
-                <div class="text-sm font-medium text-brand-gray-160 capitalize">{{ log.job_type }}</div>
-                <div class="text-xs text-brand-gray-100">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
+                <div class="text-sm font-medium text-primary-theme capitalize">{{ log.job_type }}</div>
+                <div class="text-xs text-muted-theme">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
             </div>
         </div>
     </td>
@@ -41,11 +41,11 @@
     </td>
     {# Records #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-brand-gray-160">
+        <div class="text-sm text-primary-theme">
             {{ "{:,}".format(log.records_processed) if log.records_processed else '-' }}
         </div>
         {% if log.records_created or log.records_updated %}
-        <div class="text-xs text-brand-gray-100">
+        <div class="text-xs text-muted-theme">
             +{{ log.records_created or 0 }} / ~{{ log.records_updated or 0 }}
         </div>
         {% endif %}
@@ -57,12 +57,12 @@
             {{ log.errors_count }} error{{ 's' if log.errors_count != 1 }}
         </span>
         {% else %}
-        <span class="text-sm text-brand-gray-100">-</span>
+        <span class="text-sm text-muted-theme">-</span>
         {% endif %}
     </td>
     {# Duration #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-brand-gray-160">
+        <div class="text-sm text-primary-theme">
             {% if log.duration_seconds %}
                 {% if log.duration_seconds < 60 %}
                     {{ "{:.1f}".format(log.duration_seconds) }}s
@@ -78,7 +78,7 @@
     </td>
     {# Started At #}
     <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm text-brand-gray-160" title="{{ log.started_at.isoformat() if log.started_at else '' }}">
+        <div class="text-sm text-primary-theme" title="{{ log.started_at.isoformat() if log.started_at else '' }}">
             {% if log.started_at %}
                 {% set delta = (now or last_refresh or current_time) - log.started_at %}
                 {% if delta.days > 0 %}
@@ -94,7 +94,7 @@
                 -
             {% endif %}
         </div>
-        <div class="text-xs text-brand-gray-100">{{ log.started_at.strftime('%H:%M') if log.started_at else '' }}</div>
+        <div class="text-xs text-muted-theme">{{ log.started_at.strftime('%H:%M') if log.started_at else '' }}</div>
     </td>
     {# Error Message (if failed) #}
     {% if log.status == 'failed' and log.error_message %}

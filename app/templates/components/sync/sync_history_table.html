@@ -2,11 +2,11 @@
 <div id="sync-history-table" class="bg-white rounded-lg shadow-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-brand-gray-50 flex items-center justify-between">
         <div>
-            <h3 class="text-lg font-bold text-brand-gray-160">Recent Sync Jobs</h3>
-            <p class="text-sm text-brand-gray-100">Last 15 sync operations</p>
+            <h3 class="text-lg font-bold text-primary-theme">Recent Sync Jobs</h3>
+            <p class="text-sm text-muted-theme">Last 15 sync operations</p>
         </div>
         <div class="flex items-center gap-2">
-            <button hx-get="/partials/sync-history-table" hx-target="#sync-history-table" hx-swap="outerHTML" class="p-2 text-brand-gray-100 hover:text-brand-primary-100 hover:bg-brand-primary-5 rounded-lg transition-colors" title="Refresh now">
+            <button hx-get="/partials/sync-history-table" hx-target="#sync-history-table" hx-swap="outerHTML" class="p-2 text-muted-theme hover:text-brand-primary-100 hover:bg-brand-primary-5 rounded-lg transition-colors" title="Refresh now">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
@@ -55,8 +55,8 @@
                                 {% endif %}
                             </div>
                             <div class="ml-4">
-                                <div class="text-sm font-medium text-brand-gray-160 capitalize">{{ log.job_type }}</div>
-                                <div class="text-xs text-brand-gray-100">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
+                                <div class="text-sm font-medium text-primary-theme capitalize">{{ log.job_type }}</div>
+                                <div class="text-xs text-muted-theme">{{ log.tenant.name if log.tenant else 'All Tenants' }}</div>
                             </div>
                         </div>
                     </td>
@@ -67,11 +67,11 @@
                     </td>
                     {# Records #}
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <div class="text-sm text-brand-gray-160">
+                        <div class="text-sm text-primary-theme">
                             {{ "{:,}".format(log.records_processed) if log.records_processed else '-' }}
                         </div>
                         {% if log.records_created or log.records_updated %}
-                        <div class="text-xs text-brand-gray-100">
+                        <div class="text-xs text-muted-theme">
                             +{{ log.records_created or 0 }} / ~{{ log.records_updated or 0 }}
                         </div>
                         {% endif %}
@@ -83,12 +83,12 @@
                             {{ log.errors_count }}
                         </span>
                         {% else %}
-                        <span class="text-sm text-brand-gray-100">-</span>
+                        <span class="text-sm text-muted-theme">-</span>
                         {% endif %}
                     </td>
                     {# Duration #}
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <div class="text-sm text-brand-gray-160">
+                        <div class="text-sm text-primary-theme">
                             {% if log.duration_seconds %}
                                 {% if log.duration_seconds < 60 %}
                                     {{ "{:.1f}".format(log.duration_seconds) }}s
@@ -110,7 +110,7 @@
                     </td>
                     {# Started At #}
                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <div class="text-sm text-brand-gray-160">
+                        <div class="text-sm text-primary-theme">
                             {% if log.started_at %}
                                 {% set delta = last_refresh - log.started_at %}
                                 {% if delta.days > 0 %}
@@ -126,7 +126,7 @@
                                 -
                             {% endif %}
                         </div>
-                        <div class="text-xs text-brand-gray-100">{{ log.started_at.strftime('%H:%M UTC') if log.started_at else '' }}</div>
+                        <div class="text-xs text-muted-theme">{{ log.started_at.strftime('%H:%M UTC') if log.started_at else '' }}</div>
                     </td>
                 </tr>
                 {% if log.status == 'failed' and log.error_message %}
@@ -147,8 +147,8 @@
                         <svg class="w-12 h-12 mx-auto mb-3 text-brand-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <p class="text-brand-gray-100">No sync jobs found</p>
-                        <p class="text-sm text-brand-gray-100 mt-1">Run a sync to see history</p>
+                        <p class="text-muted-theme">No sync jobs found</p>
+                        <p class="text-sm text-muted-theme mt-1">Run a sync to see history</p>
                     </td>
                 </tr>
                 {% endfor %}

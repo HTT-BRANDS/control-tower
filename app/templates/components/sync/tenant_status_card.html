@@ -13,7 +13,7 @@
     <div class="flex items-start justify-between mb-3">
         <div class="min-w-0 flex-1">
             <h4 class="font-semibold text-primary-theme truncate" title="{{ t.name }}">{{ t.name }}</h4>
-            <p class="text-xs text-brand-gray-100 truncate">{{ t.tenant_id }}</p>
+            <p class="text-xs text-muted-theme truncate">{{ t.tenant_id }}</p>
         </div>
         <div class="flex items-center gap-2 ml-2">
             {% if tenant_data.alert_count > 0 %}
@@ -60,7 +60,7 @@
                 <span class="w-2 h-2 rounded-full bg-brand-gray-100"></span>
                 {% endif %}
                 {% if sync.last_run %}
-                <span class="text-xs text-brand-gray-100">
+                <span class="text-xs text-muted-theme">
                     {% set hours_ago = ((last_refresh or now) - sync.last_run).total_seconds() / 3600 %}
                     {% if hours_ago < 1 %}
                         {{ (hours_ago * 60)|int }}m
@@ -71,7 +71,7 @@
                     {% endif %}
                 </span>
                 {% else %}
-                <span class="text-xs text-brand-gray-100">-</span>
+                <span class="text-xs text-muted-theme">-</span>
                 {% endif %}
             </div>
         </div>
@@ -90,7 +90,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
         </button>
-        <a href="/tenants/{{ t.id }}" class="p-1.5 rounded text-brand-gray-100 hover:bg-brand-gray-10 transition-colors" title="View tenant details">
+        <a href="/tenants/{{ t.id }}" class="p-1.5 rounded text-muted-theme hover:bg-brand-gray-10 transition-colors" title="View tenant details">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>

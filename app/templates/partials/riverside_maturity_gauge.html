@@ -11,8 +11,8 @@
     {# Header with Refresh #}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h2 class="text-lg font-semibold text-brand-gray-160">Domain Maturity Scores</h2>
-            <p class="text-sm text-brand-gray-100">Target: 3.0/5.0 • Deadline: July 8, 2026</p>
+            <h2 class="text-lg font-semibold text-primary-theme">Domain Maturity Scores</h2>
+            <p class="text-sm text-muted-theme">Target: 3.0/5.0 • Deadline: July 8, 2026</p>
         </div>
         <button 
             hx-get="/api/v1/riverside/maturity-scores"
@@ -56,13 +56,13 @@
                 </svg>
                 {# Center Score #}
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-2xl font-bold text-brand-gray-160">{{ "%.1f"|format(score) }}</span>
+                    <span class="text-2xl font-bold text-primary-theme">{{ "%.1f"|format(score) }}</span>
                 </div>
             </div>
             
             {# Domain Label #}
-            <div class="text-sm font-medium text-brand-gray-160">{{ domain.label }}</div>
-            <div class="text-xs text-brand-gray-100 mt-1">Target: 3.0</div>
+            <div class="text-sm font-medium text-primary-theme">{{ domain.label }}</div>
+            <div class="text-xs text-muted-theme mt-1">Target: 3.0</div>
             
             {# Linear Progress Bar #}
             <div class="mt-3 bg-brand-gray-10 rounded-full h-2">
@@ -80,20 +80,20 @@
     <div class="mt-6 pt-6 border-t border-brand-gray-50">
         <div class="flex items-center justify-between">
             <div>
-                <span class="text-sm font-medium text-brand-gray-160">Overall Maturity</span>
-                <p class="text-xs text-brand-gray-100 mt-1">Average across all domains</p>
+                <span class="text-sm font-medium text-primary-theme">Overall Maturity</span>
+                <p class="text-xs text-muted-theme mt-1">Average across all domains</p>
             </div>
             <div class="flex items-center gap-4">
                 <div class="w-48">
                     <div class="flex justify-between text-xs mb-1">
-                        <span class="text-brand-gray-100">Progress</span>
+                        <span class="text-muted-theme">Progress</span>
                         <span class="font-medium text-{{ overall_color }}-100">{{ "%.1f"|format(overall_pct) }}%</span>
                     </div>
                     <div class="bg-brand-gray-10 rounded-full h-2">
                         <div class="bg-{{ overall_color }}-100 h-2 rounded-full transition-all duration-500" style="width: {{ overall_pct }}%"></div>
                     </div>
                 </div>
-                <span class="text-2xl font-bold text-{{ overall_color }}-100">{{ "%.1f"|format(overall_score) }}<span class="text-base text-brand-gray-100">/5.0</span></span>
+                <span class="text-2xl font-bold text-{{ overall_color }}-100">{{ "%.1f"|format(overall_score) }}<span class="text-base text-muted-theme">/5.0</span></span>
             </div>
         </div>
     </div>

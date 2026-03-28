@@ -18,6 +18,11 @@
    ========================================================================== */
 @import "tailwindcss";
 
+/* DaisyUI 5.x — component library (Tailwind v4 plugin) */
+@plugin "daisyui" {
+    themes: light --default, dark;
+}
+
 /* ==========================================================================
    CSS Custom Properties — microsoft-group-management design system
    These are dynamically updated per tenant via inline style injection
@@ -69,9 +74,9 @@
   --brand-accent-180: #332810;
 
   /* Semantic Colors (from microsoft-group-management) */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
+  --color-success: #0369A1;  /* blue — colorblind-safe (not green) */
+  --color-warning: #D97706;  /* amber — colorblind-safe */
+  --color-error: #C2410C;    /* red-orange — colorblind-safe (not pure red) */
   --color-info: #3B82F6;
 
   /* Text Colors (light mode) */
@@ -304,6 +309,42 @@ body {
   --color-wm-spark-140: #997412;
 
   --color-wm-orange-500: #f97316;
+}
+
+
+/* ==========================================================================
+   Responsive Tables (Roselli pattern)
+   Horizontal scroll on small screens, stacked cards on mobile
+   ========================================================================== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    .table-responsive-stack thead {
+        display: none;
+    }
+    .table-responsive-stack tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color, #E5E7EB);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+    .table-responsive-stack tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        border: none;
+    }
+    .table-responsive-stack tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-primary, #111827);
+        margin-right: 1rem;
+    }
 }
 
 /* ==========================================================================

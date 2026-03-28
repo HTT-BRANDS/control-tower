@@ -8,11 +8,11 @@
   const brandPrimary = getComputedStyle(document.documentElement)
     .getPropertyValue('--brand-primary').trim() || '#500711';
   const colorSuccess = getComputedStyle(document.documentElement)
-    .getPropertyValue('--color-success').trim() || '#10B981';
+    .getPropertyValue('--color-success').trim() || '#0369A1';
   const colorError = getComputedStyle(document.documentElement)
-    .getPropertyValue('--color-error').trim() || '#EF4444';
+    .getPropertyValue('--color-error').trim() || '#C2410C';
   const colorWarning = getComputedStyle(document.documentElement)
-    .getPropertyValue('--color-warning').trim() || '#F59E0B';
+    .getPropertyValue('--color-warning').trim() || '#D97706';
 
   function initCostTrendChart() {
     const el = document.getElementById('costTrendChart');

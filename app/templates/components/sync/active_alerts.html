@@ -9,15 +9,15 @@
             </div>
             <div>
                 <h3 class="text-lg font-bold text-primary-theme">Active Alerts</h3>
-                <p class="text-sm text-brand-gray-100">
+                <p class="text-sm text-muted-theme">
                     {{ stats.active }} active
                     {% if stats.resolved > 0 %}
-                    <span class="text-brand-gray-100">({{ stats.resolved }} resolved)</span>
+                    <span class="text-muted-theme">({{ stats.resolved }} resolved)</span>
                     {% endif %}
                 </p>
             </div>
         </div>
-        <button hx-get="/partials/active-alerts" hx-target="#active-alerts-panel" hx-swap="outerHTML" class="p-2 text-brand-gray-100 hover:text-brand-primary-100 hover:bg-brand-primary-5 rounded-lg transition-colors" title="Refresh now">
+        <button hx-get="/partials/active-alerts" hx-target="#active-alerts-panel" hx-swap="outerHTML" class="p-2 text-muted-theme hover:text-brand-primary-100 hover:bg-brand-primary-5 rounded-lg transition-colors" title="Refresh now">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -53,7 +53,7 @@
                 </svg>
             </div>
             <h4 class="text-lg font-medium text-primary-theme">No Active Alerts</h4>
-            <p class="text-sm text-brand-gray-100 mt-1">All sync jobs are healthy</p>
+            <p class="text-sm text-muted-theme mt-1">All sync jobs are healthy</p>
         </div>
         {% endfor %}
     </div>
@@ -61,7 +61,7 @@
     {# Footer #}
     <div class="px-6 py-3 bg-brand-gray-5 border-t border-brand-gray-50">
         <div class="flex items-center justify-between">
-            <span class="text-xs text-brand-gray-100">
+            <span class="text-xs text-muted-theme">
                 Last updated: {{ last_refresh.strftime('%H:%M:%S UTC') if last_refresh else 'Unknown' }}
             </span>
             <a href="/api/v1/sync/alerts" class="text-sm text-brand-primary-100 hover:text-brand-primary-110 hover:underline">View all alerts →</a>
