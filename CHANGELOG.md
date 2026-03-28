@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.1] - 2026-03-28
+
+### Fixed
+- **CRITICAL: Production login broken** — missing `ALLOWED_REDIRECT_URIS` env var
+- **CRITICAL: 3 unprotected API routes** — added auth middleware + a11y fixes
+- **SQL injection in `get_db_stats`** — whitelist validation for table names
+- **Login probe** — replaced `__probe__` hack with `/health` endpoint check
+- 14 validation audit findings resolved
+- 9 re-validation findings — CSS tokens, dark mode, a11y
+- All test failures across 6 test suites (191 tests passing)
+- Infrastructure: Bicep→JSON rebuild, redis output ref, `#nosec` annotations
+- Ruff import sorting in lighthouse_client
+
+### Changed
+- **`datetime.utcnow()` → `datetime.now(UTC)`** — migrated across all service files (deprecated in Python 3.12)
+- **Consolidated 6 duplicate `Jinja2Templates`** instances into shared module (DRY)
+- Removed stale backup file
+
+### Security
+- Comprehensive codebase audit — 12 issues resolved
+- CI workflow `ENVIRONMENT=development` for proper test isolation
+
+---
+
 ## [1.8.0] - 2026-03-27
 
 ### Added
