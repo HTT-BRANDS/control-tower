@@ -117,7 +117,14 @@ class TestNoListKeysInBicep:
 class TestAuthMiddleware:
     """All API route files must import auth dependencies."""
 
-    PUBLIC_ROUTES = {"auth.py", "health.py", "privacy.py", "accessibility.py", "onboarding.py", "__init__.py"}
+    PUBLIC_ROUTES = {
+        "auth.py",
+        "health.py",
+        "privacy.py",
+        "accessibility.py",
+        "onboarding.py",
+        "__init__.py",
+    }
 
     def test_api_routes_require_auth(self):
         """Every data-bearing API route must reference get_current_user or require_roles.
