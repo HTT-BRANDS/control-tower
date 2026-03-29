@@ -190,12 +190,12 @@ This epic maps the Riverside-specific requirements from REQUIREMENTS.md Section 
 
 | Req ID | Requirement | Impl Code | Test Coverage | Test Type | Status |
 |--------|------------|-----------|---------------|-----------|--------|
-| RC-030 | Device compliance (Sui Generis) | `app/api/services/sui_generis_service.py`, `app/api/routes/sui_generis.py` | `test_sui_generis_service` (7 unit tests) | Unit | ✅ Implemented (placeholder) |
-| RC-031 | EDR coverage monitoring | `app/api/services/device_security_service.py`, `app/api/routes/device_security.py` | `test_device_security_service` (22 unit tests) | Unit | ✅ Implemented (placeholder) |
-| RC-032 | Device encryption status | `app/api/services/device_security_service.py`, `app/api/routes/device_security.py` | `test_device_security_service` | Unit | ✅ Implemented (placeholder) |
-| RC-033 | Asset inventory | `app/api/services/device_security_service.py`, `app/api/routes/device_security.py` | `test_device_security_service` | Unit | ✅ Implemented (placeholder) |
-| RC-034 | Device compliance scoring | `app/api/services/device_security_service.py`, `app/api/routes/device_security.py` | `test_device_security_service` | Unit | ✅ Implemented (placeholder) |
-| RC-035 | Non-compliant device alerting | `app/api/services/device_security_service.py`, `app/api/routes/device_security.py` | `test_device_security_service` | Unit | ✅ Implemented (placeholder) |
+| RC-030 | Device compliance (Sui Generis) | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
+| RC-031 | EDR coverage monitoring | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
+| RC-032 | Device encryption status | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
+| RC-033 | Asset inventory | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
+| RC-034 | Device compliance scoring | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
+| RC-035 | Non-compliant device alerting | — | — | — | 🚫 Removed — stub only, Phase 2 feature |
 
 ### 11.5 Maturity Scoring (RC-040 → RC-045)
 

@@ -22,7 +22,6 @@ from app.api.routes import (
     compliance_rules_router,
     costs_router,
     dashboard_router,
-    device_security_router,
     dmarc_router,
     exports_router,
     identity_router,
@@ -39,7 +38,6 @@ from app.api.routes import (
     resources_router,
     riverside_router,
     search_router,
-    sui_generis_router,
     sync_router,
     tenants_router,
     threats_router,
@@ -266,7 +264,6 @@ app.include_router(onboarding_router)
 # Protected routers (will be secured via dependencies in route files)
 app.include_router(public_router)
 app.include_router(dashboard_router)
-app.include_router(device_security_router)
 app.include_router(costs_router)
 app.include_router(budgets_router)
 app.include_router(compliance_router)
@@ -277,7 +274,6 @@ app.include_router(identity_router)
 app.include_router(tenants_router)
 app.include_router(sync_router)
 app.include_router(riverside_router)
-app.include_router(sui_generis_router)
 app.include_router(threats_router)
 app.include_router(bulk_router)
 app.include_router(dmarc_router)

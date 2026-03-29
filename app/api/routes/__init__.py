@@ -11,7 +11,6 @@ from app.api.routes.compliance_rules import router as compliance_rules_router
 from app.api.routes.costs import router as costs_router
 from app.api.routes.dashboard import public_router
 from app.api.routes.dashboard import router as dashboard_router
-from app.api.routes.device_security import router as device_security_router
 from app.api.routes.dmarc import router as dmarc_router
 from app.api.routes.exports import router as exports_router
 from app.api.routes.identity import router as identity_router
@@ -27,7 +26,6 @@ from app.api.routes.recommendations import router as recommendations_router
 from app.api.routes.resources import router as resources_router
 from app.api.routes.riverside import router as riverside_router
 from app.api.routes.search import router as search_router
-from app.api.routes.sui_generis import router as sui_generis_router
 from app.api.routes.sync import router as sync_router
 from app.api.routes.tenants import router as tenants_router
 from app.api.routes.threats import router as threats_router
@@ -44,7 +42,6 @@ __all__ = [
     "compliance_rules_router",
     "costs_router",
     "dashboard_router",
-    "device_security_router",
     "dmarc_router",
     "exports_router",
     "identity_router",
@@ -60,7 +57,6 @@ __all__ = [
     "resources_router",
     "riverside_router",
     "search_router",
-    "sui_generis_router",
     "sync_router",
     "tenants_router",
     "threats_router",
