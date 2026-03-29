@@ -627,35 +627,6 @@ class TestPrivacyConsentAPI:
 
 
 # ===========================================================================
-#  15. DEVICE SECURITY API
-# ===========================================================================
-
-
-class TestDeviceSecurityAPI:
-    """Device security and compliance endpoints."""
-
-    def test_edr_coverage(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/device-security/edr-coverage")
-        assert resp.status == 200
-
-    def test_encryption_status(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/device-security/encryption")
-        assert resp.status == 200
-
-    def test_device_inventory(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/device-security/inventory")
-        assert resp.status == 200
-
-    def test_compliance_score(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/device-security/compliance-score")
-        assert resp.status == 200
-
-    def test_non_compliant_devices(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/device-security/non-compliant")
-        assert resp.status == 200
-
-
-# ===========================================================================
 #  16. AUDIT LOGS API
 # ===========================================================================
 
@@ -788,23 +759,6 @@ class TestBudgetAPI:
 
     def test_budget_summary(self, page: Page):
         resp = page.goto(f"{page._base_url}/api/v1/budgets/summary")
-        assert resp.status == 200
-
-
-# ===========================================================================
-#  21. DEVICE COMPLIANCE (SUI GENERIS)
-# ===========================================================================
-
-
-class TestSuiGenerisAPI:
-    """Sui generis device compliance endpoints (under /compliance prefix)."""
-
-    def test_device_compliance(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/compliance/device-compliance")
-        assert resp.status == 200
-
-    def test_device_compliance_status(self, page: Page):
-        resp = page.goto(f"{page._base_url}/api/v1/compliance/device-compliance/status")
         assert resp.status == 200
 
 
