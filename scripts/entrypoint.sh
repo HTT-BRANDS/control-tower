@@ -59,10 +59,12 @@ fi
 # 4 — Start the application
 PORT="${PORT:-8000}"
 echo "--- Starting uvicorn on port ${PORT} ---"
+# Single worker: APScheduler has no distributed lock; 2+ workers fire
+# duplicate sync jobs, causing FK-violation races on riverside_mfa.
 exec python -m uvicorn app.main:app \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --workers 2 \
+    --workers 1 \
     --loop uvloop \
     --http httptools \
     --log-level "$(echo ${LOG_LEVEL:-info} | tr A-Z a-z)"

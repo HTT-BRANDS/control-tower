@@ -465,7 +465,7 @@ async def sync_tenant_mfa(
             existing = (
                 session.query(RiversideMFA)
                 .filter(
-                    RiversideMFA.tenant_id == tenant_id,
+                    RiversideMFA.tenant_id == tenant.id,
                     cast(RiversideMFA.snapshot_date, Date) == snapshot_date.date(),
                 )
                 .first()
@@ -484,7 +484,7 @@ async def sync_tenant_mfa(
             else:
                 # Create new record
                 mfa_record = RiversideMFA(
-                    tenant_id=tenant_id,
+                    tenant_id=tenant.id,
                     total_users=total_users,
                     mfa_enrolled_users=mfa_enrolled,
                     mfa_coverage_percentage=round(mfa_coverage_pct, 2),
@@ -521,14 +521,17 @@ async def sync_tenant_mfa(
             return result
 
         except HttpResponseError as e:
+            session.rollback()
             error_msg = f"Azure API error syncing MFA: {e.status_code} - {e.message}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
         except CircuitBreakerError as e:
+            session.rollback()
             error_msg = f"Circuit breaker open for MFA sync: {e}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
         except Exception as e:
+            session.rollback()
             error_msg = f"Unexpected error syncing MFA: {e}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
@@ -628,7 +631,7 @@ async def sync_tenant_devices(
             existing = (
                 session.query(RiversideDeviceCompliance)
                 .filter(
-                    RiversideDeviceCompliance.tenant_id == tenant_id,
+                    RiversideDeviceCompliance.tenant_id == tenant.id,
                     cast(RiversideDeviceCompliance.snapshot_date, Date) == snapshot_date.date(),
                 )
                 .first()
@@ -646,7 +649,7 @@ async def sync_tenant_devices(
             else:
                 # Create new record
                 device_record = RiversideDeviceCompliance(
-                    tenant_id=tenant_id,
+                    tenant_id=tenant.id,
                     total_devices=total_devices,
                     mdm_enrolled=mdm_enrolled,
                     edr_covered=edr_covered,
@@ -675,6 +678,7 @@ async def sync_tenant_devices(
             }
 
         except HttpResponseError as e:
+            session.rollback()
             error_msg = f"Azure API error syncing devices: {e.status_code} - {e.message}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
@@ -683,6 +687,7 @@ async def sync_tenant_devices(
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
         except Exception as e:
+            session.rollback()
             error_msg = f"Unexpected error syncing devices: {e}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
@@ -733,7 +738,7 @@ async def sync_requirement_status(
             # Get requirements for this tenant
             requirements = (
                 session.query(RiversideRequirement)
-                .filter(RiversideRequirement.tenant_id == tenant_id)
+                .filter(RiversideRequirement.tenant_id == tenant.id)
                 .all()
             )
 
@@ -796,6 +801,7 @@ async def sync_requirement_status(
             }
 
         except HttpResponseError as e:
+            session.rollback()
             error_msg = f"Azure API error syncing requirements: {e.status_code} - {e.message}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
@@ -804,6 +810,7 @@ async def sync_requirement_status(
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
         except Exception as e:
+            session.rollback()
             error_msg = f"Unexpected error syncing requirements: {e}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
@@ -859,7 +866,7 @@ async def sync_maturity_scores(
             # Get latest MFA data for this tenant
             mfa_data = (
                 session.query(RiversideMFA)
-                .filter(RiversideMFA.tenant_id == tenant_id)
+                .filter(RiversideMFA.tenant_id == tenant.id)
                 .order_by(RiversideMFA.snapshot_date.desc())
                 .first()
             )
@@ -867,7 +874,7 @@ async def sync_maturity_scores(
             # Get latest device compliance data
             device_data = (
                 session.query(RiversideDeviceCompliance)
-                .filter(RiversideDeviceCompliance.tenant_id == tenant_id)
+                .filter(RiversideDeviceCompliance.tenant_id == tenant.id)
                 .order_by(RiversideDeviceCompliance.snapshot_date.desc())
                 .first()
             )
@@ -875,14 +882,14 @@ async def sync_maturity_scores(
             # Get requirements data
             total_reqs = (
                 session.query(RiversideRequirement)
-                .filter(RiversideRequirement.tenant_id == tenant_id)
+                .filter(RiversideRequirement.tenant_id == tenant.id)
                 .count()
             )
 
             completed_reqs = (
                 session.query(RiversideRequirement)
                 .filter(
-                    RiversideRequirement.tenant_id == tenant_id,
+                    RiversideRequirement.tenant_id == tenant.id,
                     RiversideRequirement.status == RequirementStatus.COMPLETED.value,
                 )
                 .count()
@@ -915,7 +922,7 @@ async def sync_maturity_scores(
             critical_gaps = (
                 session.query(RiversideRequirement)
                 .filter(
-                    RiversideRequirement.tenant_id == tenant_id,
+                    RiversideRequirement.tenant_id == tenant.id,
                     RiversideRequirement.status != RequirementStatus.COMPLETED.value,
                     RiversideRequirement.priority == RequirementPriority.P0.value,
                 )
@@ -925,7 +932,7 @@ async def sync_maturity_scores(
             # Get or create compliance record
             compliance_record = (
                 session.query(RiversideCompliance)
-                .filter(RiversideCompliance.tenant_id == tenant_id)
+                .filter(RiversideCompliance.tenant_id == tenant.id)
                 .first()
             )
 
@@ -939,7 +946,7 @@ async def sync_maturity_scores(
                 compliance_record.updated_at = snapshot_date
             else:
                 compliance_record = RiversideCompliance(
-                    tenant_id=tenant_id,
+                    tenant_id=tenant.id,
                     overall_maturity_score=round(overall_maturity, 2),
                     target_maturity_score=TARGET_MATURITY_SCORE,
                     deadline_date=RIVERSIDE_DEADLINE,
@@ -979,6 +986,7 @@ async def sync_maturity_scores(
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
         except Exception as e:
+            session.rollback()
             error_msg = f"Unexpected error syncing maturity scores: {e}"
             logger.error(error_msg)
             raise SyncError(error_msg, tenant_id) from e
