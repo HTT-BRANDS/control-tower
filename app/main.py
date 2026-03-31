@@ -2,6 +2,7 @@
 
 import logging
 import secrets
+import time
 import uuid
 from contextlib import asynccontextmanager
 
@@ -46,7 +47,7 @@ from app.core.cache import cache_manager
 from app.core.config import get_settings
 from app.core.database import init_db
 from app.core.gpc_middleware import GPCMiddleware
-from app.core.logging_config import set_correlation_id
+from app.core.logging_config import log_api_request, set_correlation_id, set_request_start_time
 from app.core.rate_limit import rate_limiter
 from app.core.scheduler import init_scheduler
 from app.core.token_blacklist import get_blacklist_backend, get_blacklist_size
@@ -147,6 +148,52 @@ async def correlation_id_middleware(request: Request, call_next):
 
     # Add to response headers
     response.headers["X-Correlation-ID"] = cid
+
+    return response
+
+
+@app.middleware("http")
+async def api_logging_middleware(request: Request, call_next):
+    """Log all API requests with timing and structured data.
+
+    Logs method, path, status code, duration, user context for observability.
+    """
+    # Skip logging for health checks and metrics endpoints (reduces noise)
+    if request.url.path in ["/health", "/health/detailed", "/metrics", "/api/v1/status"]:
+        return await call_next(request)
+
+    # Set start time for duration calculation
+    set_request_start_time()
+    start_time = time.perf_counter()
+
+    # Extract user context if available
+    user_id = getattr(request.state, "user_id", None)
+    tenant_id = getattr(request.state, "tenant_id", None)
+
+    # Process the request
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except Exception:
+        status_code = 500
+        raise
+    finally:
+        # Calculate duration
+        duration_ms = (time.perf_counter() - start_time) * 1000
+
+        # Log the request
+        log_api_request(
+            method=request.method,
+            path=request.url.path,
+            status_code=status_code,
+            duration_ms=duration_ms,
+            user_id=user_id,
+            tenant_id=tenant_id,
+            extra={
+                "query_params": str(request.query_params),
+                "client_host": request.client.host if request.client else None,
+            },
+        )
 
     return response
 
