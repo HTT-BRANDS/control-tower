@@ -754,7 +754,7 @@ resource authSettings 'Microsoft.Web/sites/config@2023-12-01' = if (enableEasyAu
         enabled: true
         registration: {
           clientId: azureAdClientId
-          clientSecretSettingName: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET'
+          clientSecretSettingName: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET' // pragma: allowlist secret
           openIdIssuer: 'https://login.microsoftonline.com/${azureAdTenantId}/v2.0'
         }
         login: {

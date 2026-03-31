@@ -21,15 +21,14 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.azure_sql_monitoring import AzureSQLMonitor
-from app.core.database import SessionLocal
 from app.core.config import get_settings
+from app.core.database import SessionLocal
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,7 +64,9 @@ def analyze_slow_queries(
         print(f"     Total Duration: {query.total_duration_ms:.2f}ms")
         print(f"     Execution Count: {query.execution_count:,}")
         print(f"     Avg CPU: {query.avg_cpu_time_ms:.2f}ms")
-        print(f"     IO Reads: {query.avg_logical_io_reads:,} | Writes: {query.avg_logical_io_writes:,}")
+        print(
+            f"     IO Reads: {query.avg_logical_io_reads:,} | Writes: {query.avg_logical_io_writes:,}"
+        )
         print(f"     Last Executed: {query.last_execution_time}")
         print(f"     Query Preview: {query.query_text[:150]}...")
         print()
@@ -84,21 +85,22 @@ def recommend_indexes(monitor: AzureSQLMonitor, min_improvement: float) -> None:
         return
 
     # Filter by improvement measure
-    significant = [
-        idx for idx in missing_indexes
-        if idx["improvement_measure"] >= min_improvement
-    ]
+    significant = [idx for idx in missing_indexes if idx["improvement_measure"] >= min_improvement]
 
     if not significant:
         print(f"\nℹ️  No indexes with improvement measure >= {min_improvement}")
-        print(f"   (Best available: {max(idx['improvement_measure'] for idx in missing_indexes):.2f})")
+        print(
+            f"   (Best available: {max(idx['improvement_measure'] for idx in missing_indexes):.2f})"
+        )
         return
 
     print(f"\n📊 Found {len(significant)} significant index recommendations:\n")
 
     for i, idx in enumerate(significant[:20], 1):
         print(f"  {i}. Table: {idx['table']}")
-        print(f"     Improvement: {idx['improvement_measure']:.2f} (impact: {idx['improvement_percent']:.1f}%)")
+        print(
+            f"     Improvement: {idx['improvement_measure']:.2f} (impact: {idx['improvement_percent']:.1f}%)"
+        )
         print(f"     User Seeks: {idx['user_seeks']:,} | Scans: {idx['user_scans']:,}")
 
         if idx["equality_columns"]:
@@ -110,13 +112,13 @@ def recommend_indexes(monitor: AzureSQLMonitor, min_improvement: float) -> None:
 
         # Generate CREATE INDEX statement
         index_name = f"IX_{idx['table']}_{'_'.join(idx['equality_columns'].split(', ')[:2]) if idx['equality_columns'] else 'RECOMMENDED'}"
-        print(f"     📝 Suggested SQL:")
+        print("     📝 Suggested SQL:")
         print(f"        CREATE INDEX [{index_name}] ON [{idx['table']}]")
         print(f"        ({idx['equality_columns'] or idx['inequality_columns']})")
         if idx["included_columns"]:
             print(f"        INCLUDE ({idx['included_columns']});")
         else:
-            print(f"        ;")
+            print("        ;")
         print()
 
 
@@ -160,13 +162,13 @@ def generate_full_report(monitor: AzureSQLMonitor, output_file: str | None) -> N
     report = monitor.get_full_report()
 
     # Print summary
-    print(f"\n📈 Report Summary:")
+    print("\n📈 Report Summary:")
     print(f"   Query Store Enabled: {report['query_store_enabled']}")
     print(f"   Generation Time: {report['generation_time_ms']:.2f}ms")
 
     if report["dtu_metrics"]:
         dtu = report["dtu_metrics"]
-        print(f"\n   DTU Metrics:")
+        print("\n   DTU Metrics:")
         print(f"      CPU: {dtu.avg_cpu_percent:.1f}%")
         print(f"      Data IO: {dtu.avg_data_io_percent:.1f}%")
         print(f"      Log Write: {dtu.avg_log_write_percent:.1f}%")
@@ -174,7 +176,7 @@ def generate_full_report(monitor: AzureSQLMonitor, output_file: str | None) -> N
 
     if report["pool_metrics"]:
         pool = report["pool_metrics"]
-        print(f"\n   Pool Metrics:")
+        print("\n   Pool Metrics:")
         print(f"      Utilization: {pool.utilization_percent:.1f}%")
         print(f"      Checked Out: {pool.checked_out}")
         print(f"      Pool Size: {pool.pool_size}")
@@ -259,13 +261,15 @@ Examples:
     args = parser.parse_args()
 
     # If no specific analysis requested, show help
-    if not any([
-        args.slow_queries,
-        args.recommend_indexes,
-        args.analyze_n1,
-        args.full_report,
-        args.all,
-    ]):
+    if not any(
+        [
+            args.slow_queries,
+            args.recommend_indexes,
+            args.analyze_n1,
+            args.full_report,
+            args.all,
+        ]
+    ):
         parser.print_help()
         sys.exit(0)
 

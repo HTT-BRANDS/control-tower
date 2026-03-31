@@ -22,10 +22,8 @@ Environment:
 import argparse
 import json
 import logging
-import math
 import sys
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +33,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
 from app.core.config import get_settings
+from app.core.database import SessionLocal
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,6 +74,7 @@ ELASTIC_POOL_PRICING = {
 @dataclass
 class DatabaseMetrics:
     """Metrics for a single database."""
+
     database_name: str
     avg_cpu_percent: float
     max_cpu_percent: float
@@ -91,6 +90,7 @@ class DatabaseMetrics:
 @dataclass
 class ElasticPoolRecommendation:
     """Elastic pool recommendation result."""
+
     recommended: bool
     reason: str
     current_setup_cost: float
@@ -117,8 +117,7 @@ class ElasticPoolEvaluator:
 
         settings = get_settings()
         self._is_azure_sql = (
-            "database.windows.net" in settings.database_url
-            or "mssql" in settings.database_url
+            "database.windows.net" in settings.database_url or "mssql" in settings.database_url
         ) and not settings.database_url.startswith("sqlite")
         return self._is_azure_sql
 
@@ -127,7 +126,7 @@ class ElasticPoolEvaluator:
         hours: int = 168,  # 1 week
     ) -> list[DatabaseMetrics]:
         """Get resource utilization metrics for all databases.
-        
+
         Returns:
             List of DatabaseMetrics for each database
         """
@@ -159,18 +158,20 @@ class ElasticPoolEvaluator:
                 return []
 
             # For single database, return metrics for current DB
-            return [DatabaseMetrics(
-                database_name=result.database_name,
-                avg_cpu_percent=float(result.avg_cpu),
-                max_cpu_percent=float(result.max_cpu),
-                avg_data_io_percent=float(result.avg_data_io),
-                max_data_io_percent=float(result.max_data_io),
-                avg_log_write_percent=float(result.avg_log_write),
-                max_log_write_percent=float(result.max_log_write),
-                dtu_limit=int(result.dtu_limit) if result.dtu_limit else 10,
-                storage_mb=float(result.storage_mb) if result.storage_mb else 0,
-                sample_count=int(result.sample_count),
-            )]
+            return [
+                DatabaseMetrics(
+                    database_name=result.database_name,
+                    avg_cpu_percent=float(result.avg_cpu),
+                    max_cpu_percent=float(result.max_cpu),
+                    avg_data_io_percent=float(result.avg_data_io),
+                    max_data_io_percent=float(result.max_data_io),
+                    avg_log_write_percent=float(result.avg_log_write),
+                    max_log_write_percent=float(result.max_log_write),
+                    dtu_limit=int(result.dtu_limit) if result.dtu_limit else 10,
+                    storage_mb=float(result.storage_mb) if result.storage_mb else 0,
+                    sample_count=int(result.sample_count),
+                )
+            ]
 
         except Exception as e:
             logger.error(f"Failed to get database metrics: {e}")
@@ -183,15 +184,15 @@ class ElasticPoolEvaluator:
         base_metrics: DatabaseMetrics | None = None,
     ) -> list[DatabaseMetrics]:
         """Estimate metrics for multiple tenant databases.
-        
+
         This is used when we only have access to one database but want to
         simulate a multi-tenant scenario.
-        
+
         Args:
             database_count: Number of tenant databases to simulate
             peak_concurrent_ratio: Ratio of databases at peak (0.0-1.0)
             base_metrics: Base metrics to use for simulation
-            
+
         Returns:
             List of simulated DatabaseMetrics
         """
@@ -224,18 +225,28 @@ class ElasticPoolEvaluator:
             is_peak = i < peak_count
             load_factor = 1.5 if is_peak else 0.6
 
-            databases.append(DatabaseMetrics(
-                database_name=f"tenant_{i+1:03d}",
-                avg_cpu_percent=min(100, base.avg_cpu_percent * variation * load_factor),
-                max_cpu_percent=min(100, base.max_cpu_percent * variation * load_factor),
-                avg_data_io_percent=min(100, base.avg_data_io_percent * variation * load_factor),
-                max_data_io_percent=min(100, base.max_data_io_percent * variation * load_factor),
-                avg_log_write_percent=min(100, base.avg_log_write_percent * variation * load_factor),
-                max_log_write_percent=min(100, base.max_log_write_percent * variation * load_factor),
-                dtu_limit=base.dtu_limit,
-                storage_mb=base.storage_mb * variation,
-                sample_count=base.sample_count,
-            ))
+            databases.append(
+                DatabaseMetrics(
+                    database_name=f"tenant_{i+1:03d}",
+                    avg_cpu_percent=min(100, base.avg_cpu_percent * variation * load_factor),
+                    max_cpu_percent=min(100, base.max_cpu_percent * variation * load_factor),
+                    avg_data_io_percent=min(
+                        100, base.avg_data_io_percent * variation * load_factor
+                    ),
+                    max_data_io_percent=min(
+                        100, base.max_data_io_percent * variation * load_factor
+                    ),
+                    avg_log_write_percent=min(
+                        100, base.avg_log_write_percent * variation * load_factor
+                    ),
+                    max_log_write_percent=min(
+                        100, base.max_log_write_percent * variation * load_factor
+                    ),
+                    dtu_limit=base.dtu_limit,
+                    storage_mb=base.storage_mb * variation,
+                    sample_count=base.sample_count,
+                )
+            )
 
         return databases
 
@@ -244,12 +255,12 @@ class ElasticPoolEvaluator:
         databases: list[DatabaseMetrics],
     ) -> dict[str, Any]:
         """Calculate whether elastic pool would be beneficial.
-        
+
         Key metrics:
         - Average utilization per database
         - Peak utilization across all databases
         - Sum of peaks vs peak of sums
-        
+
         Returns:
             Analysis results
         """
@@ -261,27 +272,25 @@ class ElasticPoolEvaluator:
         total_databases = len(databases)
 
         # Find matching single DB tier
-        current_tier = self._find_best_single_db_tier(
-            max(db.dtu_limit for db in databases)
+        current_tier = self._find_best_single_db_tier(max(db.dtu_limit for db in databases))
+        current_cost = (
+            SINGLE_DB_PRICING.get(current_tier, {}).get("monthly_cost", 0) * total_databases
         )
-        current_cost = SINGLE_DB_PRICING.get(current_tier, {}).get("monthly_cost", 0) * total_databases
 
         # Calculate aggregate metrics
         avg_cpu = sum(db.avg_cpu_percent for db in databases) / len(databases)
         max_cpu = max(db.max_cpu_percent for db in databases)
-        
+
         # For elastic pool, the key insight is that peaks don't align perfectly
         # Peak of sums is typically less than sum of peaks
         peak_simultaneous = self._estimate_simultaneous_peak(databases)
-        
+
         # Storage calculation
         total_storage_mb = sum(db.storage_mb for db in databases)
-        
+
         # Find best elastic pool
-        recommended_pool = self._find_best_elastic_pool(
-            databases, peak_simultaneous
-        )
-        
+        recommended_pool = self._find_best_elastic_pool(databases, peak_simultaneous)
+
         pool_config = ELASTIC_POOL_PRICING.get(recommended_pool, {})
         pool_cost = pool_config.get("monthly_cost", 0)
         pool_dtus = pool_config.get("dtus", 0)
@@ -290,10 +299,7 @@ class ElasticPoolEvaluator:
         # Calculate utilization
         if pool_dtus > 0:
             # Estimate utilization based on average load
-            avg_total_load = sum(
-                db.avg_cpu_percent * db.dtu_limit / 100
-                for db in databases
-            )
+            avg_total_load = sum(db.avg_cpu_percent * db.dtu_limit / 100 for db in databases)
             pool_utilization = (avg_total_load / pool_dtus) * 100
         else:
             pool_utilization = 0
@@ -304,9 +310,7 @@ class ElasticPoolEvaluator:
         savings_percent = (monthly_savings / current_cost * 100) if current_cost > 0 else 0
 
         # Risk assessment
-        risk_level = self._assess_risk(
-            databases, pool_dtus, pool_max_dbs, pool_utilization
-        )
+        risk_level = self._assess_risk(databases, pool_dtus, pool_max_dbs, pool_utilization)
 
         return {
             "current_setup": {
@@ -335,7 +339,9 @@ class ElasticPoolEvaluator:
                 "monthly_savings": round(monthly_savings, 2),
                 "annual_savings": round(annual_savings, 2),
                 "savings_percent": round(savings_percent, 2),
-                "breakeven_months": round(pool_cost / monthly_savings, 1) if monthly_savings > 0 else None,
+                "breakeven_months": round(pool_cost / monthly_savings, 1)
+                if monthly_savings > 0
+                else None,
             },
             "risk_assessment": {
                 "level": risk_level,
@@ -358,27 +364,21 @@ class ElasticPoolEvaluator:
         correlation_factor: float = 0.6,
     ) -> float:
         """Estimate simultaneous peak across all databases.
-        
-        Uses statistical approach: peak of sums = sum of averages + 
+
+        Uses statistical approach: peak of sums = sum of averages +
         correlation-adjusted standard deviation of peaks.
         """
         # Sum of average loads
-        avg_load = sum(
-            db.avg_cpu_percent * db.dtu_limit / 100
-            for db in databases
-        )
-        
+        avg_load = sum(db.avg_cpu_percent * db.dtu_limit / 100 for db in databases)
+
         # Peak loads
-        peak_loads = [
-            db.max_cpu_percent * db.dtu_limit / 100
-            for db in databases
-        ]
-        
+        peak_loads = [db.max_cpu_percent * db.dtu_limit / 100 for db in databases]
+
         # Statistical approach: peaks don't perfectly align
         # Use correlation factor to estimate simultaneous peak
         sum_of_peaks = sum(peak_loads)
         simultaneous_peak = avg_load + (sum_of_peaks - avg_load) * correlation_factor
-        
+
         return simultaneous_peak
 
     def _find_best_elastic_pool(
@@ -388,14 +388,17 @@ class ElasticPoolEvaluator:
     ) -> str:
         """Find the best elastic pool tier for the workload."""
         database_count = len(databases)
-        
+
         # Add 30% headroom for growth and burst
         required_with_headroom = required_dtus * 1.3
-        
+
         for pool_name, config in ELASTIC_POOL_PRICING.items():
-            if config["dtus"] >= required_with_headroom and config["max_databases"] >= database_count:
+            if (
+                config["dtus"] >= required_with_headroom
+                and config["max_databases"] >= database_count
+            ):
                 return pool_name
-        
+
         # Return largest if nothing fits
         return "Standard_3000"
 
@@ -408,25 +411,22 @@ class ElasticPoolEvaluator:
     ) -> str:
         """Assess risk level of elastic pool recommendation."""
         risks = []
-        
+
         # Check database count
         if len(databases) > pool_max_dbs:
             risks.append("Database count exceeds pool maximum")
-        
+
         # Check peak utilization
-        max_peak = max(
-            db.max_cpu_percent * db.dtu_limit / 100
-            for db in databases
-        )
+        max_peak = max(db.max_cpu_percent * db.dtu_limit / 100 for db in databases)
         if max_peak > pool_dtus:
             risks.append("Single database peak exceeds pool DTUs")
-        
+
         # Check average utilization
         if pool_utilization > 80:
             risks.append("High average utilization")
         elif pool_utilization > 60:
             risks.append("Moderate utilization")
-        
+
         # Check burstiness
         burstiness = sum(db.max_cpu_percent for db in databases) / (
             sum(db.avg_cpu_percent for db in databases) or 1
@@ -435,7 +435,7 @@ class ElasticPoolEvaluator:
             risks.append("Very bursty workload")
         elif burstiness > 3:
             risks.append("Bursty workload")
-        
+
         if "Single database peak exceeds pool DTUs" in risks or len(databases) > pool_max_dbs:
             return "HIGH"
         elif risks:

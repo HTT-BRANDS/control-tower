@@ -21,7 +21,7 @@ import argparse
 import json
 import logging
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -31,8 +31,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
 from app.core.config import get_settings
+from app.core.database import SessionLocal
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TuningOptions:
     """Azure SQL Automatic Tuning options."""
+
     force_last_good_plan: str = "DEFAULT"  # ON, OFF, or DEFAULT
     create_index: str = "DEFAULT"
     drop_index: str = "DEFAULT"
@@ -92,8 +93,7 @@ class AzureSQLTuningManager:
 
         settings = get_settings()
         self._is_azure_sql = (
-            "database.windows.net" in settings.database_url
-            or "mssql" in settings.database_url
+            "database.windows.net" in settings.database_url or "mssql" in settings.database_url
         ) and not settings.database_url.startswith("sqlite")
         return self._is_azure_sql
 
@@ -148,11 +148,11 @@ class AzureSQLTuningManager:
 
     def set_tuning_option(self, option_name: str, state: str) -> bool:
         """Set a specific automatic tuning option.
-        
+
         Args:
             option_name: Option name (e.g., 'FORCE_LAST_GOOD_PLAN')
             state: Desired state ('ON', 'OFF', or 'DEFAULT')
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -203,24 +203,16 @@ class AzureSQLTuningManager:
 
         success = True
 
-        success &= self.set_tuning_option(
-            "FORCE_LAST_GOOD_PLAN", options.force_last_good_plan
-        )
-        success &= self.set_tuning_option(
-            "CREATE_INDEX", options.create_index
-        )
-        success &= self.set_tuning_option(
-            "DROP_INDEX", options.drop_index
-        )
-        success &= self.set_tuning_option(
-            "MAINTAIN_INDEX", options.maintain_index
-        )
+        success &= self.set_tuning_option("FORCE_LAST_GOOD_PLAN", options.force_last_good_plan)
+        success &= self.set_tuning_option("CREATE_INDEX", options.create_index)
+        success &= self.set_tuning_option("DROP_INDEX", options.drop_index)
+        success &= self.set_tuning_option("MAINTAIN_INDEX", options.maintain_index)
 
         return success
 
     def get_tuning_recommendations(self) -> list[dict[str, Any]]:
         """Get active automatic tuning recommendations.
-        
+
         Returns:
             List of tuning recommendations from sys.dm_db_tuning_recommendations
         """
@@ -258,21 +250,25 @@ class AzureSQLTuningManager:
                 except:
                     details = {"raw": row.details}
 
-                recommendations.append({
-                    "type": row.type,
-                    "state": row.state,
-                    "state_description": row.state_desc,
-                    "details": details,
-                    "script": row.script,
-                    "estimated_gain": float(row.estimated_gain) if row.estimated_gain else None,
-                    "error": row.error,
-                    "regressed_plan": {
-                        "plan_id": row.regressed_plan_id,
-                        "execution_count": row.regressed_plan_execution_count,
-                        "error_count": row.regressed_plan_error_count,
-                        "corrected_count": row.regressed_plan_corrected_count,
-                    } if row.regressed_plan_id else None,
-                })
+                recommendations.append(
+                    {
+                        "type": row.type,
+                        "state": row.state,
+                        "state_description": row.state_desc,
+                        "details": details,
+                        "script": row.script,
+                        "estimated_gain": float(row.estimated_gain) if row.estimated_gain else None,
+                        "error": row.error,
+                        "regressed_plan": {
+                            "plan_id": row.regressed_plan_id,
+                            "execution_count": row.regressed_plan_execution_count,
+                            "error_count": row.regressed_plan_error_count,
+                            "corrected_count": row.regressed_plan_corrected_count,
+                        }
+                        if row.regressed_plan_id
+                        else None,
+                    }
+                )
 
             return recommendations
 
@@ -315,7 +311,8 @@ class AzureSQLTuningManager:
                 "max_storage_size_mb": result.max_storage_size_mb,
                 "storage_utilization_percent": (
                     (result.current_storage_size_mb / result.max_storage_size_mb * 100)
-                    if result.max_storage_size_mb else None
+                    if result.max_storage_size_mb
+                    else None
                 ),
                 "flush_interval_seconds": result.flush_interval_seconds,
                 "interval_length_minutes": result.interval_length_minutes,
@@ -355,7 +352,7 @@ class AzureSQLTuningManager:
             self.db.execute(text(sql))
             self.db.commit()
 
-            logger.info(f"✅ Query Store configured:")
+            logger.info("✅ Query Store configured:")
             logger.info(f"   Operation Mode: {operation_mode}")
             logger.info(f"   Max Storage: {max_storage_mb} MB")
             logger.info(f"   Stale Threshold: {stale_threshold_days} days")
@@ -388,7 +385,13 @@ class AzureSQLTuningManager:
             print(f"   Error: {options['error']}")
         else:
             for name, values in options.items():
-                status_icon = "🟢" if values.get("actual") == "ON" else "🔴" if values.get("actual") == "OFF" else "⚪"
+                status_icon = (
+                    "🟢"
+                    if values.get("actual") == "ON"
+                    else "🔴"
+                    if values.get("actual") == "OFF"
+                    else "⚪"
+                )
                 print(f"\n   {status_icon} {name.upper()}")
                 print(f"      Desired: {values.get('desired', 'N/A')}")
                 print(f"      Actual: {values.get('actual', 'N/A')}")
@@ -407,7 +410,9 @@ class AzureSQLTuningManager:
         else:
             state_icon = "🟢" if qs_config.get("actual_state") == "READ_WRITE" else "🔴"
             print(f"\n   {state_icon} State: {qs_config.get('actual_state')}")
-            print(f"   Storage: {qs_config.get('current_storage_size_mb'):.1f} / {qs_config.get('max_storage_size_mb')} MB")
+            print(
+                f"   Storage: {qs_config.get('current_storage_size_mb'):.1f} / {qs_config.get('max_storage_size_mb')} MB"
+            )
             print(f"   Storage Utilization: {qs_config.get('storage_utilization_percent', 0):.1f}%")
             print(f"   Stale Query Threshold: {qs_config.get('stale_query_threshold_days')} days")
             print(f"   Capture Mode: {qs_config.get('query_capture_mode')}")
@@ -423,9 +428,9 @@ class AzureSQLTuningManager:
         else:
             for i, rec in enumerate(recommendations[:10], 1):
                 print(f"\n   {i}. Type: {rec['type']} | State: {rec['state_description']}")
-                if rec.get('estimated_gain'):
+                if rec.get("estimated_gain"):
                     print(f"      Estimated Gain: {rec['estimated_gain']:.2f}%")
-                if rec.get('details'):
+                if rec.get("details"):
                     print(f"      Details: {json.dumps(rec['details'], indent=6)[:200]}...")
 
 
@@ -547,19 +552,21 @@ Tuning Options:
     args = parser.parse_args()
 
     # If no action specified, show help
-    if not any([
-        args.status,
-        args.recommendations,
-        args.enable_all,
-        args.disable_all,
-        args.enable_plan_correction,
-        args.disable_plan_correction,
-        args.enable_create_index,
-        args.disable_create_index,
-        args.enable_drop_index,
-        args.disable_drop_index,
-        args.configure_query_store,
-    ]):
+    if not any(
+        [
+            args.status,
+            args.recommendations,
+            args.enable_all,
+            args.disable_all,
+            args.enable_plan_correction,
+            args.disable_plan_correction,
+            args.enable_create_index,
+            args.disable_create_index,
+            args.enable_drop_index,
+            args.disable_drop_index,
+            args.configure_query_store,
+        ]
+    ):
         parser.print_help()
         sys.exit(0)
 
