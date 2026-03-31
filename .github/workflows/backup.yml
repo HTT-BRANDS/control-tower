@@ -1,0 +1,200 @@
+# Automated Database Backup Workflow
+# Backs up database to Azure Blob Storage on schedule and on-demand
+
+name: Database Backup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (off-peak hours)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - schema-only
+          - data-only
+      environment:
+        description: 'Environment to backup'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PYTHON_VERSION: '3.12'
+  BACKUP_RETENTION_DAYS: 30
+
+jobs:
+  backup:
+    name: Database Backup (${{ github.event.inputs.environment || 'production' }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYBACKUP_RETENTION_DAYS: 30
+
+  backup:
+    name: Database Backup (${{ github.event.inputs.environment || 'production' }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install sqlalchemy alembic psycopg2-binary pyodbc azure-storage-blob azure-identity
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create database backup
+        id: backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_BACKUP_CONTAINER || 'database-backups' }}
+          BACKUP_TYPE: ${{ github.event.inputs.backup_type || 'full' }}
+        run: |
+          python scripts/backup_database.py \
+            --type ${{ env.BACKUP_TYPE }} \
+            --output backup.sql.gz
+
+          # Upload to Azure Blob Storage
+          python scripts/upload_backup.py \
+            --file backup.sql.gz \
+            --account ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --container ${{ env.AZURE_STORAGE_CONTAINER }}
+
+          echo "backup_file=backup.sql.gz" >> $GITHUB_OUTPUT
+          echo "backup_size=$(stat -c%s backup.sql.gz)" >> $GITHUB_OUTPUT
+
+      - name: Verify backup integrity
+        run: |
+          # Check if backup file is valid (not empty and can be decompressed)
+          if [ ! -s backup.sql.gz ]; then
+            echo "Error: Backup file is empty"
+            exit 1
+          fi
+
+          # Try to decompress to verify integrity
+          if ! gunzip -t backup.sql.gz 2>/dev/null; then
+            echo "Error: Backup file is corrupted"
+            exit 1
+          fi
+
+          echo "✓ Backup integrity verified"
+
+      - name: Cleanup old backups
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_BACKUP_CONTAINER || 'database-backups' }}
+        run: |
+          python scripts/cleanup_backups.py \
+            --account ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --container ${{ env.AZURE_STORAGE_CONTAINER }} \
+            --retention-days ${{ env.BACKUP_RETENTION_DAYS }}
+
+      - name: Notify Teams on success
+        if: success()
+        uses: mda590/teams-notify@master
+        with:
+          webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          message: |
+            ✅ Database Backup Complete
+
+            **Environment:** ${{ github.event.inputs.environment || 'production' }}
+            **Backup Type:** ${{ github.event.inputs.backup_type || 'full' }}
+            **Backup Size:** ${{ steps.backup.outputs.backup_size }} bytes
+            **Retention:** ${{ env.BACKUP_RETENTION_DAYS }} days
+            **Timestamp:** ${{ github.event.repository.updated_at }}
+
+      - name: Notify Teams on failure
+        if: failure()
+        uses: mda590/teams-notify@master
+        with:
+          webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          message: |
+            ❌ Database Backup Failed
+
+            **Environment:** ${{ github.event.inputs.environment || 'production' }}
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Upload backup artifact (for debugging)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-backup-debug
+          path: backup.sql.gz
+          retention-days: 1
+
+  backup-staging:
+    name: Staging Database Backup
+    if: github.event.schedule == '0 2 * * *'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install sqlalchemy alembic psycopg2-binary pyodbc azure-storage-blob azure-identity
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create staging backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_CONTAINER: staging-backups
+        run: |
+          python scripts/backup_database.py --type full --output staging-backup.sql.gz
+          python scripts/upload_backup.py \
+            --file staging-backup.sql.gz \
+            --account ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --container ${{ env.AZURE_STORAGE_CONTAINER }}
+
+      - name: Cleanup old staging backups
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_CONTAINER: staging-backups
+        run: |
+          python scripts/cleanup_backups.py \
+            --account ${{ env.AZURE_STORAGE_ACCOUNT }} \
+            --container ${{ env.AZURE_STORAGE_CONTAINER }} \
+            --retention-days 7
