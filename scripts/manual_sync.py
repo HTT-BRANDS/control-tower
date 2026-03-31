@@ -86,10 +86,10 @@ def trigger_infrastructure_syncs(client: httpx.Client) -> dict:
         try:
             resp = client.post(f"/api/v1/sync/{sync_type}")
             if resp.status_code == 200:
-                print(f"✅ triggered")
+                print("✅ triggered")
                 results[sync_type] = "triggered"
             elif resp.status_code == 429:
-                print(f"⚠️ rate limited (sync may already be running)")
+                print("⚠️ rate limited (sync may already be running)")
                 results[sync_type] = "rate_limited"
             else:
                 print(f"❌ {resp.status_code}: {resp.text[:100]}")
