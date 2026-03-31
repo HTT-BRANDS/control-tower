@@ -78,6 +78,38 @@ test-ci: ## Run tests for CI pipeline (with coverage)
 	pytest tests/unit tests/integration --cov=app --cov-report=xml --cov-fail-under=75
 
 # =============================================================================
+# Load & Performance Testing
+# =============================================================================
+
+load-test: ## Run Locust load tests (requires running server)
+	@echo "$(BLUE)Running Locust load tests...$(NC)"
+	@echo "Make sure the server is running: make run-dev"
+	uv run locust -f tests/load/locustfile.py \
+		--host http://localhost:8000 \
+		--headless \
+		--users 50 \
+		--spawn-rate 10 \
+		--run-time 60s
+
+load-test-smoke: ## Run quick smoke load test (30s, 10 users)
+	@echo "$(BLUE)Running smoke load test...$(NC)"
+	@echo "Make sure the server is running: make run-dev"
+	uv run locust -f tests/load/locustfile.py \
+		--host http://localhost:8000 \
+		--headless \
+		--users 10 \
+		--spawn-rate 5 \
+		--run-time 30s
+
+smoke-test: ## Run all smoke tests (API, Azure, connectivity)
+	@echo "$(BLUE)Running smoke tests...$(NC)"
+	pytest tests/smoke -v --tb=short
+
+e2e-test: ## Run Playwright E2E tests
+	@echo "$(BLUE)Running E2E tests with Playwright...$(NC)"
+	pytest tests/e2e -v --tb=short
+
+# =============================================================================
 # Code Quality
 # =============================================================================
 
