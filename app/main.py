@@ -104,13 +104,127 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-# Create FastAPI application
+# Create FastAPI application with enhanced OpenAPI configuration
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Multi-tenant Azure governance platform for cost optimization, "
-    "compliance monitoring, resource management, and identity governance.",
+    description="""
+    **Azure Multi-Tenant Governance Platform**
+
+    A comprehensive platform for managing Azure governance across multiple tenants.
+
+    ## Key Features
+
+    * **Cost Management** - Track, analyze, and optimize Azure spending across tenants
+    * **Compliance Monitoring** - Continuous compliance assessment with CIS, ISO 27001, SOC 2, and custom frameworks
+    * **Resource Management** - Inventory and lifecycle management for Azure resources
+    * **Identity Governance** - MFA tracking, access reviews, and identity hygiene
+    * **Riverside Compliance** - Specialized tracking for Riverside Company requirements
+    * **DMARC Monitoring** - Email security posture monitoring
+
+    ## Authentication
+
+    The API supports multiple authentication methods:
+
+    1. **OAuth 2.0 / OpenID Connect** via Azure AD (recommended)
+    2. **Bearer Token** (JWT) for API access
+    3. **API Key** for service-to-service calls
+
+    See the authentication endpoints for details on obtaining tokens.
+
+    ## Rate Limiting
+
+    API requests are rate-limited to ensure fair usage:
+    - Default: 100 requests per minute per client
+    - Auth endpoints: 10 requests per minute
+    - Sync endpoints: 5 concurrent requests
+
+    Rate limit headers are included in all responses:
+    - `X-RateLimit-Limit`: Maximum requests allowed
+    - `X-RateLimit-Remaining`: Requests remaining in window
+    - `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+    ## Security
+
+    All API endpoints are protected with:
+    - TLS 1.3 encryption in transit
+    - Security headers (CSP, HSTS, X-Frame-Options)
+    - Input validation and sanitization
+    - Audit logging for sensitive operations
+
+    ## Response Codes
+
+    | Code | Meaning | Description |
+    |------|---------|-------------|
+    | 200 | OK | Request succeeded |
+    | 201 | Created | Resource created successfully |
+    | 400 | Bad Request | Invalid request parameters |
+    | 401 | Unauthorized | Authentication required |
+    | 403 | Forbidden | Insufficient permissions |
+    | 404 | Not Found | Resource does not exist |
+    | 409 | Conflict | Resource conflict (e.g., duplicate) |
+    | 429 | Too Many Requests | Rate limit exceeded |
+    | 500 | Internal Error | Server-side error |
+
+    ## Support
+
+    For API support, contact the Cloud Governance Team or visit:
+    [Documentation](https://github.com/tygranlund/azure-governance-platform/tree/main/docs)
+    """,
     lifespan=lifespan,
+    docs_url="/docs" if settings.is_development else None,
+    redoc_url="/redoc" if settings.is_development else None,
+    openapi_url="/openapi.json",
+    openapi_tags=[
+        {
+            "name": "Authentication",
+            "description": "OAuth2 and token-based authentication endpoints",
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard summaries and overview metrics",
+        },
+        {
+            "name": "Costs",
+            "description": "Cost analysis, budgets, and spending reports",
+        },
+        {
+            "name": "Compliance",
+            "description": "Compliance status, frameworks, and rule management",
+        },
+        {
+            "name": "Resources",
+            "description": "Azure resource inventory and lifecycle management",
+        },
+        {
+            "name": "Identity",
+            "description": "Identity governance, MFA, and access reviews",
+        },
+        {
+            "name": "Sync",
+            "description": "Data synchronization jobs and scheduling",
+        },
+        {
+            "name": "Riverside",
+            "description": "Riverside Company compliance tracking",
+        },
+        {
+            "name": "DMARC",
+            "description": "Email security and DMARC monitoring",
+        },
+        {
+            "name": "System",
+            "description": "Health checks, metrics, and system status",
+        },
+    ],
+    contact={
+        "name": "Cloud Governance Team",
+        "email": "cloud-governance@example.com",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://github.com/tygranlund/azure-governance-platform/blob/main/LICENSE",
+    },
 )
 
 # Configure CORS — single middleware, no wildcards, no duplicates
@@ -522,6 +636,149 @@ async def global_exception_handler(request: Request, exc: Exception):
             "detail": str(exc) if settings.debug else "An unexpected error occurred",
         },
     )
+
+
+def load_openapi_examples() -> dict:
+    """Load OpenAPI examples from docs/openapi-examples directory.
+
+    Returns a dictionary of examples organized by category.
+    """
+    import json
+    from pathlib import Path
+
+    examples_dir = Path(__file__).parent.parent / "docs" / "openapi-examples"
+    examples = {
+        "auth": {},
+        "requests": {},
+        "responses": {},
+    }
+
+    if not examples_dir.exists():
+        logger.warning(f"OpenAPI examples directory not found: {examples_dir}")
+        return examples
+
+    try:
+        # Load auth examples
+        auth_dir = examples_dir / "auth"
+        if auth_dir.exists():
+            for file in auth_dir.glob("*.json"):
+                with open(file) as f:
+                    examples["auth"][file.stem] = json.load(f)
+
+        # Load request examples
+        requests_dir = examples_dir / "requests"
+        if requests_dir.exists():
+            for file in requests_dir.glob("*.json"):
+                with open(file) as f:
+                    examples["requests"][file.stem] = json.load(f)
+
+        # Load response examples
+        responses_dir = examples_dir / "responses"
+        if responses_dir.exists():
+            for file in responses_dir.glob("*.json"):
+                with open(file) as f:
+                    examples["responses"][file.stem] = json.load(f)
+
+        logger.info(
+            f"Loaded OpenAPI examples: {len(examples['auth'])} auth, "
+            f"{len(examples['requests'])} requests, "
+            f"{len(examples['responses'])} responses"
+        )
+    except Exception as e:
+        logger.warning(f"Failed to load OpenAPI examples: {e}")
+
+    return examples
+
+
+# Store examples on app state for access in routes
+app.state.openapi_examples = load_openapi_examples()
+
+
+def custom_openapi() -> dict:
+    """Generate custom OpenAPI schema with enhanced documentation."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        openapi_version=app.openapi_version,
+        description=app.description,
+        routes=app.routes,
+        tags=app.openapi_tags,
+        contact=app.contact,
+        license_info=app.license_info,
+    )
+
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT token obtained from Azure AD OAuth2 flow",
+        },
+        "oauth2": {
+            "type": "oauth2",
+            "flows": {
+                "authorizationCode": {
+                    "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                    "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                    "refreshUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                    "scopes": {
+                        "openid": "Authenticate user identity",
+                        "profile": "Access user profile",
+                        "email": "Access user email",
+                        "User.Read": "Read user profile from Microsoft Graph",
+                    },
+                }
+            },
+            "description": "Azure AD OAuth2 authentication",
+        },
+        "apiKey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key for service-to-service authentication",
+        },
+    }
+
+    # Add security requirements (endpoints can override with [])
+    openapi_schema["security"] = [
+        {"bearerAuth": []},
+        {"oauth2": ["openid", "profile", "email", "User.Read"]},
+    ]
+
+    # Add external documentation
+    openapi_schema["externalDocs"] = {
+        "description": "Full Documentation",
+        "url": "https://github.com/tygranlund/azure-governance-platform/tree/main/docs",
+    }
+
+    # Add servers info
+    openapi_schema["servers"] = [
+        {
+            "url": "/",
+            "description": "Current server",
+        },
+        {
+            "url": "https://api-staging.example.com",
+            "description": "Staging server",
+        },
+        {
+            "url": "https://api.example.com",
+            "description": "Production server",
+        },
+    ]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+# Replace the default OpenAPI schema generator
+app.openapi = custom_openapi
 
 
 if __name__ == "__main__":

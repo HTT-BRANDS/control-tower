@@ -1,0 +1,49 @@
+{
+  "description": "Trigger a manual data synchronization job",
+  "example_request": {
+    "sync_types": ["costs", "compliance", "resources", "identity"],
+    "tenant_ids": ["12345678-1234-1234-1234-123456789012"],
+    "force_full_sync": false,
+    "priority": "normal",
+    "options": {
+      "incremental_days": 7,
+      "parallel_tenants": 3,
+      "timeout_minutes": 60,
+      "retry_failed": true,
+      "notify_on_completion": true
+    }
+  },
+  "field_descriptions": {
+    "sync_types": "Types of data to synchronize (array)",
+    "tenant_ids": "Specific tenants to sync (empty = all tenants)",
+    "force_full_sync": "Force full sync instead of incremental",
+    "priority": "Job priority: low, normal, high, critical",
+    "options": "Additional sync options"
+  },
+  "sync_types_enum": [
+    "costs",
+    "compliance",
+    "resources",
+    "identity",
+    "budgets",
+    "riverside",
+    "dmarc"
+  ],
+  "priority_enum": ["low", "normal", "high", "critical"],
+  "minimal_request": {
+    "sync_types": ["costs"]
+  },
+  "full_request": {
+    "sync_types": ["costs", "compliance", "resources", "identity", "riverside"],
+    "tenant_ids": [],
+    "force_full_sync": true,
+    "priority": "high",
+    "options": {
+      "incremental_days": 30,
+      "parallel_tenants": 5,
+      "timeout_minutes": 120,
+      "retry_failed": true,
+      "notify_on_completion": true
+    }
+  }
+}

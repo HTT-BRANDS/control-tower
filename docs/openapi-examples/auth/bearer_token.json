@@ -1,0 +1,33 @@
+{
+  "description": "Bearer Token Authentication (JWT)",
+  "type": "http",
+  "scheme": "bearer",
+  "bearerFormat": "JWT",
+  "example_request_headers": {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  },
+  "example_curl": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' https://api.example.com/api/v1/dashboard",
+  "token_structure": {
+    "header": {
+      "alg": "HS256",
+      "typ": "JWT"
+    },
+    "payload": {
+      "sub": "user-id-123",
+      "tenant_id": "tenant-id-456",
+      "roles": ["admin", "reader"],
+      "iat": 1705312800,
+      "exp": 1705316400,
+      "jti": "unique-token-id"
+    }
+  },
+  "response_200": {
+    "success": true
+  },
+  "response_401_expired": {
+    "detail": "Token has expired"
+  },
+  "response_401_invalid": {
+    "detail": "Could not validate credentials"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "description": "Detailed cost analysis with breakdowns and trends",
+  "example_response": {
+    "status": "success",
+    "data": {
+      "summary": {
+        "period": {
+          "start": "2026-01-01",
+          "end": "2026-01-15"
+        },
+        "total_cost": 45230.50,
+        "currency": "USD",
+        "previous_period_cost": 40180.25,
+        "change_amount": 5050.25,
+        "change_percent": 12.57
+      },
+      "by_service": [
+        {
+          "service_name": "Virtual Machines",
+          "cost": 18500.00,
+          "percent_of_total": 40.9,
+          "change_percent": 8.5
+        },
+        {
+          "service_name": "Storage",
+          "cost": 8200.00,
+          "percent_of_total": 18.1,
+          "change_percent": -2.3
+        },
+        {
+          "service_name": "SQL Database",
+          "cost": 7200.00,
+          "percent_of_total": 15.9,
+          "change_percent": 15.2
+        },
+        {
+          "service_name": "Bandwidth",
+          "cost": 4500.00,
+          "percent_of_total": 9.9,
+          "change_percent": 22.1
+        },
+        {
+          "service_name": "App Service",
+          "cost": 3800.00,
+          "percent_of_total": 8.4,
+          "change_percent": 5.0
+        },
+        {
+          "service_name": "Other",
+          "cost": 3030.50,
+          "percent_of_total": 6.7,
+          "change_percent": 3.2
+        }
+      ],
+      "by_tenant": [
+        {
+          "tenant_id": "12345678-1234-1234-1234-123456789012",
+          "tenant_name": "Head to Toe - Production",
+          "cost": 28500.00,
+          "percent_of_total": 63.0,
+          "budget_amount": 50000.00,
+          "budget_consumed_percent": 57.0,
+          "status": "healthy"
+        },
+        {
+          "tenant_id": "87654321-4321-4321-4321-210987654321",
+          "tenant_name": "Frenchies - Staging",
+          "cost": 16730.50,
+          "percent_of_total": 37.0,
+          "budget_amount": 20000.00,
+          "budget_consumed_percent": 83.7,
+          "status": "warning"
+        }
+      ],
+      "by_resource_group": [
+        {
+          "resource_group": "rg-production",
+          "cost": 22000.00,
+          "resource_count": 45
+        },
+        {
+          "resource_group": "rg-staging",
+          "cost": 12500.00,
+          "resource_count": 32
+        },
+        {
+          "resource_group": "rg-shared",
+          "cost": 10730.50,
+          "resource_count": 28
+        }
+      ],
+      "daily_trend": [
+        {"date": "2026-01-01", "cost": 2800.50},
+        {"date": "2026-01-02", "cost": 2950.25},
+        {"date": "2026-01-03", "cost": 3100.00},
+        {"date": "2026-01-04", "cost": 3050.75},
+        {"date": "2026-01-05", "cost": 3200.00}
+      ],
+      "anomalies": [
+        {
+          "date": "2026-01-10",
+          "service": "Bandwidth",
+          "description": "Unexpected bandwidth spike detected",
+          "severity": "warning",
+          "cost_impact": 850.00,
+          "detected_at": "2026-01-11T06:00:00Z"
+        }
+      ],
+      "recommendations": [
+        {
+          "id": "cost-001",
+          "title": "Right-size underutilized VMs",
+          "description": "5 VMs showing <10% CPU utilization over 7 days",
+          "potential_savings": 1250.00,
+          "confidence": "high",
+          "resource_ids": ["vm-001", "vm-002", "vm-003", "vm-004", "vm-005"]
+        },
+        {
+          "id": "cost-002",
+          "title": "Reserved Instance opportunity",
+          "description": "Consistent VM usage detected - consider 1-year RI",
+          "potential_savings": 4200.00,
+          "confidence": "medium",
+          "applicable_services": ["Virtual Machines"]
+        }
+      ]
+    },
+    "meta": {
+      "generated_at": "2026-01-15T10:30:00Z",
+      "data_freshness": "realtime",
+      "currency_conversion_rate": 1.0
+    }
+  }
+}

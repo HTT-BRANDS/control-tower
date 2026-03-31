@@ -1,0 +1,51 @@
+{
+  "description": "Create or update a budget for a tenant",
+  "example_request": {
+    "tenant_id": "12345678-1234-1234-1234-123456789012",
+    "name": "Q1 2026 Production Budget",
+    "amount": 50000.00,
+    "currency": "USD",
+    "start_date": "2026-01-01",
+    "end_date": "2026-03-31",
+    "alert_thresholds": [50, 75, 90, 100],
+    "notification_emails": ["finance@example.com", "admin@example.com"],
+    "scope": {
+      "subscription_ids": ["sub-123", "sub-456"],
+      "resource_groups": ["rg-production", "rg-staging"],
+      "tags": {
+        "environment": "production",
+        "department": "engineering"
+      }
+    },
+    "category": "infrastructure"
+  },
+  "field_descriptions": {
+    "tenant_id": "Azure AD tenant ID (UUID format)",
+    "name": "Human-readable budget name (max 100 chars)",
+    "amount": "Budget amount in specified currency (positive number)",
+    "currency": "ISO 4217 currency code (default: USD)",
+    "start_date": "Budget period start date (YYYY-MM-DD)",
+    "end_date": "Budget period end date (YYYY-MM-DD)",
+    "alert_thresholds": "Percentage thresholds for alerts (0-100)",
+    "notification_emails": "List of email addresses for alerts",
+    "scope": "Budget scope filters",
+    "category": "Budget category for reporting"
+  },
+  "constraints": {
+    "amount": {
+      "min": 0.01,
+      "max": 999999999.99
+    },
+    "alert_thresholds": {
+      "items": {
+        "min": 1,
+        "max": 100
+      },
+      "maxItems": 10
+    },
+    "name": {
+      "minLength": 3,
+      "maxLength": 100
+    }
+  }
+}

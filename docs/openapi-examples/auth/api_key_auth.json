@@ -1,0 +1,25 @@
+{
+  "description": "API Key Authentication for Service-to-Service Calls",
+  "type": "apiKey",
+  "in": "header",
+  "name": "X-API-Key",
+  "example_request_headers": {
+    "X-API-Key": "agp_live_abc123xyz789...",
+    "Content-Type": "application/json"
+  },
+  "example_curl": "curl -H 'X-API-Key: agp_live_abc123xyz789' https://api.example.com/api/v1/dashboard",
+  "security_note": "API keys should be kept secure and rotated regularly. Use environment variables or Azure Key Vault to store keys.",
+  "response_200": {
+    "success": true,
+    "data": {
+      "total_cost": 12500.00,
+      "compliance_score": 94.5
+    }
+  },
+  "response_401": {
+    "detail": "Invalid or missing API key"
+  },
+  "response_403": {
+    "detail": "API key does not have permission to access this resource"
+  }
+}

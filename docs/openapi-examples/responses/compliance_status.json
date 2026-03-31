@@ -1,0 +1,122 @@
+{
+  "description": "Compliance status across frameworks and controls",
+  "example_response": {
+    "status": "success",
+    "data": {
+      "overall_score": 87.5,
+      "overall_status": "good",
+      "last_assessed": "2026-01-15T06:00:00Z",
+      "frameworks": [
+        {
+          "id": "riverside",
+          "name": "Riverside Security Requirements",
+          "version": "2026.1",
+          "score": 92.0,
+          "status": "compliant",
+          "controls_total": 72,
+          "controls_passed": 66,
+          "controls_failed": 6,
+          "deadline": "2026-07-08",
+          "days_remaining": 174,
+          "maturity_score": 3.2,
+          "target_maturity": 3.0
+        },
+        {
+          "id": "cis-azure",
+          "name": "CIS Azure Foundations",
+          "version": "2.0",
+          "score": 85.3,
+          "status": "partial",
+          "controls_total": 135,
+          "controls_passed": 115,
+          "controls_failed": 20,
+          "benchmark_level": "Level 2"
+        },
+        {
+          "id": "iso27001",
+          "name": "ISO 27001",
+          "version": "2022",
+          "score": 89.1,
+          "status": "compliant",
+          "controls_total": 114,
+          "controls_passed": 102,
+          "controls_failed": 12,
+          "certification_status": "in_progress"
+        },
+        {
+          "id": "soc2",
+          "name": "SOC 2 Type II",
+          "version": "2017",
+          "score": 78.4,
+          "status": "at_risk",
+          "controls_total": 64,
+          "controls_passed": 50,
+          "controls_failed": 14,
+          "next_audit_date": "2026-04-15"
+        }
+      ],
+      "failed_controls": [
+        {
+          "id": "RS-001",
+          "framework": "riverside",
+          "title": "Multi-factor authentication for privileged accounts",
+          "severity": "critical",
+          "failed_resources": 3,
+          "remediation": "Enable MFA for all users with admin roles",
+          "auto_remediate_available": true
+        },
+        {
+          "id": "CIS-4.1.1",
+          "framework": "cis-azure",
+          "title": "Ensure that 'Soft delete' is enabled for Storage Accounts",
+          "severity": "medium",
+          "failed_resources": 8,
+          "remediation": "Enable soft delete on storage accounts",
+          "auto_remediate_available": true
+        },
+        {
+          "id": "A9.2.1",
+          "framework": "iso27001",
+          "title": "User registration and de-registration",
+          "severity": "high",
+          "failed_resources": 5,
+          "remediation": "Implement automated user lifecycle management",
+          "auto_remediate_available": false
+        }
+      ],
+      "trend": {
+        "period": "30_days",
+        "score_start": 82.0,
+        "score_end": 87.5,
+        "improvement": 5.5,
+        "new_failures": 2,
+        "remediated": 8
+      },
+      "compliance_calendar": [
+        {
+          "date": "2026-02-15",
+          "event": "Internal security audit",
+          "frameworks": ["iso27001", "soc2"],
+          "status": "scheduled"
+        },
+        {
+          "date": "2026-03-01",
+          "event": "CIS benchmark reassessment",
+          "frameworks": ["cis-azure"],
+          "status": "scheduled"
+        },
+        {
+          "date": "2026-07-08",
+          "event": "Riverside compliance deadline",
+          "frameworks": ["riverside"],
+          "status": "critical_deadline"
+        }
+      ]
+    },
+    "meta": {
+      "assessment_id": "assess-20260115-001",
+      "generated_at": "2026-01-15T06:00:00Z",
+      "next_scheduled_assessment": "2026-01-16T06:00:00Z"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "description": "Create a custom compliance rule",
+  "example_request": {
+    "name": "Require MFA for Admin Roles",
+    "description": "Ensures all users with admin roles have MFA enabled",
+    "framework_id": "riverside",
+    "severity": "high",
+    "rule_type": "azure_policy",
+    "query": {
+      "resource_type": "microsoft.aad/users",
+      "filter": "assignedRoles/any(r: contains(r/displayName, 'Admin'))",
+      "condition": "authenticationMethods/any(m: m/methodType eq 'microsoftAuthenticator')"
+    },
+    "remediation": {
+      "auto_remediate": false,
+      "action": "notify",
+      "notification_template": "mfa_required_admin"
+    },
+    "schedule": {
+      "frequency": "daily",
+      "time": "02:00"
+    },
+    "enabled": true
+  },
+  "field_descriptions": {
+    "name": "Rule name (unique, max 100 chars)",
+    "description": "Detailed rule description (max 500 chars)",
+    "framework_id": "Compliance framework this rule belongs to",
+    "severity": "Rule severity: low, medium, high, critical",
+    "rule_type": "Type of rule: azure_policy, kusto_query, custom",
+    "query": "Rule query configuration",
+    "remediation": "Automatic remediation settings",
+    "schedule": "Evaluation schedule",
+    "enabled": "Whether the rule is active"
+  },
+  "severity_enum": ["low", "medium", "high", "critical"],
+  "rule_type_enum": ["azure_policy", "kusto_query", "custom_script", "resource_graph"],
+  "frequency_enum": ["hourly", "daily", "weekly", "monthly"],
+  "minimal_request": {
+    "name": "Basic Compliance Check",
+    "description": "Simple rule description",
+    "severity": "medium",
+    "rule_type": "azure_policy"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "description": "Dashboard summary with key metrics across all managed tenants",
+  "example_response": {
+    "status": "success",
+    "data": {
+      "tenant_count": 5,
+      "total_resources": 1250,
+      "total_cost_month": 45230.50,
+      "currency": "USD",
+      "cost_trend": {
+        "direction": "up",
+        "percentage": 12.5,
+        "compared_to": "previous_month"
+      },
+      "compliance_overall": {
+        "score": 87.5,
+        "status": "good",
+        "failed_controls": 12,
+        "total_controls": 96
+      },
+      "alerts_summary": {
+        "critical": 2,
+        "warning": 8,
+        "info": 15,
+        "total_active": 25
+      },
+      "identity_summary": {
+        "total_users": 450,
+        "admin_count": 25,
+        "mfa_enabled_count": 380,
+        "mfa_coverage_percent": 84.4
+      },
+      "recent_activities": [
+        {
+          "type": "sync_completed",
+          "description": "Daily cost sync completed for all tenants",
+          "timestamp": "2026-01-15T08:00:00Z",
+          "status": "success"
+        },
+        {
+          "type": "alert_triggered",
+          "description": "Budget threshold exceeded: Production (92%)",
+          "timestamp": "2026-01-15T06:30:00Z",
+          "severity": "warning"
+        },
+        {
+          "type": "compliance_violation",
+          "description": "3 new compliance violations detected",
+          "timestamp": "2026-01-15T04:00:00Z",
+          "severity": "high"
+        }
+      ],
+      "riverside_summary": {
+        "deadline_days_remaining": 174,
+        "maturity_score": 3.2,
+        "target_maturity": 3.0,
+        "requirements_met": 58,
+        "requirements_total": 72,
+        "status": "on_track"
+      }
+    },
+    "meta": {
+      "generated_at": "2026-01-15T10:30:00Z",
+      "cache_ttl_seconds": 300,
+      "version": "1.8.1"
+    }
+  },
+  "field_descriptions": {
+    "tenant_count": "Number of managed Azure AD tenants",
+    "total_resources": "Total Azure resources across all tenants",
+    "total_cost_month": "Current month cost (MTD)",
+    "compliance_overall.score": "Overall compliance score (0-100)",
+    "compliance_overall.status": "good|fair|poor based on score",
+    "alerts_summary": "Active alert counts by severity",
+    "identity_summary.mfa_coverage_percent": "Percentage of users with MFA enabled",
+    "riverside_summary.deadline_days_remaining": "Days until July 8, 2026 compliance deadline"
+  },
+  "status_codes": {
+    "200": "Success - Dashboard data retrieved",
+    "401": "Unauthorized - Valid authentication required",
+    "403": "Forbidden - Insufficient permissions",
+    "503": "Service Unavailable - Dashboard service temporarily unavailable"
+  }
+}
