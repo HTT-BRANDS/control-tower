@@ -488,7 +488,12 @@ class Settings(BaseSettings):
     @property
     def app_insights_enabled(self) -> bool:
         """Check if Application Insights is configured."""
-        return bool(os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"))
+        return bool(self.app_insights_connection_string)
+
+    @property
+    def app_insights_connection_string(self) -> str | None:
+        """Get Application Insights connection string."""
+        return os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 
     def get_cache_ttl(self, data_type: str) -> int:
         """Get TTL for a specific data type, clamped to max."""

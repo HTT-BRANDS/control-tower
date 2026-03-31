@@ -1,5 +1,23 @@
 """Core module initialization."""
 
+from app.core.app_insights import (
+    AppInsightsMiddleware,
+    AppInsightsTelemetryClient,
+    TelemetryEvent,
+    TelemetryEventType,
+    init_app_insights,
+    telemetry_client,
+    track_auth_login_failure,
+    track_auth_login_success,
+    track_auth_logout,
+    track_auth_token_refresh,
+    track_budget_alert,
+    track_compliance_violation,
+    track_cost_anomaly,
+    track_sync_completed,
+    track_sync_failed,
+    track_sync_operation,
+)
 from app.core.cache import (
     cache_manager,
     cached,
@@ -108,6 +126,23 @@ from app.core.tenant_context import (
 )
 
 __all__ = [
+    # App Insights / Telemetry
+    "TelemetryEvent",
+    "TelemetryEventType",
+    "AppInsightsTelemetryClient",
+    "AppInsightsMiddleware",
+    "init_app_insights",
+    "track_auth_login_failure",
+    "track_auth_login_success",
+    "track_auth_logout",
+    "track_auth_token_refresh",
+    "track_budget_alert",
+    "track_compliance_violation",
+    "track_cost_anomaly",
+    "track_sync_completed",
+    "track_sync_failed",
+    "track_sync_operation",
+    "telemetry_client",
     # Config
     "Settings",
     "get_settings",
