@@ -301,8 +301,8 @@ async def health_check():
 
 @app.get("/health/detailed")
 async def detailed_health_check():
-    """Detailed health check with component status."""
-    from app.core.database import SessionLocal
+    """Detailed health check with component status and pool statistics."""
+    from app.core.database import _IS_SQLITE, SessionLocal, _get_engine
 
     components = {
         "database": "unknown",
@@ -310,8 +310,9 @@ async def detailed_health_check():
         "cache": "unknown",
         "azure_configured": settings.is_configured,
     }
+    pool_stats = {}
 
-    # Check database
+    # Check database with pool stats
     try:
         from sqlalchemy import text
 
@@ -319,6 +320,17 @@ async def detailed_health_check():
         db.execute(text("SELECT 1"))
         db.close()
         components["database"] = "healthy"
+
+        # Get connection pool statistics for SQL Server/Azure SQL
+        if not _IS_SQLITE:
+            engine = _get_engine()
+            pool = engine.pool
+            pool_stats = {
+                "size": pool.size(),
+                "checked_in": pool.checkedin(),
+                "checked_out": pool.checkedout(),
+                "overflow": pool.overflow(),
+            }
     except Exception as e:
         components["database"] = f"unhealthy: {str(e)}"
 
@@ -331,9 +343,12 @@ async def detailed_health_check():
     else:
         components["scheduler"] = "not_running"
 
-    # Check cache
-    cache_metrics = cache_manager.get_metrics()
-    components["cache"] = cache_metrics.get("backend", "unknown")
+    # Check cache with detailed metrics
+    try:
+        cache_metrics = cache_manager.get_metrics()
+        components["cache"] = cache_metrics.get("backend", "unknown")
+    except Exception as e:
+        components["cache"] = f"error: {str(e)}"
 
     # Check token blacklist
     blacklist_backend = get_blacklist_backend()
@@ -342,13 +357,30 @@ async def detailed_health_check():
     # Valid non-error states: explicit health statuses, booleans, and backend names
     _healthy_values = {"healthy", "running", "memory", "redis", True}
 
+    # Build detailed cache metrics
+    detailed_cache_metrics = {}
+    try:
+        cm = cache_manager.get_metrics()
+        detailed_cache_metrics = {
+            "backend": cm.get("backend", "unknown"),
+            "hit_rate_percent": cm.get("hit_rate_percent", 0),
+            "hits": cm.get("hits", 0),
+            "misses": cm.get("misses", 0),
+            "sets": cm.get("sets", 0),
+            "deletes": cm.get("deletes", 0),
+            "avg_get_time_ms": cm.get("avg_get_time_ms", 0),
+        }
+    except Exception as e:
+        detailed_cache_metrics = {"error": str(e)}
+
     return {
         "status": "healthy"
         if all(v in _healthy_values for v in components.values())
         else "degraded",
         "version": settings.app_version,
         "components": components,
-        "cache_metrics": cache_metrics,
+        "cache_metrics": detailed_cache_metrics,
+        "database_pool": pool_stats if pool_stats else "n/a (SQLite)",
         "token_blacklist": {
             "backend": blacklist_backend,
             "size": get_blacklist_size(),

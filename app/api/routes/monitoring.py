@@ -1,5 +1,6 @@
 """Performance monitoring API routes."""
 
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.services.azure_client import azure_client_manager
 from app.core.auth import User, get_current_user
 from app.core.cache import cache_manager
-from app.core.database import get_db
+from app.core.database import _get_engine, get_db
 from app.core.monitoring import (
     get_cache_stats,
     get_performance_dashboard,
@@ -109,33 +110,58 @@ async def health_check_deep(db: Session = Depends(get_db)) -> dict[str, Any]:
     Deep health check that verifies all dependencies.
 
     Checks:
-    - Database connectivity
-    - Cache availability
+    - Database connectivity with pool statistics
+    - Cache availability with hit/miss metrics
     - Azure API connectivity (lightweight call)
     """
-    import time
-
     from app.core.config import settings
+    from app.core.database import _IS_SQLITE
 
     checks = {}
     overall_status = "healthy"
 
-    # Check database
+    # Check database with pool stats
     try:
         start = time.time()
         db.execute(text("SELECT 1"))
         db_time = (time.time() - start) * 1000
-        checks["database"] = {"status": "healthy", "response_time_ms": round(db_time, 2)}
+
+        # Get connection pool statistics
+        pool_stats = {}
+        if not _IS_SQLITE:
+            engine = _get_engine()
+            pool = engine.pool
+            pool_stats = {
+                "size": pool.size(),
+                "checked_in": pool.checkedin(),
+                "checked_out": pool.checkedout(),
+                "overflow": pool.overflow(),
+            }
+
+        checks["database"] = {
+            "status": "healthy",
+            "response_time_ms": round(db_time, 2),
+            "pool": pool_stats if pool_stats else "n/a (SQLite)",
+        }
     except Exception as e:
         checks["database"] = {"status": "unhealthy", "error": str(e)}
         overall_status = "degraded"
 
-    # Check cache
+    # Check cache with detailed metrics
     try:
         await cache_manager.set("health_check", "ok", ttl=10)
         cache_value = await cache_manager.get("health_check")
+        cache_metrics = cache_manager.get_metrics()
+
         if cache_value == "ok":
-            checks["cache"] = {"status": "healthy"}
+            checks["cache"] = {
+                "status": "healthy",
+                "backend": cache_metrics.get("backend", "unknown"),
+                "hit_rate_percent": cache_metrics.get("hit_rate_percent", 0),
+                "hits": cache_metrics.get("hits", 0),
+                "misses": cache_metrics.get("misses", 0),
+                "avg_get_time_ms": cache_metrics.get("avg_get_time_ms", 0),
+            }
         else:
             checks["cache"] = {"status": "degraded", "error": "Cache read/write mismatch"}
             overall_status = "degraded"
