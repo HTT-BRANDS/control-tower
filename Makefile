@@ -1,7 +1,7 @@
 # Azure Governance Platform - Makefile
 # Common development and deployment tasks
 
-.PHONY: help install install-dev test test-cov test-e2e lint format type-check security-check clean migrate migrate-up migrate-down run run-dev docker-build docker-push deploy-staging deploy-production backup db-backup db-shell shell logs docs
+.PHONY: help install install-dev test test-cov test-e2e lint format type-check security-check clean migrate migrate-up migrate-down run run-dev docker-build docker-push deploy-staging deploy-production backup db-backup db-shell shell logs docs visual-test accessibility-test mutation-test phase3-tests
 
 # Default target
 .DEFAULT_GOAL := help
@@ -108,6 +108,26 @@ smoke-test: ## Run all smoke tests (API, Azure, connectivity)
 e2e-test: ## Run Playwright E2E tests
 	@echo "$(BLUE)Running E2E tests with Playwright...$(NC)"
 	pytest tests/e2e -v --tb=short
+
+# =============================================================================
+# Phase 3: Advanced Testing Targets
+# =============================================================================
+
+visual-test:
+	@echo "=== Running Visual Regression Tests ==="
+	pytest tests/e2e/test_visual_regression.py -v -m visual
+
+accessibility-test:
+	@echo "=== Running Accessibility Tests ==="
+	pytest tests/e2e/test_accessibility.py -v -m accessibility
+
+mutation-test:
+	@echo "=== Running Mutation Tests ==="
+	bash scripts/run-mutation-tests.sh
+
+# Combined Phase 3 test suite
+phase3-tests: visual-test accessibility-test
+	@echo "✅ Phase 3 tests complete"
 
 # =============================================================================
 # Code Quality
