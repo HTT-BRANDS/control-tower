@@ -31,6 +31,48 @@ class TenantIdentitySummary(BaseModel):
     stale_accounts_90d: int
 
 
+class UserSummary(BaseModel):
+    """User summary for a tenant."""
+
+    tenant_id: str
+    tenant_name: str
+    total_users: int
+    active_users: int
+    guest_users: int
+    member_users: int
+    mfa_enabled_count: int
+    mfa_disabled_count: int
+    mfa_enabled_percent: float
+
+
+class GroupSummary(BaseModel):
+    """Group summary for a tenant."""
+
+    tenant_id: str
+    tenant_name: str
+    total_groups: int
+    security_groups: int
+    microsoft_365_groups: int
+    mail_enabled_groups: int
+    dynamic_groups: int
+    synced_groups: int
+
+
+class IdentityStats(BaseModel):
+    """Identity statistics for a tenant."""
+
+    tenant_id: str
+    tenant_name: str
+    users: UserSummary
+    groups: GroupSummary
+    privileged_accounts: int
+    service_principals: int
+    managed_identities: int
+    stale_accounts_30d: int
+    stale_accounts_90d: int
+    snapshot_date: datetime
+
+
 class PrivilegedAccount(BaseModel):
     """Privileged account details."""
 

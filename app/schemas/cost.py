@@ -54,6 +54,18 @@ class CostTrend(BaseModel):
     forecast: float | None = None
 
 
+class CostBreakdown(BaseModel):
+    """Cost breakdown by service, resource, or tag."""
+
+    group_key: str = Field(..., description="Service name, resource type, or tag value")
+    group_by: str = Field(..., description="Grouping dimension: service, resource, tag")
+    total_cost: float
+    previous_period_cost: float | None = None
+    change_percent: float | None = None
+    item_count: int = Field(default=0, description="Number of items in this group")
+    currency: str = "USD"
+
+
 class CostAnomaly(BaseModel):
     """Cost anomaly alert."""
 

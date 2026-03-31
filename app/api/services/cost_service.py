@@ -14,6 +14,7 @@ from app.schemas.cost import (
     AnomaliesByService,
     AnomalyTrend,
     BulkAcknowledgeResponse,
+    CostBreakdown,
     CostByTenant,
     CostForecast,
     CostSummary,
@@ -153,6 +154,109 @@ class CostService:
             daily_costs[cost.date] = daily_costs.get(cost.date, 0) + cost.total_cost
 
         return [CostTrend(date=d, cost=c) for d, c in sorted(daily_costs.items())]
+
+    async def get_cost_breakdown(
+        self,
+        tenant_id: str,
+        group_by: str = "service",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[CostBreakdown]:
+        """Get cost breakdown grouped by service, resource, or tag.
+
+        Args:
+            tenant_id: The tenant ID to query
+            group_by: Grouping dimension - "service", "resource", or "tag"
+            start_date: Optional start date (ISO format YYYY-MM-DD)
+            end_date: Optional end date (ISO format YYYY-MM-DD)
+
+        Returns:
+            List of CostBreakdown items
+        """
+        from datetime import date as date_module
+
+        # Parse dates or default to last 30 days
+        if end_date:
+            end = date_module.fromisoformat(end_date)
+        else:
+            end = date.today()
+
+        if start_date:
+            start = date_module.fromisoformat(start_date)
+        else:
+            start = end - timedelta(days=30)
+
+        # Get cost snapshots for tenant in date range
+        query = self.db.query(CostSnapshot).filter(
+            CostSnapshot.tenant_id == tenant_id,
+            CostSnapshot.date >= start,
+            CostSnapshot.date <= end,
+        )
+        costs = query.all()
+
+        # Get previous period for comparison
+        prev_end = start - timedelta(days=1)
+        prev_start = prev_end - (end - start)
+        prev_query = self.db.query(CostSnapshot).filter(
+            CostSnapshot.tenant_id == tenant_id,
+            CostSnapshot.date >= prev_start,
+            CostSnapshot.date <= prev_end,
+        )
+        prev_costs = prev_query.all()
+
+        # Aggregate costs by the specified grouping
+        current_by_group: dict[str, float] = {}
+        item_counts: dict[str, int] = {}
+
+        for cost in costs:
+            if group_by == "service":
+                key = cost.service_name or "Unknown"
+            elif group_by == "resource":
+                key = cost.resource_id or "Unknown"
+            elif group_by == "tag":
+                # For tags, we'd need tag data - use resource group as proxy
+                key = cost.resource_group or "Untagged"
+            else:
+                key = "Unknown"
+
+            current_by_group[key] = current_by_group.get(key, 0) + cost.total_cost
+            item_counts[key] = item_counts.get(key, 0) + 1
+
+        # Aggregate previous period costs
+        previous_by_group: dict[str, float] = {}
+        for cost in prev_costs:
+            if group_by == "service":
+                key = cost.service_name or "Unknown"
+            elif group_by == "resource":
+                key = cost.resource_id or "Unknown"
+            elif group_by == "tag":
+                key = cost.resource_group or "Untagged"
+            else:
+                key = "Unknown"
+            previous_by_group[key] = previous_by_group.get(key, 0) + cost.total_cost
+
+        # Build results
+        results: list[CostBreakdown] = []
+        for key, current_cost in current_by_group.items():
+            prev_cost = previous_by_group.get(key, 0)
+            change_percent = None
+            if prev_cost > 0:
+                change_percent = ((current_cost - prev_cost) / prev_cost) * 100
+
+            results.append(
+                CostBreakdown(
+                    group_key=key,
+                    group_by=group_by,
+                    total_cost=current_cost,
+                    previous_period_cost=prev_cost if prev_cost > 0 else None,
+                    change_percent=change_percent,
+                    item_count=item_counts.get(key, 0),
+                    currency="USD",
+                )
+            )
+
+        # Sort by cost descending
+        return sorted(results, key=lambda x: x.total_cost, reverse=True)
 
     def get_anomalies(self, acknowledged: bool | None = None) -> list[CostAnomaly]:
         """Get cost anomalies (not cached - real-time data)."""

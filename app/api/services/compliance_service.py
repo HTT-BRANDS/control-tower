@@ -10,8 +10,10 @@ from app.core.cache import cached, invalidate_on_sync_completion
 from app.models.compliance import ComplianceSnapshot, PolicyState
 from app.models.tenant import Tenant
 from app.schemas.compliance import (
+    ComplianceGap,
     ComplianceScore,
     ComplianceSummary,
+    ComplianceTrend,
     PolicyStatus,
     PolicyViolation,
 )
@@ -319,3 +321,165 @@ class ComplianceService:
     async def invalidate_cache(self, tenant_id: str | None = None) -> None:
         """Invalidate compliance cache after updates."""
         await invalidate_on_sync_completion(tenant_id)
+
+    async def get_compliance_score(
+        self,
+        tenant_id: str,
+        framework: str = "NIST"
+    ) -> ComplianceScore:
+        """Get compliance score for a tenant and framework.
+
+        Args:
+            tenant_id: The tenant ID to get compliance score for
+            framework: Compliance framework (default: NIST)
+
+        Returns:
+            ComplianceScore with detailed compliance metrics
+        """
+        # Get tenant info
+        tenant = (
+            self.db.query(Tenant)
+            .filter(Tenant.id == tenant_id, Tenant.is_active)
+            .first()
+        )
+
+        if not tenant:
+            raise ValueError(f"Tenant {tenant_id} not found or inactive")
+
+        # Get latest snapshot for tenant
+        latest = (
+            self.db.query(ComplianceSnapshot)
+            .filter(ComplianceSnapshot.tenant_id == tenant_id)
+            .order_by(ComplianceSnapshot.snapshot_date.desc())
+            .first()
+        )
+
+        if not latest:
+            # Return empty score if no data
+            return ComplianceScore(
+                tenant_id=tenant_id,
+                tenant_name=tenant.name,
+                subscription_id=None,
+                overall_compliance_percent=0.0,
+                secure_score=None,
+                compliant_resources=0,
+                non_compliant_resources=0,
+                exempt_resources=0,
+                last_updated=datetime.now(UTC),
+            )
+
+        return ComplianceScore(
+            tenant_id=tenant_id,
+            tenant_name=tenant.name,
+            subscription_id=latest.subscription_id,
+            overall_compliance_percent=latest.overall_compliance_percent,
+            secure_score=latest.secure_score,
+            compliant_resources=latest.compliant_resources,
+            non_compliant_resources=latest.non_compliant_resources,
+            exempt_resources=latest.exempt_resources,
+            last_updated=latest.synced_at,
+        )
+
+    async def get_compliance_trends(
+        self,
+        tenant_id: str,
+        months: int = 6
+    ) -> list[ComplianceTrend]:
+        """Get compliance trends over time.
+
+        Args:
+            tenant_id: The tenant ID to get trends for
+            months: Number of months of history (default: 6)
+
+        Returns:
+            List of ComplianceTrend data points
+        """
+        end_date = datetime.now(UTC)
+        start_date = end_date - timedelta(days=months * 30)
+
+        # Query snapshots for tenant within date range
+        snapshots = (
+            self.db.query(ComplianceSnapshot)
+            .filter(
+                ComplianceSnapshot.tenant_id == tenant_id,
+                ComplianceSnapshot.snapshot_date >= start_date,
+                ComplianceSnapshot.snapshot_date <= end_date,
+            )
+            .order_by(ComplianceSnapshot.snapshot_date.asc())
+            .all()
+        )
+
+        trends: list[ComplianceTrend] = []
+        previous_score: float | None = None
+
+        for snapshot in snapshots:
+            current_score = snapshot.overall_compliance_percent
+            change = 0.0
+            if previous_score is not None:
+                change = current_score - previous_score
+
+            trends.append(
+                ComplianceTrend(
+                    date=snapshot.snapshot_date,
+                    score=current_score,
+                    change_from_previous=round(change, 2),
+                )
+            )
+            previous_score = current_score
+
+        return trends
+
+    async def get_compliance_gaps(
+        self,
+        tenant_id: str,
+        framework: str = "NIST"
+    ) -> list[ComplianceGap]:
+        """Identify compliance gaps.
+
+        Args:
+            tenant_id: The tenant ID to analyze
+            framework: Compliance framework to check against (default: NIST)
+
+        Returns:
+            List of ComplianceGap items for remediation
+        """
+        # Get non-compliant policies for tenant
+        policies = (
+            self.db.query(PolicyState)
+            .filter(
+                PolicyState.tenant_id == tenant_id,
+                PolicyState.compliance_state == "NonCompliant",
+            )
+            .all()
+        )
+
+        gaps: list[ComplianceGap] = []
+        seen_controls: set[str] = set()
+
+        for policy in policies:
+            # Generate control ID from policy name
+            control_id = f"{framework}-{policy.policy_name.replace(' ', '-').upper()}"
+
+            if control_id in seen_controls:
+                continue
+            seen_controls.add(control_id)
+
+            # Determine severity
+            severity = self._map_severity(policy.policy_name, policy.policy_category)
+            severity_lower = severity.lower()
+
+            gap = ComplianceGap(
+                control_id=control_id,
+                control_name=policy.policy_name,
+                severity=severity_lower,
+                description=f"Policy violation: {policy.policy_name} "
+                          f"({policy.non_compliant_count} non-compliant resources)",
+                remediation=policy.recommendation or "Review and remediate non-compliant resources",
+            )
+            gaps.append(gap)
+
+        # Sort by severity (high -> medium -> low)
+        severity_order = {"high": 0, "medium": 1, "low": 2}
+        gaps.sort(key=lambda x: severity_order.get(x.severity, 3))
+
+        return gaps

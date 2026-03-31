@@ -11,11 +11,14 @@ from app.models.identity import IdentitySnapshot, PrivilegedUser
 from app.models.tenant import Tenant
 from app.schemas.identity import (
     GuestAccount,
+    GroupSummary,
+    IdentityStats,
     IdentitySummary,
     PrivilegedAccount,
     StaleAccount,
     TenantIdentitySummary,
     UserAccount,
+    UserSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -364,3 +367,153 @@ class IdentityService:
     async def invalidate_cache(self, tenant_id: str | None = None) -> None:
         """Invalidate identity cache after updates."""
         await invalidate_on_sync_completion(tenant_id)
+
+    async def get_user_summary(
+        self,
+        tenant_id: str,
+        include_guests: bool = False,
+    ) -> UserSummary:
+        """Get user summary for a tenant.
+
+        Args:
+            tenant_id: The tenant ID to query
+            include_guests: Whether to include guest users
+
+        Returns:
+            UserSummary with user counts and details
+        """
+        tenant = self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if not tenant:
+            return UserSummary(
+                tenant_id=tenant_id,
+                tenant_name="Unknown",
+                total_users=0,
+                active_users=0,
+                guest_users=0,
+                member_users=0,
+                mfa_enabled_count=0,
+                mfa_disabled_count=0,
+                mfa_enabled_percent=0.0,
+            )
+
+        # Get latest identity snapshot for tenant
+        latest = (
+            self.db.query(IdentitySnapshot)
+            .filter(IdentitySnapshot.tenant_id == tenant_id)
+            .order_by(IdentitySnapshot.snapshot_date.desc())
+            .first()
+        )
+
+        if not latest:
+            return UserSummary(
+                tenant_id=tenant_id,
+                tenant_name=tenant.name,
+                total_users=0,
+                active_users=0,
+                guest_users=0,
+                member_users=0,
+                mfa_enabled_count=0,
+                mfa_disabled_count=0,
+                mfa_enabled_percent=0.0,
+            )
+
+        total_users = latest.total_users if include_guests else latest.total_users - latest.guest_users
+        member_users = latest.total_users - latest.guest_users
+
+        mfa_enabled_percent = 0.0
+        if latest.total_users > 0:
+            mfa_enabled_percent = latest.mfa_enabled_users / latest.total_users * 100
+
+        return UserSummary(
+            tenant_id=tenant_id,
+            tenant_name=tenant.name,
+            total_users=total_users,
+            active_users=latest.active_users,
+            guest_users=latest.guest_users if include_guests else 0,
+            member_users=member_users,
+            mfa_enabled_count=latest.mfa_enabled_users,
+            mfa_disabled_count=latest.mfa_disabled_users,
+            mfa_enabled_percent=mfa_enabled_percent,
+        )
+
+    async def get_group_summary(
+        self,
+        tenant_id: str,
+    ) -> GroupSummary:
+        """Get group summary for a tenant.
+
+        Args:
+            tenant_id: The tenant ID to query
+
+        Returns:
+            GroupSummary with group counts and details
+        """
+        tenant = self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if not tenant:
+            return GroupSummary(
+                tenant_id=tenant_id,
+                tenant_name="Unknown",
+                total_groups=0,
+                security_groups=0,
+                microsoft_365_groups=0,
+                mail_enabled_groups=0,
+                dynamic_groups=0,
+                synced_groups=0,
+            )
+
+        # For MVP, return placeholder data
+        # In production, this would query a dedicated Group table
+        return GroupSummary(
+            tenant_id=tenant_id,
+            tenant_name=tenant.name,
+            total_groups=0,
+            security_groups=0,
+            microsoft_365_groups=0,
+            mail_enabled_groups=0,
+            dynamic_groups=0,
+            synced_groups=0,
+        )
+
+    async def get_identity_stats(
+        self,
+        tenant_ids: list[str],
+    ) -> dict[str, IdentityStats]:
+        """Get identity statistics across multiple tenants.
+
+        Args:
+            tenant_ids: List of tenant IDs to query
+
+        Returns:
+            Dictionary mapping tenant_id to IdentityStats
+        """
+        results: dict[str, IdentityStats] = {}
+
+        for tenant_id in tenant_ids:
+            user_summary = await self.get_user_summary(tenant_id, include_guests=True)
+            group_summary = await self.get_group_summary(tenant_id)
+
+            # Get latest snapshot for additional stats
+            latest = (
+                self.db.query(IdentitySnapshot)
+                .filter(IdentitySnapshot.tenant_id == tenant_id)
+                .order_by(IdentitySnapshot.snapshot_date.desc())
+                .first()
+            )
+
+            tenant = self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
+            tenant_name = tenant.name if tenant else "Unknown"
+
+            results[tenant_id] = IdentityStats(
+                tenant_id=tenant_id,
+                tenant_name=tenant_name,
+                users=user_summary,
+                groups=group_summary,
+                privileged_users=latest.privileged_users if latest else 0,
+                service_principals=latest.service_principals if latest else 0,
+                managed_identities=0,  # Placeholder for MVP
+                stale_accounts_30d=latest.stale_accounts_30d if latest else 0,
+                stale_accounts_90d=latest.stale_accounts_90d if latest else 0,
+                snapshot_date=latest.snapshot_date if latest else datetime.now(UTC),
+            )
+
+        return results

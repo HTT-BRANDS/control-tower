@@ -55,5 +55,23 @@ class PolicyStatus(BaseModel):
     recommendation: str | None = None
 
 
+class ComplianceTrend(BaseModel):
+    """Compliance trend data point over time."""
+
+    date: datetime
+    score: float = Field(..., ge=0, le=100)
+    change_from_previous: float
+
+
+class ComplianceGap(BaseModel):
+    """Identified compliance gap for remediation."""
+
+    control_id: str
+    control_name: str
+    severity: str  # "high", "medium", "low"
+    description: str
+    remediation: str
+
+
 # Update forward references
 ComplianceSummary.model_rebuild()

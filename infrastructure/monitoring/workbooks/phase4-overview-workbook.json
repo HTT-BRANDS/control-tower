@@ -1,0 +1,45 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Azure Governance Platform Dashboard\n\nReal-time monitoring of tenant compliance, costs, and identity."
+      },
+      "name": "Title"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where timestamp > ago(1h)\n| summarize count() by bin(timestamp, 5m), resultCode\n| render timechart",
+        "size": 0,
+        "title": "Request Volume & Status Codes (Last Hour)"
+      },
+      "name": "RequestVolumeChart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where timestamp > ago(1h)\n| summarize avg(duration), percentiles(duration, 50, 95, 99) by bin(timestamp, 5m)\n| render timechart",
+        "size": 0,
+        "title": "Response Time Percentiles (Last Hour)"
+      },
+      "name": "ResponseTimeChart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "exceptions\n| where timestamp > ago(24h)\n| summarize count() by type\n| render piechart",
+        "size": 0,
+        "title": "Exceptions by Type (Last 24 Hours)"
+      },
+      "name": "ExceptionsChart"
+    }
+  ],
+  "fallbackResourceIds": [],
+  "fromTemplateId": "sentinel-UserWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
