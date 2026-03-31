@@ -84,7 +84,7 @@ async def sync_riverside_mfa(db) -> dict:
             mfa_record = (
                 db.query(RiversideMFA)
                 .filter(
-                    RiversideMFA.tenant_id == tenant.tenant_id,
+                    RiversideMFA.tenant_id == tenant.id,
                     cast(RiversideMFA.snapshot_date, Date) == snapshot_date.date(),
                 )
                 .first()
@@ -101,7 +101,7 @@ async def sync_riverside_mfa(db) -> dict:
                 mfa_record.snapshot_date = snapshot_date
             else:
                 mfa_record = RiversideMFA(
-                    tenant_id=tenant.tenant_id,
+                    tenant_id=tenant.id,
                     total_users=total_users,
                     mfa_enrolled_users=mfa_enrolled,
                     mfa_coverage_percentage=mfa_coverage_pct,
@@ -127,6 +127,7 @@ async def sync_riverside_mfa(db) -> dict:
             logger.info(f"Synced MFA for {tenant.name}: {mfa_coverage_pct:.1f}% coverage")
 
         except Exception as e:
+            db.rollback()
             logger.error(f"Failed to sync MFA for {tenant.name}: {e}")
             results[tenant.tenant_id] = {
                 "status": "error",
@@ -188,7 +189,7 @@ async def sync_riverside_device_compliance(db) -> dict:
             device_record = (
                 db.query(RiversideDeviceCompliance)
                 .filter(
-                    RiversideDeviceCompliance.tenant_id == tenant.tenant_id,
+                    RiversideDeviceCompliance.tenant_id == tenant.id,
                     cast(RiversideDeviceCompliance.snapshot_date, Date) == snapshot_date.date(),
                 )
                 .first()
@@ -204,7 +205,7 @@ async def sync_riverside_device_compliance(db) -> dict:
                 device_record.snapshot_date = snapshot_date
             else:
                 device_record = RiversideDeviceCompliance(
-                    tenant_id=tenant.tenant_id,
+                    tenant_id=tenant.id,
                     total_devices=total_devices,
                     mdm_enrolled=mdm_enrolled,
                     edr_covered=edr_covered,
@@ -231,6 +232,7 @@ async def sync_riverside_device_compliance(db) -> dict:
             )
 
         except Exception as e:
+            db.rollback()
             logger.error(f"Failed to sync device compliance for {tenant.name}: {e}")
             results[tenant.tenant_id] = {
                 "status": "error",
@@ -272,7 +274,7 @@ async def sync_riverside_requirements(db) -> dict:
             mfa_req = (
                 db.query(RiversideRequirement)
                 .filter(
-                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.tenant_id == tenant.id,
                     RiversideRequirement.requirement_id.like("%MFA%"),
                 )
                 .first()
@@ -296,6 +298,7 @@ async def sync_riverside_requirements(db) -> dict:
             results["requirements_synced"] += 1
 
         except Exception as e:
+            db.rollback()
             logger.error(f"Failed to sync requirements for {tenant.name}: {e}")
             results["errors"].append({"tenant": tenant.name, "error": str(e)})
             continue
@@ -322,7 +325,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
             # Get latest MFA data
             mfa_data = (
                 db.query(RiversideMFA)
-                .filter(RiversideMFA.tenant_id == tenant.tenant_id)
+                .filter(RiversideMFA.tenant_id == tenant.id)
                 .order_by(RiversideMFA.snapshot_date.desc())
                 .first()
             )
@@ -330,7 +333,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
             # Get latest device compliance data
             device_data = (
                 db.query(RiversideDeviceCompliance)
-                .filter(RiversideDeviceCompliance.tenant_id == tenant.tenant_id)
+                .filter(RiversideDeviceCompliance.tenant_id == tenant.id)
                 .order_by(RiversideDeviceCompliance.snapshot_date.desc())
                 .first()
             )
@@ -338,14 +341,14 @@ async def sync_riverside_maturity_scores(db) -> dict:
             # Get requirements data
             total_reqs = (
                 db.query(RiversideRequirement)
-                .filter(RiversideRequirement.tenant_id == tenant.tenant_id)
+                .filter(RiversideRequirement.tenant_id == tenant.id)
                 .count()
             )
 
             completed_reqs = (
                 db.query(RiversideRequirement)
                 .filter(
-                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.tenant_id == tenant.id,
                     RiversideRequirement.status == "completed",
                 )
                 .count()
@@ -375,7 +378,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
             critical_gaps = (
                 db.query(RiversideRequirement)
                 .filter(
-                    RiversideRequirement.tenant_id == tenant.tenant_id,
+                    RiversideRequirement.tenant_id == tenant.id,
                     RiversideRequirement.status != "completed",
                     RiversideRequirement.priority == "P0",
                 )
@@ -385,7 +388,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
             # Create or update compliance record
             compliance_record = (
                 db.query(RiversideCompliance)
-                .filter(RiversideCompliance.tenant_id == tenant.tenant_id)
+                .filter(RiversideCompliance.tenant_id == tenant.id)
                 .first()
             )
 
@@ -398,7 +401,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
                 compliance_record.updated_at = snapshot_date
             else:
                 compliance_record = RiversideCompliance(
-                    tenant_id=tenant.tenant_id,
+                    tenant_id=tenant.id,
                     overall_maturity_score=round(overall_maturity, 2),
                     target_maturity_score=3.0,
                     deadline_date=RIVERSIDE_DEADLINE,
@@ -424,6 +427,7 @@ async def sync_riverside_maturity_scores(db) -> dict:
             logger.info(f"Synced maturity score for {tenant.name}: {overall_maturity:.2f}/5.0")
 
         except Exception as e:
+            db.rollback()
             logger.error(f"Failed to sync maturity score for {tenant.name}: {e}")
             results[tenant.tenant_id] = {
                 "status": "error",

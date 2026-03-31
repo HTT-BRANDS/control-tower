@@ -115,7 +115,7 @@ async def sync_compliance():
                                     if state.policy_definition_group_names:
                                         policy_category = ",".join(
                                             state.policy_definition_group_names
-                                        )
+                                        )[:500]  # Truncate to fit column
 
                                     # Aggregate counts
                                     if compliance_state == "Compliant":

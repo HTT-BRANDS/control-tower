@@ -88,8 +88,10 @@ async def sync_costs():
                             if rows:
                                 rows_processed = 0
 
-                                # Column indices (based on query grouping and aggregation)
-                                # Typical order: Cost, UsageDate, Currency, ResourceGroupName, ServiceName
+                                # Column indices from Azure Cost Management API response:
+                                # [0]=Cost, [1]=UsageDate, [2]=ResourceGroupName,
+                                # [3]=ServiceName, [4]=Currency
+                                # (matches grouping order in _query_costs_rest)
                                 for row in rows:
                                     try:
                                         if len(row) < 3:
@@ -98,13 +100,13 @@ async def sync_costs():
                                         # Extract values from row
                                         cost_value = float(row[0]) if row[0] else 0.0
                                         usage_date = datetime.strptime(str(row[1]), "%Y%m%d").date()
-                                        currency = str(row[2]) if len(row) > 2 and row[2] else "USD"
                                         resource_group = (
-                                            str(row[3]) if len(row) > 3 and row[3] else None
+                                            str(row[2]) if len(row) > 2 and row[2] else None
                                         )
                                         service_name = (
-                                            str(row[4]) if len(row) > 4 and row[4] else None
+                                            str(row[3]) if len(row) > 3 and row[3] else None
                                         )
+                                        currency = str(row[4]) if len(row) > 4 and row[4] else "USD"
 
                                         # Skip zero-cost entries to save space
                                         if cost_value == 0.0:
