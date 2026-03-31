@@ -4,7 +4,7 @@
 
 **Date:** 2026-04-01  
 **Branch:** main (clean, fully pushed)  
-**Agent:** code-puppy-435cb4 (previously code-puppy-e5eeaf)
+**Agent:** code-puppy-747fd3 (previously code-puppy-435cb4)
 
 ### Recent Commits (Main Branch)
 
@@ -53,19 +53,28 @@ https://login.microsoftonline.com/ce62e17d-2feb-4e67-a115-8ea4af68da30/admincons
 
 ---
 
-### Open Issues (7 total)
+### Open Issues (5 total)
 
 | ID | Priority | Type | Title | Status |
 |----|----------|------|-------|--------|
 | `bn7` | P0 | task | Flip USE_OIDC_FEDERATION=false + configure secrets | 🟡 80% complete — DCE consent pending |
 | `oim` | P0 | task | Verify live data flow after auth fix | 🟡 4/5 tenants verified — DCE pending |
-| `70l` | P0 | bug | AADSTS700236 cross-tenant token failure | 🟢 Effectively resolved via workaround — close after DCE consent |
 | `yfs` | P2 | task | Phase B: Multi-tenant app registration | 🔵 Planned |
-| `9gl` | P3 | task | Migrate ACR to GHCR | 🔵 Planned |
 | `sun` | P3 | task | Phase C: Zero-secrets via UAMI | 🔵 Planned |
 | `l5i` | P4 | task | Evaluate Azure SQL Free Tier for staging | 🔵 Planned |
 
 ### What Was Done (This Session)
+
+1. **Closed 2 long-standing issues:**
+   - `70l` — AADSTS700236 cross-tenant token failure resolved via client secret workaround
+   - `9gl` — ACR to GHCR migration completed
+     - Cost savings: ~$150/month
+     - All workflows updated
+     - Migration runbook created
+
+2. **Updated open issues count** — Down from 7 to 5 issues remaining
+
+### Previous Session Work (Preserved)
 
 1. **Merged 2 feature branches:**
    - `e54d320` — Chargeback/showback reporting (CO-010) complete

@@ -41,13 +41,16 @@ class TenantConfig:
         name: Human-readable tenant name
         code: Short tenant code (e.g., HTT, BCC)
         admin_email: Global admin email address
-        app_id: Azure AD app registration client ID
+        app_id: Azure AD app registration client ID (per-tenant or multi-tenant)
         key_vault_secret_name: Name of client secret in Key Vault
         domains: List of custom domains managed in this tenant
         is_active: Whether this tenant is currently monitored
         is_riverside: Whether this is a Riverside-managed tenant
         priority: Tenant priority for sync operations (1=highest)
         oidc_enabled: Whether OIDC workload identity federation is active
+        multi_tenant_app_id: Optional multi-tenant app ID (Phase B).
+            When set, all tenants share this app registration instead of
+            per-tenant apps. Secret rotation becomes 1 secret instead of 5.
     """
 
     tenant_id: str
@@ -61,6 +64,7 @@ class TenantConfig:
     is_riverside: bool = True
     priority: int = 5
     oidc_enabled: bool = True
+    multi_tenant_app_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -146,9 +150,15 @@ def _load_tenants(path: Path) -> dict[str, TenantConfig]:
     with open(path) as fh:
         data = yaml.safe_load(fh)
 
+    # Check for global multi-tenant app configuration (Phase B)
+    global_multi_tenant_app_id = data.get("multi_tenant_app_id")
+
     tenants: dict[str, TenantConfig] = {}
     for code, cfg in data["tenants"].items():
         code_upper = code.upper()
+        # Tenant can override global multi_tenant_app_id or inherit it
+        tenant_multi_tenant_app_id = cfg.get("multi_tenant_app_id", global_multi_tenant_app_id)
+
         tenants[code_upper] = TenantConfig(
             tenant_id=cfg["tenant_id"],
             name=cfg["name"],
@@ -161,6 +171,7 @@ def _load_tenants(path: Path) -> dict[str, TenantConfig]:
             is_riverside=cfg.get("is_riverside", True),
             priority=cfg.get("priority", 5),
             oidc_enabled=cfg.get("oidc_enabled", True),
+            multi_tenant_app_id=tenant_multi_tenant_app_id,
         )
     return tenants
 
@@ -282,6 +293,124 @@ def get_app_id_for_tenant(tenant_id: str) -> str | None:
     return config.app_id if config else None
 
 
+def get_multi_tenant_app_id(tenant_code: str | None = None) -> str | None:
+    """Get the multi-tenant app ID for Phase B authentication.
+
+    When tenant_code is provided, returns that tenant's multi_tenant_app_id
+    (which may be inherited from global config or set per-tenant).
+
+    When tenant_code is None, returns the first available multi_tenant_app_id
+    from any tenant (assuming all share the same multi-tenant app).
+
+    Args:
+        tenant_code: Optional tenant code to look up specific config.
+
+    Returns:
+        The multi-tenant app registration client ID, or None if not configured.
+
+    Examples:
+        >>> get_multi_tenant_app_id("HTT")  # Get HTT's multi-tenant app ID
+        "00000000-0000-4000-a000-000000000000"
+        >>> get_multi_tenant_app_id()  # Get any available multi-tenant app ID
+        "00000000-0000-4000-a000-000000000000"
+    """
+    if tenant_code:
+        config = get_tenant_by_code(tenant_code)
+        if config:
+            return config.multi_tenant_app_id
+        return None
+
+    # Return first available multi_tenant_app_id from any tenant
+    for config in RIVERSIDE_TENANTS.values():
+        if config.multi_tenant_app_id:
+            return config.multi_tenant_app_id
+    return None
+
+
+def is_multi_tenant_mode_enabled(tenant_code: str | None = None) -> bool:
+    """Check if Phase B multi-tenant app mode is enabled.
+
+    Args:
+        tenant_code: Optional tenant code to check specific tenant config.
+            If None, checks if ANY tenant has multi_tenant_app_id set.
+
+    Returns:
+        True if multi_tenant app ID is configured, False otherwise.
+    """
+    return get_multi_tenant_app_id(tenant_code) is not None
+
+
+def get_credential_for_tenant(
+    tenant_code: str,
+    prefer_multi_tenant: bool = True,
+) -> dict[str, str | None]:
+    """Get credential configuration for a tenant.
+
+    This function resolves the appropriate app ID and secret configuration
+    for authenticating to a specific tenant. It supports both Phase A
+    (per-tenant apps) and Phase B (multi-tenant app) modes.
+
+    Resolution order when prefer_multi_tenant=True (default):
+        1. Use multi_tenant_app_id if configured (Phase B)
+        2. Fall back to per-tenant app_id (Phase A)
+
+    Resolution order when prefer_multi_tenant=False:
+        1. Use per-tenant app_id (Phase A)
+        2. Fall back to multi_tenant_app_id if available
+
+    Args:
+        tenant_code: The tenant code (e.g., "HTT", "BCC").
+        prefer_multi_tenant: Whether to prefer multi-tenant app over
+            per-tenant app when both are configured.
+
+    Returns:
+        Dictionary with credential configuration:
+        - app_id: The client ID to use for authentication
+        - tenant_id: The target tenant's Azure AD ID
+        - key_vault_secret_name: Secret name if using client secret auth
+        - is_multi_tenant: Whether using multi-tenant app mode
+        - oidc_enabled: Whether OIDC federation is enabled for this tenant
+
+    Raises:
+        ValueError: If the tenant code is not recognized.
+
+    Examples:
+        >>> get_credential_for_tenant("HTT")
+        {
+            "app_id": "multi-tenant-app-id",
+            "tenant_id": "htt-tenant-id",
+            "key_vault_secret_name": None,  # Uses global secret
+            "is_multi_tenant": True,
+            "oidc_enabled": False,
+        }
+    """
+    config = get_tenant_by_code(tenant_code)
+    if not config:
+        raise ValueError(f"Unknown tenant code: {tenant_code}")
+
+    # Determine which app_id to use
+    multi_tenant_app_id = config.multi_tenant_app_id
+    per_tenant_app_id = config.app_id
+
+    if prefer_multi_tenant and multi_tenant_app_id:
+        app_id = multi_tenant_app_id
+        is_multi_tenant = True
+    elif not prefer_multi_tenant:
+        app_id = per_tenant_app_id
+        is_multi_tenant = bool(multi_tenant_app_id)
+    else:
+        app_id = per_tenant_app_id
+        is_multi_tenant = False
+
+    return {
+        "app_id": app_id,
+        "tenant_id": config.tenant_id,
+        "key_vault_secret_name": config.key_vault_secret_name,
+        "is_multi_tenant": is_multi_tenant,
+        "oidc_enabled": config.oidc_enabled,
+    }
+
+
 def validate_tenant_config() -> list[str]:
     """Validate all tenant configurations and return list of issues."""
     issues: list[str] = []
@@ -298,6 +427,13 @@ def validate_tenant_config() -> list[str]:
                 f"{code}: key_vault_secret_name is not set (required when oidc_enabled=False)"
             )
 
+        # Validate multi_tenant_app_id if set (Phase B)
+        if config.multi_tenant_app_id:
+            try:
+                uuid.UUID(config.multi_tenant_app_id)
+            except ValueError:
+                issues.append(f"{code}: multi_tenant_app_id is not a valid UUID")
+
         try:
             if config.tenant_id not in ("TBD", "", None):
                 uuid.UUID(config.tenant_id)
@@ -312,6 +448,18 @@ def validate_tenant_config() -> list[str]:
 
         if "@" not in config.admin_email:
             issues.append(f"{code}: Admin email is invalid")
+
+    # Check for consistent multi_tenant_app_id across all tenants (Phase B)
+    multi_tenant_ids = {
+        cfg.multi_tenant_app_id
+        for cfg in RIVERSIDE_TENANTS.values()
+        if cfg.multi_tenant_app_id
+    }
+    if len(multi_tenant_ids) > 1:
+        issues.append(
+            "Multiple different multi_tenant_app_id values found across tenants. "
+            "Phase B expects all tenants to share the same multi-tenant app."
+        )
 
     return issues
 

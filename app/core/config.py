@@ -131,6 +131,35 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Phase B: Multi-tenant App Registration (single secret for all tenants)
+    azure_multi_tenant_app_id: str | None = Field(
+        default=None,
+        alias="AZURE_MULTI_TENANT_APP_ID",
+        description=(
+            "Client ID of the multi-tenant app registration (Phase B). "
+            "When set, all tenants use this single app instead of per-tenant apps. "
+            "Reduces secret rotation from 5 secrets to 1 secret."
+        ),
+    )
+    azure_multi_tenant_client_secret: str | None = Field(
+        default=None,
+        alias="AZURE_MULTI_TENANT_CLIENT_SECRET",
+        description=(
+            "Client secret for the multi-tenant app (Phase B). "
+            "In production, this should be a Key Vault reference like "
+            '@Microsoft.KeyVault(SecretUri=https://...).'
+        ),
+    )
+    use_multi_tenant_app: bool = Field(
+        default=False,
+        alias="USE_MULTI_TENANT_APP",
+        description=(
+            "Enable Phase B multi-tenant app authentication. "
+            "When true, uses AZURE_MULTI_TENANT_APP_ID for all tenants. "
+            "Requires admin consent in each tenant."
+        ),
+    )
+
     # Azure Lighthouse Configuration
     managed_identity_object_id: str | None = Field(
         default=None,

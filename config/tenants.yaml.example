@@ -12,16 +12,52 @@
 #   oidc_enabled: true   → OIDC Workload Identity Federation (zero secrets)
 #   oidc_enabled: false  → Client secret via Key Vault (key_vault_secret_name required)
 #
+# Phase B: Multi-tenant App Registration (recommended for 5+ tenants)
+#   Instead of 5 separate app registrations (1 per tenant), use a single
+#   multi-tenant app in the home tenant (HTT) with signInAudience: AzureADMultipleOrgs.
+#
+#   Benefits:
+#     - Single client secret for all tenants (easier rotation)
+#     - One admin consent operation per foreign tenant (one-time)
+#     - Simpler configuration management
+#
+#   Setup:
+#     1. Create multi-tenant app in home tenant (HTT)
+#     2. Add API permissions (see scripts/setup-multi-tenant-app.sh)
+#     3. Grant admin consent in each tenant (BCC, FN, TLL, DCE)
+#     4. Set multi_tenant_app_id globally or per-tenant below
+#     5. Store single secret in Key Vault as "multi-tenant-client-secret"
+#
+#   Configuration options:
+#     a) Global multi_tenant_app_id (all tenants share the same app):
+#        multi_tenant_app_id: "00000000-0000-4000-c000-000000000000"
+#
+#     b) Per-tenant override (specific tenant uses different app):
+#        tenants:
+#          HTT:
+#            app_id: "per-tenant-app-id"           # Phase A: per-tenant
+#            multi_tenant_app_id: "multi-tenant-id" # Phase B: shared app
+#
+# See docs/runbooks/phase-b-multi-tenant-app.md for detailed setup.
 # See docs/AUTH_TRANSITION_ROADMAP.md for migration guidance.
+
+# Phase B: Uncomment and set this for global multi-tenant app mode
+# multi_tenant_app_id: "00000000-0000-4000-c000-000000000000"
 
 tenants:
   HTT:
     name: "Head-To-Toe (HTT)"
     code: "HTT"
     tenant_id: "00000000-0000-4000-a000-000000000001"
+    # Phase A: Per-tenant app registration (original)
     app_id: "00000000-0000-4000-b000-000000000001"
+    # Phase B: Override with multi-tenant app ID (optional, inherits from global if set)
+    # multi_tenant_app_id: "00000000-0000-4000-c000-000000000000"
     admin_email: "admin@example-htt.com"
+    # Phase A: Per-tenant secret (when oidc_enabled=false and no multi-tenant app)
     key_vault_secret_name: "htt-client-secret"  # pragma: allowlist secret
+    # Phase B: Use shared multi-tenant secret instead
+    # key_vault_secret_name: "multi-tenant-client-secret"  # pragma: allowlist secret
     domains:
       - "example-htt.com"
     is_active: true
