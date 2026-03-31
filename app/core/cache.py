@@ -1137,7 +1137,7 @@ async def delete_cached(key: str) -> bool:
 from functools import lru_cache
 from typing import Dict
 
-from app.database import get_db
+from app.core.database import SessionLocal
 from app.models.tenant import Tenant
 
 
@@ -1150,7 +1150,7 @@ def get_tenant_name_map() -> Dict[str, str]:
     This eliminates the N+1 query problem where we query all tenants
     for each resource lookup.
     """
-    db = next(get_db())
+    db = SessionLocal()
     try:
         return {str(t.id): t.name for t in db.query(Tenant).all()}
     finally:
