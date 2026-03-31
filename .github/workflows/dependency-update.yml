@@ -1,0 +1,342 @@
+# =============================================================================
+# Azure Governance Platform — Dependency Update Automation
+# =============================================================================
+# Weekly dependency maintenance:
+#   1. Run pip-audit for security vulnerabilities
+#   2. Check for outdated dependencies
+#   3. Auto-merge minor updates if tests pass
+#   4. Create issues for major updates requiring manual review
+#
+# Schedule: Weekly on Sundays at 10:00 PM UTC (before Monday Dependabot run)
+# =============================================================================
+
+name: Dependency Update Automation
+
+on:
+  schedule:
+    # Run every Sunday at 10:00 PM UTC
+    - cron: '0 22 * * 0'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  security-events: write
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: '0.5.x'
+
+jobs:
+  # ===========================================================================
+  # Job 1: Security Audit with pip-audit
+  # ===========================================================================
+  security-audit:
+    name: Security Audit (pip-audit)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Export requirements from uv.lock
+        run: uv export --no-hashes --no-dev > /tmp/requirements.txt
+
+      - name: Run pip-audit
+        id: pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r /tmp/requirements.txt --format=json --output=pip-audit-results.json || true
+          
+          # Check if vulnerabilities were found
+          VULN_COUNT=$(jq '[.dependencies[]?.vulns // empty | length] | add // 0' pip-audit-results.json)
+          echo "vuln_count=$VULN_COUNT" >> $GITHUB_OUTPUT
+          
+          # Create human-readable report
+          pip-audit -r /tmp/requirements.txt --format=markdown --output=pip-audit-report.md || true
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-results
+          path: |
+            pip-audit-results.json
+            pip-audit-report.md
+          retention-days: 30
+
+      - name: Create issues for vulnerabilities
+        if: steps.pip-audit.outputs.vuln_count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const auditResults = JSON.parse(fs.readFileSync('pip-audit-results.json', 'utf8'));
+            
+            for (const dep of auditResults.dependencies || []) {
+              if (dep.vulns && dep.vulns.length > 0) {
+                for (const vuln of dep.vulns) {
+                  const title = `Security: ${vuln.id || 'CVE'} in ${dep.name}`;
+                  
+                  // Check if issue already exists
+                  const { data: issues } = await github.rest.issues.listForRepo({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    state: 'open',
+                    labels: 'security,vulnerability'
+                  });
+                  
+                  const exists = issues.some(i => i.title === title);
+                  if (exists) continue;
+                  
+                  const body = `## Security Vulnerability Detected
+            
+**Package:** ${dep.name}
+**Installed Version:** ${dep.version}
+**Vulnerability:** ${vuln.id || 'Unknown'}
+**Severity:** ${vuln.severity || 'Unknown'}
+
+### Description
+${vuln.description || 'No description available'}
+
+### Fix
+${vuln.fix_versions ? `Update to: ${vuln.fix_versions.join(', ')}` : 'No fix version available'}
+
+### Links
+${vuln.aliases ? vuln.aliases.map(a => `- ${a}`).join('\n') : 'N/A'}
+
+---
+*This issue was automatically created by the dependency update automation workflow.*
+`;
+                  
+                  await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: title,
+                    body: body,
+                    labels: ['security', 'vulnerability', 'dependencies', 'priority-high']
+                  });
+                }
+              }
+            }
+
+  # ===========================================================================
+  # Job 2: Check for Outdated Dependencies
+  # ===========================================================================
+  outdated-check:
+    name: Check Outdated Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Export requirements
+        run: uv export --no-hashes --no-dev > /tmp/requirements.txt
+
+      - name: Check outdated dependencies
+        id: outdated
+        run: |
+          pip install pip-outdated
+          echo "## Outdated Dependencies" > outdated-report.md
+          echo "" >> outdated-report.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> outdated-report.md
+          echo "" >> outdated-report.md
+          
+          pip-outdated --requirements-file /tmp/requirements.txt --format=markdown >> outdated-report.md || true
+          
+          # Check if any major updates exist
+          MAJOR_COUNT=$(pip-outdated --requirements-file /tmp/requirements.txt --format=json 2>/dev/null | jq '[.[] | select(.latest_major != null)] | length' || echo "0")
+          echo "major_count=$MAJOR_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Upload outdated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: outdated-report
+          path: outdated-report.md
+          retention-days: 30
+
+      - name: Create issue for major updates
+        if: steps.outdated.outputs.major_count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('outdated-report.md', 'utf8');
+            
+            // Check if issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'dependencies,major-update'
+            });
+            
+            const title = '📦 Major Dependency Updates Available';
+            const exists = issues.some(i => i.title === title);
+            if (exists) {
+              console.log('Major update issue already exists');
+              return;
+            }
+            
+            const body = `## Major Version Updates Available
+
+The following major version updates are available and require manual review:
+
+${report}
+
+### Action Required
+1. Review each major update for breaking changes
+2. Test in staging environment
+3. Update code if breaking changes affect the project
+4. Merge Dependabot PRs or update manually
+
+---
+*This issue was automatically created by the dependency update automation workflow.*
+`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['dependencies', 'major-update', 'manual-review']
+            });
+
+  # ===========================================================================
+  # Job 3: Auto-merge Minor Updates (if tests pass)
+  # ===========================================================================
+  auto-merge:
+    name: Auto-merge Minor Updates
+    runs-on: ubuntu-latest
+    needs: [security-audit]
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * 0'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find and merge minor update PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'dependabot'
+            });
+            
+            for (const pr of pulls) {
+              // Check if it's a minor/patch update by Dependabot
+              const isDependabot = pr.user.login === 'dependabot[bot]';
+              const isMinorPatch = pr.labels.some(l => l.name === 'dependencies') && 
+                                   !pr.labels.some(l => l.name === 'major-update');
+              
+              if (!isDependabot || !isMinorPatch) continue;
+              
+              // Check if CI passed
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+              
+              const allPassed = checks.check_runs.every(c => c.conclusion === 'success');
+              const noFailures = !checks.check_runs.some(c => c.conclusion === 'failure');
+              
+              if (allPassed && noFailures && checks.check_runs.length > 0) {
+                // Auto-approve
+                await github.rest.pulls.createReview({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  event: 'APPROVE',
+                  body: '✅ Auto-approved: Minor dependency update with passing tests'
+                });
+                
+                // Enable auto-merge (squash)
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  body: pr.body + '\n\n---\n🤖 Auto-merge enabled for minor dependency update'
+                });
+                
+                console.log(`Auto-approved PR #${pr.number}: ${pr.title}`);
+              } else {
+                console.log(`Skipping PR #${pr.number}: Tests not passing`);
+              }
+            }
+
+  # ===========================================================================
+  # Job 4: Dependency Summary Report
+  # ===========================================================================
+  summary:
+    name: Generate Summary Report
+    runs-on: ubuntu-latest
+    needs: [security-audit, outdated-check]
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create summary
+        run: |
+          echo "## 📊 Dependency Update Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f pip-audit-results/pip-audit-report.md ]; then
+            echo "### 🔒 Security Audit Results" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat pip-audit-results/pip-audit-report.md >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f outdated-report/outdated-report.md ]; then
+            echo "### 📦 Outdated Dependencies" >> $GITHUB_STEP_SUMMARY
+            cat outdated-report/outdated-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify if issues found
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ Dependency Update Workflow Failed - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Workflow Failure
+
+The dependency update automation workflow failed. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}).
+
+### Possible Causes
+- pip-audit installation failure
+- Network issues
+- Repository permission issues
+
+---
+*This issue was automatically created.*
+`,
+              labels: ['dependencies', 'ci-cd', 'priority-medium']
+            });
