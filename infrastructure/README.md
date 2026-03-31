@@ -224,6 +224,59 @@ az group delete --name $RESOURCE_GROUP --yes --no-wait
 
 ⚠️ **Warning**: This will delete all data in the resource group!
 
+---
+
+## 📦 Resource Lifecycle & Cleanup
+
+### Deprecated vs Current Resources
+
+| Resource | Status | Replacement | Cleanup Script |
+|----------|--------|-------------|----------------|
+| `acrgovstaging19859` | 🚫 **Deprecated** | GHCR (free) | `scripts/cleanup-old-acr.sh` |
+| Per-tenant app registrations (5) | 🚫 **Deprecated** | Multi-tenant app | `scripts/cleanup-phase-a-apps.sh` |
+| Per-tenant client secrets | 🚫 **Deprecated** | Single secret or UAMI | `scripts/migrate-to-phase-c.sh` |
+| ACR-based deployments | 🚫 **Deprecated** | GHCR-based deployments | `.github/workflows/deploy-staging.yml` |
+
+### Cleanup Runbooks
+
+| Task | Runbook | Risk Level |
+|------|---------|------------|
+| Delete old ACR | `docs/runbooks/resource-cleanup.md` | Medium |
+| Delete Phase A apps | `docs/runbooks/resource-cleanup.md` | Medium |
+| Migrate Phase A → B | `docs/runbooks/phase-b-multi-tenant-app.md` | Low |
+| Migrate Phase B → C | `docs/runbooks/phase-c-zero-secrets.md` | Low |
+
+### Cost Optimization History
+
+| Optimization | Original | New | Monthly Savings |
+|--------------|----------|-----|-----------------|
+| ACR → GHCR | Standard (~$5/day) | Free | **~$10** |
+| 5 secrets → 1 secret | 5× overhead | 1× overhead | **~$2** |
+| **Total Phase A/B Cleanup** | **~$12/mo** | **~$0.50/mo** | **~$11.50** |
+
+**Annual Savings:** ~$138/year
+
+### Safe Cleanup Guidelines
+
+1. **Always preview first** — Run scripts without `--confirm` to see what will be deleted
+2. **Verify replacements work** — Ensure GHCR and multi-tenant app are operational
+3. **Use confirmation prompts** — Never use `--yes` flag in production without review
+4. **Keep backups** — Azure AD soft-delete preserves apps for 30 days
+5. **Document changes** — Update `INFRASTRUCTURE_INVENTORY.md` after cleanup
+
+### Rollback Options
+
+If cleanup causes issues:
+
+| Resource | Rollback Method | Time Window |
+|----------|-----------------|-------------|
+| ACR | Recreate + rebuild images | Immediate |
+| App registrations | Soft-delete restore | 30 days |
+| Per-tenant secrets | Recreate from scratch | Immediate |
+| Configuration | Restore from git backup | Immediate |
+
+---
+
 ## 📚 Reference
 
 - [Bicep Documentation](https://docs.microsoft.com/azure/azure-resource-manager/bicep/)

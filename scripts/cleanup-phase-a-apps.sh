@@ -40,11 +40,11 @@ CONFIRM=false
 SKIP_PROMPTS=false
 DRY_RUN=false
 
-# Results tracking
-declare -A APP_EXISTS
-declare -A APP_NAMES
-declare -A DELETE_STATUS
-declare -A ERRORS
+# Results tracking (use indexed arrays for bash 3.x compatibility)
+APP_EXISTS=()
+APP_NAMES=()
+DELETE_STATUS=()
+ERRORS=()
 
 # =============================================================================
 # UTILITY FUNCTIONS
