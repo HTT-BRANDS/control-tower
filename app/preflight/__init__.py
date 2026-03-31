@@ -26,7 +26,7 @@ Riverside checks:
 # Base and models
 # Class-based Azure checks
 # Function-based Azure checks
-from app.preflight.azure_checks import (
+from app.preflight.azure import (
     AzureAuthCheck,
     AzureCostManagementCheck,
     AzureGraphCheck,

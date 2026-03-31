@@ -2,7 +2,8 @@
 
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -31,23 +32,36 @@ DEFAULT_REQUIRED_TAGS = ["Environment", "Owner", "CostCenter", "Application"]
 class ResourceService:
     """Service for resource management operations."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, db: Session) -> None:
+        self.db: Session = db
 
     @cached("resource_inventory")
     async def get_resource_inventory(
         self,
         tenant_id: str | None = None,
         resource_type: str | None = None,
+        location: str | None = None,
         limit: int = 500,
     ) -> ResourceInventory:
-        """Get resource inventory with aggregations."""
+        """Get inventory of resources with optional filtering.
+
+        Args:
+            tenant_id: Filter by tenant ID
+            resource_type: Filter by resource type (partial match)
+            location: Filter by Azure region/location
+            limit: Maximum number of resources to return
+
+        Returns:
+            ResourceInventory with aggregated resource data
+        """
         query = self.db.query(Resource)
 
         if tenant_id:
             query = query.filter(Resource.tenant_id == tenant_id)
         if resource_type:
             query = query.filter(Resource.resource_type.contains(resource_type))
+        if location:
+            query = query.filter(Resource.location.ilike(f"%{location}%"))
 
         resources = query.limit(limit).all()
 
@@ -148,7 +162,7 @@ class ResourceService:
             """Calculate days since resource was last synced."""
             if resource.synced_at is None:
                 return 30  # Default fallback
-            delta = now - resource.synced_at
+            delta: timedelta = now - resource.synced_at
             return max(0, delta.days)
 
         def _get_orphan_reason(resource: Resource) -> str:
@@ -291,14 +305,21 @@ class ResourceService:
 
     @cached("resource_idle_summary")
     async def get_idle_resources_summary(
-        self, tenant_ids: list[str] | None = None
+        self,
+        tenant_ids: list[str] | None = None,
+        days_threshold: int = 30,
     ) -> IdleResourceSummary:
-        """Get summary of idle resources.
+        """Summarize idle resources across tenants.
 
         Args:
             tenant_ids: Optional list of tenant IDs to filter by
+            days_threshold: Minimum days of inactivity to consider
+
+        Returns:
+            IdleResourceSummary with aggregated idle resource data
         """
         query = self.db.query(IdleResource).filter(IdleResource.is_reviewed == 0)
+        query = query.filter(IdleResource.idle_days >= days_threshold)
         if tenant_ids:
             query = query.filter(IdleResource.tenant_id.in_(tenant_ids))
         idle_resources = query.all()
