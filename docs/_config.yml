@@ -41,6 +41,7 @@ exclude:
   - "decisions/adr-template.md"
   - "openapi-examples/"
   - "security/mcp-trust-audit.md"
+  - "design-system.md"
 
 # Collections
 collections:
