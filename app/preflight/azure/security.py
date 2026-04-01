@@ -39,10 +39,12 @@ class AzureSecurityCheck(BasePreflightCheck):
         """Execute security center access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
 
         # Need subscription ID for this check
         from app.preflight.azure.network import check_azure_subscriptions
+
         sub_result = await check_azure_subscriptions(tenant_id or "")
         if sub_result.status != CheckStatus.PASS:
             return CheckResult(
@@ -85,10 +87,12 @@ class AzureRBACCheck(BasePreflightCheck):
         """Execute RBAC permissions check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
 
         # Need subscription ID for this check
         from app.preflight.azure.network import check_azure_subscriptions
+
         sub_result = await check_azure_subscriptions(tenant_id or "")
         if sub_result.status != CheckStatus.PASS:
             return CheckResult(

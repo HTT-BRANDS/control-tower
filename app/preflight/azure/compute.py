@@ -35,10 +35,12 @@ class AzureResourcesCheck(BasePreflightCheck):
         """Execute resource manager access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
 
         # Need subscription ID for this check
         from app.preflight.azure.network import check_azure_subscriptions
+
         sub_result = await check_azure_subscriptions(tenant_id or "")
         if sub_result.status != CheckStatus.PASS:
             return CheckResult(
@@ -93,7 +95,9 @@ async def check_resource_manager_access(tenant_id: str, subscription_id: str) ->
                 {
                     "name": rg.name,
                     "location": rg.location,
-                    "provisioning_state": rg.properties.provisioning_state if rg.properties else None,
+                    "provisioning_state": rg.properties.provisioning_state
+                    if rg.properties
+                    else None,
                 }
             )
             # Limit to first 10 to avoid long-running checks

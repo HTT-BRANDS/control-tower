@@ -42,6 +42,7 @@ class AzureSubscriptionsCheck(BasePreflightCheck):
         """Execute subscription access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
         return await check_azure_subscriptions(tenant_id or "")
 
@@ -62,6 +63,7 @@ class AzureGraphCheck(BasePreflightCheck):
         """Execute Graph API access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
         return await check_graph_api_access(tenant_id or "")
 

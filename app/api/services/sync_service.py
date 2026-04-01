@@ -17,11 +17,7 @@ class SyncService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    async def trigger_sync(
-        self,
-        tenant_id: str,
-        sync_type: str = "full"
-    ) -> SyncJob:
+    async def trigger_sync(self, tenant_id: str, sync_type: str = "full") -> SyncJob:
         """Trigger a sync job for a tenant.
 
         Args:
@@ -50,10 +46,7 @@ class SyncService:
 
         return job
 
-    async def get_sync_status(
-        self,
-        job_id: str
-    ) -> SyncStatus:
+    async def get_sync_status(self, job_id: str) -> SyncStatus:
         """Get status of a sync job.
 
         Args:
@@ -79,10 +72,7 @@ class SyncService:
         )
 
     async def get_sync_results(
-        self,
-        tenant_id: str,
-        start_date: str | None = None,
-        end_date: str | None = None
+        self, tenant_id: str, start_date: str | None = None, end_date: str | None = None
     ) -> list[SyncResult]:
         """Get sync results within date range.
 
@@ -94,10 +84,7 @@ class SyncService:
         Returns:
             List of SyncResult items
         """
-        logger.debug(
-            f"Getting sync results for tenant {tenant_id} "
-            f"from {start_date} to {end_date}"
-        )
+        logger.debug(f"Getting sync results for tenant {tenant_id} from {start_date} to {end_date}")
 
         # In a real implementation, this would query from database
         # For now, return empty list

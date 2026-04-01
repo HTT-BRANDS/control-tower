@@ -323,9 +323,7 @@ class ComplianceService:
         await invalidate_on_sync_completion(tenant_id)
 
     async def get_compliance_score(
-        self,
-        tenant_id: str,
-        framework: str = "NIST"
+        self, tenant_id: str, framework: str = "NIST"
     ) -> ComplianceScore:
         """Get compliance score for a tenant and framework.
 
@@ -337,11 +335,7 @@ class ComplianceService:
             ComplianceScore with detailed compliance metrics
         """
         # Get tenant info
-        tenant = (
-            self.db.query(Tenant)
-            .filter(Tenant.id == tenant_id, Tenant.is_active)
-            .first()
-        )
+        tenant = self.db.query(Tenant).filter(Tenant.id == tenant_id, Tenant.is_active).first()
 
         if not tenant:
             raise ValueError(f"Tenant {tenant_id} not found or inactive")
@@ -381,9 +375,7 @@ class ComplianceService:
         )
 
     async def get_compliance_trends_for_tenant(
-        self,
-        tenant_id: str,
-        months: int = 6
+        self, tenant_id: str, months: int = 6
     ) -> list[ComplianceTrend]:
         """Get compliance trends over time for a specific tenant.
 
@@ -430,9 +422,7 @@ class ComplianceService:
         return trends
 
     async def get_compliance_gaps(
-        self,
-        tenant_id: str,
-        framework: str = "NIST"
+        self, tenant_id: str, framework: str = "NIST"
     ) -> list[ComplianceGap]:
         """Identify compliance gaps.
 
@@ -473,7 +463,7 @@ class ComplianceService:
                 control_name=policy.policy_name,
                 severity=severity_lower,
                 description=f"Policy violation: {policy.policy_name} "
-                          f"({policy.non_compliant_count} non-compliant resources)",
+                f"({policy.non_compliant_count} non-compliant resources)",
                 remediation=policy.recommendation or "Review and remediate non-compliant resources",
             )
             gaps.append(gap)

@@ -37,10 +37,12 @@ class AzureCostManagementCheck(BasePreflightCheck):
         """Execute cost management access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
 
         # Need subscription ID for this check
         from app.preflight.azure.network import check_azure_subscriptions
+
         sub_result = await check_azure_subscriptions(tenant_id or "")
         if sub_result.status != CheckStatus.PASS:
             return CheckResult(
@@ -83,10 +85,12 @@ class AzurePolicyCheck(BasePreflightCheck):
         """Execute policy access check."""
         if not tenant_id:
             from app.core.config import get_settings
+
             tenant_id = get_settings().azure_tenant_id
 
         # Need subscription ID for this check
         from app.preflight.azure.network import check_azure_subscriptions
+
         sub_result = await check_azure_subscriptions(tenant_id or "")
         if sub_result.status != CheckStatus.PASS:
             return CheckResult(
@@ -148,9 +152,7 @@ async def check_cost_management_access(tenant_id: str, subscription_id: str) -> 
             time_period=QueryTimePeriod(from_property=start_date, to=end_date),
             dataset={
                 "granularity": "None",
-                "aggregation": {
-                    "totalCost": {"name": "Cost", "function": "Sum"}
-                },
+                "aggregation": {"totalCost": {"name": "Cost", "function": "Sum"}},
             },
         )
 

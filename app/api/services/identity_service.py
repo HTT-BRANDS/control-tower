@@ -417,7 +417,9 @@ class IdentityService:
                 mfa_enabled_percent=0.0,
             )
 
-        total_users = latest.total_users if include_guests else latest.total_users - latest.guest_users
+        total_users = (
+            latest.total_users if include_guests else latest.total_users - latest.guest_users
+        )
         member_users = latest.total_users - latest.guest_users
 
         mfa_enabled_percent = 0.0
