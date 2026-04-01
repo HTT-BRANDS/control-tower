@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Cost Analysis & Scaling
+permalink: /operations/cost-analysis/
 ---
 
 # Cost Analysis & Scaling

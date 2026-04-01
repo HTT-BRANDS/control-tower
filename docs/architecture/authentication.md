@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Authentication & Authorization
+permalink: /architecture/authentication/
 ---
 
 # Authentication & Authorization

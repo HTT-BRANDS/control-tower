@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Data Flow & Connections
+permalink: /architecture/data-flow/
 ---
 
 # Data Flow & Connections

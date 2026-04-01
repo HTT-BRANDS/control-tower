@@ -3,6 +3,8 @@ layout: default
 title: Architecture Overview
 parent: Architecture
 nav_order: 1
+permalink: /architecture/overview/
+---
 ---
 
 # Architecture Overview
