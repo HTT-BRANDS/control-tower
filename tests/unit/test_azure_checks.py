@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.preflight.azure_checks import (
+from app.preflight.azure.azure_checks import (
     AZURE_MANAGEMENT_SCOPE,
     GRAPH_API_BASE,
     REQUIRED_AZURE_ROLES,
