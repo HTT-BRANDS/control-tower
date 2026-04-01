@@ -1,0 +1,24 @@
+name: Weekly Operations Check
+
+on:
+  schedule:
+    # Run every Monday at 9 AM
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  weekly-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run daily ops check
+        run: |
+          chmod +x scripts/daily-ops-check.sh
+          ./scripts/daily-ops-check.sh
+      
+      - name: Post results to Slack (optional)
+        if: failure()
+        run: |
+          echo "Weekly check failed - review required"
+          # Add Slack notification here if configured
