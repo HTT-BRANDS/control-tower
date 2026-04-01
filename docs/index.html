@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Azure Governance Platform — HTT Brands</title>
+  <meta name="description" content="Multi-tenant Azure governance, cost optimization, and compliance monitoring — built for enterprise scale.">
+  <meta property="og:title" content="Azure Governance Platform — HTT Brands">
+  <meta property="og:description" content="Multi-tenant Azure governance, cost optimization, and compliance monitoring — built for enterprise scale, running on a startup budget.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://htt-brands.github.io/azure-governance-platform/">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/main.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <nav class="nav" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+      <a href="." class="nav-logo">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="hero-badge">Production Certified · v1.9.0</span>
+        <h1 class="hero-title">Azure Governance Platform</h1>
+        <p class="hero-subtitle">Multi-tenant Azure governance, cost optimization, and compliance monitoring — built for enterprise scale, running on a startup budget.</p>
+        <div class="hero-metrics">
+          <div class="metric"><span class="metric-value">A+</span><span class="metric-label">Grade</span></div>
+          <div class="metric"><span class="metric-value">94.75%</span><span class="metric-label">Full Send</span></div>
+          <div class="metric"><span class="metric-value">2,563</span><span class="metric-label">Tests</span></div>
+          <div class="metric"><span class="metric-value">$73/mo</span><span class="metric-label">Infrastructure</span></div>
+        </div>
+        <div class="hero-actions">
+          <a href="https://app-governance-prod.azurewebsites.net/docs" class="btn-primary" target="_blank" rel="noopener">API Docs ↗</a>
+          <a href="architecture/" class="btn-outline">Explore Architecture</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capabilities -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Platform Capabilities</h2>
+        <p class="section-subtitle">Enterprise-grade governance tools</p>
+      </div>
+      <div class="grid grid--3">
+        <div class="card">
+          <div class="card-icon">🔐</div>
+          <h3 class="card-title">Zero-Secrets Auth</h3>
+          <p class="card-description">Azure AD B2C with OIDC, User-Assigned Managed Identity, and zero secrets in code. Defense-in-depth authentication.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <h3 class="card-title">Cost Optimization</h3>
+          <p class="card-description">Automated cost analysis and recommendations. 77% savings achieved — from $145/mo to $33/mo with continuous monitoring.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <h3 class="card-title">Compliance Monitoring</h3>
+          <p class="card-description">Continuous governance assessment against regulatory frameworks. Custom compliance rules with real-time scoring.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔍</div>
+          <h3 class="card-title">Resource Discovery</h3>
+          <p class="card-description">Automated Azure resource inventory across subscriptions. Cross-tenant visibility via Azure Lighthouse integration.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">👥</div>
+          <h3 class="card-title">Identity Governance</h3>
+          <p class="card-description">Multi-tenant identity management with row-level security. Role-based access control with department-based personas.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🚨</div>
+          <h3 class="card-title">Alerting &amp; Monitoring</h3>
+          <p class="card-description">Real-time anomaly detection with Application Insights and OpenTelemetry. Four active alert rules with auto-escalation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="section section--alt">
+      <div class="section-header">
+        <h2 class="section-title">Technology Stack</h2>
+        <p class="section-subtitle">Modern, proven, cost-effective</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-item"><span class="tech-layer">Backend</span><span class="tech-name">FastAPI · Python 3.11</span></div>
+        <div class="tech-item"><span class="tech-layer">Frontend</span><span class="tech-name">HTMX · Tailwind · Chart.js</span></div>
+        <div class="tech-item"><span class="tech-layer">Auth</span><span class="tech-name">Azure AD B2C · OIDC · UAMI</span></div>
+        <div class="tech-item"><span class="tech-layer">Data</span><span class="tech-name">Azure SQL · Redis</span></div>
+        <div class="tech-item"><span class="tech-layer">Infrastructure</span><span class="tech-name">App Service · Key Vault · Bicep</span></div>
+        <div class="tech-item"><span class="tech-layer">CI/CD</span><span class="tech-name">GitHub Actions · GHCR</span></div>
+        <div class="tech-item"><span class="tech-layer">Observability</span><span class="tech-name">App Insights · OpenTelemetry</span></div>
+        <div class="tech-item"><span class="tech-layer">Design System</span><span class="tech-name">Multi-brand tokens · WCAG AA</span></div>
+      </div>
+    </section>
+
+    <!-- Documentation Hub -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Documentation</h2>
+        <p class="section-subtitle">Everything you need to build, operate, and extend</p>
+      </div>
+      <div class="grid grid--2">
+        <a href="architecture/" class="doc-card">
+          <div class="doc-card-icon">🏗️</div>
+          <div class="doc-card-title">Architecture</div>
+          <div class="doc-card-description">System design, components, data flow, and deployment topology.</div>
+          <div class="doc-card-link">Explore →</div>
+        </a>
+        <a href="operations/" class="doc-card">
+          <div class="doc-card-icon">⚙️</div>
+          <div class="doc-card-title">Operations</div>
+          <div class="doc-card-description">Runbooks, playbooks, cost analysis, and day-to-day procedures.</div>
+          <div class="doc-card-link">Explore →</div>
+        </a>
+        <a href="api/" class="doc-card">
+          <div class="doc-card-icon">🔌</div>
+          <div class="doc-card-title">API Reference</div>
+          <div class="doc-card-description">Endpoints, schemas, authentication, and integration guides.</div>
+          <div class="doc-card-link">Explore →</div>
+        </a>
+        <a href="decisions/" class="doc-card">
+          <div class="doc-card-icon">📝</div>
+          <div class="doc-card-title">Decisions</div>
+          <div class="doc-card-description">Architecture Decision Records documenting key technical choices.</div>
+          <div class="doc-card-link">Explore →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Architecture Diagram -->
+    <section class="section section--alt">
+      <div class="section-header">
+        <h2 class="section-title">Architecture</h2>
+        <p class="section-subtitle">How it all fits together</p>
+      </div>
+      <div class="architecture-block">
+        <pre class="architecture-pre">
+┌─────────────────────────────────────────────────────────────────┐
+│                          CLIENTS                                │
+│     Web UI · Mobile · API Consumers · Admin Portal              │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                ┌───────────▼───────────┐
+                │    Azure Front Door   │
+                │   WAF · CDN · HTTPS   │
+                └───────────┬───────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│                    App Service (FastAPI)                         │
+│   ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌─────────────┐  │
+│   │ API Layer│  │ Services  │  │ Workers  │  │ Scheduler   │  │
+│   │ (REST)   │  │ (Business)│  │(Background)│ │ (Cron)      │  │
+│   └──────────┘  └───────────┘  └──────────┘  └─────────────┘  │
+└──────┬──────────────┬──────────────┬──────────────┬─────────────┘
+       │              │              │              │
+  ┌────▼────┐   ┌─────▼─────┐  ┌────▼────┐  ┌─────▼──────┐
+  │Azure SQL│   │   Redis   │  │Key Vault│  │App Insights│
+  │ (Data)  │   │  (Cache)  │  │(Secrets)│  │(Telemetry) │
+  └─────────┘   └───────────┘  └─────────┘  └────────────┘
+       │
+  ┌────▼──────────────────────────────────┐
+  │         Azure Lighthouse              │
+  │   Cross-Tenant Governance Plane       │
+  │   ┌─────────┐ ┌─────────┐ ┌────────┐ │
+  │   │Tenant A │ │Tenant B │ │Tenant C│ │
+  │   └─────────┘ └─────────┘ └────────┘ │
+  └───────────────────────────────────────┘</pre>
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Quick Start</h2>
+        <p class="section-subtitle">Get up and running in minutes</p>
+      </div>
+      <div class="quick-start">
+        <pre><code>git clone https://github.com/HTT-BRANDS/azure-governance-platform.git
+cd azure-governance-platform
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+make dev</code></pre>
+      </div>
+      <div class="link-list">
+        <a href="https://app-governance-prod.azurewebsites.net" class="link-item" target="_blank" rel="noopener">Production App ↗</a>
+        <a href="https://app-governance-prod.azurewebsites.net/health" class="link-item" target="_blank" rel="noopener">Health Check ↗</a>
+        <a href="https://app-governance-prod.azurewebsites.net/docs" class="link-item" target="_blank" rel="noopener">Swagger UI ↗</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" class="link-item" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="https://portal.azure.com" class="link-item" target="_blank" rel="noopener">Azure Portal ↗</a>
+      </div>
+    </section>
+
+    <!-- Production Status -->
+    <section class="section section--alt">
+      <div class="section-header">
+        <h2 class="section-title">Production Status</h2>
+        <p class="section-subtitle">Live system metrics</p>
+      </div>
+      <div class="status-grid">
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Availability</span><span class="status-value">99.9%</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Response Time</span><span class="status-value">~532ms</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Error Rate</span><span class="status-value">&lt;0.1%</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Monthly Cost</span><span class="status-value">~$73</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Alert Rules</span><span class="status-value">4</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Open Issues</span><span class="status-value">0</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Production Certified · Rock Solid · v1.9.0</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelector('.nav-toggle').addEventListener('click', function() {
+      var links = document.querySelector('.nav-links');
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', !expanded);
+      links.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

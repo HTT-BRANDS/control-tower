@@ -1,12 +1,3 @@
----
-layout: default
-title: Operations Runbook
-parent: Operations
-nav_order: 1
-permalink: /operations/runbook/
----
----
-
 # Operations Runbook
 
 ## Quick Reference

@@ -1,10 +1,3 @@
----
-layout: default
-title: API Overview
-parent: API Reference
-nav_order: 1
----
-
 # API Reference
 
 ## Base URL

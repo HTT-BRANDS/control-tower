@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture Decisions — Azure Governance Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/main.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <nav class="nav" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+      <a href="../" class="nav-logo">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links">
+        <a href="../architecture/">Architecture</a>
+        <a href="../operations/">Operations</a>
+        <a href="../api/">API</a>
+        <a href="../decisions/" style="background:var(--gray-100);color:var(--gray-900);border-radius:6px">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div class="breadcrumb"><a href="../">Home</a><span>›</span> Decisions</div>
+      <h1 class="page-title">Architecture Decisions</h1>
+      <p class="page-subtitle">Architecture Decision Records documenting key technical choices</p>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="section">
+      <div class="doc-list">
+        <div class="doc-list-item">
+          <h3><a href="adr-0001-multi-agent-architecture">ADR-0001: Multi-Agent Architecture</a></h3>
+          <p>Decision to use specialized AI agents for different platform concerns.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0002-per-agent-tool-filtering">ADR-0002: Per-Agent Tool Filtering</a></h3>
+          <p>Restricting tool access based on agent role and responsibility.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0003-local-first-issue-tracking">ADR-0003: Local-First Issue Tracking</a></h3>
+          <p>Choosing bd (beads) for git-native, local-first issue tracking.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0004-research-first-protocol">ADR-0004: Research-First Protocol</a></h3>
+          <p>Requiring evidence-based research before architectural decisions.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0005-custom-compliance-rules">ADR-0005: Custom Compliance Rules</a></h3>
+          <p>Implementing configurable compliance rule engine.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0006-regulatory-framework-mapping">ADR-0006: Regulatory Framework Mapping</a></h3>
+          <p>Mapping governance controls to regulatory frameworks.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0007-auth-evolution">ADR-0007: Auth Evolution</a></h3>
+          <p>Evolution path from B2C to direct Azure AD integration.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0008-container-registry">ADR-0008: Container Registry</a></h3>
+          <p>Migration from ACR to GitHub Container Registry.</p>
+        </div>
+        <div class="doc-list-item">
+          <h3><a href="adr-0009-database-tier">ADR-0009: Database Tier</a></h3>
+          <p>Azure SQL tier selection and scaling strategy.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="../architecture/">Architecture</a>
+        <a href="../operations/">Operations</a>
+        <a href="../api/">API</a>
+        <a href="../decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Production Certified · Rock Solid · v1.9.0</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelector('.nav-toggle').addEventListener('click', function() {
+      var links = document.querySelector('.nav-links');
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', !expanded);
+      links.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

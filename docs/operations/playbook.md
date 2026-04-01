@@ -1,9 +1,3 @@
----
-layout: default
-title: Operations Playbook
-permalink: /operations/playbook/
----
-
 # Azure Governance Platform - Operations Playbook
 
 > **Document Version:** 1.0  
