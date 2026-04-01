@@ -18,6 +18,10 @@ kramdown:
   input: GFM
   hard_wrap: false
 
+# Disable Liquid processing to avoid conflicts with code examples
+liquid:
+  render_with_liquid: false
+
 # Plugins
 plugins:
   - jekyll-sitemap
