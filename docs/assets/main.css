@@ -5,10 +5,48 @@
   width: device-width;
   initial-scale: 1;
 }
+/* --- Architecture Diagram - Fully Responsive --- */
+.architecture-pre {
+  padding: 1rem;
+  color: #e2e8f0;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: .5rem;
+  line-height: 1.3;
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 480px) {
+  .architecture-pre {
+    padding: 1.25rem;
+    font-size: .55rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .architecture-pre {
+    padding: 1.5rem;
+    font-size: .7rem;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 1024px) {
+  .architecture-pre {
+    padding: 2rem;
+    font-size: .8rem;
+  }
+}
+
 
 html {
   box-sizing: border-box;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 *, *:before, *:after {
@@ -354,22 +392,20 @@ a:hover { color: var(--burgundy-light); }
 
 /* --- Architecture Block --- */
 .architecture-block {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   background: var(--gray-900);
   border-radius: 12px;
   overflow: hidden;
+  box-sizing: border-box;
 }
-.architecture-pre {
-  padding: 2rem;
-  color: #e2e8f0;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: .8rem;
-  line-height: 1.5;
-  overflow-x: auto;
-  margin: 0;
-  white-space: pre;
+
+@media (min-width: 768px) {
+  .architecture-block {
+    max-width: 1200px;
+  }
 }
+
 
 /* --- Code --- */
 pre {
@@ -597,6 +633,9 @@ pre code { background: none; padding: 0; color: #e2e8f0; }
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: .9rem;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
 }
 .prose th {
   background: var(--burgundy);
