@@ -12,8 +12,6 @@ from unittest.mock import patch
 import pytest
 
 from app.preflight.azure.azure_checks import (
-    AZURE_MANAGEMENT_SCOPE,
-    GRAPH_API_BASE,
     REQUIRED_AZURE_ROLES,
     REQUIRED_GRAPH_PERMISSIONS,
     AzureAuthCheck,
@@ -27,6 +25,10 @@ from app.preflight.azure.azure_checks import (
     AzureSubscriptionsCheck,
     _parse_aad_error,
     _sanitize_error,
+)
+from app.preflight.azure.base import (
+    AZURE_MANAGEMENT_SCOPE,
+    GRAPH_API_BASE,
 )
 from app.preflight.models import CheckCategory, CheckStatus
 
