@@ -1,0 +1,104 @@
+# Jekyll Configuration for GitHub Pages
+# Azure Governance Platform Documentation Site
+
+title: Azure Governance Platform
+description: >-
+  Technical Architecture & Operations Guide for the Azure Governance Platform - 
+  A production-ready, enterprise-grade SaaS application providing comprehensive 
+  Azure resource governance, cost optimization, and compliance monitoring.
+
+url: "https://htt-brands.github.io"
+baseurl: "/azure-governance-platform"
+
+# GitHub Pages settings
+theme: minima
+markdown: kramdown
+highlighter: rouge
+
+# Plugins (GitHub Pages compatible)
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Build settings
+permalink: pretty
+future: true
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .bundle
+  - .sass-cache
+  - .jekyll-cache
+  - .jekyll-metadata
+  - "*.gemspec"
+  - README.md
+  - LICENSE
+  - ".git*"
+  - ".github"
+  - scripts/
+  - archive/
+
+# Collections
+collections:
+  architecture:
+    output: true
+    permalink: /:collection/:name/
+  operations:
+    output: true
+    permalink: /:collection/:name/
+  api:
+    output: true
+    permalink: /:collection/:name/
+
+# Default layouts
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "architecture"
+    values:
+      layout: "default"
+  - scope:
+      path: "operations"
+    values:
+      layout: "default"
+  - scope:
+      path: "api"
+    values:
+      layout: "default"
+
+# Site metadata
+version: "1.8.1"
+status: "Production Certified - Rock Solid"
+last_updated: "March 31, 2026"
+
+# Author information
+author:
+  name: HTT Brands
+  email: engineering@htt-brands.com
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Architecture
+    url: /architecture/
+  - title: Operations
+    url: /operations/
+  - title: API Reference
+    url: /api/
+  - title: GitHub
+    url: https://github.com/HTT-BRANDS/azure-governance-platform
+
+# Custom settings
+show_excerpts: true
+paginate: 10
+paginate_path: "/page:num/"
