@@ -51,6 +51,7 @@ exclude:
   - decisions/
   - openapi-examples/
   - security/
+  - design-system.md
 
 # Collections
 collections:
