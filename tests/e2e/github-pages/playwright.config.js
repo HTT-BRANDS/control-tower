@@ -23,8 +23,8 @@ module.exports = defineConfig({
   
   // Reporter to use
   reporter: [
-    ['html', { outputFolder: './test-results/report', open: 'never' }],
-    ['json', { outputFile: './test-results/results.json' }],
+    ['html', { outputFolder: './report', open: 'never' }],
+    ['json', { outputFile: './report/results.json' }],
     ['list'],
   ],
   

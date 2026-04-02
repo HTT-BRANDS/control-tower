@@ -10,7 +10,7 @@ const BASE_URL = process.env.GH_PAGES_URL || 'https://htt-brands.github.io/azure
  */
 const hubPages = {
   index: {
-    url: '/',
+    url: './',
     expectedTitle: /Azure Governance Platform/,
     keySelectors: {
       heading: 'h1',
@@ -21,7 +21,7 @@ const hubPages = {
     description: 'Homepage - Hero landing',
   },
   architecture: {
-    url: '/architecture/',
+    url: 'architecture/',
     expectedTitle: /Architecture/,
     keySelectors: {
       heading: 'h1',
@@ -32,7 +32,7 @@ const hubPages = {
     description: 'Architecture hub page',
   },
   operations: {
-    url: '/operations/',
+    url: 'operations/',
     expectedTitle: /Operations/,
     keySelectors: {
       heading: 'h1',
@@ -43,7 +43,7 @@ const hubPages = {
     description: 'Operations hub page',
   },
   api: {
-    url: '/api/',
+    url: 'api/',
     expectedTitle: /API/,
     keySelectors: {
       heading: 'h1',
@@ -54,7 +54,7 @@ const hubPages = {
     description: 'API reference hub page',
   },
   decisions: {
-    url: '/decisions/',
+    url: 'decisions/',
     expectedTitle: /Decisions|ADR/,
     keySelectors: {
       heading: 'h1',
@@ -71,7 +71,7 @@ const hubPages = {
  */
 const detailPages = {
   architectureOverview: {
-    url: '/architecture/overview',
+    url: 'architecture/overview',
     expectedTitle: /Architecture Overview/,
     keySelectors: {
       heading: 'h1',
@@ -80,7 +80,7 @@ const detailPages = {
     description: 'Architecture overview documentation',
   },
   architectureAuthentication: {
-    url: '/architecture/authentication',
+    url: 'architecture/authentication',
     expectedTitle: /Authentication/,
     keySelectors: {
       heading: 'h1',
@@ -89,7 +89,7 @@ const detailPages = {
     description: 'Authentication documentation',
   },
   architectureDataFlow: {
-    url: '/architecture/data-flow',
+    url: 'architecture/data-flow',
     expectedTitle: /Data Flow/,
     keySelectors: {
       heading: 'h1',
@@ -98,7 +98,7 @@ const detailPages = {
     description: 'Data flow documentation',
   },
   operationsRunbook: {
-    url: '/operations/runbook',
+    url: 'operations/runbook',
     expectedTitle: /Runbook/,
     keySelectors: {
       heading: 'h1',
@@ -107,7 +107,7 @@ const detailPages = {
     description: 'Operational runbook',
   },
   operationsPlaybook: {
-    url: '/operations/playbook',
+    url: 'operations/playbook',
     expectedTitle: /Playbook/,
     keySelectors: {
       heading: 'h1',
@@ -116,7 +116,7 @@ const detailPages = {
     description: 'Operations playbook',
   },
   operationsCostAnalysis: {
-    url: '/operations/cost-analysis',
+    url: 'operations/cost-analysis',
     expectedTitle: /Cost Analysis/,
     keySelectors: {
       heading: 'h1',
@@ -125,7 +125,7 @@ const detailPages = {
     description: 'Cost analysis documentation',
   },
   apiOverview: {
-    url: '/api/overview',
+    url: 'api/overview',
     expectedTitle: /API Overview/,
     keySelectors: {
       heading: 'h1',
@@ -134,7 +134,7 @@ const detailPages = {
     description: 'API overview documentation',
   },
   adr0001: {
-    url: '/decisions/adr-0001-multi-agent-architecture',
+    url: 'decisions/adr-0001-multi-agent-architecture',
     expectedTitle: /ADR-0001|Multi-Agent Architecture/,
     keySelectors: {
       heading: 'h1',
@@ -143,7 +143,7 @@ const detailPages = {
     description: 'ADR 0001: Multi-agent Architecture',
   },
   adr0002: {
-    url: '/decisions/adr-0002-per-agent-tool-filtering',
+    url: 'decisions/adr-0002-per-agent-tool-filtering',
     expectedTitle: /ADR-0002|Per-Agent Tool Filtering/,
     keySelectors: {
       heading: 'h1',
@@ -152,7 +152,7 @@ const detailPages = {
     description: 'ADR 0002: Per-agent Tool Filtering',
   },
   adr0003: {
-    url: '/decisions/adr-0003-local-first-issue-tracking',
+    url: 'decisions/adr-0003-local-first-issue-tracking',
     expectedTitle: /ADR-0003|Local-First Issue Tracking/,
     keySelectors: {
       heading: 'h1',
@@ -161,7 +161,7 @@ const detailPages = {
     description: 'ADR 0003: Local-First Issue Tracking',
   },
   adr0004: {
-    url: '/decisions/adr-0004-research-first-protocol',
+    url: 'decisions/adr-0004-research-first-protocol',
     expectedTitle: /ADR-0004|Research-First Protocol/,
     keySelectors: {
       heading: 'h1',
@@ -170,7 +170,7 @@ const detailPages = {
     description: 'ADR 0004: Research-First Protocol',
   },
   adr0005: {
-    url: '/decisions/adr-0005-custom-compliance-rules',
+    url: 'decisions/adr-0005-custom-compliance-rules',
     expectedTitle: /ADR-0005|Custom Compliance Rules/,
     keySelectors: {
       heading: 'h1',
@@ -179,7 +179,7 @@ const detailPages = {
     description: 'ADR 0005: Custom Compliance Rules',
   },
   adr0006: {
-    url: '/decisions/adr-0006-regulatory-framework-mapping',
+    url: 'decisions/adr-0006-regulatory-framework-mapping',
     expectedTitle: /ADR-0006|Regulatory Framework Mapping/,
     keySelectors: {
       heading: 'h1',
@@ -188,7 +188,7 @@ const detailPages = {
     description: 'ADR 0006: Regulatory Framework Mapping',
   },
   adr0007: {
-    url: '/decisions/adr-0007-auth-evolution',
+    url: 'decisions/adr-0007-auth-evolution',
     expectedTitle: /ADR-0007|Auth Evolution/,
     keySelectors: {
       heading: 'h1',
@@ -197,7 +197,7 @@ const detailPages = {
     description: 'ADR 0007: Auth Evolution',
   },
   adr0008: {
-    url: '/decisions/adr-0008-container-registry',
+    url: 'decisions/adr-0008-container-registry',
     expectedTitle: /ADR-0008|Container Registry/,
     keySelectors: {
       heading: 'h1',
@@ -206,7 +206,7 @@ const detailPages = {
     description: 'ADR 0008: Container Registry',
   },
   adr0009: {
-    url: '/decisions/adr-0009-database-tier',
+    url: 'decisions/adr-0009-database-tier',
     expectedTitle: /ADR-0009|Database Tier/,
     keySelectors: {
       heading: 'h1',

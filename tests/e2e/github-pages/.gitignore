@@ -1,5 +1,6 @@
 # Playwright test results
 test-results/
+report/
 playwright-report/
 playwright/.cache/
 

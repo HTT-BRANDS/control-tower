@@ -68,7 +68,7 @@ test.describe('Responsive Design Testing', () => {
   test.describe('Navigation Visibility', () => {
     test('navigation is accessible on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('/');
+      await page.goto('./');
       await waitForPageLoad(page);
 
       // Navigation should exist
@@ -83,7 +83,7 @@ test.describe('Responsive Design Testing', () => {
 
     test('navigation is accessible on desktop', async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 720 });
-      await page.goto('/');
+      await page.goto('./');
       await waitForPageLoad(page);
 
       const nav = page.locator('nav, header nav');
@@ -99,21 +99,48 @@ test.describe('Responsive Design Testing', () => {
   test.describe('Content Readability', () => {
     test('text does not overflow viewport on mobile', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('/');
+      await page.goto('./');
       await waitForPageLoad(page);
 
-      // Check that no element overflows horizontally
-      const hasOverflow = await page.evaluate(() => {
+      // Check that no element overflows horizontally.
+      // Skip elements (or their children) with overflow containment —
+      // e.g., <pre> has overflow-x: auto, and its <code> child inherits
+      // the scrollable context even though <code> itself has overflow: visible.
+      const overflowInfo = await page.evaluate(() => {
+        function hasOverflowContainment(el) {
+          let current = el;
+          while (current && current !== document.body) {
+            const style = window.getComputedStyle(current);
+            const ox = style.overflowX;
+            if (ox === 'auto' || ox === 'scroll' || ox === 'hidden') {
+              return true;
+            }
+            current = current.parentElement;
+          }
+          return false;
+        }
+
         const elements = document.querySelectorAll('*');
         for (const el of elements) {
           if (el.scrollWidth > window.innerWidth) {
-            return true;
+            if (hasOverflowContainment(el)) {
+              continue;
+            }
+            return {
+              overflows: true,
+              tag: el.tagName,
+              className: el.className,
+              width: el.scrollWidth,
+            };
           }
         }
-        return false;
+        return { overflows: false };
       });
 
-      expect(hasOverflow, 'No horizontal overflow on mobile').toBe(false);
+      expect(
+        overflowInfo.overflows,
+        `No horizontal overflow on mobile (got: ${JSON.stringify(overflowInfo)})`
+      ).toBe(false);
     });
 
     test('images scale correctly at all sizes', async ({ page }) => {
@@ -122,7 +149,7 @@ test.describe('Responsive Design Testing', () => {
           width: viewportConfig.width,
           height: viewportConfig.height,
         });
-        await page.goto('/');
+        await page.goto('./');
         await waitForPageLoad(page);
 
         // Check images don't overflow their containers

@@ -87,7 +87,7 @@ test.describe('GitHub Pages - Cross-Browser Testing', () => {
   // Smoke tests
   test.describe('Smoke Tests', () => {
     test('Homepage loads', async ({ page }) => {
-      await page.goto('/');
+      await page.goto('./');
       await waitForPageLoad(page);
       expect(await page.title()).toBeTruthy();
       await expect(page.locator('body')).toBeVisible();
