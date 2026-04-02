@@ -1,17 +1,16 @@
 """Shared fixtures for sync tests."""
 
-import sys
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, MagicMock
 
 # Import Azure modules BEFORE mocking to ensure namespace packages work properly
 try:
+    import azure.core.exceptions
     import azure.identity
-    import azure.mgmt.resource
+    import azure.mgmt.compute  # noqa: F401 - needed for quota_service
     import azure.mgmt.costmanagement
     import azure.mgmt.policyinsights
-    import azure.mgmt.security
-    import azure.mgmt.compute  # noqa: F401 - needed for quota_service
-    import azure.core.exceptions
+    import azure.mgmt.resource
+    import azure.mgmt.security  # noqa: F401 — imported for availability check
     AZURE_AVAILABLE = True
 except ImportError:
     AZURE_AVAILABLE = False

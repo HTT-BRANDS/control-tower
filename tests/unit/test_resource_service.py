@@ -745,6 +745,7 @@ class TestResourceServiceGetIdleResourcesSummary:
                 "idle_type",
                 "estimated_monthly_savings",
                 "is_reviewed",
+                "idle_days",
             ]
         )
         idle1.id = 1
@@ -753,6 +754,7 @@ class TestResourceServiceGetIdleResourcesSummary:
         idle1.idle_type = "low_cpu"
         idle1.estimated_monthly_savings = 150.0
         idle1.is_reviewed = 0
+        idle1.idle_days = 45
 
         idle2 = MagicMock(
             spec_set=[
@@ -762,6 +764,7 @@ class TestResourceServiceGetIdleResourcesSummary:
                 "idle_type",
                 "estimated_monthly_savings",
                 "is_reviewed",
+                "idle_days",
             ]
         )
         idle2.id = 2
@@ -770,6 +773,7 @@ class TestResourceServiceGetIdleResourcesSummary:
         idle2.idle_type = "no_connections"
         idle2.estimated_monthly_savings = 500.0
         idle2.is_reviewed = 0
+        idle2.idle_days = 60
 
         idle3 = MagicMock(
             spec_set=[
@@ -779,6 +783,7 @@ class TestResourceServiceGetIdleResourcesSummary:
                 "idle_type",
                 "estimated_monthly_savings",
                 "is_reviewed",
+                "idle_days",
             ]
         )
         idle3.id = 3
@@ -787,31 +792,21 @@ class TestResourceServiceGetIdleResourcesSummary:
         idle3.idle_type = "low_cpu"
         idle3.estimated_monthly_savings = 100.0
         idle3.is_reviewed = 0
+        idle3.idle_days = 35
 
         idle_resources = [idle1, idle2, idle3]
 
+        # The service chains .filter().filter().all() — make each filter return itself
         mock_query = MagicMock()
-        mock_query.filter.return_value.all.return_value = idle_resources
+        mock_query.filter.return_value = mock_query
+        mock_query.all.return_value = idle_resources
 
-        tenant1 = MagicMock(spec_set=["id", "name"])
-        tenant1.id = "tenant-1"
-        tenant1.name = "Tenant 1"
-        tenant2 = MagicMock(spec_set=["id", "name"])
-        tenant2.id = "tenant-2"
-        tenant2.name = "Tenant 2"
+        service.db.query.return_value = mock_query
 
-        def query_side_effect(model):
-            if model == IdleResource:
-                return mock_query
-            elif model == Tenant:
-                mock_tenant_query = MagicMock()
-                mock_tenant_query.all.return_value = [tenant1, tenant2]
-                return mock_tenant_query
-            return mock_query
-
-        service.db.query.side_effect = query_side_effect
-
-        result = await service.get_idle_resources_summary()
+        # Service now uses get_tenant_name() helper instead of DB query
+        with patch("app.api.services.resource_service.get_tenant_name") as mock_get_name:
+            mock_get_name.side_effect = lambda tid: {"tenant-1": "Tenant 1", "tenant-2": "Tenant 2"}.get(tid, "Unknown")
+            result = await service.get_idle_resources_summary()
 
         assert isinstance(result, IdleResourceSummary)
         assert result.total_count == 3

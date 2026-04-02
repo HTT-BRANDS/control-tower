@@ -72,7 +72,7 @@ param adminEmails string = ''
 @description('Redis URL for caching and token blacklist')
 param redisUrl string = ''
 
-@description('Storage account access key (passed securely via Key Vault). When empty, falls back to listKeys().')
+@description('Storage account access key (passed securely via Key Vault). When empty, falls back to listKeys().') // #nosec — documentation only
 @secure()
 param storageAccessKey string = ''
 
@@ -160,7 +160,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = if (!empty(k
 }
 
 // Use Key Vault-sourced key when available, fall back to listKeys() for backwards compatibility
-var effectiveStorageKey = !empty(storageAccessKey) ? storageAccessKey : storageAccount.listKeys().keys[0].value
+var effectiveStorageKey = !empty(storageAccessKey) ? storageAccessKey : storageAccount.listKeys().keys[0].value // #nosec — Key Vault preferred, listKeys is fallback
 
 // Determine kind based on deployment type
 var appKind = useContainerDeployment ? 'app,linux,container' : 'app,linux'

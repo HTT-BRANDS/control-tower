@@ -343,6 +343,7 @@ class TestAzureClientManagerOidcPath:
 
     def test_oidc_path_resolves_client_id_from_tenants_config(self):
         self.mock_settings.use_oidc_federation = True
+        self.mock_settings.use_uami_auth = False
 
         mock_cred = MagicMock()
         mock_provider = MagicMock()
@@ -371,6 +372,7 @@ class TestAzureClientManagerOidcPath:
     def test_oidc_path_falls_back_to_db_client_id(self):
         """When tenants_config returns None, fall back to the DB tenant record."""
         self.mock_settings.use_oidc_federation = True
+        self.mock_settings.use_uami_auth = False
 
         mock_cred = MagicMock()
         mock_provider = MagicMock()
@@ -404,6 +406,7 @@ class TestAzureClientManagerOidcPath:
     def test_oidc_path_raises_value_error_when_no_client_id_found(self):
         """ValueError is raised when neither tenants_config nor DB can supply a client_id."""
         self.mock_settings.use_oidc_federation = True
+        self.mock_settings.use_uami_auth = False
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
@@ -420,6 +423,7 @@ class TestAzureClientManagerOidcPath:
     def test_secret_path_used_when_oidc_disabled(self):
         """When use_oidc_federation=False, original ClientSecretCredential path is taken."""
         self.mock_settings.use_oidc_federation = False
+        self.mock_settings.use_uami_auth = False
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
@@ -451,6 +455,7 @@ class TestGraphClientOidcPath:
     def test_oidc_path_returned_when_oidc_enabled(self):
         mock_settings = MagicMock()
         mock_settings.use_oidc_federation = True
+        mock_settings.use_uami_auth = False
 
         mock_cred = MagicMock()
 
@@ -472,6 +477,7 @@ class TestGraphClientOidcPath:
         mock_settings.azure_client_secret = "gc-secret"
         mock_settings.azure_tenant_id = "gc-tenant-id"
         mock_settings.use_oidc_federation = False
+        mock_settings.use_uami_auth = False
 
         with patch("app.api.services.graph_client.settings", mock_settings):
             with patch("app.api.services.graph_client.ClientSecretCredential") as mock_csc:
@@ -496,6 +502,7 @@ class TestGraphClientOidcPath:
         """Once _get_credential() resolves, same object returned on subsequent calls."""
         mock_settings = MagicMock()
         mock_settings.use_oidc_federation = True
+        mock_settings.use_uami_auth = False
 
         mock_cred = MagicMock()
 
@@ -525,6 +532,7 @@ class TestAzureCheckGetCredentialOidcBypass:
     def test_oidc_mode_bypasses_secret_check_and_delegates_to_manager(self):
         mock_settings = MagicMock()
         mock_settings.use_oidc_federation = True
+        mock_settings.use_uami_auth = False
         mock_settings.azure_client_id = None  # no secret configured
         mock_settings.azure_client_secret = None
 
@@ -532,9 +540,9 @@ class TestAzureCheckGetCredentialOidcBypass:
         mock_manager = MagicMock()
         mock_manager.get_credential.return_value = mock_cred
 
-        with patch("app.preflight.azure_checks.settings", mock_settings):
-            with patch("app.preflight.azure_checks.azure_client_manager", mock_manager):
-                from app.preflight.azure_checks import _get_credential
+        with patch("app.preflight.azure.base.settings", mock_settings):
+            with patch("app.preflight.azure.base.azure_client_manager", mock_manager):
+                from app.preflight.azure.base import _get_credential
 
                 cred = _get_credential("tenant-oidc")
 
@@ -544,34 +552,38 @@ class TestAzureCheckGetCredentialOidcBypass:
     def test_secret_mode_raises_azure_check_error_when_creds_missing(self):
         mock_settings = MagicMock()
         mock_settings.use_oidc_federation = False
+        mock_settings.use_uami_auth = False
         mock_settings.azure_client_id = None
         mock_settings.azure_client_secret = None
 
-        with patch("app.preflight.azure_checks.settings", mock_settings):
-            from app.preflight.azure_checks import AzureCheckError, _get_credential
+        with patch("app.preflight.azure.base.settings", mock_settings):
+            from app.preflight.azure.base import AzureCheckError, _get_credential
 
             with pytest.raises(AzureCheckError) as exc_info:
                 _get_credential("tenant-secret")
 
             assert exc_info.value.error_code == "credentials_not_configured"
-            assert exc_info.value.details["oidc_federation_enabled"] is False
+            assert exc_info.value.details["azure_client_id_set"] is False
 
     def test_secret_mode_succeeds_when_creds_present(self):
         mock_settings = MagicMock()
         mock_settings.use_oidc_federation = False
+        mock_settings.use_uami_auth = False
         mock_settings.azure_client_id = "real-client-id"
         mock_settings.azure_client_secret = "real-client-secret"
 
-        mock_cred = MagicMock()
-        mock_manager = MagicMock()
-        mock_manager.get_credential.return_value = mock_cred
-
-        with patch("app.preflight.azure_checks.settings", mock_settings):
-            with patch("app.preflight.azure_checks.azure_client_manager", mock_manager):
-                from app.preflight.azure_checks import _get_credential
+        mock_csc = MagicMock()
+        with patch("app.preflight.azure.base.settings", mock_settings):
+            with patch("azure.identity.ClientSecretCredential", return_value=mock_csc) as mock_cls:
+                from app.preflight.azure.base import _get_credential
 
                 cred = _get_credential("tenant-with-secret")
-                assert cred is mock_cred
+                mock_cls.assert_called_once_with(
+                    tenant_id="tenant-with-secret",
+                    client_id="real-client-id",
+                    client_secret="real-client-secret",
+                )
+                assert cred is mock_csc
 
 
 # ===========================================================================

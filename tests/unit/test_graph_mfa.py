@@ -4,24 +4,23 @@ This module tests the enhanced GraphClient methods for MFA data collection
 including pagination, error handling, and retry logic.
 """
 
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # Import Azure modules BEFORE any app imports to ensure namespace packages work
 try:
-    from azure.identity import ClientSecretCredential
     from azure.core.credentials import TokenCredential
     from azure.core.exceptions import HttpResponseError
+    from azure.identity import ClientSecretCredential
 except ImportError:
     # Mock classes if Azure SDK not available
     class ClientSecretCredential:
         pass
-    
+
     class TokenCredential:
         pass
-    
+
     class HttpResponseError(Exception):
         def __init__(self, message="", status_code=None, **kwargs):
             super().__init__(message)

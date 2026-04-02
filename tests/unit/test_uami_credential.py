@@ -402,7 +402,7 @@ class TestCredentialCreation:
         """Should raise UAMICredentialError when UAMI cannot be used."""
         # Create provider without UAMI client_id to simulate unavailable UAMI
         provider_without_uami = UAMICredentialProvider(uami_client_id="")
-        
+
         with pytest.raises(UAMICredentialError) as exc_info:
             provider_without_uami.get_credential_for_tenant(
                 tenant_id="00000000-0000-0000-0000-000000000001",

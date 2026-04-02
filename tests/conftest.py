@@ -2,22 +2,23 @@
 
 # Pre-import Azure modules to fix namespace package issues during test collection
 # This must happen before any other imports
-import sys
 
 # Ensure azure namespace packages are properly loaded
 try:
     # Core Azure modules
-    import azure.identity  # noqa: F401
     import azure.core.credentials  # noqa: F401
-    # Management modules
-    import azure.mgmt.subscription  # noqa: F401
-    import azure.mgmt.resource  # noqa: F401
-    import azure.mgmt.costmanagement  # noqa: F401
-    import azure.mgmt.policyinsights  # noqa: F401
-    import azure.mgmt.security  # noqa: F401
-    import azure.mgmt.authorization  # noqa: F401
+    import azure.identity  # noqa: F401
+
     # Key Vault
     import azure.keyvault.secrets  # noqa: F401
+    import azure.mgmt.authorization  # noqa: F401
+    import azure.mgmt.costmanagement  # noqa: F401
+    import azure.mgmt.policyinsights  # noqa: F401
+    import azure.mgmt.resource  # noqa: F401
+    import azure.mgmt.security  # noqa: F401
+
+    # Management modules
+    import azure.mgmt.subscription  # noqa: F401
 except ImportError:
     pass  # Will be mocked in tests anyway
 

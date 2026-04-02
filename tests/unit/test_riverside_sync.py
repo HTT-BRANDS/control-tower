@@ -1,6 +1,5 @@
 """Tests for Riverside Azure sync services module."""
 
-import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -8,10 +7,10 @@ import pytest
 # Import Azure modules BEFORE any app imports to ensure namespace packages work
 try:
     from azure.core.exceptions import HttpResponseError
+    from azure.identity import ClientSecretCredential
     from azure.mgmt.costmanagement import CostManagementClient
     from azure.mgmt.policyinsights import PolicyInsightsClient
     from azure.mgmt.security import SecurityCenter
-    from azure.identity import ClientSecretCredential
 except ImportError:
     # Create a proper mock exception class if Azure SDK not available
     class HttpResponseError(Exception):
@@ -19,17 +18,17 @@ except ImportError:
             super().__init__(message)
             self.status_code = status_code
             self.message = message
-    
+
     # Mock classes
     class CostManagementClient:
         pass
-    
+
     class PolicyInsightsClient:
         pass
-    
+
     class SecurityCenter:
         pass
-    
+
     class ClientSecretCredential:
         pass
 

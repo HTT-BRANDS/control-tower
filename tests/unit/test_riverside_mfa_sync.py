@@ -4,7 +4,6 @@ This module tests the enhanced MFA sync functionality that uses the new
 GraphClient methods for improved MFA data collection.
 """
 
-import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

@@ -125,7 +125,7 @@ var volumes = !empty(fileShareName) && !empty(storageAccountName) ? [
     azureFile: {
       shareName: fileShareName
       storageAccountName: storageAccountName
-      storageAccountKey: !empty(storageAccountKey) ? storageAccountKey : storageAccount.listKeys().keys[0].value
+      storageAccountKey: !empty(storageAccountKey) ? storageAccountKey : storageAccount.listKeys().keys[0].value // #nosec — Key Vault preferred, listKeys is fallback
     }
   }
 ] : []

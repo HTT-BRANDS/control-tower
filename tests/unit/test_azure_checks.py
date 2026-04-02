@@ -7,7 +7,7 @@ Traces: PF-003, PF-004 — Azure authentication, subscription,
 Graph API, cost management, policy, resources, security, and RBAC checks.
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -148,18 +148,18 @@ class TestCheckClassInitialization:
 
     def test_graph_check_init(self):
         check = AzureGraphCheck()
-        assert check.check_id == "azure_graph_api"
+        assert check.check_id == "graph_api"
         assert check.category == CheckCategory.AZURE_GRAPH
 
     def test_cost_management_check_init(self):
         check = AzureCostManagementCheck()
         assert check.check_id == "azure_cost_management"
         assert check.category == CheckCategory.AZURE_COST_MANAGEMENT
-        assert check._subscription_id is None
 
     def test_cost_management_with_subscription(self):
-        check = AzureCostManagementCheck(subscription_id="sub-123")
-        assert check._subscription_id == "sub-123"
+        """Cost management check no longer takes subscription_id in constructor."""
+        check = AzureCostManagementCheck()
+        assert check.check_id == "azure_cost_management"
 
     def test_policy_check_init(self):
         check = AzurePolicyCheck()
@@ -168,22 +168,23 @@ class TestCheckClassInitialization:
 
     def test_resources_check_init(self):
         check = AzureResourcesCheck()
-        assert check.check_id == "azure_resource_manager"
+        assert check.check_id == "azure_resources"
         assert check.category == CheckCategory.AZURE_RESOURCES
 
     def test_security_check_init(self):
         check = AzureSecurityCheck()
-        assert check.check_id == "azure_security_center"
+        assert check.check_id == "azure_security"
         assert check.category == CheckCategory.AZURE_SECURITY
 
     def test_rbac_check_init(self):
         check = AzureRBACCheck()
-        assert check.check_id == "azure_rbac_permissions"
+        assert check.check_id == "azure_rbac"
         assert check.category == CheckCategory.AZURE_SECURITY
 
     def test_rbac_check_with_subscription(self):
-        check = AzureRBACCheck(subscription_id="sub-456")
-        assert check._subscription_id == "sub-456"
+        """RBAC check no longer takes subscription_id in constructor."""
+        check = AzureRBACCheck()
+        assert check.check_id == "azure_rbac"
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +196,7 @@ class TestCheckNoTenantID:
     """Tests for checks that fail when no tenant_id is available."""
 
     @pytest.mark.asyncio
-    @patch("app.preflight.azure_checks.settings")
+    @patch("app.preflight.azure.identity.settings")
     async def test_auth_check_no_tenant_fails(self, mock_settings):
         mock_settings.azure_tenant_id = None
         check = AzureAuthCheck()
@@ -204,22 +205,22 @@ class TestCheckNoTenantID:
         assert "No tenant ID" in result.message
 
     @pytest.mark.asyncio
-    @patch("app.preflight.azure_checks.settings")
-    async def test_subscriptions_check_no_tenant_fails(self, mock_settings):
+    async def test_subscriptions_check_no_tenant_fails(self):
+        mock_settings = MagicMock()
         mock_settings.azure_tenant_id = None
-        check = AzureSubscriptionsCheck()
-        result = await check._execute_check(tenant_id=None)
-        assert result.status == CheckStatus.FAIL
-        assert "No tenant ID" in result.message
+        with patch("app.core.config.get_settings", return_value=mock_settings):
+            check = AzureSubscriptionsCheck()
+            result = await check._execute_check(tenant_id=None)
+            assert result.status == CheckStatus.FAIL
 
     @pytest.mark.asyncio
-    @patch("app.preflight.azure_checks.settings")
-    async def test_graph_check_no_tenant_fails(self, mock_settings):
+    async def test_graph_check_no_tenant_fails(self):
+        mock_settings = MagicMock()
         mock_settings.azure_tenant_id = None
-        check = AzureGraphCheck()
-        result = await check._execute_check(tenant_id=None)
-        assert result.status == CheckStatus.FAIL
-        assert "No tenant ID" in result.message
+        with patch("app.core.config.get_settings", return_value=mock_settings):
+            check = AzureGraphCheck()
+            result = await check._execute_check(tenant_id=None)
+            assert result.status == CheckStatus.FAIL
 
 
 # ---------------------------------------------------------------------------

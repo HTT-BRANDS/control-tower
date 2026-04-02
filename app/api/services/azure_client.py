@@ -427,30 +427,16 @@ class AzureClientManager:
             logger.debug("ClientSecretCredential created for tenant %s", tenant_id)
             # Fall through to caching below
 
-        # Cache with expiration (only for non-UAMI or if we reached here for UAMI)
+        # Cache with expiration — reuse the credential already created above
         if self._settings.use_uami_auth:
-            # UAMI path already created the credential above
             cache_key = f"uami:{tenant_id}:{app_id}"
-            new_credential_to_cache = new_credential
         elif self._settings.use_oidc_federation:
-            from app.core.oidc_credential import get_oidc_provider
-
-            new_credential_to_cache = get_oidc_provider().get_credential_for_tenant(
-                tenant_id, oidc_client_id
-            )
             cache_key = f"{tenant_id}:{oidc_client_id}"
         else:
-            client_id, client_secret, _ = self._resolve_credentials(tenant_id)
-            new_credential_to_cache = ClientSecretCredential(
-                tenant_id=tenant_id,
-                client_id=client_id,
-                client_secret=client_secret,
-                connection_timeout=10,
-            )
             cache_key = tenant_id
 
         self._credentials[cache_key] = CachedCredential(
-            credential=new_credential_to_cache,
+            credential=new_credential,
             created_at=now,
             expires_at=now + self._credential_ttl,
         )
@@ -460,7 +446,7 @@ class AzureClientManager:
             tenant_id,
             self._credential_ttl,
         )
-        return new_credential_to_cache
+        return new_credential
 
     def get_default_credential(self) -> DefaultAzureCredential:
         """Get default credential for Lighthouse scenarios."""

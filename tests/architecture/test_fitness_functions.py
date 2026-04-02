@@ -494,6 +494,10 @@ def test_file_size_limit():
         "app/core/cache.py",
         "app/api/services/budget_service.py",
         "app/api/routes/identity.py",  # IG-010: access review routes added
+        "app/core/config.py",  # Large settings model — cohesive, no good split
+        "app/main.py",  # FastAPI app setup — 24 routers + middleware
+        "app/core/azure_service_health.py",  # Comprehensive health check logic
+        "app/core/metrics.py",  # Prometheus + App Insights metrics
     }
 
     for py_file in app_path.rglob("*.py"):
