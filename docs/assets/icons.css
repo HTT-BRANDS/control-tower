@@ -1,98 +1,57 @@
 /* ============================================================
-   Lucide-style SVG Icon System
-   Replaces emoji icons with clean, scalable SVG icons.
-   Each icon is a CSS class with an inline SVG background.
+   SVG Icon System v2 — Matches Design System v2 tokens
    ============================================================ */
 
-.icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1em;
-  height: 1em;
-  flex-shrink: 0;
-}
-
-/* Card icon — larger display size */
+/* Card icons */
 .card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-  background: var(--cream, #fdfaf3);
+  width: 48px; height: 48px;
+  border-radius: var(--radius-md, 12px);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: var(--sp-3, .75rem);
+  background: var(--gold-dim, rgba(255,201,87,.12));
+  transition: background var(--dur-normal, .25s) var(--ease-out, ease),
+              transform var(--dur-normal, .25s) var(--ease-spring, ease);
 }
-
 .card-icon svg {
-  width: 24px;
-  height: 24px;
-  stroke: var(--burgundy, #500711);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
+  width: 24px; height: 24px;
+  stroke: var(--burgundy, #500711); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; fill: none;
+  transition: stroke var(--dur-normal, .25s);
 }
-
-/* Doc card icon */
-.doc-card-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-  background: var(--cream, #fdfaf3);
-}
-
-.doc-card-icon svg {
-  width: 22px;
-  height: 22px;
-  stroke: var(--burgundy, #500711);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-
-/* Callout icon */
-.callout-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  margin-right: 0.5rem;
-}
-
-.callout-icon svg {
-  width: 20px;
-  height: 20px;
-  stroke: var(--gold, #ffc957);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-
-/* Hover effects */
 .card:hover .card-icon {
   background: var(--burgundy, #500711);
-  transition: background 0.25s;
+  transform: scale(1.08);
 }
+.card:hover .card-icon svg { stroke: var(--gold, #ffc957); }
 
-.card:hover .card-icon svg {
-  stroke: var(--gold, #ffc957);
-  transition: stroke 0.25s;
+/* Doc card icons */
+.doc-card-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm, 8px);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: var(--sp-3, .75rem);
+  background: var(--gold-dim, rgba(255,201,87,.12));
+  transition: background var(--dur-normal, .25s), transform var(--dur-normal, .25s) var(--ease-spring, ease);
 }
-
+.doc-card-icon svg {
+  width: 22px; height: 22px;
+  stroke: var(--burgundy, #500711); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; fill: none;
+  transition: stroke var(--dur-normal, .25s);
+}
 .doc-card:hover .doc-card-icon {
   background: var(--burgundy, #500711);
-  transition: background 0.25s;
+  transform: scale(1.08);
 }
+.doc-card:hover .doc-card-icon svg { stroke: var(--gold, #ffc957); }
 
-.doc-card:hover .doc-card-icon svg {
-  stroke: var(--gold, #ffc957);
-  transition: stroke 0.25s;
+/* Callout icons */
+.callout-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle; margin-right: var(--sp-2, .5rem);
+}
+.callout-icon svg {
+  width: 20px; height: 20px;
+  stroke: var(--gold, #ffc957); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; fill: none;
 }

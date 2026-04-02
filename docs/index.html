@@ -21,7 +21,7 @@
 
   <nav class="nav" role="navigation" aria-label="Main">
     <div class="nav-inner">
-      <a href="." class="nav-logo">HT</a>
+      <a href="." class="nav-logo" aria-label="Home">HT</a>
       <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -40,7 +40,7 @@
     <section class="hero">
       <div class="hero-inner">
         <span class="hero-badge">Production Certified · v1.9.0</span>
-        <h1 class="hero-title">Azure Governance Platform</h1>
+        <h1 class="hero-title">Azure Governance<br>Platform</h1>
         <p class="hero-subtitle">Multi-tenant Azure governance, cost optimization, and compliance monitoring — built for enterprise scale, running on a startup budget.</p>
         <div class="hero-metrics">
           <div class="metric"><span class="metric-value">A+</span><span class="metric-label">Grade</span></div>
@@ -264,15 +264,24 @@ make dev</code></pre>
   </footer>
 
   <script>
+  /* Mobile nav toggle */
   (function() {
-    var toggle = document.querySelector('.nav-toggle');
-    var navLinks = document.querySelector('.nav-links');
-    if (toggle && navLinks) {
-      toggle.addEventListener('click', function() {
-        navLinks.classList.toggle('open');
-        this.setAttribute('aria-expanded', navLinks.classList.contains('open'));
-      });
-    }
+    var t = document.querySelector('.nav-toggle');
+    var n = document.querySelector('.nav-links');
+    if (t && n) t.addEventListener('click', function() {
+      n.classList.toggle('open');
+      this.setAttribute('aria-expanded', n.classList.contains('open'));
+    });
+  })();
+  /* Scroll-triggered entrance animations */
+  (function() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var els = document.querySelectorAll('.fade-up, .stagger');
+    if (!els.length) return;
+    var io = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.15 });
+    els.forEach(function(el) { io.observe(el); });
   })();
   </script>
 </body>
