@@ -35,7 +35,11 @@ async def health_metrics():
 @router.get("/cache")
 async def cache_metrics():
     """Cache performance metrics."""
-    stats = await cache_manager.get_stats()
+    stats = cache_manager.get_metrics()
+    if hasattr(stats, 'to_dict'):
+        stats = stats.to_dict()
+    elif not isinstance(stats, dict):
+        stats = {}
     return {
         "timestamp": datetime.now(UTC).isoformat(),
         "hits": stats.get("hits", 0),
