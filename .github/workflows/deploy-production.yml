@@ -90,6 +90,74 @@ jobs:
       - name: Format check
         run: uv run ruff format --check .
 
+      - name: Create CI tenant config
+        run: |
+          # Create tenants.yaml with OIDC enabled for CI testing
+          cat > config/tenants.yaml << 'EOF'
+          tenants:
+            HTT:
+              name: "Head-To-Toe (HTT)"
+              code: "HTT"
+              tenant_id: "00000000-0000-0000-a000-000000000001"
+              app_id: "00000000-0000-0000-b000-000000000001"
+              admin_email: "admin@example.com"
+              domains:
+                - "example.com"
+              is_active: true
+              is_riverside: true
+              priority: 1
+              oidc_enabled: true
+            BCC:
+              name: "Bishops (BCC)"
+              code: "BCC"
+              tenant_id: "00000000-0000-0000-a000-000000000002"
+              app_id: "00000000-0000-0000-b000-000000000002"
+              admin_email: "admin@example.com"
+              domains:
+                - "example.com"
+              is_active: true
+              is_riverside: true
+              priority: 2
+              oidc_enabled: true
+            FN:
+              name: "Frenchies (FN)"
+              code: "FN"
+              tenant_id: "00000000-0000-0000-a000-000000000003"
+              app_id: "00000000-0000-0000-b000-000000000003"
+              admin_email: "admin@example.com"
+              domains:
+                - "example.com"
+              is_active: true
+              is_riverside: true
+              priority: 3
+              oidc_enabled: true
+            TLL:
+              name: "Lash Lounge (TLL)"
+              code: "TLL"
+              tenant_id: "00000000-0000-0000-a000-000000000004"
+              app_id: "00000000-0000-0000-b000-000000000004"
+              admin_email: "admin@example.com"
+              domains:
+                - "example.com"
+              is_active: true
+              is_riverside: true
+              priority: 4
+              oidc_enabled: true
+            DCE:
+              name: "Delta Crown Extensions (DCE)"
+              code: "DCE"
+              tenant_id: "00000000-0000-0000-a000-000000000005"
+              app_id: "00000000-0000-0000-b000-000000000005"
+              admin_email: "admin@example.com"
+              domains:
+                - "example.com"
+              is_active: true
+              is_riverside: true
+              priority: 5
+              oidc_enabled: true
+          EOF
+          echo "Created config/tenants.yaml with OIDC enabled for all tenants"
+
       - name: Full test suite
         if: ${{ !inputs.skip_tests }}
         run: uv run pytest tests/unit/ tests/integration/ -q --tb=short
