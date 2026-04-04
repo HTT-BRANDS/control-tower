@@ -341,6 +341,9 @@ body {
   --color-brand-warning-110: #c26b05;
   --color-brand-warning-130: #9a5504;
   --color-brand-warning-140: #7c4503;
+
+  /* Font family — Inter loaded via Google Fonts CDN, system stack fallback */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 

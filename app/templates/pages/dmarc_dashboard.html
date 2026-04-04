@@ -532,11 +532,15 @@
         const width = ctx.width = ctx.parentElement.clientWidth;
         const height = ctx.height = ctx.parentElement.clientHeight;
         const g = ctx.getContext('2d');
+        const cs = getComputedStyle(document.documentElement);
+        const colorMuted = cs.getPropertyValue('--text-muted').trim() || '#9CA3AF';
+        const colorBorder = cs.getPropertyValue('--border-color').trim() || '#E5E7EB';
+        const colorInfo = cs.getPropertyValue('--color-info').trim() || '#3B82F6';
         
         g.clearRect(0, 0, width, height);
         
         if (trends.length < 2) {
-            g.fillStyle = '#9CA3AF';
+            g.fillStyle = colorMuted;
             g.font = '14px sans-serif';
             g.textAlign = 'center';
             g.fillText('No trend data available', width / 2, height / 2);
@@ -548,7 +552,7 @@
         const chartHeight = height - padding * 2;
         
         // Draw axes
-        g.strokeStyle = '#E5E7EB';
+        g.strokeStyle = colorBorder;
         g.lineWidth = 1;
         g.beginPath();
         g.moveTo(padding, padding);
@@ -557,7 +561,7 @@
         g.stroke();
         
         // Draw data line
-        g.strokeStyle = '#2563EB';
+        g.strokeStyle = colorInfo;
         g.lineWidth = 2;
         g.beginPath();
         
@@ -582,14 +586,14 @@
             const x = padding + i * stepX;
             const y = height - padding - (trend.compliance_percentage / maxCompliance) * chartHeight;
             
-            g.fillStyle = '#2563EB';
+            g.fillStyle = colorInfo;
             g.beginPath();
             g.arc(x, y, 4, 0, Math.PI * 2);
             g.fill();
         });
         
         // Y-axis labels
-        g.fillStyle = '#6B7280';
+        g.fillStyle = colorMuted;
         g.font = '10px sans-serif';
         g.textAlign = 'right';
         for (let i = 0; i <= 5; i++) {
