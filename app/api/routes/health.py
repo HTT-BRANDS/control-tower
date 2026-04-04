@@ -73,7 +73,7 @@ async def api_health_check(
 
     # Check cache
     try:
-        await cache_manager.set("health_check", "ok", ttl=10)
+        await cache_manager.set("health_check", "ok", ttl_seconds=10)
         cache_value = await cache_manager.get("health_check")
         cache_metrics = cache_manager.get_metrics()
 
@@ -189,7 +189,7 @@ async def api_health_check_detailed(
 
     # Detailed cache check
     try:
-        await cache_manager.set("health_check_detailed", "ok", ttl=10)
+        await cache_manager.set("health_check_detailed", "ok", ttl_seconds=10)
         cache_value = await cache_manager.get("health_check_detailed")
         cache_metrics = cache_manager.get_metrics()
 

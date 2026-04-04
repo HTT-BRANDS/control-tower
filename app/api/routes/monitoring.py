@@ -149,7 +149,7 @@ async def health_check_deep(db: Session = Depends(get_db)) -> dict[str, Any]:
 
     # Check cache with detailed metrics
     try:
-        await cache_manager.set("health_check", "ok", ttl=10)
+        await cache_manager.set("health_check", "ok", ttl_seconds=10)
         cache_value = await cache_manager.get("health_check")
         cache_metrics = cache_manager.get_metrics()
 
