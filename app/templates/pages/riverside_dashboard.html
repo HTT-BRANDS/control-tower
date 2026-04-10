@@ -303,17 +303,17 @@
 
     function updateDashboard(data) {
         // Update summary cards
-        document.getElementById('maturity-score').textContent = data.overall_maturity.toFixed(1) + '/5.0';
-        document.getElementById('maturity-progress').textContent = Math.round((data.overall_maturity / 5) * 100) + '%';
-        document.getElementById('maturity-bar').style.width = (data.overall_maturity / 5 * 100) + '%';
+        document.getElementById('maturity-score').textContent = data.overall_maturity != null ? data.overall_maturity.toFixed(1) + '/5.0' : 'N/A';
+        document.getElementById('maturity-progress').textContent = data.overall_maturity != null ? Math.round((data.overall_maturity / 5) * 100) + '%' : 'N/A';
+        document.getElementById('maturity-bar').style.width = (data.overall_maturity != null ? data.overall_maturity / 5 * 100 : 0) + '%';
 
-        document.getElementById('mfa-coverage').textContent = data.overall_mfa_coverage.toFixed(1) + '%';
-        document.getElementById('mfa-progress').textContent = data.overall_mfa_coverage.toFixed(1) + '%';
-        document.getElementById('mfa-bar').style.width = data.overall_mfa_coverage + '%';
+        document.getElementById('mfa-coverage').textContent = data.overall_mfa_coverage != null ? data.overall_mfa_coverage.toFixed(1) + '%' : 'N/A';
+        document.getElementById('mfa-progress').textContent = data.overall_mfa_coverage != null ? data.overall_mfa_coverage.toFixed(1) + '%' : 'N/A';
+        document.getElementById('mfa-bar').style.width = (data.overall_mfa_coverage || 0) + '%';
 
-        document.getElementById('device-compliance').textContent = data.overall_device_compliance.toFixed(1) + '%';
-        document.getElementById('device-progress').textContent = data.overall_device_compliance.toFixed(1) + '%';
-        document.getElementById('device-bar').style.width = data.overall_device_compliance + '%';
+        document.getElementById('device-compliance').textContent = data.overall_device_compliance != null ? data.overall_device_compliance.toFixed(1) + '%' : 'N/A';
+        document.getElementById('device-progress').textContent = data.overall_device_compliance != null ? data.overall_device_compliance.toFixed(1) + '%' : 'N/A';
+        document.getElementById('device-bar').style.width = (data.overall_device_compliance || 0) + '%';
 
         document.getElementById('critical-gaps').textContent = data.total_critical_gaps;
         document.getElementById('requirements-count').textContent = `${data.total_requirements_completed}/${data.total_requirements}`;
