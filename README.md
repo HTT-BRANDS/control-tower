@@ -1,54 +1,49 @@
 # Azure Multi-Tenant Governance Platform
 
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](./CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
-[![Tests](https://img.shields.io/badge/tests-2,563+-brightgreen.svg)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-3,799-brightgreen.svg)](./tests/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 A lightweight, cost-effective platform for managing Azure/M365 governance across multiple tenants. Built with Python, FastAPI, HTMX, and Tailwind CSS.
 
-**🏆 Production Ready | 💰 75% Cost Optimized | 🔐 Zero-Secrets Auth | ✅ 221 Tasks Complete**
+**🏆 Production Ready | 💰 75% Cost Optimized | 🔐 Zero-Secrets Auth | ✅ 322 Tasks Complete | 🧪 3,799 Tests**
 
-## ✨ What's New in v1.9.0
+## ✨ What's New in v2.1.0
 
-**April 2026 Release — "Zero Gravity"**
+**April 2026 Release — "Usability Excellence"**
 
 ### 🎯 Major Highlights
 
-- **Zero-Secrets Authentication** — Complete UAMI-based auth (no client secrets)
-- **75% Cost Reduction** — $298/mo → $73/mo infrastructure optimization  
-- **Zero Open Issues** — All 7 original issues resolved
-- **2,563+ Tests Passing** — 100% test pass rate
+- **322 Roadmap Tasks Complete** — 18 phases of development, zero open issues
+- **3,799 Tests Passing** — 1.27x test-to-source ratio, zero failures
+- **Security Headers Hardening** — Environment-specific HSTS, 12 security headers, 70 integration tests
+- **WCAG 2.2 Accessibility** — aria-hidden on decorative SVGs, enhanced skip links, focus indicators
+- **Interactive OpenAPI Examples** — Request/response JSON samples on /docs
 
 ### 🔐 Security & Authentication
+- Environment-specific SecurityHeadersConfig (dev/staging/prod HSTS presets)
+- 12 security headers on every response with 0.25ms overhead
 - User-Assigned Managed Identity (UAMI) zero-secrets architecture
-- PKCE OAuth implementation (RFC 7636)
-- Enhanced security headers (7/7 headers)
-- JWT algorithm confusion prevention
-- Refresh token blacklisting with Redis
-- CSP nonce injection for inline scripts
+- PKCE OAuth, JWT algorithm confusion prevention, refresh token blacklisting
+- CSP nonce injection, GPC middleware for CCPA/CPRA compliance
 
-### 💰 Cost Optimizations
-- **GitHub Container Registry** — Migrated from ACR (~$150/mo savings)
-- **Azure SQL Free Tier** — Staging database at $0 (was $15/mo)
-- **Right-sized Infrastructure** — B2→B1, S2→S0 optimizations
-- **Orphaned Resource Cleanup** — $85/mo additional savings
+### ♿ Accessibility
+- WCAG 2.2 AA compliant — skip nav, focus-visible, 44px touch targets
+- aria-hidden=true on decorative SVGs across 28 templates
+- Enhanced skip link implementation with visible-on-focus
+- CSS focus indicator conflict resolution
+- axe-core automated testing integration
 
 ### 🛠️ Developer Experience
-- **Makefile** — 15+ common commands (`make test`, `make lint`, `make deploy-dev`)
-- **Enhanced Pre-commit Hooks** — Ruff import sorting, comprehensive linting
-- **Automated Backups** — GitHub Actions backup workflow
-- **Operations Playbook** — 24.5 KB complete operations guide
+- Interactive OpenAPI examples with 6 JSON sample payloads
+- Security headers middleware benchmark: 0.25ms overhead, 1,316 req/s
+- 223 test files with 75,796 lines of test code
+- Pre-commit hooks: ruff import sorting, linting, formatting, secret detection
+- Full Locust load test suite for performance validation
 
-### 📊 Observability
-- Enhanced Application Insights with custom telemetry
-- Structured API request logging with timing
-- Distributed tracing with OpenTelemetry
-- Detailed health check metrics
-- `/api/v1/metrics/*` endpoints
-
-See [RELEASE_NOTES_v1.9.0.md](./docs/RELEASE_NOTES_v1.9.0.md) for complete details.
+See [CHANGELOG.md](./CHANGELOG.md) for version history.
 
 ---
 

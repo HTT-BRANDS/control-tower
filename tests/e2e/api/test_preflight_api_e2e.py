@@ -1,6 +1,5 @@
 """E2E tests for Preflight API endpoints."""
 
-import pytest
 from playwright.sync_api import APIRequestContext
 
 
@@ -19,10 +18,6 @@ class TestPreflightAPI:
         resp = unauth_api_context.post("/api/v1/preflight/run")
         assert resp.status in (401, 403)
 
-    @pytest.mark.xfail(
-        reason="Preflight run hits real Azure APIs and may exceed timeout",
-        raises=Exception,
-    )
     def test_run_with_auth(self, api_context: APIRequestContext):
         """POST /api/v1/preflight/run triggers a preflight check."""
         resp = api_context.post(

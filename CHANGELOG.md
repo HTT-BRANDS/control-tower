@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-04-08
+
+### Phase 19: Release Hygiene Sprint
+- **Documentation**: README version/stats refresh (v2.1.0, 3,799 tests, 322 tasks)
+- **Version Sync**: pyproject.toml + app/__init__.py aligned to 2.1.0
+- **E2E xfail Cleanup**: 14 unnecessary xfail markers removed — only 2 legitimate failures remain
+- **Performance**: Security headers benchmark suite (0.25ms overhead, 1,316 req/s)
+- **Test Count**: 3,802 tests (3,799 unit/integration + 3 performance benchmarks)
+- **Roadmap**: 328 total tasks completed across 19 phases
+
 ## [2.1.0] - 2026-04-08
 
 ### Phase 18: Usability Excellence Sprint

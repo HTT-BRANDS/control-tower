@@ -14,14 +14,12 @@ class TestDashboardPage:
         assert resp is not None
         assert resp.status in (200, 401, 403)
 
-    @pytest.mark.xfail(reason="May require cookie-based auth for HTML pages")
     def test_dashboard_has_title(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/dashboard")
         if resp and resp.status == 200:
             title = authenticated_page.title()
             assert len(title) > 0
 
-    @pytest.mark.xfail(reason="May require cookie-based auth for HTML pages")
     def test_dashboard_has_navigation(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/dashboard")
         if resp and resp.status == 200:
@@ -29,7 +27,6 @@ class TestDashboardPage:
             nav = authenticated_page.locator("nav, [role='navigation'], .sidebar, .nav")
             assert nav.count() > 0
 
-    @pytest.mark.xfail(reason="May require cookie-based auth for HTML pages")
     def test_dashboard_loads_css(self, authenticated_page: Page, base_url: str):
         """Dashboard page loads CSS stylesheets."""
         resp = authenticated_page.goto(f"{base_url}/dashboard")
@@ -37,7 +34,6 @@ class TestDashboardPage:
             links = authenticated_page.locator("link[rel='stylesheet']")
             assert links.count() > 0
 
-    @pytest.mark.xfail(reason="May require cookie-based auth for HTML pages")
     def test_dashboard_has_htmx(self, authenticated_page: Page, base_url: str):
         """Dashboard includes HTMX library."""
         resp = authenticated_page.goto(f"{base_url}/dashboard")
@@ -60,13 +56,11 @@ class TestDashboardPage:
 class TestDashboardHTMXPartials:
     """HTMX partial endpoints for dashboard components."""
 
-    @pytest.mark.xfail(reason="Partials may require cookie auth")
     def test_cost_summary_partial(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/partials/cost-summary-card")
         assert resp is not None
         assert resp.status in (200, 401, 403)
 
-    @pytest.mark.xfail(reason="Partials may require cookie auth")
     def test_compliance_gauge_partial(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/partials/compliance-gauge")
         assert resp is not None

@@ -1,6 +1,6 @@
 [project]
 name = "azure-governance-platform"
-version = "2.1.0"
+version = "2.2.0"
 description = "Multi-tenant Azure governance platform for cost optimization, compliance monitoring, resource management, and identity governance"
 readme = "README.md"
 requires-python = ">=3.11"

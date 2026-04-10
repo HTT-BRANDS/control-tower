@@ -1,6 +1,5 @@
 """E2E browser tests for the Riverside compliance dashboard."""
 
-import pytest
 from playwright.sync_api import Page
 
 
@@ -12,14 +11,12 @@ class TestRiversideDashboard:
         assert resp is not None
         assert resp.status in (200, 401, 403)
 
-    @pytest.mark.xfail(reason="May require cookie auth")
     def test_riverside_has_compliance_content(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/riverside")
         if resp and resp.status == 200:
             content = authenticated_page.content()
             assert "riverside" in content.lower() or "compliance" in content.lower()
 
-    @pytest.mark.xfail(reason="May require cookie auth")
     def test_riverside_has_deadline_info(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/riverside")
         if resp and resp.status == 200:
@@ -29,7 +26,6 @@ class TestRiversideDashboard:
                 "deadline" in content.lower() or "countdown" in content.lower() or "2026" in content
             )
 
-    @pytest.mark.xfail(reason="May require cookie auth")
     def test_riverside_loads_stylesheets(self, authenticated_page: Page, base_url: str):
         resp = authenticated_page.goto(f"{base_url}/riverside")
         if resp and resp.status == 200:

@@ -21,14 +21,21 @@ AUTH_PAGES = [
     "/identity",
     "/riverside",
     "/dmarc",
-    pytest.param(
-        "/sync-dashboard",
-        marks=pytest.mark.xfail(
-            reason="sync-dashboard has datetime tz bug causing 500 → error page missing a11y attrs"
-        ),
-    ),
+    "/sync-dashboard",
 ]
 ALL_PAGES = PUBLIC_PAGES + AUTH_PAGES
+
+# sync-dashboard has a datetime tz bug causing 500; the error page lacks
+# proper a11y attrs. xfail only for critical-violation checks.
+_AUTH_PAGES_CRITICAL = [
+    pytest.param(
+        p,
+        marks=pytest.mark.xfail(reason="sync-dashboard has datetime tz bug causing 500"),
+    )
+    if p == "/sync-dashboard"
+    else p
+    for p in AUTH_PAGES
+]
 
 AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js"
 
@@ -103,7 +110,7 @@ class TestAxePublicPages:
 class TestAxeAuthenticatedPages:
     """Axe-core audits on authenticated pages."""
 
-    @pytest.mark.parametrize("path", AUTH_PAGES)
+    @pytest.mark.parametrize("path", _AUTH_PAGES_CRITICAL)
     def test_no_critical_violations(self, authenticated_page: Page, base_url: str, path: str):
         """No critical or serious axe-core violations on authenticated pages."""
         authenticated_page.goto(f"{base_url}{path}")

@@ -1288,8 +1288,9 @@ None of these mask production bugs.
 | Phase 16: Audit Remediation Sprint | 43 | 43 | 0 | ✅ Complete |
 | Phase 17: Test Coverage + Design System | 21 | 21 | 0 | ✅ Complete |
 | Phase 18: Usability Excellence Sprint | 12 | 12 | 0 | ✅ Complete |
-| **TOTAL (P1-P5 + P18)** | **101** | **101** | **0** | **✅ Complete** |
-| **GRAND TOTAL** | **322** | **322** | **0** | **✅ COMPLETE** |
+| Phase 19: Release Hygiene Sprint | 6 | 6 | 0 | ✅ Complete |
+| **TOTAL (P1-P5 + P18-P19)** | **107** | **107** | **0** | **✅ Complete** |
+| **GRAND TOTAL** | **328** | **328** | **0** | **✅ COMPLETE** |
 
 ---
 
@@ -1390,6 +1391,44 @@ None of these mask production bugs.
   - Validation: `uv run pytest tests/ -q --ignore=tests/smoke --ignore=tests/load` → 3796 passed
 
 | Phase 18 | 12 | 12 | 0 | ✅ Complete |
+
+---
+
+## Phase 19: Release Hygiene Sprint (v2.2.0)
+
+**Status:** ✅ COMPLETE
+**Goal:** Fix documentation drift, clean up test debt, validate E2E and performance
+**Completed:** 2026-04-08
+**Agent:** planning-agent-affa42 + code-puppy
+
+### 19.1 Documentation Refresh
+- [x] 19.1.1 Update README.md version badge (1.9.0 → 2.1.0), test count (2,563 → 3,799), task count (221 → 322) (Code-Puppy 🐶)
+  - File: README.md
+  - Validation: `head -12 README.md` shows v2.1.0 badge
+- [x] 19.1.2 Rewrite "What's New" section for v2.1.0 Usability Excellence (Code-Puppy 🐶)
+  - File: README.md
+  - Validation: README highlights security headers, accessibility, OpenAPI examples
+
+### 19.2 Version Sync
+- [x] 19.2.1 Sync pyproject.toml version (1.9.0 → 2.1.0) (Code-Puppy 🐶)
+  - Files: pyproject.toml, app/__init__.py, uv.lock
+  - Validation: `python -c "import app; print(app.__version__)"` → 2.1.0
+- [x] 19.2.2 Fix HSTS e2e test for environment-specific behavior (Code-Puppy 🐶)
+  - File: tests/e2e/test_security_headers.py
+  - Validation: `uv run pytest tests/e2e/test_security_headers.py -v` → 15 passed
+
+### 19.3 E2E xfail Cleanup
+- [x] 19.3.1 Remove 14 unnecessary xfail markers from passing browser tests (Code-Puppy 🐶)
+  - Files: 7 E2E test files (dashboard, riverside, preflight, sync, api, axe)
+  - Validation: `grep -rn 'xfail' tests/e2e/ | wc -l` → 2 (only legitimate failures remain)
+
+### 19.4 Performance Validation
+- [x] 19.4.1 Create security headers middleware benchmark (Code-Puppy 🐶)
+  - File: tests/performance/test_security_headers_perf.py
+  - Results: 0.25ms overhead, 1,316 req/s, all 3 benchmarks passed
+  - Validation: `uv run pytest tests/performance/ -v` → 3 passed
+
+| Phase 19 | 6 | 6 | 0 | ✅ Complete |
 
 ---
 

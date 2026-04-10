@@ -1,6 +1,5 @@
 """E2E tests for Sync API endpoints."""
 
-import pytest
 from playwright.sync_api import APIRequestContext
 
 
@@ -32,10 +31,6 @@ class TestSyncAPI:
         resp = api_context.post("/api/v1/sync/resources")
         assert resp.status in (200, 202, 403, 429, 500)
 
-    @pytest.mark.xfail(
-        reason="Identity sync hits real Azure Graph API and may exceed timeout",
-        raises=Exception,
-    )
     def test_trigger_identity_sync(self, api_context: APIRequestContext):
         resp = api_context.post(
             "/api/v1/sync/identity",
