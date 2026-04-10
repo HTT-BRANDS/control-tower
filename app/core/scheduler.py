@@ -1,6 +1,7 @@
 """Background job scheduler for data synchronization."""
 
 import logging
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -51,6 +52,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Lazy-import sync functions to break circular import chain
     sync_fns = _get_sync_functions()
+    now = datetime.now(UTC)
 
     # Cost sync job
     scheduler.add_job(
@@ -58,6 +60,8 @@ def init_scheduler() -> AsyncIOScheduler:
         trigger=IntervalTrigger(hours=settings.cost_sync_interval_hours),
         id="sync_costs",
         name="Sync Cost Data",
+        next_run_time=now,
+        misfire_grace_time=300,
         replace_existing=True,
     )
 
@@ -67,6 +71,8 @@ def init_scheduler() -> AsyncIOScheduler:
         trigger=IntervalTrigger(hours=settings.compliance_sync_interval_hours),
         id="sync_compliance",
         name="Sync Compliance Data",
+        next_run_time=now + timedelta(minutes=2),
+        misfire_grace_time=300,
         replace_existing=True,
     )
 
@@ -76,6 +82,8 @@ def init_scheduler() -> AsyncIOScheduler:
         trigger=IntervalTrigger(hours=settings.resource_sync_interval_hours),
         id="sync_resources",
         name="Sync Resource Inventory",
+        next_run_time=now + timedelta(minutes=4),
+        misfire_grace_time=300,
         replace_existing=True,
     )
 
@@ -85,6 +93,8 @@ def init_scheduler() -> AsyncIOScheduler:
         trigger=IntervalTrigger(hours=settings.identity_sync_interval_hours),
         id="sync_identity",
         name="Sync Identity Data",
+        next_run_time=now + timedelta(minutes=6),
+        misfire_grace_time=300,
         replace_existing=True,
     )
 
@@ -94,6 +104,8 @@ def init_scheduler() -> AsyncIOScheduler:
         trigger=IntervalTrigger(hours=4),
         id="sync_riverside",
         name="Sync Riverside Compliance Data",
+        next_run_time=now + timedelta(minutes=8),
+        misfire_grace_time=300,
         replace_existing=True,
     )
 
