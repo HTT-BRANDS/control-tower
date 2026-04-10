@@ -9,6 +9,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 import httpx
+from sqlalchemy.exc import DataError, IntegrityError, ProgrammingError
 
 from app.api.services.azure_client import azure_client_manager
 from app.api.services.monitoring_service import MonitoringService
@@ -45,23 +46,25 @@ async def sync_costs():
     log_id = None
 
     try:
+        # Start monitoring and get tenant list with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="costs")
             log_id = log_entry.id
-            # Get all active tenants
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
-            logger.info(f"Found {len(tenants)} active tenants to sync")
+            tenant_data = [(t.id, t.name, t.tenant_id) for t in tenants]
 
-            for tenant in tenants:
-                logger.info(f"Syncing costs for tenant: {tenant.name} ({tenant.tenant_id})")
+        logger.info(f"Found {len(tenant_data)} active tenants to sync")
 
-                try:
+        for tenant_id, tenant_name, azure_tenant_id in tenant_data:
+            logger.info(f"Syncing costs for tenant: {tenant_name} ({azure_tenant_id})")
+
+            try:
+                with get_db_context() as tenant_db:
                     # Get subscriptions for this tenant
-                    subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
+                    subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
                     logger.info(
-                        f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
+                        f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}"
                     )
 
                     for sub in subscriptions:
@@ -79,7 +82,7 @@ async def sync_costs():
                             )
 
                             rows = await _query_costs_rest(
-                                tenant.tenant_id,
+                                azure_tenant_id,
                                 sub_id,
                                 from_date,
                                 to_date,
@@ -114,7 +117,7 @@ async def sync_costs():
 
                                         # Create or update cost snapshot
                                         snapshot = CostSnapshot(
-                                            tenant_id=tenant.id,
+                                            tenant_id=tenant_id,
                                             subscription_id=sub_id,
                                             date=usage_date,
                                             total_cost=cost_value,
@@ -124,7 +127,7 @@ async def sync_costs():
                                             synced_at=datetime.now(UTC),
                                         )
 
-                                        db.add(snapshot)
+                                        tenant_db.add(snapshot)
                                         rows_processed += 1
 
                                     except (ValueError, TypeError, IndexError) as e:
@@ -132,7 +135,7 @@ async def sync_costs():
                                         continue
 
                                 # Commit all snapshots for this subscription
-                                db.commit()
+                                tenant_db.commit()
                                 total_synced += rows_processed
                                 logger.info(
                                     f"Successfully synced {rows_processed} cost records "
@@ -160,22 +163,29 @@ async def sync_costs():
                                 exc_info=True,
                             )
 
-                except Exception as e:
-                    total_errors += 1
-                    logger.error(f"Error processing tenant {tenant.name}: {e}", exc_info=True)
+            except (IntegrityError, DataError, ProgrammingError) as e:
+                total_errors += 1
+                logger.error(f"Data error syncing costs for tenant {tenant_name}: {e}")
+                continue
+            except Exception as e:
+                total_errors += 1
+                logger.error(f"Error processing tenant {tenant_name}: {e}", exc_info=True)
+                continue
 
         # Update monitoring with final status
         if log_id:
-            monitoring.complete_sync_job(
-                log_id=log_id,
-                status="completed" if total_errors == 0 else "failed",
-                final_records={
-                    "records_processed": total_synced,
-                    "records_created": total_synced,
-                    "records_updated": 0,
-                    "errors_count": total_errors,
-                },
-            )
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
+                monitoring.complete_sync_job(
+                    log_id=log_id,
+                    status="completed" if total_errors == 0 else "failed",
+                    final_records={
+                        "records_processed": total_synced,
+                        "records_created": total_synced,
+                        "records_updated": 0,
+                        "errors_count": total_errors,
+                    },
+                )
 
         logger.info(
             f"Cost sync completed: {total_synced} records synced, {total_errors} errors encountered"

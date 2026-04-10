@@ -4,12 +4,14 @@ import logging
 from datetime import UTC, datetime
 
 from azure.core.exceptions import HttpResponseError
+from sqlalchemy.exc import DataError, IntegrityError, ProgrammingError
 
 from app.api.services.azure_client import azure_client_manager
 from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import COMPLIANCE_SYNC_BREAKER, circuit_breaker
 from app.core.database import get_db_context
 from app.core.retry import COMPLIANCE_SYNC_POLICY, retry_with_backoff
+from app.core.sync.utils import safe_truncate
 from app.models.compliance import ComplianceSnapshot, PolicyState
 from app.models.tenant import Tenant
 
@@ -35,23 +37,25 @@ async def sync_compliance():
     log_id = None
 
     try:
+        # Start monitoring and get tenant list with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="compliance")
             log_id = log_entry.id
-            # Get all active tenants
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
-            logger.info(f"Found {len(tenants)} active tenants to sync for compliance")
+            tenant_data = [(t.id, t.name, t.tenant_id) for t in tenants]
 
-            for tenant in tenants:
-                logger.info(f"Syncing compliance for tenant: {tenant.name} ({tenant.tenant_id})")
+        logger.info(f"Found {len(tenant_data)} active tenants to sync for compliance")
 
-                try:
+        for tenant_id, tenant_name, azure_tenant_id in tenant_data:
+            logger.info(f"Syncing compliance for tenant: {tenant_name} ({azure_tenant_id})")
+
+            try:
+                with get_db_context() as tenant_db:
                     # Get subscriptions for this tenant
-                    subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
+                    subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
                     logger.info(
-                        f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
+                        f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}"
                     )
 
                     for sub in subscriptions:
@@ -70,10 +74,10 @@ async def sync_compliance():
 
                             # Get policy and security clients
                             policy_client = azure_client_manager.get_policy_client(
-                                tenant.tenant_id, sub_id
+                                azure_tenant_id, sub_id
                             )
                             security_client = azure_client_manager.get_security_client(
-                                tenant.tenant_id, sub_id
+                                azure_tenant_id, sub_id
                             )
 
                             # Initialize counters for this subscription
@@ -95,9 +99,18 @@ async def sync_compliance():
                                 policy_aggregates = {}
 
                                 for state in policy_states:
-                                    policy_def_id = state.policy_definition_id or "unknown"
-                                    policy_name = (
-                                        state.policy_definition_reference_id or "Unknown Policy"
+                                    _ctx = {"tenant": tenant_name, "subscription": sub_id}
+                                    policy_def_id = safe_truncate(
+                                        state.policy_definition_id or "unknown",
+                                        500,
+                                        "policy_definition_id",
+                                        _ctx,
+                                    )
+                                    policy_name = safe_truncate(
+                                        state.policy_definition_reference_id or "Unknown Policy",
+                                        1000,
+                                        "policy_name",
+                                        _ctx,
                                     )
                                     # SDK v4+ returns strings; older versions return enums
                                     raw_state = state.compliance_state
@@ -113,9 +126,12 @@ async def sync_compliance():
 
                                     # Try to extract category from metadata if available
                                     if state.policy_definition_group_names:
-                                        policy_category = ",".join(
-                                            state.policy_definition_group_names
-                                        )[:500]  # Truncate to fit column
+                                        policy_category = safe_truncate(
+                                            ",".join(state.policy_definition_group_names),
+                                            500,
+                                            "policy_category",
+                                            _ctx,
+                                        )
 
                                     # Aggregate counts
                                     if compliance_state == "Compliant":
@@ -149,7 +165,7 @@ async def sync_compliance():
                                 # Create PolicyState records
                                 for policy_data in policy_aggregates.values():
                                     policy_state = PolicyState(
-                                        tenant_id=tenant.id,
+                                        tenant_id=tenant_id,
                                         subscription_id=sub_id,
                                         policy_definition_id=policy_data["policy_definition_id"],
                                         policy_name=policy_data["policy_name"],
@@ -160,7 +176,7 @@ async def sync_compliance():
                                         recommendation=policy_data["recommendation"],
                                         synced_at=datetime.now(UTC),
                                     )
-                                    db.add(policy_state)
+                                    tenant_db.add(policy_state)
                                     total_policy_states += 1
 
                                 logger.info(
@@ -225,7 +241,7 @@ async def sync_compliance():
 
                             # Create ComplianceSnapshot
                             snapshot = ComplianceSnapshot(
-                                tenant_id=tenant.id,
+                                tenant_id=tenant_id,
                                 subscription_id=sub_id,
                                 snapshot_date=snapshot_date,
                                 overall_compliance_percent=overall_compliance,
@@ -235,8 +251,8 @@ async def sync_compliance():
                                 exempt_resources=exempt_resources,
                                 synced_at=datetime.now(UTC),
                             )
-                            db.add(snapshot)
-                            db.commit()
+                            tenant_db.add(snapshot)
+                            tenant_db.commit()
                             total_snapshots += 1
 
                             logger.info(
@@ -264,25 +280,32 @@ async def sync_compliance():
                                 exc_info=True,
                             )
 
-                except Exception as e:
-                    total_errors += 1
-                    logger.error(
-                        f"Error processing tenant {tenant.name}: {e}",
-                        exc_info=True,
-                    )
+            except (IntegrityError, DataError, ProgrammingError) as e:
+                total_errors += 1
+                logger.error(f"Data error syncing compliance for tenant {tenant_name}: {e}")
+                continue
+            except Exception as e:
+                total_errors += 1
+                logger.error(
+                    f"Error processing tenant {tenant_name}: {e}",
+                    exc_info=True,
+                )
+                continue
 
         # Update monitoring with final status
         if log_id:
-            monitoring.complete_sync_job(
-                log_id=log_id,
-                status="completed" if total_errors == 0 else "failed",
-                final_records={
-                    "records_processed": total_snapshots + total_policy_states,
-                    "records_created": total_snapshots + total_policy_states,
-                    "records_updated": 0,
-                    "errors_count": total_errors,
-                },
-            )
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
+                monitoring.complete_sync_job(
+                    log_id=log_id,
+                    status="completed" if total_errors == 0 else "failed",
+                    final_records={
+                        "records_processed": total_snapshots + total_policy_states,
+                        "records_created": total_snapshots + total_policy_states,
+                        "records_updated": 0,
+                        "errors_count": total_errors,
+                    },
+                )
 
         logger.info(
             f"Compliance sync completed: {total_snapshots} snapshots, "
