@@ -25,7 +25,7 @@ class TestCORS:
     ):
         """Responses should include CORS headers for allowed origins."""
         resp = unauth_api_context.get(
-            "/health",
+            "/api/v1/health",
             headers={"Origin": "http://localhost:8099"},
         )
         # The health endpoint should respond regardless of origin
@@ -37,16 +37,19 @@ class TestSecurityMiddleware:
 
     def test_all_responses_have_frame_options(self, api_context: APIRequestContext):
         """Every response should have X-Frame-Options header."""
-        for path in ["/health", "/api/v1/status", "/metrics"]:
+        for path in [
+            "/api/v1/health",
+            "/api/v1/status",
+        ]:  # /metrics excluded from security headers (Prometheus text)
             resp = api_context.get(path)
             assert resp.headers.get("x-frame-options") == "DENY", f"{path} missing X-Frame-Options"
 
     def test_all_responses_have_content_type_options(self, api_context: APIRequestContext):
-        for path in ["/health", "/api/v1/status"]:
+        for path in ["/api/v1/health", "/api/v1/status"]:
             resp = api_context.get(path)
             assert resp.headers.get("x-content-type-options") == "nosniff"
 
     def test_json_endpoints_return_json_content_type(self, api_context: APIRequestContext):
         """JSON API endpoints should set application/json content type."""
-        resp = api_context.get("/health")
+        resp = api_context.get("/api/v1/health")
         assert "application/json" in resp.headers.get("content-type", "")

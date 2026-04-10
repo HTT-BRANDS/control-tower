@@ -133,7 +133,11 @@ def track_requirement_progress(db: Session, requirement_id: int) -> dict:
         blockers.append("Requirement explicitly marked as blocked")
     if days_in_status > 30 and _enum_val(requirement.status) != RequirementStatus.COMPLETED.value:
         blockers.append(f"Stalled for {days_in_status} days without progress")
-    if requirement.due_date and requirement.due_date < today:
+    if (
+        requirement.due_date
+        and requirement.due_date < today
+        and _enum_val(requirement.status) != RequirementStatus.COMPLETED.value
+    ):
         blockers.append("Past due date")
 
     result: dict[str, Any] = {

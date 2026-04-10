@@ -1,5 +1,6 @@
 """E2E tests for error handling and edge cases."""
 
+import httpx as _httpx
 from playwright.sync_api import APIRequestContext
 
 
@@ -40,26 +41,41 @@ class TestErrorHandling:
         )
         assert resp.status in (400, 413, 422, 403, 500)
 
-    def test_empty_auth_header(self, unauth_api_context: APIRequestContext):
-        """Empty Authorization header should return 401."""
-        resp = unauth_api_context.get(
-            "/api/v1/costs/summary",
+    def test_empty_auth_header(self, base_url: str):
+        """Empty Authorization header should return 401.
+
+        Uses httpx to avoid Playwright APIRequestContext cookie leakage.
+        """
+        resp = _httpx.get(
+            f"{base_url}/api/v1/costs/summary",
             headers={"Authorization": ""},
+            timeout=10,
         )
-        assert resp.status in (401, 403)
+        assert resp.status_code in (401, 403)
 
-    def test_malformed_bearer_token(self, unauth_api_context: APIRequestContext):
-        """Malformed bearer token should return 401."""
-        resp = unauth_api_context.get(
-            "/api/v1/costs/summary",
-            headers={"Authorization": "Bearer "},
+    def test_malformed_bearer_token(self, base_url: str):
+        """Malformed bearer token should return 401.
+
+        Uses httpx to avoid Playwright APIRequestContext cookie leakage.
+        Note: "Bearer " (trailing space, no token) is rejected by httpx at
+        the client level as an illegal header value, so we test with a
+        minimal non-JWT string instead.
+        """
+        resp = _httpx.get(
+            f"{base_url}/api/v1/costs/summary",
+            headers={"Authorization": "Bearer not-a-jwt"},
+            timeout=10,
         )
-        assert resp.status in (401, 403)
+        assert resp.status_code in (401, 403)
 
-    def test_wrong_auth_scheme(self, unauth_api_context: APIRequestContext):
-        """Non-Bearer auth scheme should return 401."""
-        resp = unauth_api_context.get(
-            "/api/v1/costs/summary",
+    def test_wrong_auth_scheme(self, base_url: str):
+        """Non-Bearer auth scheme should return 401.
+
+        Uses httpx to avoid Playwright APIRequestContext cookie leakage.
+        """
+        resp = _httpx.get(
+            f"{base_url}/api/v1/costs/summary",
             headers={"Authorization": "Basic dXNlcjpwYXNz"},
+            timeout=10,
         )
-        assert resp.status in (401, 403)
+        assert resp.status_code in (401, 403)

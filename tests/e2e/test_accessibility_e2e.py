@@ -29,8 +29,9 @@ class TestStaticAssetAccessibility:
         body = resp.text()
         assert len(body) > 0
 
-    def test_dark_mode_css_exists(self, unauth_api_context: APIRequestContext):
-        resp = unauth_api_context.get("/static/css/dark-mode.css")
+    def test_theme_css_has_dark_mode_support(self, unauth_api_context: APIRequestContext):
+        # dark-mode.css was consolidated into theme.css in Phase 16
+        resp = unauth_api_context.get("/static/css/theme.css")
         assert resp.status == 200
         body = resp.text()
         assert len(body) > 0

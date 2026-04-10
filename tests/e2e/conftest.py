@@ -38,7 +38,7 @@ def base_url() -> Generator[str, None, None]:
     url = "http://127.0.0.1:8099"
     for _ in range(30):
         try:
-            r = httpx.get(f"{url}/health", timeout=2)
+            r = httpx.get(f"{url}/api/v1/health", timeout=2)
             if r.status_code == 200:
                 break
         except (httpx.ConnectError, httpx.ReadTimeout):
@@ -56,7 +56,23 @@ def base_url() -> Generator[str, None, None]:
 
 # ---------------------------------------------------------------------------
 # Auth token acquisition
+#
+# The login endpoint returns tokens ONLY in HttpOnly Set-Cookie headers
+# (access_token and refresh_token). The JSON body deliberately excludes
+# them for browser security. We parse the cookies to extract the tokens.
 # ---------------------------------------------------------------------------
+
+
+def _extract_cookie(response: httpx.Response, cookie_name: str) -> str:
+    """Extract a named cookie value from an httpx response's Set-Cookie headers."""
+    for cookie in response.cookies.jar:
+        if cookie.name == cookie_name:
+            return cookie.value
+    msg = (
+        f"Cookie '{cookie_name}' not found in login response. "
+        f"Available cookies: {[c.name for c in response.cookies.jar]}"
+    )
+    raise KeyError(msg)
 
 
 @pytest.fixture(scope="session")
@@ -69,12 +85,16 @@ def auth_token(base_url: str) -> str:
         timeout=10,
     )
     assert resp.status_code == 200, f"Login failed: {resp.status_code} {resp.text}"
-    return resp.json()["access_token"]
+    return _extract_cookie(resp, "access_token")
 
 
 @pytest.fixture(scope="session")
 def auth_tokens(base_url: str) -> dict:
-    """Acquire full token set (access + refresh) via dev login."""
+    """Acquire full token set (access + refresh) via dev login.
+
+    Returns a dict with 'access_token', 'refresh_token', plus the
+    JSON body fields (token_type, expires_in, cookies_set, etc.).
+    """
     resp = httpx.post(
         f"{base_url}/api/v1/auth/login",
         data={"username": "admin", "password": "admin"},
@@ -82,7 +102,12 @@ def auth_tokens(base_url: str) -> dict:
         timeout=10,
     )
     assert resp.status_code == 200, f"Login failed: {resp.status_code} {resp.text}"
-    return resp.json()
+
+    # Merge JSON body with cookie-extracted tokens
+    result = resp.json()
+    result["access_token"] = _extract_cookie(resp, "access_token")
+    result["refresh_token"] = _extract_cookie(resp, "refresh_token")
+    return result
 
 
 # ---------------------------------------------------------------------------

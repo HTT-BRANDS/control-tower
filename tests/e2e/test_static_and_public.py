@@ -13,7 +13,6 @@ class TestStaticAssets:
             "/static/css/theme.css",
             "/static/css/riverside.css",
             "/static/css/accessibility.css",
-            "/static/css/dark-mode.css",
             "/static/js/darkMode.js",
             "/static/js/navigation/index.js",
         ],

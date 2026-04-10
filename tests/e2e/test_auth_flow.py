@@ -2,31 +2,46 @@
 
 Tests login, token lifecycle, user info, and logout via Playwright
 against the real FastAPI server.
+
+IMPORTANT: The login endpoint returns tokens in HttpOnly Set-Cookie
+headers, NOT in the JSON response body. Tests must check cookies.
 """
 
+import httpx as _httpx
 import pytest
 from playwright.sync_api import APIRequestContext
 
 
 class TestLoginAPI:
-    """Test the login API endpoint directly."""
+    """Test the login API endpoint directly.
 
-    def test_successful_login_returns_tokens(self, unauth_api_context: APIRequestContext):
-        """POST /api/v1/auth/login with valid creds returns token response."""
-        resp = unauth_api_context.post(
-            "/api/v1/auth/login",
-            form={
-                "username": "admin",
-                "password": "admin",
-            },
+    Uses httpx directly (not the shared Playwright unauth_api_context)
+    to avoid cookie leakage — Playwright APIRequestContext auto-stores
+    Set-Cookie headers, which would make subsequent "unauthenticated"
+    tests fail (they'd have the access_token cookie).
+    """
+
+    def test_successful_login_returns_cookies(self, base_url: str):
+        """POST /api/v1/auth/login with valid creds sets HttpOnly token cookies."""
+        resp = _httpx.post(
+            f"{base_url}/api/v1/auth/login",
+            data={"username": "admin", "password": "admin"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
         )
-        assert resp.status == 200
+        assert resp.status_code == 200
         data = resp.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+
+        # Tokens are in HttpOnly cookies, NOT in the JSON body
+        assert data.get("cookies_set") is True
         assert data["token_type"] == "bearer"
         assert isinstance(data["expires_in"], int)
         assert data["expires_in"] > 0
+
+        # Verify tokens are in Set-Cookie headers
+        cookie_names = [c.name for c in resp.cookies.jar]
+        assert "access_token" in cookie_names, f"No access_token cookie; got: {cookie_names}"
+        assert "refresh_token" in cookie_names, f"No refresh_token cookie; got: {cookie_names}"
 
     def test_invalid_password_returns_401(self, unauth_api_context: APIRequestContext):
         """POST /api/v1/auth/login with wrong password returns 401."""
@@ -73,10 +88,13 @@ class TestTokenAccess:
         assert "id" in data or "user_id" in data or "sub" in data
         assert "roles" in data
 
-    def test_no_token_returns_401(self, unauth_api_context: APIRequestContext):
-        """GET /api/v1/auth/me without token returns 401."""
-        resp = unauth_api_context.get("/api/v1/auth/me")
-        assert resp.status in (401, 403)
+    def test_no_token_returns_401(self, base_url: str):
+        """GET /api/v1/auth/me without token returns 401.
+
+        Uses httpx directly to ensure no cookies leak from Playwright context.
+        """
+        resp = _httpx.get(f"{base_url}/api/v1/auth/me", timeout=10)
+        assert resp.status_code in (401, 403)
 
     def test_invalid_token_returns_401(self, unauth_api_context: APIRequestContext):
         """GET /api/v1/auth/me with garbage token returns 401."""
@@ -102,7 +120,7 @@ class TestTokenAccess:
         assert resp.status in (200, 404)
         if resp.status == 200:
             data = resp.json()
-            assert isinstance(data, (list, dict))
+            assert isinstance(data, list | dict)
 
 
 class TestTokenRefresh:
@@ -110,21 +128,27 @@ class TestTokenRefresh:
 
     def test_refresh_token_grants_new_access_token(
         self,
-        unauth_api_context: APIRequestContext,
+        base_url: str,
         auth_tokens: dict,
     ):
-        """POST /api/v1/auth/token with refresh_token grant returns new tokens."""
-        resp = unauth_api_context.post(
-            "/api/v1/auth/token",
-            form={
+        """POST /api/v1/auth/token with refresh_token grant returns new tokens.
+
+        Uses httpx to avoid polluting shared Playwright contexts with cookies.
+        """
+        resp = _httpx.post(
+            f"{base_url}/api/v1/auth/token",
+            data={
                 "grant_type": "refresh_token",
                 "refresh_token": auth_tokens["refresh_token"],
             },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
         )
-        assert resp.status == 200
-        data = resp.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert resp.status_code == 200
+
+        # New tokens come back as Set-Cookie
+        cookie_names = [c.name for c in resp.cookies.jar]
+        assert "access_token" in cookie_names
 
     def test_invalid_refresh_token_returns_401(self, unauth_api_context: APIRequestContext):
         """POST /api/v1/auth/token with bad refresh token returns 401."""
@@ -153,11 +177,8 @@ class TestLogout:
 
     def test_logout_returns_success(self, base_url: str, auth_token: str):
         """POST /api/v1/auth/logout invalidates the token."""
-        import httpx
-
-        # Use the session-scoped token to avoid extra login (rate limiting)
-        # Verify token works
-        me_resp = httpx.get(
+        # Use the session-scoped token to verify auth works
+        me_resp = _httpx.get(
             f"{base_url}/api/v1/auth/me",
             headers={"Authorization": f"Bearer {auth_token}"},
             timeout=10,
@@ -168,7 +189,7 @@ class TestLogout:
         import time
 
         time.sleep(1)  # Brief pause to avoid rate limiting
-        login_resp = httpx.post(
+        login_resp = _httpx.post(
             f"{base_url}/api/v1/auth/login",
             data={"username": "admin", "password": "admin"},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -177,17 +198,27 @@ class TestLogout:
         if login_resp.status_code == 429:
             pytest.skip("Rate limited — cannot acquire fresh token for logout test")
         assert login_resp.status_code == 200
-        token = login_resp.json()["access_token"]
 
-        # Logout
-        logout_resp = httpx.post(
+        # Extract fresh token from Set-Cookie
+        fresh_token = None
+        for cookie in login_resp.cookies.jar:
+            if cookie.name == "access_token":
+                fresh_token = cookie.value
+                break
+        assert fresh_token, "No access_token cookie in login response"
+
+        # Logout with the fresh token
+        logout_resp = _httpx.post(
             f"{base_url}/api/v1/auth/logout",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"Authorization": f"Bearer {fresh_token}"},
             timeout=10,
         )
         assert logout_resp.status_code == 200
 
-    def test_logout_without_auth_returns_error(self, unauth_api_context: APIRequestContext):
-        """POST /api/v1/auth/logout without auth returns 401."""
-        resp = unauth_api_context.post("/api/v1/auth/logout")
-        assert resp.status in (401, 403)
+    def test_logout_without_auth_returns_error(self, base_url: str):
+        """POST /api/v1/auth/logout without auth returns 401.
+
+        Uses httpx directly to ensure no cookies leak from Playwright context.
+        """
+        resp = _httpx.post(f"{base_url}/api/v1/auth/logout", timeout=10)
+        assert resp.status_code in (401, 403)
