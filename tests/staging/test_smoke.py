@@ -67,9 +67,7 @@ class TestPublicEndpoints:
                 f"/docs returned {resp.status_code} in production — expected 401"
             )
         else:
-            assert resp.status_code == 200, (
-                f"/docs returned {resp.status_code} — expected 200"
-            )
+            assert resp.status_code == 200, f"/docs returned {resp.status_code} — expected 200"
             assert "text/html" in resp.headers.get("content-type", "")
 
     def test_app_not_returning_500(self, client: requests.Session, staging_url: str) -> None:
