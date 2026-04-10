@@ -1,0 +1,60 @@
+{
+  "description": "Compliance summary response for /api/v1/compliance/summary endpoint",
+  "summary": "Aggregated compliance summary across all tenants",
+  "value": {
+    "average_compliance_percent": 87.5,
+    "total_compliant_resources": 985,
+    "total_non_compliant_resources": 142,
+    "total_exempt_resources": 123,
+    "scores_by_tenant": [
+      {
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+        "tenant_name": "Head to Toe - Production",
+        "subscription_id": "sub-123",
+        "subscription_name": "Production Subscription",
+        "overall_compliance_percent": 92.3,
+        "secure_score": 85.0,
+        "compliant_resources": 450,
+        "non_compliant_resources": 38,
+        "exempt_resources": 45,
+        "last_updated": "2026-01-15T06:00:00Z"
+      },
+      {
+        "tenant_id": "87654321-4321-4321-4321-210987654321",
+        "tenant_name": "Frenchies - Staging",
+        "subscription_id": "sub-456",
+        "subscription_name": "Staging Subscription",
+        "overall_compliance_percent": 78.4,
+        "secure_score": 72.0,
+        "compliant_resources": 320,
+        "non_compliant_resources": 88,
+        "exempt_resources": 20,
+        "last_updated": "2026-01-15T06:00:00Z"
+      }
+    ],
+    "top_violations": [
+      {
+        "policy_name": "Require MFA for admin accounts",
+        "policy_category": "Identity",
+        "violation_count": 15,
+        "affected_tenants": 3,
+        "severity": "High"
+      },
+      {
+        "policy_name": "Storage accounts must use private endpoints",
+        "policy_category": "Network Security",
+        "violation_count": 23,
+        "affected_tenants": 5,
+        "severity": "Medium"
+      }
+    ]
+  },
+  "field_descriptions": {
+    "average_compliance_percent": "Weighted average compliance across all tenants",
+    "total_compliant_resources": "Count of resources in compliant state",
+    "total_non_compliant_resources": "Count of resources violating policies",
+    "total_exempt_resources": "Count of resources with compliance exemptions",
+    "scores_by_tenant": "Per-tenant compliance breakdown",
+    "top_violations": "Most common policy violations across tenants"
+  }
+}

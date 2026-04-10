@@ -1,0 +1,101 @@
+{
+  "description": "Resource lifecycle history response for /api/v1/resources/{resource_id}/history endpoint",
+  "summary": "Lifecycle events for a specific Azure resource",
+  "value": {
+    "resource_id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production/providers/Microsoft.Compute/virtualMachines/vm-web-01",
+    "events": [
+      {
+        "id": 1,
+        "resource_id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production/providers/Microsoft.Compute/virtualMachines/vm-web-01",
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+        "subscription_id": "12345678-1234-1234-1234-123456789012",
+        "resource_type": "Microsoft.Compute/virtualMachines",
+        "event_type": "created",
+        "resource_name": "vm-web-01",
+        "resource_group": "rg-production",
+        "location": "eastus",
+        "properties_before": null,
+        "properties_after": {
+          "vmSize": "Standard_D4s_v3",
+          "osType": "Linux",
+          "tags": {
+            "environment": "production",
+            "department": "engineering"
+          }
+        },
+        "detected_at": "2026-01-10T08:30:00Z",
+        "sync_run_id": "sync-20260110-083000"
+      },
+      {
+        "id": 2,
+        "resource_id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production/providers/Microsoft.Compute/virtualMachines/vm-web-01",
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+        "subscription_id": "12345678-1234-1234-1234-123456789012",
+        "resource_type": "Microsoft.Compute/virtualMachines",
+        "event_type": "updated",
+        "resource_name": "vm-web-01",
+        "resource_group": "rg-production",
+        "location": "eastus",
+        "properties_before": {
+          "vmSize": "Standard_D4s_v3",
+          "tags": {
+            "environment": "production"
+          }
+        },
+        "properties_after": {
+          "vmSize": "Standard_D8s_v3",
+          "tags": {
+            "environment": "production",
+            "cost-center": "cc-12345"
+          }
+        },
+        "detected_at": "2026-01-12T14:15:00Z",
+        "sync_run_id": "sync-20260112-141500"
+      },
+      {
+        "id": 3,
+        "resource_id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production/providers/Microsoft.Compute/virtualMachines/vm-web-01",
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+        "subscription_id": "12345678-1234-1234-1234-123456789012",
+        "resource_type": "Microsoft.Compute/virtualMachines",
+        "event_type": "tagged",
+        "resource_name": "vm-web-01",
+        "resource_group": "rg-production",
+        "location": "eastus",
+        "properties_before": {
+          "tags": {
+            "environment": "production"
+          }
+        },
+        "properties_after": {
+          "tags": {
+            "environment": "production",
+            "owner": "team-platform",
+            "project": "web-redesign"
+          }
+        },
+        "detected_at": "2026-01-14T09:45:00Z",
+        "sync_run_id": "sync-20260114-094500"
+      }
+    ],
+    "count": 3,
+    "limit": 50,
+    "offset": 0
+  },
+  "field_descriptions": {
+    "resource_id": "Full Azure resource ID",
+    "events": "Array of lifecycle events ordered by detection time (newest first)",
+    "event_type": "Type of change: created, updated, deleted, tagged, or moved",
+    "properties_before": "Resource properties prior to change (null for creates)",
+    "properties_after": "Resource properties after change (null for deletes)",
+    "detected_at": "ISO 8601 timestamp when the change was detected",
+    "sync_run_id": "Identifier of the sync run that detected the change"
+  },
+  "event_types": {
+    "created": "Resource was newly provisioned",
+    "updated": "Resource properties were modified",
+    "deleted": "Resource was removed/deprovisioned",
+    "tagged": "Only resource tags were modified",
+    "moved": "Resource was moved to different resource group or subscription"
+  }
+}

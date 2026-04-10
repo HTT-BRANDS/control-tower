@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -43,6 +43,7 @@ from app.api.routes import (
     tenants_router,
     threats_router,
 )
+from app.core.auth import jwt_manager
 from app.core.cache import cache_manager
 from app.core.config import get_settings
 from app.core.database import init_db
@@ -65,6 +66,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+# Create FastAPI application with enhanced OpenAPI configuration
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
@@ -173,8 +175,8 @@ app = FastAPI(
     [Documentation](https://github.com/tygranlund/azure-governance-platform/tree/main/docs)
     """,
     lifespan=lifespan,
-    docs_url="/docs" if settings.is_development else None,
-    redoc_url="/redoc" if settings.is_development else None,
+    docs_url=None,  # Disabled - using custom routes with auth protection
+    redoc_url=None,  # Disabled - using custom routes with auth protection
     openapi_url="/openapi.json",
     openapi_tags=[
         {
@@ -411,6 +413,96 @@ app.include_router(provisioning_standards_router)
 app.include_router(metrics_router)
 app.include_router(monitoring_router)
 app.include_router(recommendations_router)
+
+
+# =============================================================================
+# API Documentation Routes (with auth protection in production)
+# =============================================================================
+
+
+@app.get("/docs", include_in_schema=False)
+async def swagger_ui_html(request: Request) -> HTMLResponse:
+    """Swagger UI documentation with auth protection in production.
+
+    In development: accessible without authentication.
+    In production: requires valid JWT token in header or cookie.
+    """
+    # Check auth in production
+    if not settings.is_development:
+        token = None
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+        if not token:
+            token = request.cookies.get("access_token")
+
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Authentication required to access API documentation"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Validate token
+        try:
+            jwt_manager.decode_token(token)
+        except Exception:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid or expired token"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    from fastapi.openapi.docs import get_swagger_ui_html
+
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title=f"{settings.app_name} - Swagger UI",
+        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+    )
+
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html(request: Request) -> HTMLResponse:
+    """ReDoc documentation with auth protection in production.
+
+    In development: accessible without authentication.
+    In production: requires valid JWT token in header or cookie.
+    """
+    # Check auth in production
+    if not settings.is_development:
+        token = None
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+        if not token:
+            token = request.cookies.get("access_token")
+
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Authentication required to access API documentation"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Validate token
+        try:
+            jwt_manager.decode_token(token)
+        except Exception:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid or expired token"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    from fastapi.openapi.docs import get_redoc_html
+
+    return get_redoc_html(
+        openapi_url="/openapi.json",
+        title=f"{settings.app_name} - ReDoc",
+        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2/bundles/redoc.standalone.js",
+    )
 
 
 @app.get("/health")
@@ -775,8 +867,131 @@ def custom_openapi() -> dict:
         },
     ]
 
+    # Inject examples into P1 endpoint schemas
+    _inject_openapi_examples(openapi_schema)
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
+
+def _inject_openapi_examples(openapi_schema: dict) -> None:
+    """Inject loaded examples into OpenAPI schema for key endpoints.
+
+    Attaches request/response examples to P1 endpoints to enhance
+    Swagger UI interactive documentation.
+    """
+    try:
+        examples = getattr(app.state, "openapi_examples", {})
+        if not examples:
+            return
+
+        responses = examples.get("responses", {})
+        requests = examples.get("requests", {})
+
+        # Map endpoint paths to their example files
+        endpoint_examples = {
+            "/api/v1/costs/summary": {
+                "response": responses.get("cost_summary", {}),
+                "request_params": requests.get("cost_summary_query", {}),
+            },
+            "/api/v1/compliance/summary": {
+                "response": responses.get("compliance_summary", {}),
+                "request_params": requests.get("compliance_summary_query", {}),
+            },
+            "/api/v1/resources/{resource_id}/history": {
+                "response": responses.get("resource_lifecycle_history", {}),
+                "request_params": requests.get("resource_lifecycle_query", {}),
+            },
+        }
+
+        paths = openapi_schema.get("paths", {})
+
+        for path, example_data in endpoint_examples.items():
+            if path not in paths:
+                continue
+
+            methods = paths[path]
+            for method, operation in methods.items():
+                if method not in ("get", "post", "put", "patch", "delete"):
+                    continue
+
+                # Add response examples for 200 status
+                if "response" in example_data and example_data["response"]:
+                    response_example = example_data["response"]
+                    if isinstance(response_example, dict):
+                        # Extract example value from file structure
+                        if "value" in response_example:
+                            example_value = response_example["value"]
+                        elif "example_response" in response_example:
+                            example_value = response_example["example_response"]
+                        else:
+                            example_value = response_example
+
+                        # Ensure response structure exists
+                        if "responses" not in operation:
+                            operation["responses"] = {}
+                        if "200" not in operation["responses"]:
+                            operation["responses"]["200"] = {"description": "Successful response"}
+
+                        # Add example to content
+                        if "content" not in operation["responses"]["200"]:
+                            operation["responses"]["200"]["content"] = {
+                                "application/json": {"schema": {"type": "object"}}
+                            }
+
+                        operation["responses"]["200"]["content"]["application/json"]["example"] = (
+                            example_value
+                        )
+
+                        # Add summary/description from example file
+                        if "summary" in response_example:
+                            operation["responses"]["200"]["content"]["application/json"]["schema"][
+                                "title"
+                            ] = response_example["summary"]
+
+                # Add parameter examples
+                if "request_params" in example_data and example_data["request_params"]:
+                    params_example = example_data["request_params"]
+                    if isinstance(params_example, dict) and "value" in params_example:
+                        for param_name, param_value in params_example["value"].items():
+                            # Find or create parameter
+                            param_found = False
+                            for param in operation.get("parameters", []):
+                                if param.get("name") == param_name:
+                                    param["example"] = param_value
+                                    param_found = True
+                                    break
+
+                            if not param_found:
+                                if "parameters" not in operation:
+                                    operation["parameters"] = []
+                                operation["parameters"].append(
+                                    {
+                                        "name": param_name,
+                                        "in": "query",
+                                        "schema": {"type": _infer_schema_type(param_value)},
+                                        "example": param_value,
+                                    }
+                                )
+
+    except Exception as e:
+        logger.warning(f"Failed to inject OpenAPI examples: {e}")
+
+
+def _infer_schema_type(value) -> str:
+    """Infer JSON Schema type from a Python value."""
+    if isinstance(value, bool):
+        return "boolean"
+    elif isinstance(value, int):
+        return "integer"
+    elif isinstance(value, float):
+        return "number"
+    elif isinstance(value, list):
+        return "array"
+    elif isinstance(value, dict):
+        return "object"
+    else:
+        return "string"
 
 
 # Replace the default OpenAPI schema generator

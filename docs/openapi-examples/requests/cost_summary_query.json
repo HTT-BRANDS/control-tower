@@ -1,0 +1,41 @@
+{
+  "description": "Query parameters for /api/v1/costs/summary endpoint",
+  "summary": "Cost summary query parameters",
+  "value": {
+    "period_days": 30,
+    "tenant_ids": [
+      "12345678-1234-1234-1234-123456789012",
+      "87654321-4321-4321-4321-210987654321"
+    ],
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-31"
+  },
+  "field_descriptions": {
+    "period_days": "Number of days to look back (1-365, default: 30). Ignored if start_date is provided.",
+    "tenant_ids": "Optional filter for specific tenant UUIDs. If omitted, returns all accessible tenants.",
+    "start_date": "Optional explicit start date (YYYY-MM-DD). Takes precedence over period_days.",
+    "end_date": "Optional explicit end date (YYYY-MM-DD). Defaults to today if not provided."
+  },
+  "examples": {
+    "default": {
+      "description": "Default 30-day summary for all accessible tenants",
+      "value": {}
+    },
+    "specific_period": {
+      "description": "Query for a specific date range",
+      "value": {
+        "start_date": "2026-01-01",
+        "end_date": "2026-01-31"
+      }
+    },
+    "specific_tenants": {
+      "description": "Query for specific tenants only",
+      "value": {
+        "tenant_ids": [
+          "12345678-1234-1234-1234-123456789012"
+        ],
+        "period_days": 7
+      }
+    }
+  }
+}

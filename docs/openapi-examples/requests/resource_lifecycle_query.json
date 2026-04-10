@@ -1,0 +1,27 @@
+{
+  "description": "Query parameters for /api/v1/resources/{resource_id}/history endpoint",
+  "summary": "Resource lifecycle history query parameters",
+  "value": {
+    "limit": 50,
+    "offset": 0
+  },
+  "field_descriptions": {
+    "limit": "Maximum number of events to return (1-200, default: 50). Events are ordered by detection time, newest first.",
+    "offset": "Number of events to skip for pagination (default: 0)"
+  },
+  "examples": {
+    "recent_events": {
+      "description": "Get the 10 most recent lifecycle events",
+      "value": {
+        "limit": 10
+      }
+    },
+    "paginated": {
+      "description": "Get events 51-100 for pagination",
+      "value": {
+        "limit": 50,
+        "offset": 50
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "description": "Query parameters for /api/v1/compliance/summary endpoint",
+  "summary": "Compliance summary query parameters",
+  "value": {
+    "tenant_ids": [
+      "12345678-1234-1234-1234-123456789012",
+      "87654321-4321-4321-4321-210987654321"
+    ]
+  },
+  "field_descriptions": {
+    "tenant_ids": "Optional filter for specific tenant UUIDs. If omitted, returns compliance summary for all accessible tenants."
+  },
+  "examples": {
+    "all_tenants": {
+      "description": "Get compliance summary for all accessible tenants",
+      "value": {}
+    },
+    "specific_tenant": {
+      "description": "Get compliance summary for a specific tenant",
+      "value": {
+        "tenant_ids": [
+          "12345678-1234-1234-1234-123456789012"
+        ]
+      }
+    }
+  }
+}

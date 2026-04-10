@@ -1,0 +1,40 @@
+{
+  "description": "Cost summary response for /api/v1/costs/summary endpoint",
+  "summary": "Aggregated cost summary across all tenants",
+  "value": {
+    "total_cost": 45230.50,
+    "currency": "USD",
+    "period_start": "2026-01-01",
+    "period_end": "2026-01-15",
+    "tenant_count": 5,
+    "subscription_count": 12,
+    "cost_change_percent": 12.57,
+    "top_services": [
+      {
+        "service_name": "Virtual Machines",
+        "cost": 18500.00,
+        "percentage_of_total": 40.9
+      },
+      {
+        "service_name": "Storage",
+        "cost": 8200.00,
+        "percentage_of_total": 18.1
+      },
+      {
+        "service_name": "SQL Database",
+        "cost": 7200.00,
+        "percentage_of_total": 15.9
+      }
+    ]
+  },
+  "field_descriptions": {
+    "total_cost": "Total cost across all accessible tenants for the period",
+    "currency": "ISO 4217 currency code",
+    "period_start": "Start date of the cost period (YYYY-MM-DD)",
+    "period_end": "End date of the cost period (YYYY-MM-DD)",
+    "tenant_count": "Number of tenants included in the summary",
+    "subscription_count": "Total number of Azure subscriptions",
+    "cost_change_percent": "Percentage change compared to previous period",
+    "top_services": "Top 3 services by cost with percentage breakdown"
+  }
+}
