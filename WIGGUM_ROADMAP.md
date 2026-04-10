@@ -1287,8 +1287,9 @@ None of these mask production bugs.
 
 | Phase 16: Audit Remediation Sprint | 43 | 43 | 0 | ✅ Complete |
 | Phase 17: Test Coverage + Design System | 21 | 21 | 0 | ✅ Complete |
-| **TOTAL (P1-P5)** | **89** | **89** | **0** | **✅ Complete** |
-| **GRAND TOTAL** | **310** | **310** | **0** | **✅ COMPLETE** |
+| Phase 18: Usability Excellence Sprint | 12 | 12 | 0 | ✅ Complete |
+| **TOTAL (P1-P5 + P18)** | **101** | **101** | **0** | **✅ Complete** |
+| **GRAND TOTAL** | **322** | **322** | **0** | **✅ COMPLETE** |
 
 ---
 
@@ -1333,6 +1334,62 @@ None of these mask production bugs.
 - [x] 17.5.2 Verify app starts with seeded data and health check passes
 
 | Phase 17 | 21 | 21 | 0 | ✅ Complete |
+
+---
+
+## Phase 18: Usability Excellence Sprint (v2.1.0)
+
+**Status:** ✅ COMPLETE
+**Goal:** Improve developer experience, accessibility, and security headers across all environments
+**Completed:** 2026-04-08
+**Agent:** planning-agent-affa42 + code-puppy
+
+### 18.1 Developer Experience
+- [x] 18.1.1 Fix cache_manager.set() keyword arg (ttl → ttl_seconds) (Code-Puppy 🐶)
+  - File: app/core/cache_manager.py, app/api/routes/health.py
+  - Validation: Health endpoint returns 200 with cache stats
+- [x] 18.1.2 Add Interactive OpenAPI Examples with request/response JSON samples (Code-Puppy 🐶)
+  - Files: app/main.py (+_inject_openapi_examples), docs/openapi-examples/*.json (6 files)
+  - Validation: /docs endpoint shows example payloads for cost, compliance, lifecycle endpoints
+
+### 18.2 Accessibility — Focus & Navigation
+- [x] 18.2.1 Update E2E tests for HttpOnly cookie auth compatibility (Code-Puppy 🐶)
+  - Files: 12 E2E test files updated for cookie-based auth flow
+  - Validation: `uv run pytest tests/e2e/ -q` passes
+- [x] 18.2.2 Fix CSS focus indicator conflicts (Code-Puppy 🐶)
+  - Files: app/static/css/theme.css, app/static/css/components/*.css
+  - Validation: Focus rings visible on all interactive elements without conflicts
+- [x] 18.2.3 Enhance skip link implementation (Code-Puppy 🐶)
+  - Files: app/templates/base.html, app/static/css/theme.css
+  - Validation: Skip link appears on Tab, navigates to #main-content
+
+### 18.3 Accessibility — ARIA & Semantic HTML
+- [x] 18.3.1 Add aria-hidden=true to decorative SVGs across all templates (Code-Puppy 🐶)
+  - Files: 28 Jinja2 templates updated (base, loading, search, sync components, all page templates)
+  - Validation: `grep -r 'aria-hidden' app/templates/ | wc -l` shows comprehensive coverage
+- [x] 18.3.2 Add missing aria-labels to interactive elements (Code-Puppy 🐶)
+  - Files: Same 28 templates — buttons, links, and form controls labeled
+  - Validation: Axe accessibility scan passes with zero critical violations
+
+### 18.4 Security Headers Hardening
+- [x] 18.4.1 Implement environment-specific SecurityHeadersConfig (dev/staging/prod) (Code-Puppy 🐶)
+  - Files: app/core/security_headers.py (+SecurityHeadersConfig class with 3 presets)
+  - Validation: HSTS max-age=300 (dev), 86400 (staging), 31536000 (prod)
+- [x] 18.4.2 Create SECURITY_HEADERS.md comprehensive documentation (Code-Puppy 🐶)
+  - File: docs/security/SECURITY_HEADERS.md
+  - Validation: Document covers all 12 security headers with rationale
+- [x] 18.4.3 Add enhanced security headers integration tests — 70 tests (Code-Puppy 🐶)
+  - File: tests/integration/test_security_headers_enhanced.py
+  - Validation: `uv run pytest tests/integration/test_security_headers_enhanced.py -v` — 70 passed
+
+### 18.5 Quality Assurance
+- [x] 18.5.1 Fix 14 ruff lint errors — unused vars, dict literals (Code-Puppy 🐶)
+  - Files: 5 files (seed_data, e2e/test_accessibility, test_azure_service_health_models, test_design_system_compliance, test_wcag_accessibility)
+  - Validation: `ruff check .` → All checks passed
+- [x] 18.5.2 Full test suite validation — 3796 passed, 0 failures (Watchdog 🐕‍🦺)
+  - Validation: `uv run pytest tests/ -q --ignore=tests/smoke --ignore=tests/load` → 3796 passed
+
+| Phase 18 | 12 | 12 | 0 | ✅ Complete |
 
 ---
 

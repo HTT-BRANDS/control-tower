@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-04-08
+
+### Phase 18: Usability Excellence Sprint
+- **Developer Experience**: Interactive OpenAPI examples with 6 JSON sample payloads; fixed cache_manager keyword arg
+- **Accessibility — Focus & Navigation**: CSS focus indicator conflict fixes; enhanced skip-to-content link; E2E tests updated for HttpOnly cookie auth
+- **Accessibility — ARIA**: aria-hidden on decorative SVGs across 28 templates; missing aria-labels added to interactive elements
+- **Security Headers**: Environment-specific SecurityHeadersConfig (dev 300s / staging 86400s / prod 31536000s HSTS); comprehensive SECURITY_HEADERS.md documentation; 70 new integration tests
+- **Quality**: 14 ruff lint errors fixed; full suite 3,796 passed, 0 failures
+- **Roadmap**: 322 total tasks completed across 18 phases
+
 ## [2.0.0] - 2026-04-04
 
 ### 🎉 Release Highlights
