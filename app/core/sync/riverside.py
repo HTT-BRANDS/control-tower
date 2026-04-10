@@ -46,17 +46,18 @@ async def sync_riverside():
     log_id = None
 
     try:
+        # Start monitoring with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="riverside")
             log_id = log_entry.id
 
-            # Initialize service
-            service = RiversideService(db)
+        # Each operation gets its own session to prevent cascading failures
 
-            try:
-                # Sync MFA data
+        # Sync MFA data
+        try:
+            with get_db_context() as db:
+                service = RiversideService(db)
                 logger.info("Syncing MFA data...")
                 mfa_results = await service.sync_riverside_mfa()
                 results["mfa_synced"] = sum(
@@ -69,8 +70,15 @@ async def sync_riverside():
                     for r in mfa_results.values()
                     if isinstance(r, dict) and r.get("status") == "error"
                 )
+                total_tenants = len(mfa_results)
+        except Exception as e:
+            logger.error(f"MFA sync failed: {e}")
+            total_errors += 1
 
-                # Sync device compliance
+        # Sync device compliance
+        try:
+            with get_db_context() as db:
+                service = RiversideService(db)
                 logger.info("Syncing device compliance data...")
                 device_results = await service.sync_riverside_device_compliance()
                 results["device_synced"] = sum(
@@ -83,13 +91,25 @@ async def sync_riverside():
                     for r in device_results.values()
                     if isinstance(r, dict) and r.get("status") == "error"
                 )
+        except Exception as e:
+            logger.error(f"Device compliance sync failed: {e}")
+            total_errors += 1
 
-                # Sync requirements
+        # Sync requirements
+        try:
+            with get_db_context() as db:
+                service = RiversideService(db)
                 logger.info("Syncing requirement status...")
                 req_results = await service.sync_riverside_requirements()
                 results["requirements_synced"] = req_results.get("requirements_synced", 0)
+        except Exception as e:
+            logger.error(f"Requirements sync failed: {e}")
+            total_errors += 1
 
-                # Calculate maturity scores
+        # Calculate maturity scores
+        try:
+            with get_db_context() as db:
+                service = RiversideService(db)
                 logger.info("Calculating maturity scores...")
                 maturity_results = await service.sync_riverside_maturity_scores()
                 results["maturity_calculated"] = sum(
@@ -97,38 +117,41 @@ async def sync_riverside():
                     for r in maturity_results.values()
                     if isinstance(r, dict) and r.get("status") == "success"
                 )
+        except Exception as e:
+            logger.error(f"Maturity calculation failed: {e}")
+            total_errors += 1
 
-                total_tenants = len(mfa_results)
+        logger.info(
+            f"Riverside sync completed: {results['mfa_synced']} MFA, "
+            f"{results['device_synced']} device, "
+            f"{results['requirements_synced']} requirements, "
+            f"{results['maturity_calculated']} maturity scores"
+        )
 
-                logger.info(
-                    f"Riverside sync completed: {results['mfa_synced']} MFA, "
-                    f"{results['device_synced']} device, "
-                    f"{results['requirements_synced']} requirements, "
-                    f"{results['maturity_calculated']} maturity scores"
-                )
-
-                # Complete monitoring
+        # Complete monitoring with its own session
+        if log_id:
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
-                    status="success",
+                    status="success" if total_errors == 0 else "completed_with_errors",
                     items_processed=sum(results.values()),
                     items_failed=total_errors,
                     message=f"Synced {total_tenants} tenants",
                 )
 
-            except Exception as e:
-                logger.error(f"Riverside sync failed: {e}")
+    except Exception as e:
+        logger.error(f"Riverside sync error: {e}")
+        if log_id:
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
                     status="failed",
                     items_processed=0,
-                    items_failed=total_tenants,
+                    items_failed=0,
                     message=f"Error: {e!s}",
                 )
-                raise
-
-    except Exception as e:
-        logger.error(f"Riverside sync error: {e}")
         raise
 
     return results

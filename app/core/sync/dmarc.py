@@ -7,6 +7,8 @@ reports for all Riverside tenants with email security compliance.
 import logging
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import DataError, IntegrityError, ProgrammingError
+
 from app.api.services.dmarc_service import DMARCService
 from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import DMARC_SYNC_BREAKER, circuit_breaker
@@ -40,99 +42,102 @@ async def sync_dmarc_dkim():
     log_id = None
 
     try:
+        # Start monitoring and get tenant list with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="dmarc")
             log_id = log_entry.id
-
-            # Get all active tenants
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
-
-            # Prioritize Riverside tenants
-            priority_tenants = []
-            other_tenants = []
-
-            for tenant in tenants:
-                if tenant.id in RIVERSIDE_TENANTS:
-                    priority_tenants.append(tenant)
+            # Extract data and apply priority sorting
+            priority_data = []
+            other_data = []
+            for t in tenants:
+                entry = (t.id, t.name, t.tenant_id)
+                if t.id in RIVERSIDE_TENANTS:
+                    priority_data.append(entry)
                 else:
-                    other_tenants.append(tenant)
+                    other_data.append(entry)
+            tenant_data = priority_data + other_data
 
-            # Process Riverside tenants first
-            all_tenants = priority_tenants + other_tenants
+        logger.info(
+            f"Found {len(priority_data)} Riverside tenants "
+            f"and {len(other_data)} other tenants to sync"
+        )
 
-            logger.info(
-                f"Found {len(priority_tenants)} Riverside tenants "
-                f"and {len(other_tenants)} other tenants to sync"
-            )
+        for tenant_id, tenant_name, _azure_tenant_id in tenant_data:
+            is_riverside = tenant_id in RIVERSIDE_TENANTS
+            tenant_type = "Riverside" if is_riverside else "other"
+            logger.info(f"Syncing DMARC/DKIM for {tenant_type} tenant: {tenant_name} ({tenant_id})")
 
-            service = DMARCService(db)
+            try:
+                with get_db_context() as tenant_db:
+                    service = DMARCService(tenant_db)
 
-            for tenant in all_tenants:
-                is_riverside = tenant.id in RIVERSIDE_TENANTS
-                tenant_type = "Riverside" if is_riverside else "other"
-
-                logger.info(
-                    f"Syncing DMARC/DKIM for {tenant_type} tenant: {tenant.name} ({tenant.id})"
-                )
-
-                try:
                     # Sync DMARC records
-                    dmarc_records = await service.sync_dmarc_records(tenant.id)
+                    dmarc_records = await service.sync_dmarc_records(tenant_id)
                     total_dmarc += len(dmarc_records)
 
                     # Sync DKIM records
-                    dkim_records = await service.sync_dkim_records(tenant.id)
+                    dkim_records = await service.sync_dkim_records(tenant_id)
                     total_dkim += len(dkim_records)
 
                     # Sync DMARC reports (if RUA endpoint configured)
-                    reports = await service.sync_dmarc_reports(tenant.id)
+                    reports = await service.sync_dmarc_reports(tenant_id)
                     total_reports += len(reports)
 
                     # Check for security issues and create alerts
                     alerts = await _check_security_issues(
-                        service, tenant, dmarc_records, dkim_records
+                        service, tenant_id, dmarc_records, dkim_records
                     )
                     total_alerts_created += len(alerts)
 
                     # Check for stale DKIM keys
-                    stale_alerts = await _check_stale_dkim_keys(service, tenant, dkim_records)
+                    stale_alerts = await _check_stale_dkim_keys(service, tenant_id, dkim_records)
                     total_alerts_created += len(stale_alerts)
 
-                    db.commit()
+                    tenant_db.commit()
 
                     logger.info(
-                        f"DMARC/DKIM sync completed for {tenant.name}: "
+                        f"DMARC/DKIM sync completed for {tenant_name}: "
                         f"{len(dmarc_records)} DMARC, {len(dkim_records)} DKIM, "
                         f"{len(reports)} reports"
                     )
 
-                except Exception as e:
-                    total_errors += 1
-                    logger.error(
-                        f"Error syncing DMARC/DKIM for tenant {tenant.name}: {e}",
-                        exc_info=True,
-                    )
-                    db.rollback()
-                    continue
+            except (IntegrityError, DataError, ProgrammingError) as e:
+                total_errors += 1
+                logger.error(f"Data error syncing DMARC/DKIM for tenant {tenant_name}: {e}")
+                continue
+            except Exception as e:
+                total_errors += 1
+                logger.error(
+                    f"Error syncing DMARC/DKIM for tenant {tenant_name}: {e}",
+                    exc_info=True,
+                )
+                continue
 
-            # Invalidate cache after sync
-            await service.invalidate_cache()
+        # Invalidate cache after sync
+        try:
+            with get_db_context() as db:
+                service = DMARCService(db)
+                await service.invalidate_cache()
+        except Exception as e:
+            logger.warning(f"Cache invalidation failed: {e}")
 
         # Update monitoring with final status
         if log_id:
-            monitoring.complete_sync_job(
-                log_id=log_id,
-                status="completed" if total_errors == 0 else "completed_with_errors",
-                final_records={
-                    "records_processed": total_dmarc + total_dkim + total_reports,
-                    "records_created": total_dmarc + total_dkim + total_reports,
-                    "records_updated": 0,
-                    "alerts_created": total_alerts_created,
-                    "errors_count": total_errors,
-                },
-            )
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
+                monitoring.complete_sync_job(
+                    log_id=log_id,
+                    status="completed" if total_errors == 0 else "completed_with_errors",
+                    final_records={
+                        "records_processed": total_dmarc + total_dkim + total_reports,
+                        "records_created": total_dmarc + total_dkim + total_reports,
+                        "records_updated": 0,
+                        "alerts_created": total_alerts_created,
+                        "errors_count": total_errors,
+                    },
+                )
 
         logger.info(
             f"DMARC/DKIM sync completed: {total_dmarc} DMARC records, "
@@ -162,7 +167,7 @@ async def sync_dmarc_dkim():
 
 async def _check_security_issues(
     service: DMARCService,
-    tenant: Tenant,
+    tenant_id: str,
     dmarc_records: list[DMARCRecord],
     dkim_records: list[DKIMRecord],
 ) -> list[DMARCAlert]:
@@ -173,7 +178,7 @@ async def _check_security_issues(
     for record in dmarc_records:
         if record.policy == "none":
             alert = await service.create_alert(
-                tenant_id=tenant.id,
+                tenant_id=tenant_id,
                 alert_type="weak_dmarc_policy",
                 severity="high",
                 message=f"DMARC policy for {record.domain} is set to 'none' - emails can be spoofed",
@@ -184,7 +189,7 @@ async def _check_security_issues(
 
         elif record.policy == "quarantine" and record.pct < 100:
             alert = await service.create_alert(
-                tenant_id=tenant.id,
+                tenant_id=tenant_id,
                 alert_type="dmarc_partial_enforcement",
                 severity="medium",
                 message=f"DMARC policy for {record.domain} is only enforcing {record.pct}%",
@@ -200,7 +205,7 @@ async def _check_security_issues(
 
     for domain in missing_dkim:
         alert = await service.create_alert(
-            tenant_id=tenant.id,
+            tenant_id=tenant_id,
             alert_type="missing_dkim",
             severity="high",
             message=f"DKIM is not enabled for {domain} - DMARC may fail legitimate emails",
@@ -213,7 +218,7 @@ async def _check_security_issues(
 
 
 async def _check_stale_dkim_keys(
-    service: DMARCService, tenant: Tenant, dkim_records: list[DKIMRecord]
+    service: DMARCService, tenant_id: str, dkim_records: list[DKIMRecord]
 ) -> list[DMARCAlert]:
     """Check for stale DKIM keys and create alerts."""
     alerts = []
@@ -222,7 +227,7 @@ async def _check_stale_dkim_keys(
         if record.is_key_stale:
             days = record.days_since_rotation or "unknown"
             alert = await service.create_alert(
-                tenant_id=tenant.id,
+                tenant_id=tenant_id,
                 alert_type="stale_dkim_key",
                 severity="medium",
                 message=f"DKIM key for {record.domain} has not been rotated in {days} days",

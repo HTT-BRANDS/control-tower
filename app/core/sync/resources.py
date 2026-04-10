@@ -5,6 +5,7 @@ import logging
 from datetime import UTC, datetime
 
 from azure.core.exceptions import HttpResponseError
+from sqlalchemy.exc import DataError, IntegrityError, ProgrammingError
 
 from app.api.services.azure_client import azure_client_manager
 from app.api.services.monitoring_service import MonitoringService
@@ -35,23 +36,25 @@ async def sync_resources():
     log_id = None
 
     try:
+        # Start monitoring and get tenant list with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="resources")
             log_id = log_entry.id
-            # Get all active tenants
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
-            logger.info(f"Found {len(tenants)} active tenants to sync for resources")
+            tenant_data = [(t.id, t.name, t.tenant_id) for t in tenants]
 
-            for tenant in tenants:
-                logger.info(f"Syncing resources for tenant: {tenant.name} ({tenant.tenant_id})")
+        logger.info(f"Found {len(tenant_data)} active tenants to sync for resources")
 
-                try:
+        for tenant_id, tenant_name, azure_tenant_id in tenant_data:
+            logger.info(f"Syncing resources for tenant: {tenant_name} ({azure_tenant_id})")
+
+            try:
+                with get_db_context() as tenant_db:
                     # Get subscriptions for this tenant
-                    subscriptions = await azure_client_manager.list_subscriptions(tenant.tenant_id)
+                    subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
                     logger.info(
-                        f"Found {len(subscriptions)} subscriptions for tenant {tenant.name}"
+                        f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}"
                     )
 
                     for sub in subscriptions:
@@ -70,7 +73,7 @@ async def sync_resources():
 
                             # Get resource client for this subscription
                             resource_client = azure_client_manager.get_resource_client(
-                                tenant.tenant_id, sub_id
+                                azure_tenant_id, sub_id
                             )
 
                             # List all resources in the subscription with pagination
@@ -84,7 +87,6 @@ async def sync_resources():
                             for resource in resources:
                                 try:
                                     # Parse resource ID to extract components
-                                    # Format: /subscriptions/{sub}/resourceGroups/{rg}/providers/{provider}/{type}/{name}
                                     resource_id = resource.id or ""
                                     resource_group = ""
                                     resource_type = ""
@@ -92,7 +94,6 @@ async def sync_resources():
                                     # Extract resource group from ID
                                     id_parts = resource_id.split("/")
                                     if len(id_parts) > 4 and id_parts[1] == "subscriptions":
-                                        # Find resourceGroups in path
                                         for i, part in enumerate(id_parts):
                                             if part.lower() == "resourcegroups" and i + 1 < len(
                                                 id_parts
@@ -146,7 +147,6 @@ async def sync_resources():
                                         for key, value in resource.tags.items():
                                             if "cost" in key.lower() and "month" in key.lower():
                                                 try:
-                                                    # Try to parse cost value
                                                     cost_val = (
                                                         str(value).replace("$", "").replace(",", "")
                                                     )
@@ -156,14 +156,14 @@ async def sync_resources():
 
                                     # Check if resource already exists
                                     existing = (
-                                        db.query(Resource)
+                                        tenant_db.query(Resource)
                                         .filter(Resource.id == resource_id)
                                         .first()
                                     )
 
                                     if existing:
                                         # Update existing resource
-                                        existing.tenant_id = tenant.id
+                                        existing.tenant_id = tenant_id
                                         existing.subscription_id = sub_id
                                         existing.resource_group = resource_group
                                         existing.resource_type = resource_type
@@ -180,7 +180,7 @@ async def sync_resources():
                                         # Create new resource
                                         new_resource = Resource(
                                             id=resource_id,
-                                            tenant_id=tenant.id,
+                                            tenant_id=tenant_id,
                                             subscription_id=sub_id,
                                             resource_group=resource_group,
                                             resource_type=resource_type,
@@ -193,7 +193,7 @@ async def sync_resources():
                                             estimated_monthly_cost=estimated_cost,
                                             synced_at=datetime.now(UTC),
                                         )
-                                        db.add(new_resource)
+                                        tenant_db.add(new_resource)
 
                                     subscription_synced += 1
 
@@ -203,7 +203,7 @@ async def sync_resources():
                                     continue
 
                             # Commit all resources for this subscription
-                            db.commit()
+                            tenant_db.commit()
                             total_synced += subscription_synced
                             total_orphaned += subscription_orphaned
 
@@ -231,25 +231,32 @@ async def sync_resources():
                                 exc_info=True,
                             )
 
-                except Exception as e:
-                    total_errors += 1
-                    logger.error(
-                        f"Error processing tenant {tenant.name}: {e}",
-                        exc_info=True,
-                    )
+            except (IntegrityError, DataError, ProgrammingError) as e:
+                total_errors += 1
+                logger.error(f"Data error syncing resources for tenant {tenant_name}: {e}")
+                continue
+            except Exception as e:
+                total_errors += 1
+                logger.error(
+                    f"Error processing tenant {tenant_name}: {e}",
+                    exc_info=True,
+                )
+                continue
 
         # Update monitoring with final status
         if log_id:
-            monitoring.complete_sync_job(
-                log_id=log_id,
-                status="completed" if total_errors == 0 else "failed",
-                final_records={
-                    "records_processed": total_synced,
-                    "records_created": total_synced,
-                    "records_updated": 0,
-                    "errors_count": total_errors,
-                },
-            )
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
+                monitoring.complete_sync_job(
+                    log_id=log_id,
+                    status="completed" if total_errors == 0 else "failed",
+                    final_records={
+                        "records_processed": total_synced,
+                        "records_created": total_synced,
+                        "records_updated": 0,
+                        "errors_count": total_errors,
+                    },
+                )
 
         logger.info(
             f"Resource sync completed: {total_synced} resources synced, "

@@ -3,6 +3,8 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.exc import DataError, IntegrityError, ProgrammingError
+
 from app.api.services.graph_client import GraphClient
 from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import IDENTITY_SYNC_BREAKER, circuit_breaker
@@ -127,21 +129,23 @@ async def sync_identity():
     log_id = None
 
     try:
+        # Start monitoring and get tenant list with a short-lived session
         with get_db_context() as db:
-            # Start monitoring
             monitoring = MonitoringService(db)
             log_entry = monitoring.start_sync_job(job_type="identity")
             log_id = log_entry.id
-            # Get all active tenants
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
-            logger.info(f"Found {len(tenants)} active tenants to sync for identity")
+            tenant_data = [(t.id, t.name, t.tenant_id) for t in tenants]
 
-            for tenant in tenants:
-                logger.info(f"Syncing identity for tenant: {tenant.name} ({tenant.tenant_id})")
+        logger.info(f"Found {len(tenant_data)} active tenants to sync for identity")
 
-                try:
+        for tenant_id, tenant_name, azure_tenant_id in tenant_data:
+            logger.info(f"Syncing identity for tenant: {tenant_name} ({azure_tenant_id})")
+
+            try:
+                with get_db_context() as tenant_db:
                     # Initialize GraphClient for this tenant
-                    graph_client = GraphClient(tenant.tenant_id)
+                    graph_client = GraphClient(azure_tenant_id)
 
                     # Fetch all required data from Graph API
                     users = await graph_client.get_users()
@@ -156,7 +160,7 @@ async def sync_identity():
                         mfa_users = mfa_response.get("value", [])
                         mfa_data = {user.get("userPrincipalName", ""): user for user in mfa_users}
                     except Exception as e:
-                        logger.warning(f"Could not fetch MFA status for tenant {tenant.name}: {e}")
+                        logger.warning(f"Could not fetch MFA status for tenant {tenant_name}: {e}")
 
                     # Calculate date thresholds for stale account detection
                     now = datetime.now(UTC)
@@ -255,7 +259,7 @@ async def sync_identity():
 
                             privileged_users_data.append(
                                 {
-                                    "tenant_id": tenant.id,
+                                    "tenant_id": tenant_id,
                                     "user_principal_name": upn,
                                     "display_name": display_name,
                                     "user_type": user_type,
@@ -269,7 +273,9 @@ async def sync_identity():
                             privileged_user_count += 1
 
                     # Delete existing privileged user records for this tenant
-                    db.query(PrivilegedUser).filter(PrivilegedUser.tenant_id == tenant.id).delete()
+                    tenant_db.query(PrivilegedUser).filter(
+                        PrivilegedUser.tenant_id == tenant_id
+                    ).delete()
 
                     # Create new privileged user records
                     for priv_user_data in privileged_users_data:
@@ -285,12 +291,12 @@ async def sync_identity():
                             last_sign_in=priv_user_data["last_sign_in"],
                             synced_at=datetime.now(UTC),
                         )
-                        db.add(privileged_user)
+                        tenant_db.add(privileged_user)
                         total_privileged_users += 1
 
                     # Create IdentitySnapshot
                     snapshot = IdentitySnapshot(
-                        tenant_id=tenant.id,
+                        tenant_id=tenant_id,
                         snapshot_date=snapshot_date,
                         total_users=total_user_count,
                         active_users=active_user_count,
@@ -303,39 +309,45 @@ async def sync_identity():
                         service_principals=len(service_principals),
                         synced_at=datetime.now(UTC),
                     )
-                    db.add(snapshot)
+                    tenant_db.add(snapshot)
                     total_snapshots += 1
 
                     # Commit changes for this tenant
-                    db.commit()
+                    tenant_db.commit()
 
                     logger.info(
-                        f"Identity sync completed for tenant {tenant.name}: "
+                        f"Identity sync completed for tenant {tenant_name}: "
                         f"{total_user_count} users, {len(guest_users)} guests, "
                         f"{privileged_user_count} privileged users, "
                         f"{len(service_principals)} service principals"
                     )
 
-                except Exception as e:
-                    total_errors += 1
-                    logger.error(
-                        f"Error syncing identity for tenant {tenant.name}: {e}",
-                        exc_info=True,
-                    )
-                    continue
+            except (IntegrityError, DataError, ProgrammingError) as e:
+                total_errors += 1
+                logger.error(f"Data error syncing identity for tenant {tenant_name}: {e}")
+                continue
+            except Exception as e:
+                total_errors += 1
+                logger.error(
+                    f"Error syncing identity for tenant {tenant_name}: {e}",
+                    exc_info=True,
+                )
+                continue
 
         # Update monitoring with final status
         if log_id:
-            monitoring.complete_sync_job(
-                log_id=log_id,
-                status="completed" if total_errors == 0 else "failed",
-                final_records={
-                    "records_processed": total_snapshots + total_privileged_users,
-                    "records_created": total_snapshots + total_privileged_users,
-                    "records_updated": 0,
-                    "errors_count": total_errors,
-                },
-            )
+            with get_db_context() as db:
+                monitoring = MonitoringService(db)
+                monitoring.complete_sync_job(
+                    log_id=log_id,
+                    status="completed" if total_errors == 0 else "failed",
+                    final_records={
+                        "records_processed": total_snapshots + total_privileged_users,
+                        "records_created": total_snapshots + total_privileged_users,
+                        "records_updated": 0,
+                        "errors_count": total_errors,
+                    },
+                )
 
         logger.info(
             f"Identity sync completed: {total_snapshots} snapshots, "
