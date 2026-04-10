@@ -275,12 +275,22 @@ jobs:
         run: az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Update container image and restart App Service
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Pass GHCR credentials so App Service can pull the (internal) image.
+          # Prefer GHCR_PAT (a long-lived PAT with read:packages scope) over
+          # GITHUB_TOKEN, which expires after the workflow ends. Without a PAT,
+          # App Service restarts outside CI may fail to re-pull the image.
+          GHCR_PASSWORD="${GHCR_PAT:-$GITHUB_TOKEN}"
           az webapp config container set \
             --name ${{ env.AZURE_APP_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --container-image-name ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
-            --container-registry-url https://${{ env.GHCR_REGISTRY }}
+            --container-registry-url https://${{ env.GHCR_REGISTRY }} \
+            --container-registry-user ${{ github.repository_owner }} \
+            --container-registry-password "$GHCR_PASSWORD"
           az webapp restart \
             --name ${{ env.AZURE_APP_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
