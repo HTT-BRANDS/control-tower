@@ -21,7 +21,6 @@ from app.core.http_client import (
     with_timeout,
 )
 
-
 # ── Module-level constants ───────────────────────────────────────────
 
 
@@ -99,6 +98,7 @@ class TestWithTimeout:
 
     async def test_uses_default_timeout_and_operation_name(self):
         """When called with only coro, defaults are applied (no crash)."""
+
         async def instant():
             return "ok"
 
@@ -115,6 +115,7 @@ class TestWithTimeout:
 
     async def test_timeout_error_chains_original(self):
         """The custom TimeoutError chains from the stdlib TimeoutError."""
+
         async def slow():
             await asyncio.sleep(10)
 
@@ -219,7 +220,7 @@ class TestTimeoutsClass:
             Timeouts.DB_QUERY,
         ]
         for t in all_timeouts:
-            assert isinstance(t, (int, float))
+            assert isinstance(t, int | float)
             assert 0 < t < 600, f"Timeout {t} out of expected range"
 
     def test_specific_values_match_source(self):

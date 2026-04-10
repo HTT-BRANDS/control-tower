@@ -7,7 +7,6 @@ Tests all threat endpoints with FastAPI TestClient:
 
 from unittest.mock import MagicMock, patch
 
-
 # ============================================================================
 # GET /api/v1/threats/cybeta Tests
 # ============================================================================
@@ -37,9 +36,7 @@ class TestGetCybetaThreats:
     """Tests for GET /api/v1/threats/cybeta endpoint."""
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_cybeta_threats_returns_list(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_cybeta_threats_returns_list(self, mock_get_service, authed_client):
         """Cybeta threats endpoint returns a list of threat records."""
         mock_service = MagicMock()
         mock_service.get_cybeta_threats.return_value = SAMPLE_THREATS
@@ -53,9 +50,7 @@ class TestGetCybetaThreats:
         assert len(data) == 2
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_cybeta_threats_response_shape(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_cybeta_threats_response_shape(self, mock_get_service, authed_client):
         """Each threat record contains expected fields."""
         mock_service = MagicMock()
         mock_service.get_cybeta_threats.return_value = SAMPLE_THREATS[:1]
@@ -87,9 +82,7 @@ class TestGetCybetaThreats:
         mock_get_service.return_value = mock_service
         mock_authz.filter_tenant_ids.return_value = ["test-tenant-123"]
 
-        response = authed_client.get(
-            "/api/v1/threats/cybeta?tenant_ids=test-tenant-123"
-        )
+        response = authed_client.get("/api/v1/threats/cybeta?tenant_ids=test-tenant-123")
 
         assert response.status_code == 200
         # Verify the service was called with the filtered tenant IDs
@@ -97,9 +90,7 @@ class TestGetCybetaThreats:
         assert call_kwargs.kwargs["tenant_ids"] == ["test-tenant-123"]
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_cybeta_threats_filters_by_date_range(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_cybeta_threats_filters_by_date_range(self, mock_get_service, authed_client):
         """Cybeta threats endpoint passes date range filters to service."""
         mock_service = MagicMock()
         mock_service.get_cybeta_threats.return_value = SAMPLE_THREATS
@@ -116,9 +107,7 @@ class TestGetCybetaThreats:
         assert str(call_kwargs["end_date"]) == "2024-06-30"
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_cybeta_threats_empty_results(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_cybeta_threats_empty_results(self, mock_get_service, authed_client):
         """Cybeta threats endpoint returns empty list when no data exists."""
         mock_service = MagicMock()
         mock_service.get_cybeta_threats.return_value = []
@@ -167,17 +156,13 @@ class TestGetThreatSummary:
     """Tests for GET /api/v1/threats/summary/{tenant_id} endpoint."""
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_threat_summary_returns_data(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_threat_summary_returns_data(self, mock_get_service, authed_client):
         """Threat summary endpoint returns summary for a tenant."""
         mock_service = MagicMock()
         mock_service.get_threat_summary.return_value = SAMPLE_SUMMARY
         mock_get_service.return_value = mock_service
 
-        response = authed_client.get(
-            "/api/v1/threats/summary/test-tenant-123"
-        )
+        response = authed_client.get("/api/v1/threats/summary/test-tenant-123")
 
         assert response.status_code == 200
         data = response.json()
@@ -186,17 +171,13 @@ class TestGetThreatSummary:
         assert data["latest_threat_score"] == 72.5
 
     @patch("app.api.routes.threats.get_threat_intel_service")
-    def test_get_threat_summary_no_data(
-        self, mock_get_service, authed_client
-    ):
+    def test_get_threat_summary_no_data(self, mock_get_service, authed_client):
         """Threat summary returns no_data status when tenant has no threats."""
         mock_service = MagicMock()
         mock_service.get_threat_summary.return_value = EMPTY_SUMMARY
         mock_get_service.return_value = mock_service
 
-        response = authed_client.get(
-            "/api/v1/threats/summary/test-tenant-123"
-        )
+        response = authed_client.get("/api/v1/threats/summary/test-tenant-123")
 
         assert response.status_code == 200
         data = response.json()

@@ -52,9 +52,9 @@ def seeded_db():
             timeout=30,
         )
 
-        assert result.returncode == 0, (
-            f"seed_data.py failed!\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"seed_data.py failed!\nstdout: {result.stdout}\nstderr: {result.stderr}"
         assert "Seeding complete" in result.stdout, f"Unexpected output: {result.stdout}"
 
         # Connect to the seeded database
@@ -120,7 +120,6 @@ class TestTenants:
 
 # ── Cost Data Tests ─────────────────────────────────────────────
 class TestCostData:
-
     def test_cost_snapshots_exist(self, seeded_db):
         count = _count(seeded_db, "cost_snapshots")
         assert count >= 500, f"Expected >= 500 cost snapshots, got {count}"
@@ -141,13 +140,14 @@ class TestCostData:
 
 # ── Compliance Data Tests ───────────────────────────────────────
 class TestComplianceData:
-
     def test_compliance_snapshots_exist(self, seeded_db):
         count = _count(seeded_db, "compliance_snapshots")
         assert count >= 100, f"Expected >= 100, got {count}"
 
     def test_compliance_scores_in_range(self, seeded_db):
-        rows = _query(seeded_db, "SELECT overall_compliance_percent FROM compliance_snapshots LIMIT 20")
+        rows = _query(
+            seeded_db, "SELECT overall_compliance_percent FROM compliance_snapshots LIMIT 20"
+        )
         for (score,) in rows:
             assert 0 <= score <= 100, f"Score out of range: {score}"
 
@@ -157,7 +157,6 @@ class TestComplianceData:
 
 # ── Resource Data Tests ─────────────────────────────────────────
 class TestResourceData:
-
     def test_resources_exist(self, seeded_db):
         assert _count(seeded_db, "resources") >= 100
 
@@ -175,7 +174,6 @@ class TestResourceData:
 
 # ── Identity Data Tests ─────────────────────────────────────────
 class TestIdentityData:
-
     def test_identity_snapshots_exist(self, seeded_db):
         assert _count(seeded_db, "identity_snapshots") >= 100
 
@@ -185,7 +183,6 @@ class TestIdentityData:
 
 # ── Sync Data Tests ─────────────────────────────────────────────
 class TestSyncData:
-
     def test_sync_jobs_exist(self, seeded_db):
         assert _count(seeded_db, "sync_jobs") >= 50
 
@@ -201,14 +198,12 @@ class TestSyncData:
 
 # ── Recommendation Tests ────────────────────────────────────────
 class TestRecommendations:
-
     def test_recommendations_exist(self, seeded_db):
         assert _count(seeded_db, "recommendations") >= 10
 
 
 # ── DMARC Data Tests ────────────────────────────────────────────
 class TestDMARCData:
-
     def test_dmarc_records_exist(self, seeded_db):
         assert _count(seeded_db, "dmarc_records") >= 5
 
@@ -220,10 +215,13 @@ class TestDMARCData:
         assert count >= 200, f"Expected >= 200 DMARC reports, got {count}"
 
     def test_dmarc_reports_have_valid_data(self, seeded_db):
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT messages_total, messages_passed, messages_failed, pct_compliant
             FROM dmarc_reports LIMIT 10
-        """)
+        """,
+        )
         for total, passed, failed, pct in rows:
             assert total > 0
             assert passed >= 0
@@ -236,7 +234,6 @@ class TestDMARCData:
 
 # ── Riverside Data Tests ────────────────────────────────────────
 class TestRiversideData:
-
     def test_compliance_records_exist(self, seeded_db):
         assert _count(seeded_db, "riverside_compliance") == 5
 
@@ -250,10 +247,13 @@ class TestRiversideData:
         assert _count(seeded_db, "riverside_mfa") == 5
 
     def test_mfa_coverage_valid(self, seeded_db):
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT total_users, mfa_enrolled_users, mfa_coverage_percentage
             FROM riverside_mfa
-        """)
+        """,
+        )
         for total, enrolled, pct in rows:
             assert total >= enrolled, f"More enrolled than total: {enrolled} > {total}"
             assert 0 <= pct <= 100
@@ -262,10 +262,13 @@ class TestRiversideData:
         assert _count(seeded_db, "riverside_device_compliance") == 5
 
     def test_device_compliance_valid(self, seeded_db):
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT total_devices, compliance_percentage
             FROM riverside_device_compliance
-        """)
+        """,
+        )
         for total, pct in rows:
             assert total > 0
             assert 0 <= pct <= 100
@@ -284,10 +287,13 @@ class TestRiversideData:
         assert statuses.issubset(valid), f"Invalid statuses: {statuses - valid}"
 
     def test_requirements_have_owners(self, seeded_db):
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT requirement_id, owner FROM riverside_requirements
             WHERE owner IS NULL OR owner = ''
-        """)
+        """,
+        )
         assert len(rows) == 0, f"{len(rows)} requirements have no owner"
 
     def test_requirements_cover_categories(self, seeded_db):
@@ -300,41 +306,66 @@ class TestRiversideData:
 
 # ── Cross-Cutting Integrity ─────────────────────────────────────
 class TestDataIntegrity:
-
     def test_all_cost_snapshots_reference_valid_tenant(self, seeded_db):
-        orphans = _query(seeded_db, """
+        orphans = _query(
+            seeded_db,
+            """
             SELECT COUNT(*) FROM cost_snapshots cs
             LEFT JOIN tenants t ON cs.tenant_id = t.id
             WHERE t.id IS NULL
-        """)
+        """,
+        )
         assert orphans[0][0] == 0, "Orphaned cost snapshots found"
 
     def test_all_riverside_data_references_valid_tenant(self, seeded_db):
-        orphans = _query(seeded_db, """
+        orphans = _query(
+            seeded_db,
+            """
             SELECT COUNT(*) FROM riverside_compliance rc
             LEFT JOIN tenants t ON rc.tenant_id = t.id
             WHERE t.id IS NULL
-        """)
+        """,
+        )
         assert orphans[0][0] == 0, "Orphaned riverside compliance records"
 
     def test_all_dmarc_reports_reference_valid_tenant(self, seeded_db):
-        orphans = _query(seeded_db, """
+        orphans = _query(
+            seeded_db,
+            """
             SELECT COUNT(*) FROM dmarc_reports dr
             LEFT JOIN tenants t ON dr.tenant_id = t.id
             WHERE t.id IS NULL
-        """)
+        """,
+        )
         assert orphans[0][0] == 0, "Orphaned DMARC reports"
 
     def test_total_record_count(self, seeded_db):
         """Overall record count should be in the 2500-5000 range."""
         tables = [
-            "tenants", "brand_configs", "cost_snapshots", "cost_anomalies",
-            "compliance_snapshots", "policy_states", "resources", "resource_tags",
-            "idle_resources", "identity_snapshots", "privileged_users",
-            "sync_jobs", "sync_job_logs", "sync_job_metrics", "alerts",
-            "recommendations", "dmarc_records", "dkim_records", "dmarc_reports",
-            "dmarc_alerts", "riverside_compliance", "riverside_mfa",
-            "riverside_device_compliance", "riverside_threat_data",
+            "tenants",
+            "brand_configs",
+            "cost_snapshots",
+            "cost_anomalies",
+            "compliance_snapshots",
+            "policy_states",
+            "resources",
+            "resource_tags",
+            "idle_resources",
+            "identity_snapshots",
+            "privileged_users",
+            "sync_jobs",
+            "sync_job_logs",
+            "sync_job_metrics",
+            "alerts",
+            "recommendations",
+            "dmarc_records",
+            "dkim_records",
+            "dmarc_reports",
+            "dmarc_alerts",
+            "riverside_compliance",
+            "riverside_mfa",
+            "riverside_device_compliance",
+            "riverside_threat_data",
             "riverside_requirements",
         ]
         total = sum(_count(seeded_db, t) for t in tables)
@@ -342,22 +373,28 @@ class TestDataIntegrity:
 
     def test_each_tenant_has_cost_data(self, seeded_db):
         """Every tenant should have at least some cost snapshots."""
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT t.name, COUNT(cs.id) AS cnt
             FROM tenants t
             LEFT JOIN cost_snapshots cs ON t.id = cs.tenant_id
             GROUP BY t.id
-        """)
+        """,
+        )
         for name, cnt in rows:
             assert cnt > 0, f"Tenant '{name}' has no cost data"
 
     def test_each_tenant_has_compliance_data(self, seeded_db):
         """Every tenant should have compliance snapshots."""
-        rows = _query(seeded_db, """
+        rows = _query(
+            seeded_db,
+            """
             SELECT t.name, COUNT(cs.id) AS cnt
             FROM tenants t
             LEFT JOIN compliance_snapshots cs ON t.id = cs.tenant_id
             GROUP BY t.id
-        """)
+        """,
+        )
         for name, cnt in rows:
             assert cnt > 0, f"Tenant '{name}' has no compliance data"

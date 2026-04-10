@@ -63,7 +63,7 @@ INLINE_HEX_PATTERN = re.compile(
 )
 
 # ── Helpers ─────────────────────────────────────────────────────
-GRADIENT_EXCEPTIONS = {"from-indigo-600", "to-blue-800", "from-blue-600", "to-blue-800"}
+GRADIENT_EXCEPTIONS = {"from-indigo-600", "to-blue-800", "from-blue-600"}
 
 
 def _collect_files(directory: Path, extension: str) -> list[Path]:
@@ -77,7 +77,9 @@ def _collect_files(directory: Path, extension: str) -> list[Path]:
     ]
 
 
-def _find_violations(filepath: Path, pattern: re.Pattern, skip_comments: bool = True) -> list[tuple[int, str, str]]:
+def _find_violations(
+    filepath: Path, pattern: re.Pattern, skip_comments: bool = True
+) -> list[tuple[int, str, str]]:
     """Find pattern violations in a file. Returns [(line_num, match, line_text)]."""
     violations = []
     content = filepath.read_text(encoding="utf-8")
@@ -117,7 +119,7 @@ class TestTemplateColorCompliance:
         all_violations = []
         for f in html_files:
             violations = _find_violations(f, BANNED_COLOR_PATTERN)
-            for line_num, matched, line_text in violations:
+            for line_num, matched, _line_text in violations:
                 all_violations.append(f"  {f.relative_to(ROOT)}:{line_num} — {matched}")
 
         assert not all_violations, (
@@ -131,7 +133,7 @@ class TestTemplateColorCompliance:
         all_violations = []
         for f in html_files:
             violations = _find_violations(f, BANNED_GRAY_PATTERN)
-            for line_num, matched, line_text in violations:
+            for line_num, matched, _line_text in violations:
                 all_violations.append(f"  {f.relative_to(ROOT)}:{line_num} — {matched}")
 
         assert not all_violations, (
@@ -145,7 +147,7 @@ class TestTemplateColorCompliance:
         all_violations = []
         for f in html_files:
             violations = _find_violations(f, BANNED_FOCUS_OUTLINE_NONE)
-            for line_num, matched, line_text in violations:
+            for line_num, _matched, _line_text in violations:
                 all_violations.append(f"  {f.relative_to(ROOT)}:{line_num}")
 
         assert not all_violations, (
@@ -174,7 +176,7 @@ class TestJavaScriptColorCompliance:
         all_violations = []
         for f in js_files:
             violations = _find_violations(f, BANNED_COLOR_PATTERN)
-            for line_num, matched, line_text in violations:
+            for line_num, matched, _line_text in violations:
                 all_violations.append(f"  {f.relative_to(ROOT)}:{line_num} — {matched}")
 
         assert not all_violations, (
@@ -187,7 +189,7 @@ class TestJavaScriptColorCompliance:
         all_violations = []
         for f in js_files:
             violations = _find_violations(f, BANNED_GRAY_PATTERN)
-            for line_num, matched, line_text in violations:
+            for line_num, matched, _line_text in violations:
                 all_violations.append(f"  {f.relative_to(ROOT)}:{line_num} — {matched}")
 
         assert not all_violations, (
@@ -209,9 +211,9 @@ class TestCSSDesignSystem:
     def test_accessibility_css_uses_brand_token_for_focus(self):
         """accessibility.css must use var(--brand-primary) for focus-visible, not hardcoded blue."""
         content = ACCESSIBILITY_CSS.read_text()
-        assert "var(--brand-primary" in content, (
-            "accessibility.css must use var(--brand-primary) for focus-visible outlines"
-        )
+        assert (
+            "var(--brand-primary" in content
+        ), "accessibility.css must use var(--brand-primary) for focus-visible outlines"
         # Must NOT have hardcoded Walmart blue
         assert "#0053e2" not in content.lower(), (
             "accessibility.css still has hardcoded #0053e2 (Walmart blue). "
@@ -221,16 +223,16 @@ class TestCSSDesignSystem:
     def test_accessibility_css_has_forced_colors(self):
         """accessibility.css must support forced-colors (Windows High Contrast)."""
         content = ACCESSIBILITY_CSS.read_text()
-        assert "forced-colors" in content, (
-            "accessibility.css must include @media (forced-colors: active) for HC mode"
-        )
+        assert (
+            "forced-colors" in content
+        ), "accessibility.css must include @media (forced-colors: active) for HC mode"
 
     def test_accessibility_css_has_reduced_motion(self):
         """accessibility.css must respect prefers-reduced-motion."""
         content = ACCESSIBILITY_CSS.read_text()
-        assert "prefers-reduced-motion" in content, (
-            "accessibility.css must include @media (prefers-reduced-motion: reduce)"
-        )
+        assert (
+            "prefers-reduced-motion" in content
+        ), "accessibility.css must include @media (prefers-reduced-motion: reduce)"
 
     def test_accessibility_css_has_skip_link(self):
         """accessibility.css must define .skip-link for keyboard navigation."""
@@ -241,9 +243,7 @@ class TestCSSDesignSystem:
         """btn-brand:focus-visible must use outline (not just box-shadow) for HC mode."""
         content = THEME_SRC.read_text()
         # Find the btn-brand:focus-visible block
-        focus_block_match = re.search(
-            r"\.btn-brand:focus-visible\s*\{([^}]+)\}", content
-        )
+        focus_block_match = re.search(r"\.btn-brand:focus-visible\s*\{([^}]+)\}", content)
         assert focus_block_match, "btn-brand:focus-visible rule not found in theme.src.css"
 
         block = focus_block_match.group(1)
@@ -252,9 +252,7 @@ class TestCSSDesignSystem:
             "for Windows High Contrast Mode compatibility"
         )
         # Must not have outline: none
-        assert "outline: none" not in block, (
-            "btn-brand:focus-visible must NOT use 'outline: none'"
-        )
+        assert "outline: none" not in block, "btn-brand:focus-visible must NOT use 'outline: none'"
 
     def test_text_muted_meets_wcag_aa(self):
         """--text-muted must have >= 4.5:1 contrast ratio on white (WCAG AA)."""
@@ -348,7 +346,7 @@ class TestBaseTemplate:
 
     def test_nav_has_aria_label(self, base_html):
         """Navigation must have aria-label for screen readers."""
-        assert 'aria-label=' in base_html, "Navigation must have aria-label"
+        assert "aria-label=" in base_html, "Navigation must have aria-label"
 
 
 # ── Login Template Tests ────────────────────────────────────────
@@ -372,12 +370,12 @@ class TestLoginTemplate:
 
     def test_uses_design_tokens(self, login_html):
         """login.html must use brand-primary and muted-theme tokens."""
-        assert "bg-brand-primary" in login_html or "btn-brand" in login_html, (
-            "login.html must use brand-primary or btn-brand for the brand accent"
-        )
-        assert "text-muted-theme" in login_html, (
-            "login.html must use text-muted-theme for secondary text"
-        )
+        assert (
+            "bg-brand-primary" in login_html or "btn-brand" in login_html
+        ), "login.html must use brand-primary or btn-brand for the brand accent"
+        assert (
+            "text-muted-theme" in login_html
+        ), "login.html must use text-muted-theme for secondary text"
 
 
 # ── Contrast Ratio Helper ──────────────────────────────────────
@@ -389,6 +387,7 @@ def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
 
 def _relative_luminance(r: int, g: int, b: int) -> float:
     """WCAG 2.x relative luminance calculation."""
+
     def linearize(c: int) -> float:
         s = c / 255.0
         return s / 12.92 if s <= 0.04045 else ((s + 0.055) / 1.055) ** 2.4

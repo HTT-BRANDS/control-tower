@@ -134,7 +134,7 @@ class TestSkipLinks:
     def test_skip_link_is_focusable(self, authenticated_page: Page, base_url: str):
         """Skip links should be focusable (not display:none)."""
         authenticated_page.goto(f"{base_url}/dashboard")
-        skip_link = authenticated_page.locator("a[href='#main-content']")
+        _skip_link = authenticated_page.locator("a[href='#main-content']")
 
         # Tab to the skip link (should be first focusable element)
         authenticated_page.keyboard.press("Tab")
@@ -153,7 +153,7 @@ class TestSkipLinks:
         skip_link = authenticated_page.locator("a[href='#main-content']")
 
         # Check initial opacity - should be 0 or very low
-        initial_opacity = skip_link.evaluate("el => window.getComputedStyle(el).opacity")
+        _initial_opacity = skip_link.evaluate("el => window.getComputedStyle(el).opacity")
         # Skip links may be positioned off-screen or have 0 opacity
 
         # Focus the skip link via keyboard Tab (more realistic)
@@ -340,7 +340,7 @@ class TestARIALabels:
                 missing_labels.append(f"Button {i}: {button.element_handle().outer_html()[:100]}")
 
         if missing_labels:
-            pytest.fail(f"Buttons missing accessible names:\n" + "\n".join(missing_labels[:5]))
+            pytest.fail("Buttons missing accessible names:\n" + "\n".join(missing_labels[:5]))
 
     def test_nav_buttons_have_aria_label(self, authenticated_page: Page, base_url: str):
         """Navigation buttons (like hamburger menu) should have aria-label."""
@@ -374,7 +374,7 @@ class TestARIALabels:
             input_id = inp.get_attribute("id")
             aria_label = inp.get_attribute("aria-label")
             aria_labelled_by = inp.get_attribute("aria-labelledby")
-            placeholder = inp.get_attribute("placeholder")
+            _placeholder = inp.get_attribute("placeholder")
             title = inp.get_attribute("title")
 
             has_label = (
@@ -529,7 +529,7 @@ class TestPublicPageAccessibility:
             # Wait for navigation to complete
             unauthenticated_page.wait_for_load_state("networkidle")
             # Check for any content container (main, div with content, body content, etc.)
-            content = unauthenticated_page.locator("main, [role='main'], body > div, .container")
+            _content = unauthenticated_page.locator("main, [role='main'], body > div, .container")
             # Onboarding uses a standalone template without base.html
             # Just verify the page loaded with some content
             body_text = unauthenticated_page.locator("body").inner_text()

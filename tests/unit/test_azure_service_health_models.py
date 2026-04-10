@@ -54,33 +54,33 @@ TWO_HOURS_LATER = NOW + timedelta(hours=2)
 
 def _make_incident(**overrides) -> ServiceHealthIncident:
     """Build a ServiceHealthIncident with sensible defaults."""
-    defaults = dict(
-        incident_id="INC-001",
-        correlation_id="CORR-001",
-        title="Test Incident",
-        summary="Something went wrong",
-        severity=IncidentSeverity.WARNING,
-        status=IncidentStatus.ACTIVE,
-        service="App Service",
-        region="East US",
-        start_time=NOW,
-        last_update_time=ONE_HOUR_LATER,
-    )
+    defaults = {
+        "incident_id": "INC-001",
+        "correlation_id": "CORR-001",
+        "title": "Test Incident",
+        "summary": "Something went wrong",
+        "severity": IncidentSeverity.WARNING,
+        "status": IncidentStatus.ACTIVE,
+        "service": "App Service",
+        "region": "East US",
+        "start_time": NOW,
+        "last_update_time": ONE_HOUR_LATER,
+    }
     defaults.update(overrides)
     return ServiceHealthIncident(**defaults)
 
 
 def _make_resource_health_event(**overrides) -> ResourceHealthEvent:
     """Build a ResourceHealthEvent with sensible defaults."""
-    defaults = dict(
-        resource_id="/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1",
-        resource_name="vm-1",
-        resource_type="Microsoft.Compute/virtualMachines",
-        resource_group="rg-1",
-        status=ResourceHealthStatus.AVAILABLE,
-        event_type="AvailabilityStateChange",
-        occurred_time=NOW,
-    )
+    defaults = {
+        "resource_id": "/subscriptions/sub-1/resourceGroups/rg-1/providers/Microsoft.Compute/virtualMachines/vm-1",
+        "resource_name": "vm-1",
+        "resource_type": "Microsoft.Compute/virtualMachines",
+        "resource_group": "rg-1",
+        "status": ResourceHealthStatus.AVAILABLE,
+        "event_type": "AvailabilityStateChange",
+        "occurred_time": NOW,
+    }
     defaults.update(overrides)
     return ResourceHealthEvent(**defaults)
 

@@ -35,6 +35,7 @@ ACCESSIBILITY_CSS = ROOT / "app" / "static" / "css" / "accessibility.css"
 @pytest.fixture(autouse=True)
 def clear_brand_cache():
     import app.core.design_tokens as dt
+
     dt._registry = None
     yield
     dt._registry = None
@@ -89,14 +90,18 @@ class TestContrastRequirements:
         ratio = get_contrast_ratio(match.group(1), "#FFFFFF")
         assert ratio >= 7.0, f"--text-primary contrast: {ratio:.2f}:1 (need >= 7.0:1 for AAA)"
 
-    @pytest.mark.parametrize("brand_key", ["httbrands", "frenchies", "bishops", "lashlounge", "deltacrown"])
+    @pytest.mark.parametrize(
+        "brand_key", ["httbrands", "frenchies", "bishops", "lashlounge", "deltacrown"]
+    )
     def test_brand_primary_on_white(self, registry, brand_key):
         """Each brand's primary color must pass WCAG AA on white."""
         brand = registry[brand_key]
         ratio = get_contrast_ratio(brand.colors.primary, "#FFFFFF")
         assert ratio >= 4.5, f"{brand.name} primary on white: {ratio:.2f}:1"
 
-    @pytest.mark.parametrize("brand_key", ["httbrands", "frenchies", "bishops", "lashlounge", "deltacrown"])
+    @pytest.mark.parametrize(
+        "brand_key", ["httbrands", "frenchies", "bishops", "lashlounge", "deltacrown"]
+    )
     def test_brand_text_on_background(self, registry, brand_key):
         """Each brand's text color must pass WCAG AA on its background."""
         brand = registry[brand_key]
@@ -145,9 +150,9 @@ class TestFocusVisible:
         focus_match = re.search(r":focus-visible\s*\{([^}]+)\}", theme_css)
         assert focus_match
         block = focus_match.group(1)
-        assert "var(--brand-primary" in block, (
-            "Focus-visible must use var(--brand-primary) for tenant-aware focus"
-        )
+        assert (
+            "var(--brand-primary" in block
+        ), "Focus-visible must use var(--brand-primary) for tenant-aware focus"
 
     def test_accessibility_css_focus_not_hardcoded(self, a11y_css):
         """accessibility.css focus must use CSS vars, not hex.
@@ -161,9 +166,9 @@ class TestFocusVisible:
             if "outline" in block:
                 uses_system_color = any(sc in block for sc in system_colors)
                 if not uses_system_color:
-                    assert "var(" in block, (
-                        f"Focus-visible block uses hardcoded color: {block.strip()}"
-                    )
+                    assert (
+                        "var(" in block
+                    ), f"Focus-visible block uses hardcoded color: {block.strip()}"
 
     def test_btn_brand_focus_has_outline(self, theme_css):
         """btn-brand:focus-visible must use outline (not just box-shadow)."""
@@ -179,10 +184,12 @@ class TestFocusVisible:
         for i, line in enumerate(lines):
             if "outline: none" in line or "outline:none" in line:
                 # Check if there's an alternative indicator nearby (ring, box-shadow, outline with different value)
-                context = "\n".join(lines[max(0, i-3):i+4])
-                assert "ring" in context or "box-shadow" in context or "outline:" in context.replace(line, ""), (
-                    f"Line {i+1}: outline: none without replacement indicator"
-                )
+                context = "\n".join(lines[max(0, i - 3) : i + 4])
+                assert (
+                    "ring" in context
+                    or "box-shadow" in context
+                    or "outline:" in context.replace(line, "")
+                ), f"Line {i + 1}: outline: none without replacement indicator"
 
 
 # ── SC 2.4.1 — Bypass Blocks ───────────────────────────────────
@@ -237,10 +244,10 @@ class TestForcedColors:
 
     def test_forced_colors_focus_indicator(self, a11y_css):
         """Focus indicator must use Highlight in forced-colors mode."""
-        forced_block = a11y_css[a11y_css.index("forced-colors"):]
-        assert "Highlight" in forced_block or "highlight" in forced_block, (
-            "Forced-colors mode must use system Highlight color for focus"
-        )
+        forced_block = a11y_css[a11y_css.index("forced-colors") :]
+        assert (
+            "Highlight" in forced_block or "highlight" in forced_block
+        ), "Forced-colors mode must use system Highlight color for focus"
 
 
 # ── Reduced Motion ──────────────────────────────────────────────
@@ -257,10 +264,8 @@ class TestReducedMotion:
     def test_reduced_motion_disables_animations(self, a11y_css):
         """Reduced motion must set animation-duration to near-zero."""
         # Should contain something like animation-duration: 0.01ms or animation: none
-        rm_block = a11y_css[a11y_css.index("prefers-reduced-motion"):]
-        assert "animation" in rm_block, (
-            "prefers-reduced-motion block must override animations"
-        )
+        rm_block = a11y_css[a11y_css.index("prefers-reduced-motion") :]
+        assert "animation" in rm_block, "prefers-reduced-motion block must override animations"
 
 
 # ── ARIA Completeness ──────────────────────────────────────────
@@ -269,7 +274,7 @@ class TestAriaAttributes:
 
     def test_search_input_has_label(self):
         search = (TEMPLATES_DIR / "components" / "search.html").read_text()
-        assert 'aria-label=' in search, "Search trigger needs aria-label"
+        assert "aria-label=" in search, "Search trigger needs aria-label"
 
     def test_consent_banner_labelled(self):
         banner = (TEMPLATES_DIR / "components" / "consent_banner.html").read_text()
@@ -306,7 +311,7 @@ class TestNonTextContrast:
         """Default border color must have >= 3:1 on white."""
         match = re.search(r"--border-default:\s*(#[0-9a-fA-F]{6})", theme_css)
         assert match
-        ratio = get_contrast_ratio(match.group(1), "#FFFFFF")
+        _ratio = get_contrast_ratio(match.group(1), "#FFFFFF")
         # Borders are non-text UI, need 3:1 per 1.4.11
         # Note: #E5E7EB is ~1.3:1 — this is intentionally light for aesthetic reasons
         # but focus borders must pass. Let's check focus border instead.
