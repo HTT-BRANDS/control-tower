@@ -38,21 +38,18 @@ nav button {
 
 /* ── Focus-Visible (WCAG 2.4.7 + 2.4.11) ───────────────────── 
    Uses brand token so focus rings adapt per-tenant.
-   The theme.src.css defines :focus-visible with the same token;
-   this layer adds enhanced specificity for ARIA roles.
+   The base :focus-visible rule is defined in theme.src.css;
+   this layer adds enhanced specificity for ARIA roles and elements.
+   
+   Token chain: --color-border-focus → --border-focus → --brand-primary-100 → #500711
    ─────────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 3px solid var(--brand-primary, #500711);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
 
 /* Enhanced focus for tab/menu patterns */
 [tabindex="0"]:focus-visible,
 [role="tab"]:focus-visible,
 [role="menuitem"]:focus-visible,
 [role="button"]:focus-visible {
-  outline: 3px solid var(--brand-primary, #500711);
+  outline: 3px solid var(--color-border-focus, var(--border-focus, var(--brand-primary-100, #500711)));
   outline-offset: 2px;
 }
 
@@ -62,7 +59,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--brand-primary, #500711);
+  outline: 3px solid var(--color-border-focus, var(--border-focus, var(--brand-primary-100, #500711)));
   outline-offset: 2px;
 }
 

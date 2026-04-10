@@ -447,7 +447,7 @@ body {
    WCAG Focus Indicators
    ========================================================================== */
 :focus-visible {
-  outline: 2px solid var(--brand-primary, #500711);
+  outline: 3px solid var(--color-border-focus, var(--border-focus, var(--brand-primary-100, #500711)));
   outline-offset: 2px;
 }
 
@@ -571,7 +571,7 @@ body {
 }
 
 .btn-brand:focus-visible {
-  outline: 2px solid var(--brand-primary, #500711);
+  outline: 3px solid var(--color-border-focus, var(--border-focus, var(--brand-primary-100, #500711)));
   outline-offset: 2px;
   box-shadow: none;
 }
