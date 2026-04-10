@@ -226,6 +226,8 @@ All responses now include:
 - `Content-Security-Policy: default-src 'self'; ...`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains` (production only)
 
+**See detailed documentation:** [`docs/security/SECURITY_HEADERS.md`](docs/security/SECURITY_HEADERS.md)
+
 ### Remaining Recommendations (Post v1.2.0)
 - Consider implementing token refresh rotation (rotate refresh tokens on each use)
 - Add Azure Application Insights integration for security event monitoring
