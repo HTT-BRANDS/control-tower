@@ -16,6 +16,7 @@ This migration is idempotent - it checks if indexes exist before creating them.
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy.exc import NoSuchTableError
 
 from alembic import op
 
@@ -27,10 +28,16 @@ depends_on: str | Sequence[str] | None = None
 
 
 def _index_exists(table: str, index: str) -> bool:
-    """Check if an index already exists on the table."""
+    """Check if an index already exists on the table.
+
+    Returns False if the table doesn't exist (no table → no indexes).
+    """
     bind = op.get_bind()
     insp = sa.inspect(bind)
-    indexes = [idx["name"] for idx in insp.get_indexes(table)]
+    try:
+        indexes = [idx["name"] for idx in insp.get_indexes(table)]
+    except NoSuchTableError:
+        return False
     return index in indexes
 
 
@@ -83,33 +90,9 @@ def upgrade() -> None:
             postgresql_using="btree",
         )
 
-    # Monitoring alerts indexes
-    # Frequently queried by tenant_id for active alerts
-    if not _index_exists("monitoring_alerts", "idx_monitoring_alerts_tenant_id"):
-        op.create_index(
-            "idx_monitoring_alerts_tenant_id",
-            "monitoring_alerts",
-            ["tenant_id"],
-            postgresql_using="btree",
-        )
-
-    # Frequently queried by status for alert management
-    if not _index_exists("monitoring_alerts", "idx_monitoring_alerts_status"):
-        op.create_index(
-            "idx_monitoring_alerts_status",
-            "monitoring_alerts",
-            ["status"],
-            postgresql_using="btree",
-        )
-
-    # Frequently queried by created_at for time-based alerts
-    if not _index_exists("monitoring_alerts", "idx_monitoring_alerts_created_at"):
-        op.create_index(
-            "idx_monitoring_alerts_created_at",
-            "monitoring_alerts",
-            ["created_at"],
-            postgresql_using="btree",
-        )
+    # NOTE: monitoring_alerts table does not exist — the model uses
+    # __tablename__ = "alerts" instead. Indexes for that table are omitted
+    # to avoid NoSuchTableError at migration time.
 
     # Budget indexes
     # Frequently queried by tenant_id (already has FK, adding index for performance)
@@ -121,24 +104,8 @@ def upgrade() -> None:
             postgresql_using="btree",
         )
 
-    # Cost data indexes
-    # Frequently queried by tenant_id for cost reporting
-    if not _index_exists("cost_data", "idx_cost_data_tenant_id"):
-        op.create_index(
-            "idx_cost_data_tenant_id",
-            "cost_data",
-            ["tenant_id"],
-            postgresql_using="btree",
-        )
-
-    # Frequently queried by date for cost trend analysis
-    if not _index_exists("cost_data", "idx_cost_data_usage_date"):
-        op.create_index(
-            "idx_cost_data_usage_date",
-            "cost_data",
-            ["usage_date"],
-            postgresql_using="btree",
-        )
+    # NOTE: cost_data table does not exist — models use cost_snapshots
+    # and cost_anomalies. Indexes omitted.
 
     # Resources indexes
     # Frequently queried by tenant_id for resource listings
@@ -150,23 +117,9 @@ def upgrade() -> None:
             postgresql_using="btree",
         )
 
-    # Compliance indexes
-    # Frequently queried by tenant_id for compliance status
-    if not _index_exists("compliance_scores", "idx_compliance_scores_tenant_id"):
-        op.create_index(
-            "idx_compliance_scores_tenant_id",
-            "compliance_scores",
-            ["tenant_id"],
-            postgresql_using="btree",
-        )
-
-    if not _index_exists("compliance_frameworks", "idx_compliance_frameworks_tenant_id"):
-        op.create_index(
-            "idx_compliance_frameworks_tenant_id",
-            "compliance_frameworks",
-            ["tenant_id"],
-            postgresql_using="btree",
-        )
+    # NOTE: compliance_scores and compliance_frameworks tables do not
+    # exist — models use compliance_snapshots and policy_states.
+    # Indexes omitted.
 
     # Subscriptions indexes
     # Frequently queried by tenant_ref for tenant's subscriptions
@@ -217,37 +170,16 @@ def downgrade() -> None:
     if _index_exists("recommendations", "idx_recommendations_created_at"):
         op.drop_index("idx_recommendations_created_at", table_name="recommendations")
 
-    # Drop monitoring alerts indexes
-    if _index_exists("monitoring_alerts", "idx_monitoring_alerts_tenant_id"):
-        op.drop_index("idx_monitoring_alerts_tenant_id", table_name="monitoring_alerts")
-
-    if _index_exists("monitoring_alerts", "idx_monitoring_alerts_status"):
-        op.drop_index("idx_monitoring_alerts_status", table_name="monitoring_alerts")
-
-    if _index_exists("monitoring_alerts", "idx_monitoring_alerts_created_at"):
-        op.drop_index("idx_monitoring_alerts_created_at", table_name="monitoring_alerts")
+    # NOTE: monitoring_alerts, cost_data, compliance_scores, and
+    # compliance_frameworks tables do not exist — no indexes to drop.
 
     # Drop budget indexes
     if _index_exists("budgets", "idx_budgets_tenant_id"):
         op.drop_index("idx_budgets_tenant_id", table_name="budgets")
 
-    # Drop cost data indexes
-    if _index_exists("cost_data", "idx_cost_data_tenant_id"):
-        op.drop_index("idx_cost_data_tenant_id", table_name="cost_data")
-
-    if _index_exists("cost_data", "idx_cost_data_usage_date"):
-        op.drop_index("idx_cost_data_usage_date", table_name="cost_data")
-
     # Drop resources indexes
     if _index_exists("resources", "idx_resources_tenant_id"):
         op.drop_index("idx_resources_tenant_id", table_name="resources")
-
-    # Drop compliance indexes
-    if _index_exists("compliance_scores", "idx_compliance_scores_tenant_id"):
-        op.drop_index("idx_compliance_scores_tenant_id", table_name="compliance_scores")
-
-    if _index_exists("compliance_frameworks", "idx_compliance_frameworks_tenant_id"):
-        op.drop_index("idx_compliance_frameworks_tenant_id", table_name="compliance_frameworks")
 
     # Drop subscriptions indexes
     if _index_exists("subscriptions", "idx_subscriptions_tenant_ref"):
