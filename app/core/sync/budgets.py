@@ -86,7 +86,7 @@ async def sync_budgets_for_tenant(
 
         except Exception as e:
             sync_result.status = "failed"
-            sync_result.error_message = str(e)[:1000]
+            sync_result.error_message = str(e)[:5000]
             sync_result.complete("failed")
             db.commit()
 

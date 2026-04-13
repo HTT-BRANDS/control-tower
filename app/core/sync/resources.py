@@ -273,7 +273,7 @@ async def sync_resources():
                 monitoring.complete_sync_job(
                     log_id=log_id,
                     status="failed",
-                    error_message=str(e)[:1000],
+                    error_message=str(e)[:5000],
                     final_records={
                         "records_processed": total_synced,
                         "records_created": total_synced,

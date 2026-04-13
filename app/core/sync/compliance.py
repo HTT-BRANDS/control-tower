@@ -261,6 +261,12 @@ async def sync_compliance():
                                 f"({compliant_resources}/{total_evaluated} resources)"
                             )
 
+                        except (IntegrityError, DataError, ProgrammingError) as e:
+                            # DB-level error (e.g. type mismatch, constraint) — rollback
+                            # so the session can be reused for the next subscription.
+                            total_errors += 1
+                            tenant_db.rollback()
+                            logger.error(f"DB error syncing compliance for {sub_name}: {e}")
                         except HttpResponseError as e:
                             total_errors += 1
                             if e.status_code == 403:
@@ -275,15 +281,12 @@ async def sync_compliance():
                                 )
                         except Exception as e:
                             total_errors += 1
+                            tenant_db.rollback()
                             logger.error(
                                 f"Error syncing compliance for subscription {sub_name}: {e}",
                                 exc_info=True,
                             )
 
-            except (IntegrityError, DataError, ProgrammingError) as e:
-                total_errors += 1
-                logger.error(f"Data error syncing compliance for tenant {tenant_name}: {e}")
-                continue
             except Exception as e:
                 total_errors += 1
                 logger.error(
@@ -292,13 +295,23 @@ async def sync_compliance():
                 )
                 continue
 
+        # Determine final status and error summary
+        final_status = "completed" if total_errors == 0 else "failed"
+        error_summary = None
+        if total_errors > 0:
+            error_summary = (
+                f"Compliance sync completed with {total_errors} error(s). "
+                f"{total_snapshots} snapshots, {total_policy_states} policy states synced."
+            )
+
         # Update monitoring with final status
         if log_id:
             with get_db_context() as db:
                 monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
-                    status="completed" if total_errors == 0 else "failed",
+                    status=final_status,
+                    error_message=error_summary,
                     final_records={
                         "records_processed": total_snapshots + total_policy_states,
                         "records_created": total_snapshots + total_policy_states,
@@ -322,7 +335,7 @@ async def sync_compliance():
                 monitoring.complete_sync_job(
                     log_id=log_id,
                     status="failed",
-                    error_message=str(e)[:1000],
+                    error_message=str(e)[:5000],
                     final_records={
                         "records_processed": total_snapshots + total_policy_states,
                         "records_created": total_snapshots + total_policy_states,

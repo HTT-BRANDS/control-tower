@@ -3,9 +3,20 @@
 from datetime import UTC, date, datetime
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.mssql import NVARCHAR as MSSQL_NVARCHAR
 from sqlalchemy.orm import Mapped
 
 from app.core.database import Base
+
+
+def _nv(size: int) -> String:
+    """String that renders as NVARCHAR on SQL Server, plain String elsewhere.
+
+    SQLAlchemy's String() already maps to NVARCHAR on the mssql dialect,
+    but being explicit prevents future VARCHAR/NVARCHAR mismatches that
+    cause error 2628 in batch INSERT patterns.
+    """
+    return String(size).with_variant(MSSQL_NVARCHAR(size), "mssql")
 
 
 class CostSnapshot(Base):
@@ -14,14 +25,14 @@ class CostSnapshot(Base):
     __tablename__ = "cost_snapshots"
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    subscription_id: Mapped[str] = Column(String(36), nullable=False)
+    tenant_id: Mapped[str] = Column(_nv(36), ForeignKey("tenants.id"), nullable=False)
+    subscription_id: Mapped[str] = Column(_nv(36), nullable=False)
     date: Mapped[date] = Column(Date, nullable=False)
     total_cost: Mapped[float] = Column(Float, nullable=False)
-    currency: Mapped[str] = Column(String(10), default="USD")
-    resource_group: Mapped[str | None] = Column(String(255))
-    service_name: Mapped[str | None] = Column(String(255))
-    meter_category: Mapped[str | None] = Column(String(255))
+    currency: Mapped[str] = Column(_nv(10), default="USD")
+    resource_group: Mapped[str | None] = Column(_nv(255))
+    service_name: Mapped[str | None] = Column(_nv(255))
+    meter_category: Mapped[str | None] = Column(_nv(255))
     synced_at: Mapped[datetime] = Column(DateTime, default=lambda: datetime.now(UTC))
 
     def __repr__(self) -> str:

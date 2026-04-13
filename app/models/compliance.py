@@ -3,9 +3,20 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.mssql import NVARCHAR as MSSQL_NVARCHAR
 from sqlalchemy.orm import Mapped
 
 from app.core.database import Base
+
+
+def _nv(size: int) -> String:
+    """String that renders as NVARCHAR on SQL Server, plain String elsewhere.
+
+    SQLAlchemy's String() already maps to NVARCHAR on the mssql dialect,
+    but being explicit prevents future VARCHAR/NVARCHAR mismatches that
+    cause error 2628 in batch INSERT patterns.
+    """
+    return String(size).with_variant(MSSQL_NVARCHAR(size), "mssql")
 
 
 class ComplianceSnapshot(Base):
@@ -14,8 +25,8 @@ class ComplianceSnapshot(Base):
     __tablename__ = "compliance_snapshots"
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    subscription_id: Mapped[str] = Column(String(36), nullable=False)
+    tenant_id: Mapped[str] = Column(_nv(36), ForeignKey("tenants.id"), nullable=False)
+    subscription_id: Mapped[str] = Column(_nv(36), nullable=False)
     snapshot_date: Mapped[datetime] = Column(DateTime, nullable=False)
     overall_compliance_percent: Mapped[float] = Column(Float, default=0.0)
     secure_score: Mapped[float | None] = Column(Float)
@@ -34,13 +45,13 @@ class PolicyState(Base):
     __tablename__ = "policy_states"
 
     id: Mapped[int] = Column(Integer, primary_key=True, autoincrement=True)
-    tenant_id: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    subscription_id: Mapped[str] = Column(String(36), nullable=False)
-    policy_definition_id: Mapped[str] = Column(String(500), nullable=False)
-    policy_name: Mapped[str] = Column(String(1000), nullable=False)
-    policy_category: Mapped[str | None] = Column(String(500))
+    tenant_id: Mapped[str] = Column(_nv(36), ForeignKey("tenants.id"), nullable=False)
+    subscription_id: Mapped[str] = Column(_nv(36), nullable=False)
+    policy_definition_id: Mapped[str] = Column(_nv(500), nullable=False)
+    policy_name: Mapped[str] = Column(_nv(1000), nullable=False)
+    policy_category: Mapped[str | None] = Column(_nv(500))
     compliance_state: Mapped[str] = Column(
-        String(50), nullable=False
+        _nv(50), nullable=False
     )  # Compliant, NonCompliant, Exempt
     non_compliant_count: Mapped[int] = Column(Integer, default=0)
     resource_id: Mapped[str | None] = Column(Text)  # Affected resource

@@ -567,7 +567,7 @@ class BudgetService:
 
         except Exception as e:
             sync_result.status = "failed"
-            sync_result.error_message = str(e)[:1000]
+            sync_result.error_message = str(e)[:5000]
             sync_result.complete("failed")
             self.db.commit()
             logger.error(f"Budget sync failed for tenant {tenant_id}: {e}")

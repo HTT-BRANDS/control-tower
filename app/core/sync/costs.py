@@ -190,13 +190,22 @@ async def sync_costs():
                 logger.error(f"Error processing tenant {tenant_name}: {e}", exc_info=True)
                 continue
 
+        # Determine final status and error summary
+        final_status = "completed" if total_errors == 0 else "failed"
+        error_summary = None
+        if total_errors > 0:
+            error_summary = (
+                f"Cost sync completed with {total_errors} error(s). {total_synced} records synced."
+            )
+
         # Update monitoring with final status
         if log_id:
             with get_db_context() as db:
                 monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
-                    status="completed" if total_errors == 0 else "failed",
+                    status=final_status,
+                    error_message=error_summary,
                     final_records={
                         "records_processed": total_synced,
                         "records_created": total_synced,
@@ -218,7 +227,7 @@ async def sync_costs():
                 monitoring.complete_sync_job(
                     log_id=log_id,
                     status="failed",
-                    error_message=str(e)[:1000],
+                    error_message=str(e)[:5000],
                     final_records={
                         "records_processed": total_synced,
                         "records_created": total_synced,
