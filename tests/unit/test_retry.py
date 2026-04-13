@@ -90,6 +90,8 @@ def _ensure_real_retry_internals():
         KeyError,
         SQLAlchemyError,
     )
+    # Ensure NON_RETRYABLE_STATUS_CODES is available (added in this PR)
+    retry_mod.NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404, 405, 409, 422}
 
     yield
 
@@ -211,6 +213,61 @@ class TestIsRetryableError:
     def test_unknown_exception_is_retryable(self):
         """Test that unknown exceptions are retryable by default."""
         error = RuntimeError("Unknown error")
+        assert is_retryable_error(error) is True
+
+    def test_non_retryable_http_403(self):
+        """Test that HTTP 403 (Forbidden) is NOT retryable — permissions won't change."""
+        error = _RealHttpResponseError("Forbidden")
+        error.status_code = 403
+        assert is_retryable_error(error) is False
+
+    def test_non_retryable_http_401(self):
+        """Test that HTTP 401 (Unauthorized) is NOT retryable — bad creds won't fix themselves."""
+        error = _RealHttpResponseError("Unauthorized")
+        error.status_code = 401
+        assert is_retryable_error(error) is False
+
+    def test_non_retryable_http_409(self):
+        """Test that HTTP 409 (Conflict) is NOT retryable."""
+        error = _RealHttpResponseError("Conflict")
+        error.status_code = 409
+        assert is_retryable_error(error) is False
+
+    def test_non_retryable_http_422(self):
+        """Test that HTTP 422 (Unprocessable Entity) is NOT retryable."""
+        error = _RealHttpResponseError("Unprocessable Entity")
+        error.status_code = 422
+        assert is_retryable_error(error) is False
+
+    def test_httpx_403_not_retryable(self):
+        """Test that httpx.HTTPStatusError with 403 is NOT retryable.
+
+        The cost sync uses httpx directly, not the Azure SDK. We must
+        handle httpx exceptions the same way as HttpResponseError.
+        """
+        import httpx
+
+        request = httpx.Request("GET", "https://example.com")
+        response = httpx.Response(403, request=request)
+        error = httpx.HTTPStatusError("Forbidden", request=request, response=response)
+        assert is_retryable_error(error) is False
+
+    def test_httpx_429_is_retryable(self):
+        """Test that httpx.HTTPStatusError with 429 IS retryable."""
+        import httpx
+
+        request = httpx.Request("GET", "https://example.com")
+        response = httpx.Response(429, request=request)
+        error = httpx.HTTPStatusError("Too Many Requests", request=request, response=response)
+        assert is_retryable_error(error) is True
+
+    def test_httpx_503_is_retryable(self):
+        """Test that httpx.HTTPStatusError with 503 IS retryable."""
+        import httpx
+
+        request = httpx.Request("GET", "https://example.com")
+        response = httpx.Response(503, request=request)
+        error = httpx.HTTPStatusError("Service Unavailable", request=request, response=response)
         assert is_retryable_error(error) is True
 
 
@@ -413,5 +470,51 @@ class TestRetryWithBackoff:
                 await bad_request_func()
 
             # Should only try once
+            assert call_count == 1
+            assert mock_sleep.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_http_403_not_retried(self):
+        """Test that HTTP 403 (Forbidden) is never retried."""
+        call_count = 0
+
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
+            @retry_with_backoff(RetryPolicy(max_retries=3))
+            async def forbidden_func():
+                nonlocal call_count
+                call_count += 1
+                error = _RealHttpResponseError("Forbidden")
+                error.status_code = 403
+                raise error
+
+            with pytest.raises(Exception, match="Forbidden"):
+                await forbidden_func()
+
+            # Should only try once — 403 is a permissions error
+            assert call_count == 1
+            assert mock_sleep.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_httpx_403_not_retried(self):
+        """Test that httpx HTTPStatusError 403 is not retried via decorator."""
+        import httpx
+
+        call_count = 0
+
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+
+            @retry_with_backoff(RetryPolicy(max_retries=3))
+            async def httpx_forbidden_func():
+                nonlocal call_count
+                call_count += 1
+                request = httpx.Request("GET", "https://management.azure.com")
+                response = httpx.Response(403, request=request)
+                raise httpx.HTTPStatusError("Forbidden", request=request, response=response)
+
+            with pytest.raises(httpx.HTTPStatusError, match="Forbidden"):
+                await httpx_forbidden_func()
+
+            # Should only try once — 403 via httpx is also non-retryable
             assert call_count == 1
             assert mock_sleep.call_count == 0

@@ -15,8 +15,12 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-# Retryable HTTP status codes
+# Retryable HTTP status codes (transient / rate-limited)
 RETRYABLE_STATUS_CODES = {429, 502, 503, 504}
+
+# Non-retryable HTTP status codes (permission / auth / client errors)
+# Retrying these is pointless — the same credentials will fail again.
+NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404, 405, 409, 422}
 
 # Non-retryable exceptions
 NON_RETRYABLE_EXCEPTIONS = (
@@ -38,16 +42,56 @@ class RetryPolicy:
     retryable_exceptions: tuple = (Exception,)
 
 
+def _get_status_code(error: Exception) -> int | None:
+    """Extract HTTP status code from various exception types.
+
+    Azure SDK raises HttpResponseError; httpx raises HTTPStatusError.
+    Both carry the status code but on different attributes.
+    """
+    # Azure SDK: HttpResponseError.status_code
+    if isinstance(error, HttpResponseError):
+        return getattr(error, "status_code", None)
+
+    # httpx: HTTPStatusError.response.status_code
+    if type(error).__name__ == "HTTPStatusError":
+        response = getattr(error, "response", None)
+        if response is not None:
+            return getattr(response, "status_code", None)
+
+    return None
+
+
 def is_retryable_error(error: Exception) -> bool:
-    """Determine if an error is retryable."""
+    """Determine if an error is retryable.
+
+    Non-retryable errors include:
+    - Explicitly non-retryable exception types (auth errors, programming bugs)
+    - HTTP 4xx client errors (401, 403, 404, etc.) — same creds will fail again
+    - HttpResponseError without a status_code (can't determine if transient)
+
+    Retryable errors include:
+    - HTTP 429 (rate limit), 502, 503, 504 (transient server errors)
+    - Timeout / connection errors
+    - Unknown errors (safe default: retry once)
+    """
     # Non-retryable exceptions
     if isinstance(error, NON_RETRYABLE_EXCEPTIONS):
         return False
 
-    # HTTP errors - check status code
+    # Extract status code from any HTTP error type
+    status_code = _get_status_code(error)
+
+    # HttpResponseError / httpx error WITH a status code
+    if status_code is not None:
+        # Explicitly non-retryable status codes take precedence
+        if status_code in NON_RETRYABLE_STATUS_CODES:
+            return False
+        # Only known retryable codes get retried
+        return status_code in RETRYABLE_STATUS_CODES
+
+    # HttpResponseError WITHOUT a status_code is non-retryable —
+    # we can't tell if it's transient or permanent.
     if isinstance(error, HttpResponseError):
-        if hasattr(error, "status_code"):
-            return error.status_code in RETRYABLE_STATUS_CODES
         return False
 
     # Connection and timeout errors are retryable
@@ -55,7 +99,7 @@ def is_retryable_error(error: Exception) -> bool:
     if error_type in ["TimeoutError", "ConnectionError", "ConnectionResetError"]:
         return True
 
-    # Default: retry unknown errors
+    # Default: retry unknown errors (but only once — the policy controls max)
     return True
 
 
