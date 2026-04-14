@@ -154,6 +154,19 @@ def init_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
 
+    # Clean up ghost jobs from before this scheduler started
+    try:
+        from app.api.services.monitoring_service import MonitoringService
+        from app.core.database import get_db_context
+
+        with get_db_context() as db:
+            monitoring = MonitoringService(db)
+            ghost_count = monitoring.cleanup_ghost_jobs()
+            if ghost_count:
+                logger.info("Cleaned up %d ghost job(s) at scheduler init", ghost_count)
+    except Exception:
+        logger.exception("Failed to clean up ghost jobs at scheduler init")
+
     logger.info("Scheduler initialized with sync jobs")
     return scheduler
 

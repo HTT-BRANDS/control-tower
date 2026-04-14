@@ -84,15 +84,20 @@ def _get_engine():
                 logger.warning(f"Slow query detected ({total_time:.2f}ms): {statement[:200]}...")
                 # Track in Application Insights if available
                 if settings.app_insights_enabled:
-                    from app.core.app_insights import track_dependency
+                    try:
+                        from app.core.app_insights import track_dependency
 
-                    track_dependency(
-                        name="slow_query",
-                        data=statement[:100],
-                        duration=total_time,
-                        success=False,
-                        properties={"query_time_ms": total_time},
-                    )
+                        track_dependency(
+                            name="slow_query",
+                            data=statement[:100],
+                            duration=total_time,
+                            success=False,
+                            properties={"query_time_ms": total_time},
+                        )
+                    except ImportError:
+                        logger.debug("app_insights not available; skipping slow_query telemetry")
+                    except Exception as exc:
+                        logger.debug(f"Failed to track slow_query dependency: {exc}")
             if settings.debug and settings.enable_query_logging:
                 logger.debug(f"Query executed in {total_time:.2f}ms: {statement[:100]}...")
 

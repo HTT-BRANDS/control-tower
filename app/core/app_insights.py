@@ -48,6 +48,9 @@ class TelemetryEventType(Enum):
     DB_QUERY = "db.query"
     CACHE_OPERATION = "cache.operation"
 
+    # Dependency tracking
+    DEPENDENCY = "dependency"
+
     # Business events
     COMPLIANCE_VIOLATION = "compliance.violation"
     BUDGET_ALERT = "budget.alert"
@@ -543,6 +546,46 @@ def track_cost_anomaly(
             "variance": variance,
             "variance_percent": (variance / expected_cost * 100) if expected_cost > 0 else 0,
             "anomaly_score": anomaly_score,
+        },
+    )
+    telemetry_client.track_event(event)
+
+
+# =============================================================================
+# Dependency Tracking
+# =============================================================================
+
+
+def track_dependency(
+    name: str,
+    data: str,
+    duration: float,
+    success: bool,
+    dependency_type: str | None = None,
+    properties: dict[str, Any] | None = None,
+) -> None:
+    """Track a dependency call (e.g. database query, HTTP call).
+
+    Args:
+        name: Name of the dependency (e.g. "slow_query", "blob_storage").
+        data: Details about the call (truncated to 100 chars by callers).
+        duration: Duration in milliseconds.
+        success: Whether the call succeeded.
+        dependency_type: Type of dependency (e.g. "SQL", "HTTP", "BLOB").
+        properties: Optional additional key/value properties.
+    """
+    event = TelemetryEvent(
+        event_type=TelemetryEventType.DEPENDENCY,
+        duration_ms=duration,
+        success=success,
+        properties={
+            "dependency_name": name,
+            "dependency_data": data[:100],
+            "dependency_type": dependency_type or "unknown",
+            **(properties or {}),
+        },
+        metrics={
+            "duration_ms": duration,
         },
     )
     telemetry_client.track_event(event)

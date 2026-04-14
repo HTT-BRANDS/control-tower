@@ -52,10 +52,58 @@ class MonitoringService:
     # Sync Job Log Operations
     # ==========================================================================
 
+    def cleanup_ghost_jobs(self, stale_minutes: int = 30) -> int:
+        """Mark stale "running" jobs as failed to prevent ghost jobs.
+
+        A ghost job is a sync job stuck in "running" status for longer than
+        ``stale_minutes`` — typically caused by a process crash or OOM kill
+        that never called ``complete_sync_job()``.
+
+        Args:
+            stale_minutes: How many minutes a job can be "running" before
+                it is considered ghostly.  Defaults to 30.
+
+        Returns:
+            Number of ghost jobs cleaned up.
+        """
+        cutoff = datetime.now(UTC) - timedelta(minutes=stale_minutes)
+        ghost_jobs = (
+            self.db.query(SyncJobLog)
+            .filter(
+                SyncJobLog.status == "running",
+                SyncJobLog.started_at < cutoff,
+            )
+            .all()
+        )
+
+        for job in ghost_jobs:
+            job.status = "failed"
+            job.ended_at = datetime.now(UTC)
+            job.error_message = (
+                f"Ghost job: still running after {stale_minutes} min — likely crashed or OOM-killed"
+            )
+            if job.started_at:
+                started_at = job.started_at
+                if started_at.tzinfo is None:
+                    started_at = started_at.replace(tzinfo=UTC)
+                job.duration_ms = int((job.ended_at - started_at).total_seconds() * 1000)
+            logger.warning(
+                f"Cleaned up ghost job: {job.job_type} (id={job.id}, "
+                f"started={job.started_at.isoformat()})"
+            )
+
+        if ghost_jobs:
+            self.db.commit()
+
+        return len(ghost_jobs)
+
     def start_sync_job(
         self, job_type: str, tenant_id: str | None = None, details: dict | None = None
     ) -> SyncJobLog:
         """Create a new sync job log entry at the start of execution.
+
+        Cleans up ghost jobs before creating the new entry so that stale
+        "running" entries don't block monitoring dashboards.
 
         Args:
             job_type: Type of sync job (costs, compliance, resources, identity)
@@ -65,6 +113,11 @@ class MonitoringService:
         Returns:
             The created SyncJobLog entry
         """
+        # Nuke ghost jobs before we start a new one
+        ghost_count = self.cleanup_ghost_jobs()
+        if ghost_count:
+            logger.info(f"Cleaned up {ghost_count} ghost job(s) before starting {job_type} sync")
+
         log_entry = SyncJobLog(
             job_type=job_type,
             tenant_id=tenant_id,
