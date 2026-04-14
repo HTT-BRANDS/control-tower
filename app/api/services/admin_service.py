@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import logging
 import math
+import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.api.services.audit_log_service import AuditAction
 from app.core.permissions import (
     ALL_PERMISSIONS,
     LEGACY_ROLE_MAP,
@@ -24,6 +27,7 @@ from app.core.permissions import (
     Role,
     get_all_permissions,
 )
+from app.models.audit_log import AuditLogEntry
 from app.models.sync import SyncJob
 from app.models.tenant import Tenant, UserTenant
 
@@ -135,9 +139,7 @@ class AdminService:
             HTTPException 404 if no ``UserTenant`` records exist for *user_id*.
         """
         mappings: list[UserTenant] = (
-            self.db.query(UserTenant)
-            .filter(UserTenant.user_id == user_id)
-            .all()
+            self.db.query(UserTenant).filter(UserTenant.user_id == user_id).all()
         )
 
         if not mappings:
@@ -149,8 +151,7 @@ class AdminService:
         # Collect tenant details
         tenant_ids = [ut.tenant_id for ut in mappings]
         tenants: dict[str, Tenant] = {
-            t.id: t
-            for t in self.db.query(Tenant).filter(Tenant.id.in_(tenant_ids)).all()
+            t.id: t for t in self.db.query(Tenant).filter(Tenant.id.in_(tenant_ids)).all()
         }
 
         roles = sorted({ut.role for ut in mappings})
@@ -192,6 +193,8 @@ class AdminService:
         self,
         user_id: str,
         roles: list[str],
+        *,
+        current_user_id: str | None = None,
     ) -> dict[str, Any]:
         """Update the role assignment for a user.
 
@@ -202,6 +205,7 @@ class AdminService:
         Args:
             user_id: The user to update.
             roles: List of role slugs (e.g. ``["analyst"]``).
+            current_user_id: ID of the admin performing the change (for audit).
 
         Returns:
             Updated user detail dict (same shape as ``get_user_by_id``).
@@ -225,18 +229,13 @@ class AdminService:
             except ValueError as exc:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        f"Invalid role '{r}'. "
-                        f"Valid roles: {[role.value for role in Role]}"
-                    ),
+                    detail=(f"Invalid role '{r}'. Valid roles: {[role.value for role in Role]}"),
                 ) from exc
             valid_slugs.append(resolved)
 
         # Get existing mappings
         mappings: list[UserTenant] = (
-            self.db.query(UserTenant)
-            .filter(UserTenant.user_id == user_id)
-            .all()
+            self.db.query(UserTenant).filter(UserTenant.user_id == user_id).all()
         )
 
         if not mappings:
@@ -245,12 +244,35 @@ class AdminService:
                 detail=f"User '{user_id}' not found",
             )
 
+        # Capture old roles for audit trail
+        old_roles = sorted({ut.role for ut in mappings})
+
         # Determine effective role (highest privilege)
         effective_role = _highest_role(valid_slugs)
 
         # Update all mappings
         for ut in mappings:
             ut.role = effective_role
+
+        # F-02: Write audit log entry in the same transaction
+        new_roles = sorted(valid_slugs)
+        self.db.add(
+            AuditLogEntry(
+                id=str(uuid.uuid4()),
+                timestamp=datetime.now(UTC),
+                actor_id=current_user_id,
+                action=AuditAction.USER_ROLE_CHANGED,
+                resource_type="user",
+                resource_id=user_id,
+                detail=f"Roles changed: {old_roles} -> {new_roles}",
+                metadata_json={
+                    "target_user_id": user_id,
+                    "old_roles": old_roles,
+                    "new_roles": new_roles,
+                    "effective_role": effective_role,
+                },
+            )
+        )
 
         self.db.commit()
 
@@ -270,9 +292,7 @@ class AdminService:
     def get_admin_stats(self) -> dict[str, Any]:
         """Aggregate admin dashboard statistics."""
         total_users: int = (
-            self.db.query(func.count(func.distinct(UserTenant.user_id)))
-            .scalar()
-            or 0
+            self.db.query(func.count(func.distinct(UserTenant.user_id))).scalar() or 0
         )
 
         role_counts = (
@@ -283,16 +303,11 @@ class AdminService:
         users_by_role: dict[str, int] = dict(role_counts)
 
         active_tenants: int = (
-            self.db.query(func.count(Tenant.id))
-            .filter(Tenant.is_active.is_(True))
-            .scalar()
-            or 0
+            self.db.query(func.count(Tenant.id)).filter(Tenant.is_active.is_(True)).scalar() or 0
         )
         total_tenants: int = self.db.query(func.count(Tenant.id)).scalar() or 0
 
-        total_mappings: int = (
-            self.db.query(func.count(UserTenant.id)).scalar() or 0
-        )
+        total_mappings: int = self.db.query(func.count(UserTenant.id)).scalar() or 0
 
         # Last sync per job type
         last_syncs: dict[str, str | None] = {}
@@ -303,9 +318,7 @@ class AdminService:
                 .group_by(SyncJob.job_type)
                 .all()
             )
-            last_syncs = {
-                jt: ts.isoformat() if ts else None for jt, ts in latest
-            }
+            last_syncs = {jt: ts.isoformat() if ts else None for jt, ts in latest}
         except Exception:
             # SyncJob table may not exist yet in test databases
             pass

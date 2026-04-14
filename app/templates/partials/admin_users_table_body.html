@@ -1,0 +1,67 @@
+{# HTMX partial: <tbody> rows for the admin users table.
+
+   Context:
+     - users:  list of {user_id, roles, tenant_count, is_active}
+     - total:  total user count (for pagination info)
+     - page:   current page number
+     - pages:  total page count
+#}
+{% from "macros/ui.html" import brand_badge %}
+
+{% if users %}
+{% for u in users %}
+<tr class="border-b border-theme hover:bg-surface-secondary transition-colors">
+    <td class="px-4 py-3 font-medium text-primary-theme">{{ u.user_id }}</td>
+    <td class="px-4 py-3">
+        <div class="flex flex-wrap gap-1">
+            {% for role in u.roles %}
+            {% if role == "admin" %}
+            {{ brand_badge(role, variant="danger", extra_classes="text-xs") }}
+            {% elif role == "tenant_admin" %}
+            {{ brand_badge(role, variant="warning", extra_classes="text-xs") }}
+            {% elif role == "analyst" %}
+            {{ brand_badge(role, variant="primary", extra_classes="text-xs") }}
+            {% else %}
+            {{ brand_badge(role, variant="neutral", extra_classes="text-xs") }}
+            {% endif %}
+            {% endfor %}
+        </div>
+    </td>
+    <td class="px-4 py-3 text-center text-secondary-theme">{{ u.tenant_count }}</td>
+    <td class="px-4 py-3 text-center">
+        {% if u.is_active %}
+        <span class="inline-flex items-center gap-1 text-success text-xs" role="status">
+            <span class="w-2 h-2 rounded-full bg-success" aria-hidden="true"></span>
+            Active
+        </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1 text-muted-theme text-xs" role="status">
+            <span class="w-2 h-2 rounded-full bg-surface-tertiary" aria-hidden="true"></span>
+            Inactive
+        </span>
+        {% endif %}
+    </td>
+    <td class="px-4 py-3 text-right">
+        <button type="button"
+                class="px-3 py-1.5 text-xs rounded border-theme bg-surface-primary text-primary-theme hover:bg-surface-secondary transition-colors"
+                data-edit-roles="{{ u.user_id }}"
+                data-current-roles="{{ u.roles | join(',') }}"
+                aria-label="Edit roles for {{ u.user_id }}">
+            Edit Roles
+        </button>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="5" class="px-4 py-8 text-center text-muted-theme">
+        No users found matching your filters.
+    </td>
+</tr>
+{% endif %}
+
+{# Pagination metadata — consumed by client-side JS via a hidden element #}
+<tr class="hidden" aria-hidden="true" data-pagination
+    data-total="{{ total }}" data-page="{{ page }}" data-pages="{{ pages }}">
+    <td></td>
+</tr>

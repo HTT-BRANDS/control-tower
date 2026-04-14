@@ -12,10 +12,13 @@ assignment see everything (soft rollout).
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
 
+from app.api.services.admin_service import AdminService
 from app.core.auth import User, get_current_user
+from app.core.database import get_db
 from app.core.permissions import has_permission
 from app.core.personas import can_view_page, pages_for_personas
 from app.core.templates import templates
@@ -116,6 +119,39 @@ async def admin_page(request: Request, user: User = Depends(get_current_user)):
             "visible_pages": {"*"},
             "page_key": "admin",
             "user": user,
+        },
+    )
+
+
+@router.get("/admin/partials/users-table", response_class=HTMLResponse)
+async def admin_users_table_partial(
+    request: Request,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=50),
+    search: str = Query("", max_length=100),
+    role: str = Query("", max_length=50),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """HTMX partial: admin users table body rows."""
+    if not has_permission(user.roles, "system:admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+    svc = AdminService(db)
+    result = svc.get_users(
+        page=page,
+        per_page=per_page,
+        search=search or None,
+        role_filter=role or None,
+    )
+    return templates.TemplateResponse(
+        request,
+        "partials/admin_users_table_body.html",
+        {
+            "users": result["items"],
+            "total": result["total"],
+            "page": result["page"],
+            "pages": result["pages"],
         },
     )
 

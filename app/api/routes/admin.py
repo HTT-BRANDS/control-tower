@@ -227,7 +227,7 @@ async def update_user_roles(
         )
 
     svc = AdminService(db)
-    data = svc.update_user_roles(user_id, body.roles)
+    data = svc.update_user_roles(user_id, body.roles, current_user_id=user.id)
     return UserDetailResponse(**data)
 
 
