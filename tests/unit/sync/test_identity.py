@@ -351,10 +351,22 @@ class TestIdentitySync:
         tenant2.name = "Test Tenant 2"
         tenant2.is_active = True
 
-        mock_db_query = MagicMock()
-        mock_db_query.filter.return_value = mock_db_query
-        mock_db_query.all.return_value = [mock_tenant, tenant2]
-        mock_db_session.query.return_value = mock_db_query
+        # The fixture sets query.side_effect (routing by model type), which
+        # takes precedence over return_value. Override the side_effect so
+        # Tenant queries return both tenants while SyncJobLog stays isolated.
+        from app.models.monitoring import SyncJobLog
+
+        multi_tenant_query = MagicMock()
+        multi_tenant_query.filter.return_value = multi_tenant_query
+        multi_tenant_query.all.return_value = [mock_tenant, tenant2]
+
+        ghost_query = MagicMock()
+        ghost_query.filter.return_value.all.return_value = []
+        ghost_query.filter.return_value.first.return_value = None
+
+        mock_db_session.query.side_effect = lambda model: (
+            ghost_query if model is SyncJobLog else multi_tenant_query
+        )
 
         with patch("app.core.sync.identity.GraphClient") as mock_graph_class:
             mock_graph_client = AsyncMock()
