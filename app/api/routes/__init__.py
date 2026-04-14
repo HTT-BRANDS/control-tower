@@ -1,6 +1,7 @@
 """API routes module."""
 
 from app.api.routes.accessibility import router as accessibility_router
+from app.api.routes.admin import router as admin_router
 from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.budgets import router as budgets_router
@@ -34,6 +35,7 @@ from app.api.routes.topology import router as topology_router
 
 __all__ = [
     "accessibility_router",
+    "admin_router",
     "audit_logs_router",
     "quotas_router",
     "auth_router",

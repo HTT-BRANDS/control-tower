@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.api.routes import (
     accessibility_router,
+    admin_router,
     audit_logs_router,
     auth_router,
     budgets_router,
@@ -416,6 +417,7 @@ app.include_router(provisioning_standards_router)
 app.include_router(metrics_router)
 app.include_router(monitoring_router)
 app.include_router(recommendations_router)
+app.include_router(admin_router)
 
 
 # =============================================================================
