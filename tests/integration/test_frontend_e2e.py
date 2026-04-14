@@ -403,8 +403,9 @@ class TestHTMXAttributes:
 
     def test_riverside_badge_no_push_url(self):
         """Riverside badge partial doesn't push URL."""
-        html = Path("app/templates/base.html").read_text()
-        assert 'hx-push-url="false"' in html
+        # hx-push-url="false" lives in the nav partial (included by base.html)
+        nav_html = Path("app/templates/partials/nav.html").read_text()
+        assert 'hx-push-url="false"' in nav_html
 
 
 # ============================================================================
