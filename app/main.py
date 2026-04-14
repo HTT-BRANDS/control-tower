@@ -5,11 +5,12 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
+from sqlalchemy.orm import Session
 
 from app.api.routes import (
     accessibility_router,
@@ -47,7 +48,7 @@ from app.api.routes import (
 from app.core.auth import jwt_manager
 from app.core.cache import cache_manager
 from app.core.config import get_settings
-from app.core.database import init_db
+from app.core.database import get_db, init_db
 from app.core.gpc_middleware import GPCMiddleware
 from app.core.logging_config import log_api_request, set_correlation_id, set_request_start_time
 from app.core.rate_limit import rate_limiter
@@ -522,7 +523,7 @@ async def health_check():
 
 
 @app.get("/healthz/data")
-async def healthz_data_alias():
+async def healthz_data_alias(db: Session = Depends(get_db)):
     """Friendly alias for /api/v1/health/data — per-tenant sync freshness.
 
     Mounted at /healthz/data so the UI header partial and staging smoke
@@ -530,13 +531,8 @@ async def healthz_data_alias():
     endpoint to avoid duplicating the query logic.
     """
     from app.api.routes.health import data_freshness_check
-    from app.core.database import SessionLocal
 
-    db = SessionLocal()
-    try:
-        return await data_freshness_check(db=db)
-    finally:
-        db.close()
+    return await data_freshness_check(db=db)
 
 
 @app.get("/health/detailed")
