@@ -96,25 +96,26 @@ jobs:
                   const exists = issues.some(i => i.title === title);
                   if (exists) continue;
                   
-                  const body = `## Security Vulnerability Detected
-            
-**Package:** ${dep.name}
-**Installed Version:** ${dep.version}
-**Vulnerability:** ${vuln.id || 'Unknown'}
-**Severity:** ${vuln.severity || 'Unknown'}
-
-### Description
-${vuln.description || 'No description available'}
-
-### Fix
-${vuln.fix_versions ? `Update to: ${vuln.fix_versions.join(', ')}` : 'No fix version available'}
-
-### Links
-${vuln.aliases ? vuln.aliases.map(a => `- ${a}`).join('\n') : 'N/A'}
-
----
-*This issue was automatically created by the dependency update automation workflow.*
-`;
+                  const body = [
+                    '## Security Vulnerability Detected',
+                    '',
+                    `**Package:** ${dep.name}`,
+                    `**Installed Version:** ${dep.version}`,
+                    `**Vulnerability:** ${vuln.id || 'Unknown'}`,
+                    `**Severity:** ${vuln.severity || 'Unknown'}`,
+                    '',
+                    '### Description',
+                    vuln.description || 'No description available',
+                    '',
+                    '### Fix',
+                    vuln.fix_versions ? `Update to: ${vuln.fix_versions.join(', ')}` : 'No fix version available',
+                    '',
+                    '### Links',
+                    vuln.aliases ? vuln.aliases.map(a => `- ${a}`).join('\n') : 'N/A',
+                    '',
+                    '---',
+                    '*This issue was automatically created by the dependency update automation workflow.*',
+                  ].join('\n');
                   
                   await github.rest.issues.create({
                     owner: context.repo.owner,
@@ -193,21 +194,22 @@ ${vuln.aliases ? vuln.aliases.map(a => `- ${a}`).join('\n') : 'N/A'}
               return;
             }
             
-            const body = `## Major Version Updates Available
-
-The following major version updates are available and require manual review:
-
-${report}
-
-### Action Required
-1. Review each major update for breaking changes
-2. Test in staging environment
-3. Update code if breaking changes affect the project
-4. Merge Dependabot PRs or update manually
-
----
-*This issue was automatically created by the dependency update automation workflow.*
-`;
+            const body = [
+              '## Major Version Updates Available',
+              '',
+              'The following major version updates are available and require manual review:',
+              '',
+              report,
+              '',
+              '### Action Required',
+              '1. Review each major update for breaking changes',
+              '2. Test in staging environment',
+              '3. Update code if breaking changes affect the project',
+              '4. Merge Dependabot PRs or update manually',
+              '',
+              '---',
+              '*This issue was automatically created by the dependency update automation workflow.*',
+            ].join('\n');
             
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -326,17 +328,18 @@ ${report}
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `⚠️ Dependency Update Workflow Failed - ${new Date().toISOString().split('T')[0]}`,
-              body: `## Workflow Failure
-
-The dependency update automation workflow failed. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}).
-
-### Possible Causes
-- pip-audit installation failure
-- Network issues
-- Repository permission issues
-
----
-*This issue was automatically created.*
-`,
+              body: [
+                '## Workflow Failure',
+                '',
+                `The dependency update automation workflow failed. Please check the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}).`,
+                '',
+                '### Possible Causes',
+                '- pip-audit installation failure',
+                '- Network issues',
+                '- Repository permission issues',
+                '',
+                '---',
+                '*This issue was automatically created.*',
+              ].join('\n'),
               labels: ['dependencies', 'ci-cd', 'priority-medium']
             });

@@ -24,8 +24,10 @@ jobs:
         with:
           node-version: '24'
       
-      - name: Install axe-core CLI
-        run: npm install -g @axe-core/cli@4.11.1
+      - name: Install axe-core CLI and sync ChromeDriver
+        run: |
+          npm install -g @axe-core/cli@4.11.1
+          npx browser-driver-manager install chrome
       
       - name: Check staging is reachable
         run: |

@@ -139,11 +139,24 @@ async function captureScreenshot(
   const filename = `${sanitizedTestName}-${browserName}-${viewportLabel}.png`;
   const filepath = path.join(dir, filename);
 
-  // Capture full page screenshot
-  await page.screenshot({
-    path: filepath,
-    fullPage: true,
-  });
+  // Capture full page screenshot.
+  // Webkit has a 32767px limit per dimension — fall back to viewport-only
+  // screenshot to avoid crashing the test on long pages.
+  try {
+    await page.screenshot({
+      path: filepath,
+      fullPage: true,
+    });
+  } catch (screenshotError) {
+    if (screenshotError.message.includes('32767')) {
+      await page.screenshot({
+        path: filepath,
+        fullPage: false,
+      });
+    } else {
+      throw screenshotError;
+    }
+  }
 
   return filepath;
 }

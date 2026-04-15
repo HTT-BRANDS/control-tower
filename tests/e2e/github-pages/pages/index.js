@@ -214,6 +214,24 @@ const detailPages = {
     },
     description: 'ADR 0009: Database Tier',
   },
+  adr0010: {
+    url: 'decisions/adr-0010-sync-reliability',
+    expectedTitle: /ADR-0010|Sync Reliability/,
+    keySelectors: {
+      heading: 'h1',
+      content: '#readme, article, .markdown-body',
+    },
+    description: 'ADR 0010: Sync Reliability',
+  },
+  adr0011: {
+    url: 'decisions/adr-0011-granular-rbac',
+    expectedTitle: /ADR-0011|Granular RBAC/,
+    keySelectors: {
+      heading: 'h1',
+      content: '#readme, article, .markdown-body',
+    },
+    description: 'ADR 0011: Granular RBAC',
+  },
 };
 
 /**
