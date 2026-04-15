@@ -1,5 +1,6 @@
 """Dashboard API routes."""
 
+import asyncio
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
@@ -44,16 +45,19 @@ async def _get_dashboard_data(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Get summary data from all services (filtered by tenant access)
+    # Get summary data from all services concurrently (filtered by tenant access)
+
     cost_svc = CostService(db)
     compliance_svc = ComplianceService(db)
     resource_svc = ResourceService(db)
     identity_svc = IdentityService(db)
 
-    cost_summary = await cost_svc.get_cost_summary()
-    compliance_summary = await compliance_svc.get_compliance_summary()
-    resource_inventory = await resource_svc.get_resource_inventory(limit=10)
-    identity_summary = await identity_svc.get_identity_summary()
+    cost_summary, compliance_summary, resource_inventory, identity_summary = await asyncio.gather(
+        cost_svc.get_cost_summary(),
+        compliance_svc.get_compliance_summary(),
+        resource_svc.get_resource_inventory(limit=10),
+        identity_svc.get_identity_summary(),
+    )
 
     # Apply tenant isolation to resources
     accessible_tenants = authz.accessible_tenant_ids
