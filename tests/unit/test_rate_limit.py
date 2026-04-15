@@ -24,7 +24,9 @@ from app.core.circuit_breaker import (
 )
 from app.core.rate_limit import (
     AZURE_API_RATE_LIMITS,
+    DEFAULT_LIMITS,
     MultiApiRateLimiter,
+    RateLimiter,
     TokenBucketRateLimiter,
     calculate_backoff,
     extract_retry_after,
@@ -314,6 +316,65 @@ class TestMultiApiRateLimiter:
         assert AZURE_API_RATE_LIMITS["cost"]["rate"] == 0.008
         # Security: 0.083 req/s
         assert AZURE_API_RATE_LIMITS["security"]["rate"] == 0.083
+
+
+# =============================================================================
+# Admin Rate Limit Configuration Tests (F-04)
+# =============================================================================
+
+
+class TestAdminRateLimits:
+    """Tests for admin endpoint rate limiting (F-04).
+
+    Validates that admin endpoints get stricter rate limits than the default,
+    and that the admin_write tier is even more restrictive for mutations.
+    """
+
+    def test_admin_tier_exists(self):
+        """Admin read tier must be defined in DEFAULT_LIMITS."""
+        assert "admin" in DEFAULT_LIMITS
+        cfg = DEFAULT_LIMITS["admin"]
+        assert cfg.requests == 30
+        assert cfg.window_seconds == 60
+
+    def test_admin_write_tier_exists(self):
+        """Admin write tier must be defined in DEFAULT_LIMITS."""
+        assert "admin_write" in DEFAULT_LIMITS
+        cfg = DEFAULT_LIMITS["admin_write"]
+        assert cfg.requests == 10
+        assert cfg.window_seconds == 60
+
+    def test_admin_stricter_than_default(self):
+        """Admin tier must allow fewer requests than default."""
+        assert DEFAULT_LIMITS["admin"].requests < DEFAULT_LIMITS["default"].requests
+
+    def test_admin_write_stricter_than_admin(self):
+        """Admin write must be stricter than admin read."""
+        assert DEFAULT_LIMITS["admin_write"].requests < DEFAULT_LIMITS["admin"].requests
+
+    def test_get_limit_config_recognises_admin_path(self):
+        """get_limit_config should return admin tier for /admin/ paths."""
+        limiter = RateLimiter()
+        cfg = limiter.get_limit_config("/api/v1/admin/users")
+        assert cfg.requests == DEFAULT_LIMITS["admin"].requests
+
+    def test_get_limit_config_admin_stats(self):
+        """Stats endpoint also matches admin tier."""
+        limiter = RateLimiter()
+        cfg = limiter.get_limit_config("/api/v1/admin/stats")
+        assert cfg.requests == DEFAULT_LIMITS["admin"].requests
+
+    def test_get_limit_config_admin_roles(self):
+        """Roles endpoint also matches admin tier."""
+        limiter = RateLimiter()
+        cfg = limiter.get_limit_config("/api/v1/admin/roles")
+        assert cfg.requests == DEFAULT_LIMITS["admin"].requests
+
+    def test_admin_does_not_match_non_admin_paths(self):
+        """Non-admin paths must NOT get admin rate limits."""
+        limiter = RateLimiter()
+        cfg = limiter.get_limit_config("/api/v1/costs/summary")
+        assert cfg.requests == DEFAULT_LIMITS["default"].requests
 
 
 # =============================================================================

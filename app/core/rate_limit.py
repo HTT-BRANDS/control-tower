@@ -47,6 +47,8 @@ DEFAULT_LIMITS = {
     "default": RateLimitConfig(requests=100, window_seconds=60),
     "auth": RateLimitConfig(requests=10, window_seconds=60),  # Stricter for auth
     "login": RateLimitConfig(requests=5, window_seconds=300),  # Very strict for login
+    "admin": RateLimitConfig(requests=30, window_seconds=60),  # Admin read endpoints
+    "admin_write": RateLimitConfig(requests=10, window_seconds=60),  # Admin mutations
     "sync": RateLimitConfig(requests=5, window_seconds=60),  # Expensive operations
     "bulk": RateLimitConfig(requests=3, window_seconds=60),
     "exports": RateLimitConfig(requests=10, window_seconds=60),
@@ -267,6 +269,8 @@ class RateLimiter:
             return DEFAULT_LIMITS["login"]
         elif "/auth/" in path_lower:
             return DEFAULT_LIMITS["auth"]
+        elif "/admin/" in path_lower:
+            return DEFAULT_LIMITS["admin"]
         elif "/sync" in path_lower:
             return DEFAULT_LIMITS["sync"]
         elif "/bulk" in path_lower:

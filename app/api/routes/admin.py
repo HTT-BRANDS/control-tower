@@ -27,6 +27,7 @@ from app.core.permissions import (
     WILDCARD_PERMISSION,
     Role,
 )
+from app.core.rate_limit import rate_limit
 from app.core.rbac import require_permissions
 
 # ============================================================================
@@ -210,6 +211,7 @@ async def get_user(
 async def update_user_roles(
     user_id: str,
     body: RolesUpdateRequest,
+    _rate_check: None = Depends(rate_limit("admin_write")),
     user: User = Depends(require_permissions("system:admin")),
     db: Session = Depends(get_db),
 ) -> UserDetailResponse:
