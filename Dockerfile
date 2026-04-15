@@ -67,6 +67,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     WEBSITE_HEALTHCHECK_MAXPINGFAILURES=3 \
     WEBSITES_PORT=8000
 
+# Apply Debian security patches (picks up libssl3, libgnutls30, etc.)
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install ODBC runtime + Microsoft ODBC Driver 18 for SQL Server
 # NOTE: libodbc2 (libodbc.so.2) must be installed from the standard Debian repo
 #       first; the Microsoft repo provides msodbcsql18 (the actual MSSQL driver).
