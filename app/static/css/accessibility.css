@@ -77,6 +77,16 @@ nav button {
   padding: 8px 12px;
 }
 
+/* ── Focus Not Obscured by Sticky Headers (WCAG 2.4.11) ────── 
+   Elements receiving keyboard focus behind sticky table headers or
+   nav bars must scroll into the visible viewport. scroll-margin-top
+   prevents the focused element from being hidden under overlays.
+   ─────────────────────────────────────────────────────────────── */
+:target,
+:focus {
+  scroll-margin-top: 5rem;
+}
+
 /* ── Focus-Visible (WCAG 2.4.7 + 2.4.11) ───────────────────── 
    Uses brand token so focus rings adapt per-tenant.
    The base :focus-visible rule is defined in theme.src.css;

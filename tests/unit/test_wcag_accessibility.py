@@ -320,3 +320,159 @@ class TestNonTextContrast:
         """Focus border must have >= 3:1 contrast on white (SC 1.4.11)."""
         # Focus uses brand-primary which we already validate at 4.5:1
         assert "--border-focus: var(--brand-primary" in theme_css
+
+
+# ── NEW WCAG 2.2 AA Criteria ──────────────────────────────────
+# These success criteria were added in WCAG 2.2 (October 2023).
+# SC 2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8 are AA level.
+
+
+class TestFocusNotObscured:
+    """WCAG SC 2.4.11: Focus Not Obscured (Minimum).
+
+    When a UI component receives keyboard focus, it must not be
+    entirely hidden by author-created content (e.g. sticky headers).
+    """
+
+    def test_scroll_margin_top_in_accessibility_css(self, a11y_css):
+        """Focused elements must have scroll-margin-top to clear sticky headers."""
+        assert "scroll-margin-top" in a11y_css, (
+            "accessibility.css must set scroll-margin-top on :focus "
+            "to prevent focused elements from being hidden under sticky headers"
+        )
+
+    def test_focus_selector_has_scroll_margin(self, a11y_css):
+        """:focus and :target selectors need scroll-margin-top."""
+        assert ":focus" in a11y_css
+        assert ":target" in a11y_css
+
+
+class TestDraggingMovements:
+    """WCAG SC 2.5.7: Dragging Movements.
+
+    Any path-based drag-and-drop must have a single-pointer alternative.
+    This app has NO drag-and-drop, so this test verifies that remains true.
+    """
+
+    def test_no_draggable_elements(self, all_html):
+        """No draggable elements should exist without keyboard alternatives."""
+        # If draggable is added, a keyboard alternative must be present
+        drag_count = all_html.count('draggable="true"')
+        assert drag_count == 0, (
+            f"Found {drag_count} draggable elements. WCAG 2.5.7 requires "
+            f"single-pointer alternatives for all dragging movements."
+        )
+
+    def test_no_ondrag_handlers(self, all_html):
+        """No ondrag* event handlers without alternatives."""
+        import re as _re
+
+        matches = _re.findall(r"ondrag\w+", all_html)
+        assert len(matches) == 0, (
+            f"Found drag handlers: {matches}. Add single-pointer alternatives."
+        )
+
+
+class TestTargetSizeMinimum:
+    """WCAG SC 2.5.8: Target Size (Minimum) — 24×24 CSS pixels.
+
+    Interactive elements must be at least 24×24px, or have sufficient
+    spacing from other targets.
+    """
+
+    def test_nav_touch_targets_exceed_minimum(self, a11y_css):
+        """Nav links/buttons must have min-height >= 44px (exceeds 24px)."""
+        assert "min-height: 44px" in a11y_css, (
+            "Nav touch targets must have min-height >= 44px (WCAG 2.5.8 min: 24px)"
+        )
+
+    def test_touch_target_api_exists(self, client):
+        """Touch target audit endpoint must exist and return valid data."""
+        response = client.get("/api/v1/accessibility/touch-targets")
+        assert response.status_code == 200
+        data = response.json()
+        assert "compliant" in data
+        assert "score" in data
+
+
+class TestConsistentHelp:
+    """WCAG SC 3.2.6: Consistent Help.
+
+    Help mechanisms present on multiple pages must appear in the
+    same relative order. We verify the base template footer provides
+    a consistent accessibility/help link.
+    """
+
+    def test_footer_has_accessibility_link(self):
+        """base.html footer must include an accessibility help link."""
+        base = (TEMPLATES_DIR / "base.html").read_text()
+        assert "Accessibility" in base, (
+            "base.html must have an Accessibility link in the footer "
+            "for consistent help across all pages (WCAG 3.2.6)"
+        )
+
+    def test_footer_help_links_order_is_stable(self):
+        """Footer links must be in a stable order: Privacy, then Accessibility."""
+        base = (TEMPLATES_DIR / "base.html").read_text()
+        privacy_pos = base.find("Privacy Policy")
+        a11y_pos = base.find("Accessibility")
+        assert privacy_pos > 0 and a11y_pos > 0, (
+            "Both Privacy and Accessibility links must be in footer"
+        )
+        assert privacy_pos < a11y_pos, (
+            "Footer link order must be: Privacy Policy → Accessibility "
+            "for consistent help mechanism (WCAG 3.2.6)"
+        )
+
+
+class TestRedundantEntry:
+    """WCAG SC 3.3.7: Redundant Entry.
+
+    Users must not be asked to re-enter the same information within
+    the same process. This app uses Azure AD SSO with no multi-step
+    forms, so this is satisfied by design.
+    """
+
+    def test_login_is_single_step(self):
+        """Login page must be a single-step flow (SSO redirect or one form)."""
+        login = (TEMPLATES_DIR.parent / "templates" / "login.html").read_text()
+        # Only one form should exist (dev login)
+        form_count = login.count("<form")
+        assert form_count <= 1, (
+            f"Login has {form_count} forms. Multi-step forms risk "
+            f"redundant entry (WCAG 3.3.7). Use SSO where possible."
+        )
+
+
+class TestAccessibleAuthentication:
+    """WCAG SC 3.3.8: Accessible Authentication (Minimum).
+
+    Authentication must not require cognitive function tests (e.g. CAPTCHA,
+    puzzle solving) unless alternatives exist. Password fields must allow
+    paste (for password managers).
+    """
+
+    def test_no_captcha_in_login(self):
+        """Login page must not require CAPTCHA or cognitive tests."""
+        login = (TEMPLATES_DIR.parent / "templates" / "login.html").read_text()
+        captcha_patterns = ["captcha", "recaptcha", "hcaptcha", "turnstile"]
+        for pattern in captcha_patterns:
+            assert pattern not in login.lower(), (
+                f"Login page contains '{pattern}'. WCAG 3.3.8 requires "
+                f"authentication without cognitive function tests."
+            )
+
+    def test_password_allows_paste(self):
+        """Password field must not prevent paste (for password managers)."""
+        login = (TEMPLATES_DIR.parent / "templates" / "login.html").read_text()
+        assert "onpaste" not in login.lower(), (
+            "Password field must not block paste events. "
+            "WCAG 3.3.8 requires paste support for password managers."
+        )
+
+    def test_azure_ad_sso_is_primary(self):
+        """Azure AD SSO must be the primary auth method (no cognitive test)."""
+        login = (TEMPLATES_DIR.parent / "templates" / "login.html").read_text()
+        assert "Sign in with Microsoft" in login, (
+            "Azure AD SSO must be the primary authentication method"
+        )
