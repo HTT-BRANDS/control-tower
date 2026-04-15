@@ -33,13 +33,18 @@ ALERT_THRESHOLDS = {
     "zero_records_threshold": 3,  # Alert after 3 consecutive zero-record runs
 }
 
-# Expected sync intervals in hours (for stale sync detection)
-EXPECTED_SYNC_INTERVALS = {
-    "costs": 24,
-    "compliance": 24,
-    "resources": 24,
-    "identity": 24,
-}
+
+def _expected_sync_intervals() -> dict[str, int]:
+    """Return expected sync intervals from settings (configurable via env)."""
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    return {
+        "costs": settings.cost_sync_interval_hours,
+        "compliance": settings.compliance_sync_interval_hours,
+        "resources": settings.resource_sync_interval_hours,
+        "identity": settings.identity_sync_interval_hours,
+    }
 
 
 class MonitoringService:
@@ -426,7 +431,7 @@ class MonitoringService:
         """
         alerts = []
 
-        for job_type, expected_hours in EXPECTED_SYNC_INTERVALS.items():
+        for job_type, expected_hours in _expected_sync_intervals().items():
             metrics = (
                 self.db.query(SyncJobMetrics).filter(SyncJobMetrics.job_type == job_type).first()
             )
@@ -631,7 +636,7 @@ class MonitoringService:
 
         # Build status for each expected job type
         job_statuses = {}
-        for job_type in EXPECTED_SYNC_INTERVALS:
+        for job_type in _expected_sync_intervals():
             metrics = metrics_by_type.get(job_type)
 
             if not metrics:

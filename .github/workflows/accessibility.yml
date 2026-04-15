@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       
       - name: Install axe-core CLI
         run: npm install -g @axe-core/cli@4.11.1
@@ -104,7 +104,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       
       - name: Install Pa11y
         run: npm install -g pa11y@9.1.1

@@ -519,6 +519,11 @@ class Settings(BaseSettings):
     compliance_sync_interval_hours: int = 4
     resource_sync_interval_hours: int = 1
     identity_sync_interval_hours: int = 24
+    sync_stale_threshold_hours: int = Field(
+        default=24,
+        alias="SYNC_STALE_THRESHOLD_HOURS",
+        description="Hours after which sync data is considered stale",
+    )
 
     # Alerting
     teams_webhook_url: str | None = None

@@ -20,9 +20,11 @@ router = APIRouter(
     tags=["System"],
 )
 
-# Freshness threshold used by /healthz/data — any tenant whose most recent
-# sync for a given data type is older than this is reported as stale.
-DATA_FRESHNESS_THRESHOLD = timedelta(hours=24)
+
+def _get_data_freshness_threshold() -> timedelta:
+    """Return the data freshness threshold from settings (configurable via env)."""
+    settings = get_settings()
+    return timedelta(hours=settings.sync_stale_threshold_hours)
 
 
 @router.get("")
@@ -280,7 +282,7 @@ async def data_freshness_check(
     Returns a mapping ``{tenant_key: {domain: iso8601 | null, ..., stale: bool}}``
     used by the UI header indicator to answer the question "is data actually
     flowing?" at a glance. A tenant is ``stale`` when any domain's most recent
-    ``synced_at`` is older than ``DATA_FRESHNESS_THRESHOLD`` (or missing).
+    ``synced_at`` is older than ``_get_data_freshness_threshold()`` (or missing).
 
     No authentication required — returns no sensitive data, just timestamps
     and freshness booleans, so the unauthenticated app shell can render
@@ -326,7 +328,7 @@ async def data_freshness_check(
             # SQLite may return naive datetimes — normalise to UTC for comparison
             last_utc = last if last.tzinfo else last.replace(tzinfo=UTC)
             per_tenant[name] = last_utc.isoformat()
-            if now - last_utc > DATA_FRESHNESS_THRESHOLD:
+            if now - last_utc > _get_data_freshness_threshold():
                 tenant_stale = True
 
         per_tenant["stale"] = tenant_stale
@@ -336,7 +338,7 @@ async def data_freshness_check(
 
     return {
         "timestamp": now.isoformat(),
-        "threshold_hours": int(DATA_FRESHNESS_THRESHOLD.total_seconds() // 3600),
+        "threshold_hours": int(_get_data_freshness_threshold().total_seconds() // 3600),
         "any_stale": overall_any_stale,
         "tenants": result,
     }

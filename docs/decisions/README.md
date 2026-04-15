@@ -160,6 +160,8 @@ adr-NNNN-short-title-with-dashes.md
 | [0007](adr-0007-auth-evolution.md) | Authentication Architecture Evolution: Phase A→B→C | accepted | 2025-02-15 |
 | [0008](adr-0008-container-registry.md) | Container Registry Migration: ACR → GHCR | accepted | 2025-01-28 |
 | [0009](adr-0009-database-tier.md) | Database Tier Selection: Standard → Free Tier | accepted | 2025-02-10 |
+| [0010](adr-0010-sync-reliability.md) | Sync Reliability: Prevent cascading multi-tenant failures | accepted | 2025-04-15 |
+| [0011](adr-0011-granular-rbac.md) | Granular RBAC with permission-based access control | accepted | 2025-05-20 |
 
 ## References
 
