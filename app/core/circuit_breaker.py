@@ -1,5 +1,6 @@
 """Circuit breaker pattern for Azure API calls."""
 
+import inspect
 import logging
 import threading
 import time
@@ -267,9 +268,7 @@ def circuit_breaker(
             return breaker.call(func, *args, **kwargs)
 
         # Return appropriate wrapper based on function type
-        import asyncio
-
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
 

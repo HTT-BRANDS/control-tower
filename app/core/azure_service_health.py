@@ -28,6 +28,7 @@ Usage:
 """
 
 import asyncio
+import inspect
 import logging
 import os
 from collections.abc import Callable
@@ -388,7 +389,7 @@ class AzureServiceHealthMonitor:
         # Call registered handlers
         for handler in self._notification_handlers:
             try:
-                if asyncio.iscoroutinefunction(handler):
+                if inspect.iscoroutinefunction(handler):
                     await handler(incident)
                 else:
                     handler(incident)
