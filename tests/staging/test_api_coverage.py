@@ -67,7 +67,9 @@ class TestAPIRouteMounting:
     ) -> None:
         """GET {path} must return one of {expected_statuses}, never 404."""
         # openapi.json can be large; use 30s for schema endpoints
-        timeout = 30 if path == "/openapi.json" else 10
+        # Swagger/OpenAPI endpoints are slow on cold start (schema generation)
+        slow_paths = {"/openapi.json", "/docs", "/redoc"}
+        timeout = 30 if path in slow_paths else 10
         resp = client.get(f"{staging_url}{path}", timeout=timeout)
         assert resp.status_code in expected_statuses, (
             f"GET {path} → {resp.status_code} "
@@ -81,7 +83,7 @@ class TestAPISchemaCompleteness:
 
     @pytest.fixture(scope="class")
     def openapi_paths(self, client: requests.Session, staging_url: str) -> set[str]:
-        resp = client.get(f"{staging_url}/openapi.json", timeout=10)
+        resp = client.get(f"{staging_url}/openapi.json", timeout=30)
         return set(resp.json().get("paths", {}).keys())
 
     EXPECTED_PATH_PREFIXES = [
