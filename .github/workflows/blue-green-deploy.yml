@@ -78,6 +78,11 @@ jobs:
         with:
           context: .
           push: true
+          # CRITICAL: target the production stage. Without this, buildx defaults
+          # to the LAST stage in the Dockerfile (currently `development`),
+          # producing a dev image with no ODBC libs and uvicorn --reload.
+          # See: a1sb (2026-04-17) — prod was running dev image for weeks.
+          target: production
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
