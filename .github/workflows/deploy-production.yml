@@ -289,6 +289,13 @@ jobs:
           echo "sha_tag=${SHA_TAG}" >> $GITHUB_ENV
           echo "sha_tag=${SHA_TAG}" >> $GITHUB_OUTPUT
 
+      # Regression guard for incident a1sb (libodbc missing in dev image
+      # shipped to prod). See .github/actions/verify-production-image/README.md
+      - name: Verify production image (a1sb guard)
+        uses: ./.github/actions/verify-production-image
+        with:
+          image-ref: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:sha-${{ github.sha }}
+
       - name: Set image output
         id: set-output
         run: |

@@ -89,6 +89,15 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
+      # Belt-and-suspenders regression guard for incident a1sb.
+      # If the `target:` above is ever dropped/renamed, this step fails the
+      # pipeline BEFORE a dev-stage image can land in prod.
+      # See .github/actions/verify-production-image/README.md
+      - name: Verify production image (a1sb guard)
+        uses: ./.github/actions/verify-production-image
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+
   # ---------------------------------------------------------------------------
   # Deploy to staging slot
   # ---------------------------------------------------------------------------

@@ -232,6 +232,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -244,6 +245,15 @@ jobs:
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Regression guard for incident a1sb (libodbc missing in dev image
+      # shipped to prod). Staging images get promoted to prod via blue-green
+      # swap, so this workflow is in-scope.
+      # See .github/actions/verify-production-image/README.md
+      - name: Verify production image (a1sb guard)
+        uses: ./.github/actions/verify-production-image
+        with:
+          image-ref: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}@${{ steps.build.outputs.digest }}
 
       - name: Set image output
         id: set-output
