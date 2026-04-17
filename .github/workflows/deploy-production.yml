@@ -275,7 +275,12 @@ jobs:
         run: |
           SHA_TAG="sha-${{ github.sha }}"
           
-          # Build and push using docker CLI for better control
+          # Build and push using docker CLI for better control.
+          # --metadata-file captures the pushed manifest digest so the
+          # a1sb guard (next step) can verify the immutable digest rather
+          # than a mutable tag. Matches the pattern used by the other two
+          # prod-reachable workflows which rely on docker/build-push-action's
+          # `outputs.digest` value.
           docker buildx build \
             --platform linux/amd64 \
             --target production \
@@ -283,18 +288,36 @@ jobs:
             --tag ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${SHA_TAG} \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
+            --metadata-file /tmp/buildx-meta.json \
             --push \
             .
           
           echo "sha_tag=${SHA_TAG}" >> $GITHUB_ENV
           echo "sha_tag=${SHA_TAG}" >> $GITHUB_OUTPUT
 
+      # Extract the content-addressed digest from buildx's metadata file.
+      # Using the digest (immutable) instead of a tag (mutable) means the
+      # guard cannot be fooled by a racy retag between push and verify.
+      - name: Extract image digest
+        id: digest
+        run: |
+          set -euo pipefail
+          DIGEST=$(jq -r '."containerimage.digest"' /tmp/buildx-meta.json)
+          if [[ -z "$DIGEST" || "$DIGEST" == "null" ]]; then
+            echo "::error::Failed to extract digest from buildx metadata"
+            exit 1
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Extracted digest: ${DIGEST}"
+
       # Regression guard for incident a1sb (libodbc missing in dev image
-      # shipped to prod). See .github/actions/verify-production-image/README.md
+      # shipped to prod). Verifies the exact manifest we just pushed by
+      # digest, not by a mutable tag.
+      # See .github/actions/verify-production-image/README.md
       - name: Verify production image (a1sb guard)
         uses: ./.github/actions/verify-production-image
         with:
-          image-ref: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:sha-${{ github.sha }}
+          image-ref: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}@${{ steps.digest.outputs.digest }}
 
       - name: Set image output
         id: set-output
