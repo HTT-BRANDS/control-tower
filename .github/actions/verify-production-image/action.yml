@@ -1,0 +1,125 @@
+# =============================================================================
+# Verify Production Image — a1sb regression guard
+# =============================================================================
+# A belt-and-suspenders check that runs after `docker/build-push-action`
+# (or equivalent `docker buildx build --push`) to confirm that the image
+# that just landed in GHCR is a REAL production build — not the dev stage
+# that silently shipped to prod for weeks during incident a1sb.
+#
+# See README.md alongside this file for the full story.
+# =============================================================================
+
+name: 'Verify Production Image'
+description: >-
+  Inspect a freshly-pushed container image and fail the workflow if it looks
+  like the dev stage (bad version label, wrong USER, missing entrypoint, or
+  missing ODBC libraries). Regression guard for incident a1sb.
+
+inputs:
+  image-ref:
+    description: >-
+      Fully qualified image ref to inspect, e.g.
+      ghcr.io/htt-brands/azure-governance-platform:sha-abc123
+      or ghcr.io/htt-brands/azure-governance-platform@sha256:...
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Pull image for inspection
+      shell: bash
+      env:
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        set -euo pipefail
+        echo "::group::docker pull $IMAGE_REF"
+        docker pull "$IMAGE_REF"
+        echo "::endgroup::"
+
+    - name: Verify image metadata (label, user, entrypoint)
+      shell: bash
+      env:
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        set -euo pipefail
+
+        GUARD_MSG='This guard exists because of incident a1sb (libodbc missing in dev image shipped to prod). See .github/actions/verify-production-image/README.md'
+
+        echo "::group::docker inspect $IMAGE_REF"
+        INSPECT_JSON=$(docker inspect "$IMAGE_REF")
+        echo "$INSPECT_JSON" | jq '.[0].Config | {Labels: .Labels, User: .User, Entrypoint: .Entrypoint}'
+        echo "::endgroup::"
+
+        # ---------------------------------------------------------------------
+        # Check 1: version label must exist and must NOT end with "-dev".
+        # The Dockerfile's `development` stage labels version="2.5.0-dev";
+        # production labels it "2.5.0". If we see "-dev" here, someone shipped
+        # the wrong target (exactly what happened in a1sb).
+        # ---------------------------------------------------------------------
+        VERSION_LABEL=$(echo "$INSPECT_JSON" | jq -r '.[0].Config.Labels.version // ""')
+        echo "version label: '${VERSION_LABEL}'"
+        if [[ -z "$VERSION_LABEL" ]]; then
+          echo "::error::Image is missing a 'version' label. Production images MUST carry one. ${GUARD_MSG}"
+          exit 1
+        fi
+        if [[ "$VERSION_LABEL" == *-dev ]]; then
+          echo "::error::Image version label '${VERSION_LABEL}' ends with '-dev' — this is a development-stage build and must NEVER ship to prod. ${GUARD_MSG}"
+          exit 1
+        fi
+
+        # ---------------------------------------------------------------------
+        # Check 2: USER must be 'appuser'. The dev stage inherits from the
+        # builder (root). Running as root in prod is both a security regression
+        # AND a signal that the wrong target was built.
+        # ---------------------------------------------------------------------
+        USER_VALUE=$(echo "$INSPECT_JSON" | jq -r '.[0].Config.User // ""')
+        echo "user: '${USER_VALUE}'"
+        if [[ "$USER_VALUE" != "appuser" ]]; then
+          echo "::error::Image runs as '${USER_VALUE:-<empty/root>}' but expected 'appuser'. This is the dev-stage fingerprint. ${GUARD_MSG}"
+          exit 1
+        fi
+
+        # ---------------------------------------------------------------------
+        # Check 3: Entrypoint must reference entrypoint.sh. The dev stage
+        # uses `uvicorn --reload` directly with no wrapper script.
+        # ---------------------------------------------------------------------
+        ENTRYPOINT_JOINED=$(echo "$INSPECT_JSON" | jq -r '.[0].Config.Entrypoint // [] | join(" ")')
+        echo "entrypoint: '${ENTRYPOINT_JOINED}'"
+        if [[ "$ENTRYPOINT_JOINED" != *entrypoint.sh* ]]; then
+          echo "::error::Image entrypoint '${ENTRYPOINT_JOINED}' does not reference entrypoint.sh. Dev stage uses uvicorn --reload directly. ${GUARD_MSG}"
+          exit 1
+        fi
+
+        echo "✅ Metadata checks passed (version=${VERSION_LABEL}, user=${USER_VALUE}, entrypoint contains entrypoint.sh)"
+
+    - name: Verify ODBC runtime (a1sb-specific regression check)
+      shell: bash
+      env:
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        set -euo pipefail
+
+        GUARD_MSG='This guard exists because of incident a1sb (libodbc missing in dev image shipped to prod). See .github/actions/verify-production-image/README.md'
+
+        # Run the check inside the image itself. We explicitly override the
+        # entrypoint with `sh` so this works even if some future entrypoint
+        # misbehaves. The two assertions must BOTH succeed:
+        #   1. ldconfig knows about libodbc.so.2 (from libodbc2 package)
+        #   2. msodbcsql18's actual .so file is present on disk
+        echo "::group::ODBC runtime check inside $IMAGE_REF"
+        if ! docker run --rm --entrypoint sh "$IMAGE_REF" -c '
+          set -e
+          echo "--- ldconfig -p | grep libodbc ---"
+          ldconfig -p | grep libodbc || true
+          echo "--- msodbcsql18 driver files ---"
+          ls -l /opt/microsoft/msodbcsql18/lib64/ 2>/dev/null || echo "(directory missing)"
+          echo "--- assertions ---"
+          ldconfig -p | grep -q libodbc.so.2
+          ls /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.*.so.* >/dev/null 2>&1
+        '; then
+          echo "::error::ODBC regression check FAILED. Image is missing libodbc.so.2 and/or Microsoft ODBC 18 driver. This is the EXACT fingerprint of the a1sb outage. ${GUARD_MSG}"
+          exit 1
+        fi
+        echo "::endgroup::"
+
+        echo "✅ ODBC runtime present (libodbc.so.2 + msodbcsql18)"
