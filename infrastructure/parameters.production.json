@@ -64,7 +64,7 @@
       "value": ""
     },
     "enableRedis": {
-      "value": true
+      "value": false
     }
   }
 }

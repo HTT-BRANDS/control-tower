@@ -59,7 +59,7 @@ param enableKeyVault bool = true
 @description('Enable VNet integration')
 param enableVNetIntegration bool = false
 
-@description('Enable Azure Cache for Redis')
+@description('Enable Azure Cache for Redis. Leave FALSE until: (a) App Service scaled to 2+ instances, (b) cache miss rate >20% sustained, or (c) memory pressure on App Service. See docs/COST_MODEL_AND_SCALING.md section 6.2 trigger #7. Redis C0 adds ~$16/mo.')
 param enableRedis bool = false
 
 @description('Admin username for SQL Server')
