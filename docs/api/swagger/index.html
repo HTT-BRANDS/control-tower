@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Explorer — Azure Governance Platform</title>
+  <meta name="description" content="Interactive Swagger UI for the Azure Governance Platform API — 191 endpoints, always-fresh from production.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
+
+  <!-- Brand stylesheet (for nav + header consistency) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/main.css">
+  <link rel="stylesheet" href="../../assets/icons.css">
+
+  <!-- Swagger UI from jsDelivr (more reliable than unpkg) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css">
+
+  <style>
+    /* Tighten Swagger UI inside our brand chrome */
+    .swagger-ui-wrap { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+    .swagger-ui .topbar { display: none; } /* hide the green Swagger logo bar */
+    .swagger-ui .info { margin: 1rem 0 1.5rem; }
+    .swagger-ui .info .title { font-family: 'Montserrat', sans-serif; }
+
+    /* Stale-data banner */
+    .stale-banner {
+      max-width: 1280px;
+      margin: 1rem auto;
+      padding: 0.75rem 1rem;
+      background: #fff8e1;
+      border-left: 4px solid #ffc957;
+      font-size: 0.875rem;
+      color: #5a4a00;
+      border-radius: 4px;
+    }
+    .stale-banner code {
+      background: rgba(0,0,0,0.06);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <a href="#swagger" class="skip-link">Skip to API explorer</a>
+
+  <nav class="nav" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+      <a href="../../" class="nav-logo" aria-label="Home">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links">
+        <a href="../../architecture/">Architecture</a>
+        <a href="../../operations/">Operations</a>
+        <a href="../" class="active">API</a>
+        <a href="../../decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div class="breadcrumb"><a href="../../">Home</a><span>›</span> <a href="../">API</a><span>›</span> Explorer</div>
+      <h1 class="page-title">API Explorer</h1>
+      <p class="page-subtitle">Interactive Swagger UI · 191 endpoints · always public</p>
+    </div>
+  </div>
+
+  <div class="stale-banner">
+    <strong>Snapshot info:</strong> This explorer loads a bundled OpenAPI spec
+    refreshed automatically every time GitHub Pages rebuilds. The live spec is
+    also available at
+    <a href="https://app-governance-prod.azurewebsites.net/openapi.json" target="_blank" rel="noopener"><code>app-governance-prod.azurewebsites.net/openapi.json</code></a>.
+    Production <code>/docs</code> requires authentication by design — this page is the public-friendly alternative.
+  </div>
+
+  <main id="swagger" class="swagger-ui-wrap"></main>
+
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin></script>
+  <script>
+    window.onload = function () {
+      window.ui = SwaggerUIBundle({
+        url: './openapi.json',                          // bundled, same-origin, no CORS pain
+        dom_id: '#swagger',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: 'BaseLayout',
+        defaultModelsExpandDepth: 0,                    // collapse the giant schema tree by default
+        docExpansion: 'list',                           // show endpoint list, not full bodies
+        filter: true,                                   // search box on by default
+        tryItOutEnabled: true,
+        // Most endpoints require auth — surface that clearly
+        persistAuthorization: true,
+      });
+    };
+
+    // Mobile nav toggle (matches the rest of the site)
+    (function () {
+      var t = document.querySelector('.nav-toggle');
+      var n = document.querySelector('.nav-links');
+      if (t && n) t.addEventListener('click', function () {
+        n.classList.toggle('open');
+        this.setAttribute('aria-expanded', n.classList.contains('open'));
+      });
+    })();
+  </script>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="../../architecture/">Architecture</a>
+        <a href="../../operations/">Operations</a>
+        <a href="../">API</a>
+        <a href="../../decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/azure-governance-platform" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Production Certified · v2.5.0 · Updated 2026-04-17</p>
+    </div>
+  </footer>
+</body>
+</html>

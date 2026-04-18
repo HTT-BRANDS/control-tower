@@ -229,12 +229,15 @@ X-RateLimit-Reset: 1640995200
 </tbody></table>
 <hr>
 <h2>Interactive Documentation</h2>
-<p><strong>Production:</strong> <a href="https://app-governance-prod.azurewebsites.net/docs">https://app-governance-prod.azurewebsites.net/docs</a></p>
+<p><strong>API Explorer (public):</strong> <a href="../swagger/">/api/swagger/</a> — Swagger UI hosted on this site, refreshed on every Pages build.</p>
+<p><strong>Live OpenAPI spec:</strong> <a href="https://app-governance-prod.azurewebsites.net/openapi.json">https://app-governance-prod.azurewebsites.net/openapi.json</a> (always public, CORS-restricted)</p>
+<p><strong>Production <code>/docs</code> + <code>/redoc</code>:</strong> require authentication by design — <a href="../swagger/">use the public explorer instead</a>.</p>
 <p>Features:</p>
 <ul>
-<li>Try endpoints in browser</li>
+<li>Try endpoints in the browser (191 endpoints, 109 schemas)</li>
 <li>See request/response examples</li>
-<li>Download OpenAPI spec</li>
+<li>Authorize once with your token, calls persist across reloads</li>
+<li>Download the bundled OpenAPI spec at <a href="../swagger/openapi.json"><code>/api/swagger/openapi.json</code></a></li>
 </ul>
 <hr>
 <h2>Code Examples</h2>

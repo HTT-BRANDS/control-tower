@@ -6,7 +6,7 @@
 |----------|-----|
 | **Production** | https://app-governance-prod.azurewebsites.net |
 | **Health Check** | https://app-governance-prod.azurewebsites.net/health |
-| **API Docs** | https://app-governance-prod.azurewebsites.net/docs |
+| **API Explorer** | [/api/swagger/](../api/swagger/) (public) · prod `/docs` requires auth |
 | **Azure Portal** | https://portal.azure.com |
 
 ---

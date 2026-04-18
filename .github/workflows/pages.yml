@@ -38,6 +38,19 @@ jobs:
       - name: Render audit status into docs/status.md
         run: python scripts/render_status.py || true
 
+      - name: Refresh bundled OpenAPI spec for /api/swagger/
+        # Public endpoint, no auth needed. Non-fatal: if prod is down,
+        # the previously-committed snapshot ships instead.
+        run: |
+          mkdir -p docs/api/swagger
+          if curl -fsSL --max-time 15 \
+              https://app-governance-prod.azurewebsites.net/openapi.json \
+              -o docs/api/swagger/openapi.json; then
+            echo "Refreshed openapi.json: $(wc -c < docs/api/swagger/openapi.json) bytes"
+          else
+            echo "WARN: openapi.json refresh failed; using committed snapshot"
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
