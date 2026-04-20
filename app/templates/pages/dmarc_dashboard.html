@@ -153,6 +153,30 @@
         none:    'bg-brand-error-5 text-danger',
     };
 
+    // Alert severity → badge classes. 'low' uses the brand-primary tint to
+    // match ds_badge(variant="info") without pulling a full macro into JS.
+    const SEVERITY_STYLES = {
+        critical: 'bg-brand-error-5 text-danger',
+        high:     'bg-brand-warning-5 text-warning',
+        medium:   'bg-brand-warning-5 text-warning',
+        low:      'bg-brand-primary-5 text-brand-primary',
+    };
+    const SEVERITY_FALLBACK = 'bg-surface-tertiary text-primary-theme';
+
+    // Per-row descriptors for the DMARC/DKIM breakdown progress bars.
+    // Driving render loops off a data array kills 3× duplicated <div>
+    // blocks per panel (see renderBarPanel below).
+    const DMARC_BAR_ROWS = [
+        { label: 'Reject (Full Protection)',        color: 'bg-success', key: 'reject' },
+        { label: 'Quarantine (Partial Protection)', color: 'bg-warning', key: 'quarantine' },
+        { label: 'None (No Protection)',            color: 'bg-danger',  key: 'none' },
+    ];
+    const DKIM_BAR_ROWS = [
+        { label: 'Enabled & Aligned', color: 'bg-success', key: 'aligned' },
+        { label: 'Enabled Only',      color: 'bg-warning', key: 'enabledOnly' },
+        { label: 'Disabled',          color: 'bg-danger',  key: 'disabled' },
+    ];
+
     let currentData = null;
 
     // Fetch dashboard data
@@ -308,111 +332,65 @@
         }).join('');
     }
 
+    /* Render N progress bars from a rows-descriptor + counts lookup. Kills
+       three near-identical <div> blocks per panel that each hardcoded the
+       same three semantic colors. Single source of truth: the `rows` array. */
+    function renderBarPanel(containerId, rows, counts) {
+        const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+        document.getElementById(containerId).innerHTML = rows.map(row => {
+            const n = counts[row.key] || 0;
+            const pct = (n / total) * 100;
+            return `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="font-medium text-secondary-theme">${row.label}</span>
+                        <span class="text-muted-theme">${n} (${Math.round(pct)}%)</span>
+                    </div>
+                    <div class="bg-surface-tertiary rounded-full h-2.5">
+                        <div class="${row.color} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     function updateDMARCPolicies(tenants) {
-        const container = document.getElementById('dmarc-policies');
-        
-        // Aggregate policy counts
-        const allRecords = tenants.flatMap(t => t.dmarc_records);
-        const rejectCount = allRecords.filter(r => r.policy === 'reject').length;
-        const quarantineCount = allRecords.filter(r => r.policy === 'quarantine').length;
-        const noneCount = allRecords.filter(r => r.policy === 'none').length;
-        const total = allRecords.length || 1;
-        
-        container.innerHTML = `
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">Reject (Full Protection)</span>
-                    <span class="text-muted-theme">${rejectCount} (${Math.round(rejectCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-success h-2.5 rounded-full transition-all duration-500" style="width: ${(rejectCount/total*100)}%"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">Quarantine (Partial Protection)</span>
-                    <span class="text-muted-theme">${quarantineCount} (${Math.round(quarantineCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-warning h-2.5 rounded-full transition-all duration-500" style="width: ${(quarantineCount/total*100)}%"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">None (No Protection)</span>
-                    <span class="text-muted-theme">${noneCount} (${Math.round(noneCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-danger h-2.5 rounded-full transition-all duration-500" style="width: ${(noneCount/total*100)}%"></div>
-                </div>
-            </div>
-        `;
+        const all = tenants.flatMap(t => t.dmarc_records);
+        renderBarPanel('dmarc-policies', DMARC_BAR_ROWS, {
+            reject:     all.filter(r => r.policy === 'reject').length,
+            quarantine: all.filter(r => r.policy === 'quarantine').length,
+            none:       all.filter(r => r.policy === 'none').length,
+        });
     }
 
     function updateDKIMStatus(tenants) {
-        const container = document.getElementById('dkim-status');
-        
-        // Aggregate DKIM counts
-        const allRecords = tenants.flatMap(t => t.dkim_records);
-        const alignedCount = allRecords.filter(r => r.is_enabled && r.is_aligned).length;
-        const enabledOnlyCount = allRecords.filter(r => r.is_enabled && !r.is_aligned).length;
-        const disabledCount = allRecords.filter(r => !r.is_enabled).length;
-        const total = allRecords.length || 1;
-        
-        container.innerHTML = `
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">Enabled & Aligned</span>
-                    <span class="text-muted-theme">${alignedCount} (${Math.round(alignedCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-success h-2.5 rounded-full transition-all duration-500" style="width: ${(alignedCount/total*100)}%"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">Enabled Only</span>
-                    <span class="text-muted-theme">${enabledOnlyCount} (${Math.round(enabledOnlyCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-warning h-2.5 rounded-full transition-all duration-500" style="width: ${(enabledOnlyCount/total*100)}%"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="font-medium text-secondary-theme">Disabled</span>
-                    <span class="text-muted-theme">${disabledCount} (${Math.round(disabledCount/total*100)}%)</span>
-                </div>
-                <div class="bg-surface-tertiary rounded-full h-2.5">
-                    <div class="bg-danger h-2.5 rounded-full transition-all duration-500" style="width: ${(disabledCount/total*100)}%"></div>
-                </div>
-            </div>
-        `;
+        const all = tenants.flatMap(t => t.dkim_records);
+        renderBarPanel('dkim-status', DKIM_BAR_ROWS, {
+            aligned:     all.filter(r => r.is_enabled && r.is_aligned).length,
+            enabledOnly: all.filter(r => r.is_enabled && !r.is_aligned).length,
+            disabled:    all.filter(r => !r.is_enabled).length,
+        });
     }
 
     function updateAlerts(alerts) {
-        document.getElementById('alert-count').textContent = alerts.length;
-        
+        // Uses module-level SEVERITY_STYLES — adding a new severity is one
+        // dict entry, not a per-function re-declaration.
         const table = document.getElementById('alerts-table');
-        
-        const severityColors = {
-            'critical': 'bg-brand-error-5 text-danger',
-            'high': 'bg-brand-warning-5 text-warning',
-            'medium': 'bg-brand-warning-5 text-warning',
-            'low': 'bg-brand-primary-5 text-brand-primary'
-        };
-        
+
         table.innerHTML = alerts.slice(0, 10).map(alert => `
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${severityColors[alert.severity] || 'bg-surface-tertiary text-primary-theme'}">${alert.severity}</span>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${SEVERITY_STYLES[alert.severity] || SEVERITY_FALLBACK}">${alert.severity}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-theme">${alert.alert_type.replace(/_/g, ' ')}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${alert.domain || 'N/A'}</td>
                 <td class="px-6 py-4 text-sm text-muted-theme max-w-md truncate">${alert.message}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(alert.created_at).toLocaleDateString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button data-action="acknowledge-alert" data-alert-id="${alert.id}" class="text-info hover:text-brand-primary-110">Acknowledge</button>
+                    <button type="button" data-action="acknowledge-alert" data-alert-id="${alert.id}"
+                            class="text-brand-primary hover:text-brand-primary-110 dark:text-brand-secondary">
+                        Acknowledge
+                    </button>
                 </td>
             </tr>
         `).join('');
@@ -420,18 +398,22 @@
 
     function updateFailures(failures) {
         const table = document.getElementById('failures-table');
-        
-        table.innerHTML = failures.slice(0, 10).map(f => `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${f.domain}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(f.date).toLocaleDateString()}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-danger font-bold">${f.failed}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${f.total}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${f.failure_rate > 5 ? 'bg-brand-error-5 text-danger' : 'bg-brand-warning-5 text-warning'}">${f.failure_rate.toFixed(2)}%</span>
-                </td>
-            </tr>
-        `).join('');
+        // Binary: high-failure (>5%) vs low-failure. Two-state → simple
+        // lookup (COMPLIANCE_STYLES.none for severe, .partial for mild).
+        table.innerHTML = failures.slice(0, 10).map(f => {
+            const rateBadge = f.failure_rate > 5 ? COMPLIANCE_STYLES.none : COMPLIANCE_STYLES.partial;
+            return `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${f.domain}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(f.date).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-danger font-bold">${f.failed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${f.total}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${rateBadge}">${f.failure_rate.toFixed(2)}%</span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     async function fetchTrends() {
