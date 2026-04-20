@@ -16,7 +16,7 @@
             <button 
                 hx-post="/api/v1/preflight/run" 
                 hx-swap="none"
-                class="bg-wm-blue-100 hover:bg-wm-blue-110 text-white px-4 py-2 rounded-lg transition-colors"
+                class="bg-brand-primary-100 hover:bg-brand-primary-110 text-white px-4 py-2 rounded-lg transition-colors"
             >
                 <span class="htmx-indicator">Running...</span>
                 <span>Run All Checks</span>
@@ -24,7 +24,7 @@
             <button 
                 hx-post="/api/v1/preflight/clear-cache" 
                 hx-swap="none"
-                class="bg-wm-gray-10 hover:bg-wm-gray-50 text-primary-theme px-4 py-2 rounded-lg transition-colors"
+                class="bg-surface-secondary hover:bg-surface-tertiary text-primary-theme px-4 py-2 rounded-lg transition-colors"
             >
                 Clear Cache
             </button>
@@ -34,16 +34,16 @@
     <!-- Summary Cards Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Overall Status -->
-        <div id="overall-status" class="bg-surface-primary rounded-lg shadow p-4 border-l-4 {% if report and report.is_success %}border-wm-green-100{% else %}border-wm-red-100{% endif %}">
+        <div id="overall-status" class="bg-surface-primary rounded-lg shadow p-4 border-l-4 {% if report and report.is_success %}border-l-success{% else %}border-l-danger{% endif %}">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-secondary-theme">Status</p>
                     <p class="text-xl font-bold text-primary-theme">
                         {% if report %}
                             {% if report.is_success %}
-                                <span class="text-wm-green-100">✅ Passed</span>
+                                <span class="text-success">✅ Passed</span>
                             {% else %}
-                                <span class="text-wm-red-100">❌ Failed</span>
+                                <span class="text-danger">❌ Failed</span>
                             {% endif %}
                         {% else %}
                             <span class="text-secondary-theme">Not Run</span>
@@ -54,25 +54,25 @@
         </div>
 
         <!-- Passed -->
-        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-wm-green-100">
+        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-l-success">
             <p class="text-sm font-medium text-secondary-theme">Passed</p>
-            <p class="text-2xl font-bold text-wm-green-100">{{ report.passed_count if report else 0 }}</p>
+            <p class="text-2xl font-bold text-success">{{ report.passed_count if report else 0 }}</p>
         </div>
 
         <!-- Warnings -->
-        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-wm-spark-100">
+        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-l-warning">
             <p class="text-sm font-medium text-secondary-theme">Warnings</p>
-            <p class="text-2xl font-bold text-wm-spark-140">{{ report.warning_count if report else 0 }}</p>
+            <p class="text-2xl font-bold text-warning">{{ report.warning_count if report else 0 }}</p>
         </div>
 
         <!-- Failed -->
-        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-wm-red-100">
+        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-l-danger">
             <p class="text-sm font-medium text-secondary-theme">Failed</p>
-            <p class="text-2xl font-bold text-wm-red-100">{{ report.failed_count if report else 0 }}</p>
+            <p class="text-2xl font-bold text-danger">{{ report.failed_count if report else 0 }}</p>
         </div>
 
         <!-- Duration -->
-        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-wm-blue-100">
+        <div class="bg-surface-primary rounded-lg shadow p-4 border-l-4 border-l-brand-primary">
             <p class="text-sm font-medium text-secondary-theme">Duration</p>
             <p class="text-2xl font-bold text-primary-theme">
                 {% if report %}
@@ -89,15 +89,15 @@
     <h2 class="sr-only">Category Overview</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for summary in category_summaries %}
-        <div class="bg-surface-primary rounded-lg shadow p-4 {% if summary.overall_status == 'pass' %}border-l-4 border-wm-green-100{% elif summary.overall_status == 'warning' %}border-l-4 border-wm-spark-100{% elif summary.overall_status == 'fail' %}border-l-4 border-wm-red-100{% else %}border-l-4 border-wm-gray-50{% endif %}">
+        <div class="bg-surface-primary rounded-lg shadow p-4 {% if summary.overall_status == 'pass' %}border-l-4 border-l-success{% elif summary.overall_status == 'warning' %}border-l-4 border-l-warning{% elif summary.overall_status == 'fail' %}border-l-4 border-l-danger{% else %}border-l-4 border-default{% endif %}">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="font-semibold text-primary-theme">{{ summary.display_name }}</h3>
                 <span class="text-sm text-secondary-theme">{{ summary.checks_passed + summary.checks_failed + summary.checks_warning + summary.checks_skipped }} checks</span>
             </div>
             <div class="flex items-center space-x-4 text-sm">
-                <span class="text-wm-green-100">✅ {{ summary.checks_passed }}</span>
-                <span class="text-wm-spark-140">⚠️ {{ summary.checks_warning }}</span>
-                <span class="text-wm-red-100">❌ {{ summary.checks_failed }}</span>
+                <span class="text-success">✅ {{ summary.checks_passed }}</span>
+                <span class="text-warning">⚠️ {{ summary.checks_warning }}</span>
+                <span class="text-danger">❌ {{ summary.checks_failed }}</span>
                 <span class="text-secondary-theme">⏭️ {{ summary.checks_skipped }}</span>
             </div>
         </div>
@@ -107,14 +107,14 @@
 
     <!-- Detailed Results -->
     <div class="bg-surface-primary rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-wm-gray-50">
+        <div class="px-6 py-4 border-b border-default">
             <h2 class="sr-only">Check Details</h2>
             <h3 class="text-lg font-semibold text-primary-theme">Check Results</h3>
         </div>
         {% if results %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-wm-gray-50">
-                <thead class="bg-wm-gray-10">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-secondary">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary-theme uppercase">Status</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary-theme uppercase">Check</th>
@@ -124,28 +124,28 @@
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-secondary-theme uppercase">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-wm-gray-50">
+                <tbody class="divide-y divide-border-default">
                     {% for result in results %}
-                    <tr class="hover:bg-wm-gray-5" hx-vals='{{ {"check_id": result.check_id}|tojson }}'>
+                    <tr class="hover:bg-surface-secondary" hx-vals='{{ {"check_id": result.check_id}|tojson }}'>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if result.status == 'pass' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-green-10 text-wm-green-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-success-5 text-success">
                                 ✅ Pass
                             </span>
                             {% elif result.status == 'warning' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-spark-10 text-wm-spark-140">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-warning-5 text-warning">
                                 ⚠️ Warning
                             </span>
                             {% elif result.status == 'fail' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-red-10 text-wm-red-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-error-5 text-danger">
                                 ❌ Failed
                             </span>
                             {% elif result.status == 'skipped' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-gray-10 text-secondary-theme">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-secondary text-secondary-theme">
                                 ⏭️ Skipped
                             </span>
                             {% elif result.status == 'running' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-blue-10 text-wm-blue-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-primary-5 dark:bg-brand-primary-50 text-brand-primary dark:text-brand-secondary">
                                 🔄 Running
                             </span>
                             {% endif %}
@@ -154,7 +154,7 @@
                             {{ result.name }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">
-                            <span class="px-2 py-1 text-xs rounded bg-wm-gray-10">
+                            <span class="px-2 py-1 text-xs rounded bg-surface-secondary">
                                 {{ result.category }}
                             </span>
                         </td>
@@ -167,7 +167,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                             {% if result.recommendations and result.status == 'fail' %}
                             <button 
-                                class="text-wm-blue-100 hover:text-wm-blue-130"
+                                class="text-brand-primary dark:text-brand-secondary hover:underline"
                                 data-toggle-rec="{{ result.check_id }}"
                             >
                                 View Fixes
@@ -177,9 +177,9 @@
                     </tr>
                     {% if result.recommendations and result.status == 'fail' %}
                     <tr id="rec-{{ result.check_id }}" class="hidden">
-                        <td colspan="6" class="px-6 py-4 bg-wm-red-5">
+                        <td colspan="6" class="px-6 py-4 bg-surface-secondary">
                             <div class="text-sm">
-                                <strong class="text-wm-red-100">Recommendations:</strong>
+                                <strong class="text-danger">Recommendations:</strong>
                                 <ul class="mt-2 ml-4 list-disc">
                                     {% for rec in result.recommendations %}
                                     <li class="text-primary-theme">{{ rec }}</li>
@@ -196,7 +196,7 @@
         {% else %}
         <div class="px-6 py-8 text-center">
             <div class="text-secondary-theme mb-4">
-                <svg class="w-12 h-12 mx-auto mb-4 text-wm-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-12 h-12 mx-auto mb-4 text-muted-theme" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                 </svg>
                 <p>No preflight checks have been run yet.</p>
@@ -204,7 +204,7 @@
             <button 
                 hx-post="/api/v1/preflight/run" 
                 hx-swap="none"
-                class="bg-wm-blue-100 hover:bg-wm-blue-110 text-white px-6 py-2 rounded-lg transition-colors"
+                class="bg-brand-primary-100 hover:bg-brand-primary-110 text-white px-6 py-2 rounded-lg transition-colors"
             >
                 Run Preflight Checks
             </button>
@@ -215,13 +215,13 @@
     <!-- Tenant Summaries -->
     {% if tenant_summaries %}
     <div class="bg-surface-primary rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-wm-gray-50">
+        <div class="px-6 py-4 border-b border-default">
             <h2 class="sr-only">Tenant Results</h2>
             <h3 class="text-lg font-semibold text-primary-theme">Tenant-Specific Results</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-wm-gray-50">
-                <thead class="bg-wm-gray-10">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-secondary">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary-theme uppercase">Tenant</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-secondary-theme uppercase">Status</th>
@@ -230,36 +230,36 @@
                         <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-secondary-theme uppercase">Failed</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-wm-gray-50">
+                <tbody class="divide-y divide-border-default">
                     {% for summary in tenant_summaries %}
-                    <tr class="hover:bg-wm-gray-5">
+                    <tr class="hover:bg-surface-secondary">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-primary-theme">{{ summary.tenant_name }}</div>
                             <div class="text-xs text-secondary-theme">{{ summary.tenant_id }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if summary.overall_status == 'pass' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-green-10 text-wm-green-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-success-5 text-success">
                                 ✅ Passed
                             </span>
                             {% elif summary.overall_status == 'warning' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-spark-10 text-wm-spark-140">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-warning-5 text-warning">
                                 ⚠️ Warning
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-wm-red-10 text-wm-red-100">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-error-5 text-danger">
                                 ❌ Failed
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-center text-sm text-primary-theme">
-                            <span class="text-wm-green-100 font-medium">{{ summary.checks_passed }}</span>
+                            <span class="text-success font-medium">{{ summary.checks_passed }}</span>
                         </td>
                         <td class="px-6 py-4 text-center text-sm text-primary-theme">
-                            <span class="text-wm-spark-140 font-medium">{{ summary.checks_warning }}</span>
+                            <span class="text-warning font-medium">{{ summary.checks_warning }}</span>
                         </td>
                         <td class="px-6 py-4 text-center text-sm text-primary-theme">
-                            <span class="text-wm-red-100 font-medium">{{ summary.checks_failed }}</span>
+                            <span class="text-danger font-medium">{{ summary.checks_failed }}</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -279,7 +279,7 @@
                     hx-post="/api/v1/preflight/run"
                     hx-vals='{{ {"categories": ["azure_auth", "azure_subscriptions", "azure_cost_management", "azure_policy", "azure_resources", "azure_graph", "azure_security"]}|tojson }}'
                     hx-swap="none"
-                    class="w-full bg-wm-blue-10 hover:bg-wm-blue-5 text-wm-blue-100 px-4 py-2 rounded-lg transition-colors text-left"
+                    class="w-full bg-brand-primary-5 dark:bg-brand-primary-50 hover:bg-brand-primary-10 text-brand-primary dark:text-brand-secondary px-4 py-2 rounded-lg transition-colors text-left"
                 >
                     Run Azure Checks
                 </button>
@@ -292,7 +292,7 @@
             <button 
                 hx-get="/api/v1/preflight/github"
                 hx-swap="none"
-                class="w-full bg-wm-gray-10 hover:bg-wm-gray-5 text-primary-theme px-4 py-2 rounded-lg transition-colors"
+                class="w-full bg-surface-secondary hover:bg-surface-secondary text-primary-theme px-4 py-2 rounded-lg transition-colors"
             >
                 Run GitHub Checks
             </button>
@@ -304,13 +304,13 @@
             <div class="space-y-2">
                 <a 
                     href="/api/v1/preflight/report/json"
-                    class="block w-full bg-wm-gray-10 hover:bg-wm-gray-5 text-primary-theme px-4 py-2 rounded-lg transition-colors text-center"
+                    class="block w-full bg-surface-secondary hover:bg-surface-secondary text-primary-theme px-4 py-2 rounded-lg transition-colors text-center"
                 >
                     Download JSON
                 </a>
                 <a 
                     href="/api/v1/preflight/report/markdown"
-                    class="block w-full bg-wm-gray-10 hover:bg-wm-gray-5 text-primary-theme px-4 py-2 rounded-lg transition-colors text-center"
+                    class="block w-full bg-surface-secondary hover:bg-surface-secondary text-primary-theme px-4 py-2 rounded-lg transition-colors text-center"
                 >
                     Download Markdown
                 </a>
