@@ -1,17 +1,18 @@
-{# HTMX partial: Identity statistics refresh #}
+{# HTMX partial: Identity statistics refresh. See compliance_gauge.html for
+   rationale on mirroring ds_stat_card structure without the macro wrapper. #}
 <div class="flex items-center justify-between">
     <div>
-        <p class="text-sm font-medium text-wm-gray-100">Total Users</p>
-        <p class="text-3xl font-bold text-wm-gray-160">
+        <p class="text-sm font-medium text-secondary-theme">Total Users</p>
+        <p class="text-3xl font-bold text-primary-theme">
             {{ "{:,}".format(summary.total_users) }}
         </p>
     </div>
-    <div class="p-3 bg-wm-blue-10 rounded-full">
-        <svg class="w-6 h-6 text-wm-blue-130" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <div class="p-3 bg-brand-primary-5 dark:bg-brand-primary-50 rounded-full" aria-hidden="true">
+        <svg class="w-6 h-6 text-brand-primary dark:text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1H9"></path>
         </svg>
     </div>
 </div>
-<div class="mt-2 text-sm text-wm-gray-100">
+<div class="mt-2 text-sm text-secondary-theme">
     {{ "{:.1f}".format(summary.mfa_enabled_percent) }}% MFA enabled • {{ summary.privileged_users }} privileged
 </div>
