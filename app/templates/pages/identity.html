@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_button %}
+{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_table, ds_button %}
 
 {% block title %}Identity &amp; Access{% endblock %}
 {% block nav_identity %}bg-brand-primary-110{% endblock %}
@@ -25,58 +25,24 @@
         {{ ds_stat_card(label="Privileged Users",  value="--", value_id="privileged-count",  caption="Admin role holders",  border_accent="info") }}
     </div>
 
-    {% call ds_card(title="Privileged Users", extra_classes="!p-0 overflow-hidden") %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-tertiary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Display Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">UPN</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Roles</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-surface-primary divide-y divide-border-default" id="privileged-table">
-                    <tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    {% endcall %}
+    {{ ds_table(
+         title="Privileged Users",
+         columns=["Display Name", "UPN", "Roles", "Tenant"],
+         body_id="privileged-table"
+     ) }}
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {% call ds_card(title="Guest Users", extra_classes="!p-0 overflow-hidden") %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Email</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="guests-table">
-                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        {% endcall %}
+        {{ ds_table(
+         title="Guest Users",
+         columns=["Name", "Email", "Tenant"],
+         body_id="guests-table"
+     ) }}
 
-        {% call ds_card(title="Stale Accounts", extra_classes="!p-0 overflow-hidden") %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Last Sign-in</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="stale-table">
-                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        {% endcall %}
+        {{ ds_table(
+         title="Stale Accounts",
+         columns=["Name", "Last Sign-in", "Tenant"],
+         body_id="stale-table"
+     ) }}
     </div>
 
 {% endcall %}

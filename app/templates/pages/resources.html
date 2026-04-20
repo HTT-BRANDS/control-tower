@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_button %}
+{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_table, ds_button %}
 
 {% block title %}Resource Inventory{% endblock %}
 {% block nav_resources %}bg-brand-primary-110{% endblock %}
@@ -31,58 +31,24 @@
         {% endcall %}
     </div>
 
-    {% call ds_card(title="Resource Inventory", extra_classes="!p-0 overflow-hidden") %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-tertiary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Resource Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Location</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-surface-primary divide-y divide-border-default" id="resources-table">
-                    <tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    {% endcall %}
+    {{ ds_table(
+         title="Resource Inventory",
+         columns=["Resource Name", "Type", "Location", "Tenant"],
+         body_id="resources-table"
+     ) }}
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {% call ds_card(title="Idle Resources", extra_classes="!p-0 overflow-hidden") %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Resource</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Est. Savings</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="idle-table">
-                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        {% endcall %}
+        {{ ds_table(
+         title="Idle Resources",
+         columns=["Resource", "Type", "Est. Savings"],
+         body_id="idle-table"
+     ) }}
 
-        {% call ds_card(title="Orphaned Resources", extra_classes="!p-0 overflow-hidden") %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Resource</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="orphaned-table">
-                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        {% endcall %}
+        {{ ds_table(
+         title="Orphaned Resources",
+         columns=["Resource", "Type", "Reason"],
+         body_id="orphaned-table"
+     ) }}
     </div>
 
 {% endcall %}

@@ -300,6 +300,48 @@
 <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full {{ variants.get(variant, variants['primary']) }} {{ extra_classes }}" role="status">{{ text }}</span>
 {% endmacro %}
 
+{# ── Data Table ────────────────────────────────────────────────────────────────
+   Thin wrapper around the repeated "card + responsive table + skeleton tbody"
+   pattern used across cost/compliance/resource/identity pages.
+
+   Every migrated page uses IDENTICAL markup for:
+     - <table class="min-w-full divide-y divide-border-default">
+     - <thead class="bg-surface-tertiary"> with <th scope="col" class="{fixed}">
+     - <tbody id="..."> whose rows are populated client-side via fetch+innerHTML
+     - Single "Loading..." row as initial skeleton
+
+   Args:
+     title: card header text (passed through to ds_card)
+     columns: list[str] of column labels (header cells)
+     body_id: id attribute on <tbody> — JS targets this for innerHTML swaps
+     loading_message: text shown in the skeleton row until JS populates it
+     extra_card_classes: forwarded to ds_card (rarely needed; default already
+       sets !p-0 overflow-hidden so the table sits flush inside the card)
+
+   Rows are deliberately NOT a param: every consuming page renders rows from
+   fetched JSON via client-side JS. If a server-rendered row use case arises
+   later, add a {% call %} body (caller()) and an "if caller" branch.
+─────────────────────────────────────────────────────────────────────────────── #}
+{% macro ds_table(title, columns, body_id, loading_message="Loading...",
+                   extra_card_classes="!p-0 overflow-hidden") %}
+{% call ds_card(title=title, extra_classes=extra_card_classes) %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-border-default">
+            <thead class="bg-surface-tertiary">
+                <tr>
+                    {% for col in columns %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-surface-primary divide-y divide-border-default" id="{{ body_id }}">
+                <tr><td colspan="{{ columns|length }}" class="px-6 py-4 text-center text-muted-theme">{{ loading_message }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+{% endcall %}
+{% endmacro %}
+
 {% macro ds_card_grid(columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-4", gap="gap-6") %}
 <div class="grid {{ columns }} {{ gap }}">
     {{ caller() }}
