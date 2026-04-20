@@ -115,7 +115,7 @@
         
         const html = items.map((item, i) => `
             <a href="${item.url}" 
-               class="block px-4 py-3 hover:bg-surface-secondary ${i === selectedIndex ? 'bg-wm-blue-5' : ''}"
+               class="block px-4 py-3 hover:bg-surface-secondary ${i === selectedIndex ? 'bg-brand-primary-5' : ''}"
                data-index="${i}">
                 <div class="flex items-center gap-3">
                     <span class="text-lg">${getIcon(item.type)}</span>
@@ -168,7 +168,7 @@
     
     function updateSelection(items) {
         items.forEach((item, i) => {
-            item.classList.toggle('bg-wm-blue-5', i === selectedIndex);
+            item.classList.toggle('bg-brand-primary-5', i === selectedIndex);
         });
         items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
     }
