@@ -1,77 +1,82 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_button %}
 
 {% block title %}Azure Topology{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
-        integrity="sha384-sIKkbMaXEogg8JBYSe/89e+GkgaqXO0xU2SEyq7Xkf/0i4jyvQW5IHAyxdk0j1Ei"
-        crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" integrity="sha384-sIKkbMaXEogg8JBYSe/89e+GkgaqXO0xU2SEyq7Xkf/0i4jyvQW5IHAyxdk0j1Ei" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret — SRI integrity hash, not a credential #}
 {% endblock %}
 
+{# ── Header action buttons — pre-rendered so ds_page_shell can inject them. ── #}
+{% set icon_download %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+{% endset %}
+{% set icon_code %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+{% endset %}
+
+{% set header_actions %}
+{{ ds_button(label="Download SVG", variant="primary", icon_svg=icon_download,
+             href="/topology/svg", extra_attrs='download') }}
+{{ ds_button(label="View Mermaid source", variant="secondary", icon_svg=icon_code,
+             href="/topology/mermaid") }}
+{% endset %}
+
 {% block content %}
-<div class="min-h-screen bg-surface-tertiary">
-  <div class="bg-surface-primary shadow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-bold text-primary-theme">Azure Topology</h1>
-        <p class="mt-1 text-sm text-muted-theme">
-          Management groups → subscriptions → resource groups → resources.
-          Regenerated from Azure Resource Graph on every push.
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <a href="/topology/svg" class="text-sm px-3 py-2 rounded bg-brand-primary-100 text-white hover:bg-brand-primary-110" download>
-          Download SVG
-        </a>
-        <a href="/topology/mermaid" class="text-sm px-3 py-2 rounded border border-theme hover:bg-surface-secondary">
-          View Mermaid source
-        </a>
-      </div>
-    </div>
-  </div>
+{% call ds_page_shell(
+    title="Azure Topology",
+    subtitle="Management groups → subscriptions → resource groups → resources. Regenerated from Azure Resource Graph on every push.",
+    actions=header_actions) %}
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-surface-primary rounded-xl shadow p-6">
-      {% if has_svg %}
-        <div class="w-full overflow-auto">
-          <object data="/topology/svg" type="image/svg+xml" class="w-full" aria-label="Azure resource topology diagram"></object>
-        </div>
-      {% else %}
-        <p class="text-sm text-muted-theme mb-4">
-          SVG export not available yet (weekly <code>topology-export.yml</code> workflow runs Mondays).
-          Rendering Mermaid client-side below.
-        </p>
-        <div id="topology-mermaid" class="mermaid text-center overflow-auto">
-          %% loading...
-          flowchart TB
-            loading["Loading diagram..."]
-        </div>
-        <script nonce="{{ request.state.csp_nonce }}">
-          (async function () {
-            try {
-              const r = await fetch('/topology/mermaid');
-              const src = await r.text();
-              const el = document.getElementById('topology-mermaid');
-              el.textContent = src;
-              if (window.mermaid) {
-                window.mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
-                const { svg } = await window.mermaid.render('topology-svg', src);
-                el.innerHTML = svg;
-              }
-            } catch (err) {
-              console.error('topology render failed', err);
-            }
-          })();
-        </script>
-      {% endif %}
-    </div>
+    {% call ds_card() %}
+        {% if has_svg %}
+            <div class="w-full overflow-auto">
+                <object data="/topology/svg" type="image/svg+xml" class="w-full"
+                        aria-label="Azure resource topology diagram"></object>
+            </div>
+        {% else %}
+            <p class="text-sm text-muted-theme mb-4">
+                SVG export not available yet (weekly <code>topology-export.yml</code> workflow runs Mondays).
+                Rendering Mermaid client-side below.
+            </p>
+            <div id="topology-mermaid" class="mermaid text-center overflow-auto">
+                %% loading...
+                flowchart TB
+                    loading["Loading diagram..."]
+            </div>
+            <script nonce="{{ request.state.csp_nonce }}">
+                (async function () {
+                    try {
+                        const r = await fetch('/topology/mermaid');
+                        const src = await r.text();
+                        const el = document.getElementById('topology-mermaid');
+                        el.textContent = src;
+                        if (window.mermaid) {
+                            window.mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict' });
+                            const { svg } = await window.mermaid.render('topology-svg', src);
+                            el.innerHTML = svg;
+                        }
+                    } catch (err) {
+                        console.error('topology render failed', err);
+                    }
+                })();
+            </script>
+        {% endif %}
+    {% endcall %}
 
-    <div class="mt-6 text-xs text-muted-theme">
-      Callouts: <span class="inline-block px-2 py-0.5 rounded" style="background:#f0abfc;color:#3b0764">riverside</span>
-      tagged resources are tinted pink;
-      <span class="inline-block px-2 py-0.5 rounded" style="border:2px solid #ef4444">prod</span>
-      tagged resources have a red border.
-    </div>
-  </div>
-</div>
+    {# ── Legend ──────────────────────────────────────────────────────────── #}
+    {# Inline color swatches use literal hex because they reference EXTERNAL
+       Mermaid-rendered colors (pink fill, red outline) that must match the
+       diagram's own palette — NOT brand tokens. Keeping them literal avoids
+       a false visual coupling to the design system. #}
+    <p class="text-xs text-muted-theme">
+        Callouts:
+        <span class="inline-block px-2 py-0.5 rounded ml-1"
+              style="background:#f0abfc;color:#3b0764">riverside</span>
+        tagged resources are tinted pink;
+        <span class="inline-block px-2 py-0.5 rounded ml-2"
+              style="border:2px solid #ef4444">prod</span>
+        tagged resources have a red border.
+    </p>
+{% endcall %}
 {% endblock %}

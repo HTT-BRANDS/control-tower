@@ -1,105 +1,70 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_button %}
 
 {% block title %}Sync Status Dashboard - Azure Governance Platform{% endblock %}
-
 {% block nav_sync_dashboard %}bg-brand-primary-110{% endblock %}
 
+{# ─────────────────────────────────────────────────────────────────────
+   Local helper: four HTMX-loaded panels all need IDENTICAL skeleton
+   markup. Inline macro removes 4× duplication without promoting to
+   the global ds.html namespace (YAGNI — only this page uses it).
+   ───────────────────────────────────────────────────────────────────── #}
+{% macro _loading_panel(extra_classes="") %}
+<div class="bg-surface-primary rounded-lg shadow-lg p-8 flex items-center justify-center {{ extra_classes }}">
+    <div class="flex items-center gap-3">
+        <svg class="w-6 h-6 text-brand-primary-100 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-primary-theme">{{ caller() }}</span>
+    </div>
+</div>
+{% endmacro %}
+
+{# ── Header action buttons ───────────────────────────────────────────── #}
+{% set icon_sync %}
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+{% endset %}
+
+{% set header_actions %}
+{{ ds_button(label="Sync All", variant="primary", icon_svg=icon_sync,
+             extra_attrs='hx-post="/api/v1/sync/all" hx-swap="none" hx-confirm="Trigger sync for all data types?"') }}
+{{ ds_button(label="Refresh", variant="secondary", icon_svg=icon_sync,
+             extra_attrs='data-action="page-reload" title="Full page refresh"') }}
+{% endset %}
+
 {% block content %}
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-primary-theme">Sync Status Dashboard</h1>
-            <p class="text-secondary-theme mt-1">Real-time monitoring for DevOps/SRE teams</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <!-- Global Sync All Button -->
-            <button 
-                hx-post="/api/v1/sync/all" 
-                hx-swap="none"
-                hx-confirm="Trigger sync for all data types?"
-                class="inline-flex items-center px-4 py-2 bg-wm-blue-100 text-white rounded-lg hover:bg-wm-blue-110 transition-colors font-medium">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Sync All
-            </button>
-            <!-- Manual Refresh -->
-            <button 
-                data-action="page-reload"
-                class="p-2 text-secondary-theme hover:text-wm-blue-100 hover:bg-wm-blue-5 rounded-lg transition-colors"
-                title="Full page refresh">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-            </button>
-        </div>
-    </div>
+{% call ds_page_shell(
+    title="Sync Status Dashboard",
+    subtitle="Real-time monitoring for DevOps/SRE teams",
+    actions=header_actions) %}
 
-    <!-- Main Status Card (Auto-refreshing) -->
+    {# ── Main Status (auto-refreshing HTMX target) ───────────────────── #}
     <div hx-get="/partials/sync-status-card" hx-trigger="load" hx-swap="outerHTML">
-        <!-- Loading state shown initially, replaced by HTMX -->
-        <div class="bg-surface-primary rounded-lg shadow-lg p-8 flex items-center justify-center">
-            <div class="flex items-center gap-3">
-                <svg class="w-6 h-6 text-wm-blue-100 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="text-primary-theme">Loading sync status...</span>
-            </div>
-        </div>
+        {% call _loading_panel() %}Loading sync status...{% endcall %}
     </div>
 
-    <!-- Two Column Layout: Alerts & History -->
+    {# ── Two-column: Alerts & History ────────────────────────────────── #}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <!-- Active Alerts Panel (Auto-refreshing) -->
         <div hx-get="/partials/active-alerts" hx-trigger="load" hx-swap="outerHTML">
-            <div class="bg-surface-primary rounded-lg shadow-lg p-8 flex items-center justify-center h-64">
-                <div class="flex items-center gap-3">
-                    <svg class="w-6 h-6 text-wm-blue-100 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span class="text-primary-theme">Loading alerts...</span>
-                </div>
-            </div>
+            {% call _loading_panel(extra_classes="h-64") %}Loading alerts...{% endcall %}
         </div>
-
-        <!-- Sync History Table (Auto-refreshing) -->
         <div hx-get="/partials/sync-history-table" hx-trigger="load" hx-swap="outerHTML">
-            <div class="bg-surface-primary rounded-lg shadow-lg p-8 flex items-center justify-center h-64">
-                <div class="flex items-center gap-3">
-                    <svg class="w-6 h-6 text-wm-blue-100 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span class="text-primary-theme">Loading history...</span>
-                </div>
-            </div>
+            {% call _loading_panel(extra_classes="h-64") %}Loading history...{% endcall %}
         </div>
     </div>
 
-    <!-- Per-Tenant Sync Status (Auto-refreshing) -->
+    {# ── Per-tenant status (auto-refreshing) ─────────────────────────── #}
     <div hx-get="/partials/tenant-sync-status" hx-trigger="load" hx-swap="outerHTML">
-        <div class="bg-surface-primary rounded-lg shadow-lg p-8 flex items-center justify-center">
-            <div class="flex items-center gap-3">
-                <svg class="w-6 h-6 text-wm-blue-100 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="text-primary-theme">Loading tenant status...</span>
-            </div>
-        </div>
+        {% call _loading_panel() %}Loading tenant status...{% endcall %}
     </div>
 
-    <!-- Metrics Summary (Optional - static for now) -->
+    {# ── Metrics Summary (server-rendered when available) ────────────── #}
     {% if metrics %}
-    <div class="bg-surface-primary rounded-lg shadow-lg p-6">
-        <h2 class="sr-only">Sync Details</h2>
-        <h3 class="text-lg font-bold text-primary-theme mb-4">Sync Performance Metrics</h3>
+    {% call ds_card(title="Sync Performance Metrics") %}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             {% for metric in metrics %}
-            <div class="p-4 rounded-lg bg-wm-gray-5 border border-wm-gray-50">
+            <div class="p-4 rounded-lg bg-surface-secondary border border-default">
                 <div class="text-xs text-secondary-theme uppercase tracking-wide mb-1">{{ metric.job_type.title() }}</div>
                 <div class="text-2xl font-bold text-primary-theme">
                     {{ "{:.0%}".format(metric.success_rate or 0) }}
@@ -118,47 +83,46 @@
             </div>
             {% endfor %}
         </div>
-    </div>
+    {% endcall %}
     {% endif %}
 
-    <!-- Quick Reference Card -->
-    <div class="bg-wm-blue-5 rounded-lg p-6 border border-wm-blue-10">
-        <h2 class="sr-only">Reference Information</h2>
-        <h3 class="text-lg font-bold text-primary-theme mb-3">Quick Reference</h3>
+    {# ── Quick Reference Card ────────────────────────────────────────── #}
+    {% call ds_card(title="Quick Reference") %}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
                 <h4 class="font-medium text-primary-theme mb-2">Expected Sync Intervals</h4>
                 <ul class="space-y-1 text-primary-theme">
-                    <li class="flex justify-between"><span>Costs:</span> <span class="font-medium">24 hours</span></li>
+                    <li class="flex justify-between"><span>Costs:</span>      <span class="font-medium">24 hours</span></li>
                     <li class="flex justify-between"><span>Compliance:</span> <span class="font-medium">24 hours</span></li>
-                    <li class="flex justify-between"><span>Resources:</span> <span class="font-medium">24 hours</span></li>
-                    <li class="flex justify-between"><span>Identity:</span> <span class="font-medium">24 hours</span></li>
+                    <li class="flex justify-between"><span>Resources:</span>  <span class="font-medium">24 hours</span></li>
+                    <li class="flex justify-between"><span>Identity:</span>   <span class="font-medium">24 hours</span></li>
                 </ul>
             </div>
             <div>
                 <h4 class="font-medium text-primary-theme mb-2">Status Indicators</h4>
                 <ul class="space-y-1 text-primary-theme">
-                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-wm-green-100"></span> Healthy (&lt;36h)</li>
-                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-wm-spark-100"></span> Warning (36-48h)</li>
-                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-wm-red-100"></span> Stale (&gt;48h)</li>
+                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-success"></span> Healthy (&lt;36h)</li>
+                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-warning"></span> Warning (36-48h)</li>
+                    <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-danger"></span>  Stale (&gt;48h)</li>
                 </ul>
             </div>
             <div>
                 <h4 class="font-medium text-primary-theme mb-2">API Endpoints</h4>
                 <ul class="space-y-1 text-primary-theme">
-                    <li><code class="bg-surface-primary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/status</code></li>
-                    <li><code class="bg-surface-primary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/history</code></li>
-                    <li><code class="bg-surface-primary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/alerts</code></li>
-                    <li><code class="bg-surface-primary px-1.5 py-0.5 rounded text-xs">POST /api/v1/sync/{type}</code></li>
+                    <li><code class="bg-surface-secondary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/status</code></li>
+                    <li><code class="bg-surface-secondary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/history</code></li>
+                    <li><code class="bg-surface-secondary px-1.5 py-0.5 rounded text-xs">GET /api/v1/sync/alerts</code></li>
+                    <li><code class="bg-surface-secondary px-1.5 py-0.5 rounded text-xs">POST /api/v1/sync/{type}</code></li>
                 </ul>
             </div>
         </div>
-    </div>
-</div>
+    {% endcall %}
+{% endcall %}
 
-<!-- Sync dashboard specific scripts -->
+{# Sync dashboard specific scripts — CSP-safe event delegation for the
+   refresh button. ds_button's extra_attrs injects data-action so this
+   listener still finds it. #}
 <script nonce="{{ request.state.csp_nonce }}">
-// CSP-safe: event delegation for page reload button
 document.addEventListener('click', function(e) {
     if (e.target.closest('[data-action="page-reload"]')) {
         window.location.reload();

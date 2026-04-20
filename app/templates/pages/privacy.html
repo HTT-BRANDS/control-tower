@@ -1,23 +1,27 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_card %}
 
 {% block title %}Privacy Policy - Azure Governance Platform{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-12 px-4">
-    <h1 class="text-3xl font-bold mb-8">Privacy Policy</h1>
-    
-    <div class="prose prose max-w-none">
-        <p class="text-lg text-secondary-theme mb-6">
-            Last updated: March 26, 2026
-        </p>
-        
-        <h2 class="text-xl font-semibold mt-8 mb-4">1. Overview</h2>
+{% call ds_page_shell(
+    title="Privacy Policy",
+    subtitle="Last updated: March 26, 2026") %}
+
+<div class="max-w-4xl mx-auto w-full">
+    {% call ds_card() %}
+    {# Typography classes are intentionally kept here (not extracted to a
+       `ds_prose` macro) because this is the ONE long-form document on the
+       site. YAGNI: no other page needs this typography scale. #}
+    <div class="prose max-w-none text-primary-theme">
+
+        <h2 class="text-xl font-semibold mt-0 mb-4">1. Overview</h2>
         <p>
-            Azure Governance Platform ("we", "us", "our") is committed to protecting your privacy. 
-            This Privacy Policy explains how we collect, use, disclose, and safeguard your information 
+            Azure Governance Platform ("we", "us", "our") is committed to protecting your privacy.
+            This Privacy Policy explains how we collect, use, disclose, and safeguard your information
             when you use our platform.
         </p>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">2. Information We Collect</h2>
         <h3 class="text-lg font-medium mt-6 mb-3">2.1 Personal Information</h3>
         <ul class="list-disc pl-6 space-y-2">
@@ -26,14 +30,14 @@
             <li>Organization/tenant affiliation</li>
             <li>Azure AD object ID</li>
         </ul>
-        
+
         <h3 class="text-lg font-medium mt-6 mb-3">2.2 Usage Data</h3>
         <ul class="list-disc pl-6 space-y-2">
             <li>IP address and browser information</li>
             <li>Pages visited and actions taken</li>
             <li>Performance and error logs</li>
         </ul>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">3. How We Use Your Information</h2>
         <ul class="list-disc pl-6 space-y-2">
             <li>To provide and maintain our services</li>
@@ -41,12 +45,13 @@
             <li>To analyze usage and improve the platform</li>
             <li>To comply with legal obligations</li>
         </ul>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">4. Your Privacy Rights</h2>
-        
+
         <h3 class="text-lg font-medium mt-6 mb-3">4.1 Global Privacy Control (GPC)</h3>
         <p>
-            We honor the <a href="https://privacycg.github.io/gpc-spec/" class="text-info underline">Global Privacy Control</a> 
+            We honor the
+            <a href="https://privacycg.github.io/gpc-spec/" class="text-info underline">Global Privacy Control</a>
             signal. If your browser sends a <code>Sec-GPC: 1</code> header, we will automatically:
         </p>
         <ul class="list-disc pl-6 space-y-2 mt-3">
@@ -54,22 +59,18 @@
             <li>Disable marketing cookies</li>
             <li>Prevent sale/sharing of your personal information</li>
         </ul>
-        
+
         <h3 class="text-lg font-medium mt-6 mb-3">4.2 California Residents (CCPA/CPRA)</h3>
-        <p>
-            California residents have the right to:
-        </p>
+        <p>California residents have the right to:</p>
         <ul class="list-disc pl-6 space-y-2">
             <li>Know what personal information we collect</li>
             <li>Delete their personal information</li>
             <li>Opt-out of the sale of personal information</li>
             <li>Non-discrimination for exercising privacy rights</li>
         </ul>
-        
+
         <h3 class="text-lg font-medium mt-6 mb-3">4.3 EU Residents (GDPR)</h3>
-        <p>
-            EU residents have the right to:
-        </p>
+        <p>EU residents have the right to:</p>
         <ul class="list-disc pl-6 space-y-2">
             <li>Access their personal data</li>
             <li>Rectify inaccurate data</li>
@@ -78,47 +79,51 @@
             <li>Data portability</li>
             <li>Object to processing</li>
         </ul>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">5. Cookies and Tracking</h2>
-        <p>
-            We use cookies in the following categories:
-        </p>
-        
-        <table class="w-full mt-4 border-collapse border border-default">
-            <thead>
-                <tr class="bg-surface-tertiary">
-                    <th scope="col" class="border border-default px-4 py-2 text-left">Category</th>
-                    <th scope="col" class="border border-default px-4 py-2 text-left">Purpose</th>
-                    <th scope="col" class="border border-default px-4 py-2 text-left">Required?</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="border border-default px-4 py-2">Necessary</td>
-                    <td class="border border-default px-4 py-2">Essential for site function (authentication, security)</td>
-                    <td class="border border-default px-4 py-2">Yes</td>
-                </tr>
-                <tr>
-                    <td class="border border-default px-4 py-2">Functional</td>
-                    <td class="border border-default px-4 py-2">Preferences and settings (theme, language)</td>
-                    <td class="border border-default px-4 py-2">No</td>
-                </tr>
-                <tr>
-                    <td class="border border-default px-4 py-2">Analytics</td>
-                    <td class="border border-default px-4 py-2">Usage statistics and performance monitoring</td>
-                    <td class="border border-default px-4 py-2">No</td>
-                </tr>
-                <tr>
-                    <td class="border border-default px-4 py-2">Marketing</td>
-                    <td class="border border-default px-4 py-2">Advertising and personalization</td>
-                    <td class="border border-default px-4 py-2">No</td>
-                </tr>
-            </tbody>
-        </table>
-        
+        <p>We use cookies in the following categories:</p>
+
+        {# Table mirrors ds_table visual conventions (bg-surface-tertiary
+           header, divide-y borders, px-6 py-3 cells) so it looks identical
+           to the migrated dashboards — without forcing ds_table's
+           JS-populated-tbody contract onto static content. #}
+        <div class="mt-4 overflow-x-auto border border-default rounded-xl">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-tertiary">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Category</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Purpose</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Required?</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-surface-primary divide-y divide-border-default">
+                    <tr>
+                        <td class="px-6 py-3 text-sm">Necessary</td>
+                        <td class="px-6 py-3 text-sm">Essential for site function (authentication, security)</td>
+                        <td class="px-6 py-3 text-sm font-semibold">Yes</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-3 text-sm">Functional</td>
+                        <td class="px-6 py-3 text-sm">Preferences and settings (theme, language)</td>
+                        <td class="px-6 py-3 text-sm">No</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-3 text-sm">Analytics</td>
+                        <td class="px-6 py-3 text-sm">Usage statistics and performance monitoring</td>
+                        <td class="px-6 py-3 text-sm">No</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-3 text-sm">Marketing</td>
+                        <td class="px-6 py-3 text-sm">Advertising and personalization</td>
+                        <td class="px-6 py-3 text-sm">No</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <h2 class="text-xl font-semibold mt-8 mb-4">6. Data Retention</h2>
         <p>
-            We retain personal information for as long as necessary to provide our services 
+            We retain personal information for as long as necessary to provide our services
             and comply with legal obligations:
         </p>
         <ul class="list-disc pl-6 space-y-2">
@@ -126,22 +131,22 @@
             <li>Audit logs: 90 days</li>
             <li>Analytics data: 26 months (anonymized after 90 days)</li>
         </ul>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">7. Contact Us</h2>
-        <p>
-            For privacy-related inquiries or to exercise your rights, contact:
-        </p>
+        <p>For privacy-related inquiries or to exercise your rights, contact:</p>
         <p class="mt-2">
             <strong>Privacy Officer</strong><br>
             Email: <a href="mailto:privacy@httbrands.com" class="text-info underline">privacy@httbrands.com</a><br>
             Azure Governance Platform
         </p>
-        
+
         <h2 class="text-xl font-semibold mt-8 mb-4">8. Changes to This Policy</h2>
         <p>
-            We may update this Privacy Policy from time to time. We will notify you of any changes 
+            We may update this Privacy Policy from time to time. We will notify you of any changes
             by posting the new policy on this page and updating the "Last updated" date.
         </p>
     </div>
+    {% endcall %}
 </div>
+{% endcall %}
 {% endblock %}
