@@ -1,42 +1,34 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_button %}
 
 {% block title %}Riverside Executive Dashboard{% endblock %}
 
 {% block nav_riverside %}bg-brand-primary-110{% endblock %}
 
-{% block content %}
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-primary-theme">Riverside Executive Dashboard</h1>
-            <p class="text-muted-theme mt-1">Compliance tracking for July 8, 2026 deadline</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <!-- Financial Risk Badge -->
-            <div class="inline-flex items-center px-3 py-1.5 bg-brand-error-10 text-brand-error-100 rounded-lg border border-brand-error-50">
-                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                </svg>
-                <span class="font-bold text-sm">Financial Risk: $4M</span>
-            </div>
-            <!-- Sync Button -->
-            <button 
-                hx-post="/api/v1/riverside/sync" 
-                hx-swap="none"
-                aria-label="Sync Riverside compliance data"
-                class="inline-flex items-center px-4 py-2 bg-brand-primary-100 text-white rounded-lg hover:bg-brand-primary-110 transition-colors font-medium"
-            >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <span class="htmx-indicator hidden">Syncing...</span>
-                <span>Sync Now</span>
-            </button>
-        </div>
-    </div>
+{# ─────────────────────────────────────────────────────────────────────
+   Header action slot: financial-risk badge + Sync Now button. Rendered
+   into ds_page_shell's actions parameter so the standard page chrome
+   wraps the bespoke badge without re-implementing header layout.
+   ───────────────────────────────────────────────────────────────────── #}
+{% set header_actions %}
+<div class="inline-flex items-center px-3 py-1.5 bg-brand-error-10 text-brand-error-100 rounded-lg border border-brand-error-50">
+    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+    </svg>
+    <span class="font-bold text-sm">Financial Risk: $4M</span>
+</div>
+{% set sync_icon %}<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{% endset %}
+{{ ds_button(label="Sync Now", variant="primary", icon_svg=sync_icon,
+             extra_attrs='hx-post="/api/v1/riverside/sync" hx-swap="none" aria-label="Sync Riverside compliance data"') }}
+{% endset %}
 
-    <!-- Deadline Countdown Card -->
+{% block content %}
+{% call ds_page_shell(
+    title="Riverside Executive Dashboard",
+    subtitle="Compliance tracking for July 8, 2026 deadline",
+    actions=header_actions) %}
+
+    {# ── Deadline Countdown (bespoke gradient — marketing hero) ──────── #}
     <div class="bg-gradient-to-r from-brand-primary-100 to-brand-primary-130 rounded-xl shadow-lg p-6 text-white">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
@@ -64,16 +56,16 @@
         </div>
     </div>
 
-    <!-- Executive Summary Cards (HTMX Auto-refresh) -->
-    <div hx-get="/api/v1/riverside/summary" 
+    {# ── Executive Summary Cards (HTMX auto-refresh, 60s) ────────── #}
+    <div hx-get="/api/v1/riverside/summary"
          hx-trigger="load, every 60s"
          hx-target="#executive-cards"
          hx-swap="innerHTML"
          hx-indicator="#executive-loading">
         <div id="executive-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Loading State -->
+            {# Loading skeletons — replaced by JS on first HTMX response. #}
             {% for i in range(4) %}
-            <div class="bg-white rounded-lg shadow p-6 animate-pulse">
+            <div class="bg-surface-primary rounded-lg shadow p-6 animate-pulse">
                 <div class="h-4 bg-brand-gray-10 rounded w-1/2 mb-4"></div>
                 <div class="h-8 bg-brand-gray-10 rounded w-1/3"></div>
             </div>
@@ -89,8 +81,8 @@
         </div>
     </div>
 
-    <!-- MFA Enrollment Chart Section -->
-    <div class="bg-white rounded-lg shadow p-6">
+    {# MFA Enrollment Chart (HTMX load) #}
+    {% call ds_card() %}
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h2 class="text-lg font-semibold text-primary-theme">MFA Enrollment by Tenant</h2>
@@ -113,10 +105,10 @@
                 </svg>
             </div>
         </div>
-    </div>
+    {% endcall %}
 
-    <!-- Maturity Score Gauges -->
-    <div class="bg-white rounded-lg shadow p-6">
+    {# Domain Maturity Gauges (HTMX load) #}
+    {% call ds_card() %}
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h2 class="text-lg font-semibold text-primary-theme">Domain Maturity Scores</h2>
@@ -141,10 +133,10 @@
                 {% endfor %}
             </div>
         </div>
-    </div>
+    {% endcall %}
 
-    <!-- Requirements Status with Filters -->
-    <div class="bg-white rounded-lg shadow">
+    {# Requirements Status with filters (HTMX load on change) #}
+    {% call ds_card(extra_classes="!p-0 overflow-hidden") %}
         <div class="p-6 border-b border-brand-gray-50">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
@@ -194,7 +186,7 @@
             </div>
         </div>
         
-        <!-- Requirements Table -->
+        {# Requirements Table (HTMX innerHTML target) #}
         <div id="requirements-table-container" hx-get="/api/v1/riverside/requirements" hx-trigger="load" hx-swap="innerHTML">
             <div class="p-8 flex items-center justify-center">
                 <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -203,10 +195,10 @@
                 </svg>
             </div>
         </div>
-    </div>
+    {% endcall %}
 
-    <!-- Critical Alerts Panel -->
-    <div class="bg-white rounded-lg shadow border-l-4 border-brand-error-100">
+    {# Critical Alerts Panel (HTMX load) #}
+    {% call ds_card(extra_classes="!p-0 overflow-hidden border-l-4 !border-l-danger") %}
         <div class="p-6 border-b border-brand-gray-50 bg-brand-error-5">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -226,11 +218,10 @@
                 </svg>
             </div>
         </div>
-    </div>
+    {% endcall %}
 
-    <!-- Quick Actions -->
-    <div class="bg-brand-gray-5 rounded-lg p-6 border border-brand-gray-50">
-        <h3 class="text-lg font-semibold text-primary-theme mb-4">Quick Actions</h3>
+    {# Quick Actions (static link set) #}
+    {% call ds_card(title="Quick Actions", extra_classes="bg-surface-secondary") %}
         <div class="flex flex-wrap gap-3">
             <a href="/api/v1/riverside/requirements" class="inline-flex items-center px-4 py-2 bg-white border border-brand-gray-50 rounded-lg hover:bg-brand-gray-10 transition-colors text-sm font-medium text-primary-theme">
                 <svg class="w-4 h-4 mr-2 text-brand-primary-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -251,10 +242,29 @@
                 Legacy Dashboard
             </a>
         </div>
-    </div>
-</div>
+    {% endcall %}
+{% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">
+    // ─────────────────────────────────────────────────────────────────
+    // Severity bucket tables — single source of truth replacing the
+    // previous nested ternary chains in renderMFAChart / renderMaturityGauges.
+    // To change thresholds or add a bucket: edit ONE row, not three sites.
+    // ─────────────────────────────────────────────────────────────────
+    const MFA_BUCKETS = [
+        { min: 90, color: 'brand-success', badge: 'bg-brand-success-10 text-brand-success-100', label: 'Good' },
+        { min: 70, color: 'brand-warning', badge: 'bg-brand-warning-10 text-brand-warning-130', label: 'Fair' },
+        { min: 0,  color: 'brand-error',   badge: 'bg-brand-error-10 text-brand-error-100',     label: 'Poor' },
+    ];
+    const MATURITY_BUCKETS = [
+        { min: 3, color: null /* domain default */ },
+        { min: 2, color: 'brand-warning' },
+        { min: 0, color: 'brand-error'   },
+    ];
+    function bucketOf(value, table) {
+        return table.find(b => value >= b.min) || table[table.length - 1];
+    }
+
     // Countdown Timer
     function updateCountdown() {
         const deadline = new Date('2026-07-08T00:00:00');
@@ -411,23 +421,21 @@
             <div class="space-y-4">
                 ${tenants.map(t => {
                     const coverage = t.coverage_percentage || 0;
-                    const color = coverage >= 90 ? 'brand-success' : coverage >= 70 ? 'brand-warning' : 'brand-error';
+                    const bucket = bucketOf(coverage, MFA_BUCKETS);
                     return `
                         <div class="flex items-center gap-4">
                             <div class="w-24 text-sm font-medium text-primary-theme truncate">${t.tenant_name}</div>
                             <div class="flex-1">
                                 <div class="flex justify-between text-xs mb-1">
                                     <span class="text-muted-theme">${t.mfa_enabled_count || 0} / ${t.total_users || 0} users</span>
-                                    <span class="font-medium text-${color}-100">${coverage.toFixed(1)}%</span>
+                                    <span class="font-medium text-${bucket.color}-100">${coverage.toFixed(1)}%</span>
                                 </div>
                                 <div class="bg-brand-gray-10 rounded-full h-3">
-                                    <div class="bg-${color}-100 h-3 rounded-full transition-all duration-500" style="width: ${Math.min(coverage, 100)}%"></div>
+                                    <div class="bg-${bucket.color}-100 h-3 rounded-full transition-all duration-500" style="width: ${Math.min(coverage, 100)}%"></div>
                                 </div>
                             </div>
                             <div class="w-16 text-right">
-                                <span class="text-xs px-2 py-1 rounded-full ${coverage >= 90 ? 'bg-brand-success-10 text-brand-success-100' : coverage >= 70 ? 'bg-brand-warning-10 text-brand-warning-130' : 'bg-brand-error-10 text-brand-error-100'}">
-                                    ${coverage >= 90 ? 'Good' : coverage >= 70 ? 'Fair' : 'Poor'}
-                                </span>
+                                <span class="text-xs px-2 py-1 rounded-full ${bucket.badge}">${bucket.label}</span>
                             </div>
                         </div>
                     `;
@@ -456,7 +464,8 @@
                 ${domains.map(domain => {
                     const score = summary[`${domain.key}_average`] || 0;
                     const percentage = (score / 5) * 100;
-                    const color = score >= 3 ? domain.color : score >= 2 ? 'brand-warning' : 'brand-error';
+                    const bucket = bucketOf(score, MATURITY_BUCKETS);
+                    const color = bucket.color || domain.color;
                     return `
                         <div class="text-center p-4 bg-brand-gray-5 rounded-lg">
                             <!-- Gauge SVG -->
