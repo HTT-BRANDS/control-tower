@@ -280,6 +280,26 @@
    Layout helpers. Default to a 1→2→4 column responsive grid.
    Use {% call %} to wrap multiple ds_card / ds_stat_card calls.
 #}
+{# ── Badge ────────────────────────────────────────────────────────────────
+   Inline status/label badge with semantic variants. Composable with any
+   inline layout (headers, table cells, cards). Uses existing utility classes
+   so it picks up theme tokens automatically.
+
+   Variants: primary | accent | success | warning | danger | info | neutral
+─────────────────────────────────────────────────────────────────────────── #}
+{% macro ds_badge(text, variant="primary", extra_classes="") %}
+{% set variants = {
+  "primary": "badge-brand",
+  "accent":  "badge-brand-accent",
+  "success": "bg-brand-success-5 text-success",
+  "warning": "bg-brand-warning-5 text-warning",
+  "danger":  "bg-brand-error-5 text-danger",
+  "info":    "bg-brand-primary-5 text-brand-primary",
+  "neutral": "bg-surface-secondary text-secondary-theme",
+} %}
+<span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full {{ variants.get(variant, variants['primary']) }} {{ extra_classes }}" role="status">{{ text }}</span>
+{% endmacro %}
+
 {% macro ds_card_grid(columns="grid-cols-1 md:grid-cols-2 lg:grid-cols-4", gap="gap-6") %}
 <div class="grid {{ columns }} {{ gap }}">
     {{ caller() }}

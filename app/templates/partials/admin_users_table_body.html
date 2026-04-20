@@ -6,7 +6,7 @@
      - page:   current page number
      - pages:  total page count
 #}
-{% from "macros/ui.html" import brand_badge %}
+{% from "macros/ds.html" import ds_badge %}
 
 {% if users %}
 {% for u in users %}
@@ -15,15 +15,11 @@
     <td class="px-4 py-3">
         <div class="flex flex-wrap gap-1">
             {% for role in u.roles %}
-            {% if role == "admin" %}
-            {{ brand_badge(role, variant="danger", extra_classes="text-xs") }}
-            {% elif role == "tenant_admin" %}
-            {{ brand_badge(role, variant="warning", extra_classes="text-xs") }}
-            {% elif role == "analyst" %}
-            {{ brand_badge(role, variant="primary", extra_classes="text-xs") }}
-            {% else %}
-            {{ brand_badge(role, variant="neutral", extra_classes="text-xs") }}
-            {% endif %}
+            {# Map role → semantic variant. Keeps visual intent explicit:          #}
+            {#   admin=danger (destructive power), tenant_admin=warning (scoped),    #}
+            {#   analyst=primary (brand), everything else=neutral.                   #}
+            {% set role_variants = {"admin": "danger", "tenant_admin": "warning", "analyst": "primary"} %}
+            {{ ds_badge(role, variant=role_variants.get(role, "neutral")) }}
             {% endfor %}
         </div>
     </td>

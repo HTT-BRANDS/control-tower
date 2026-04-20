@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ui.html" import brand_badge, metric_card %}
+{% from "macros/ds.html" import ds_badge %}
 
 {% block title %}Administration - Azure Governance Platform{% endblock %}
 
@@ -11,7 +11,7 @@
     <div class="flex justify-between items-center flex-wrap gap-4">
         <div class="flex items-center gap-3">
             <h1 class="text-2xl font-bold text-primary-theme">Administration</h1>
-            {{ brand_badge("Admin", variant="danger", extra_classes="text-xs") }}
+            {{ ds_badge("Admin", variant="danger") }}
         </div>
         <p class="text-secondary-theme text-sm">User management, roles, and platform oversight</p>
     </div>
