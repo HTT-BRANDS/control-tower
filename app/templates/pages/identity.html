@@ -1,115 +1,85 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_button %}
 
 {% block title %}Identity &amp; Access{% endblock %}
-
 {% block nav_identity %}bg-brand-primary-110{% endblock %}
 
-{% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-primary-theme">Identity &amp; Access</h1>
-                    <p class="mt-1 text-sm text-muted-theme">Entra ID users, guest accounts &amp; privileged access</p>
-                </div>
-                <button id="refresh-btn"
-                        class="inline-flex items-center px-4 py-2 bg-wm-blue-100 text-white text-sm font-medium rounded-lg hover:bg-wm-blue-110 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Refresh
-                </button>
-    </div>
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Total Users</div>
-                <div class="mt-2 text-3xl font-bold text-primary-theme" id="total-users">--</div>
-                <div class="mt-1 text-sm text-muted-theme">Across all tenants</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Guest Users</div>
-                <div class="mt-2 text-3xl font-bold text-warning" id="guest-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">External identities</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Stale Accounts</div>
-                <div class="mt-2 text-3xl font-bold text-danger" id="stale-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">No recent sign-in</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Privileged Users</div>
-                <div class="mt-2 text-3xl font-bold text-accent-theme" id="privileged-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">Admin role holders</div>
-            </div>
-        </div>
+{% set icon_refresh %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+{% endset %}
 
-        <!-- Privileged Users -->
-        <div class="bg-surface-primary rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-default">
-                <h2 class="text-lg font-semibold text-primary-theme">Privileged Users</h2>
-            </div>
+{% set header_actions %}
+{{ ds_button(label="Refresh", variant="primary", icon_svg=icon_refresh, extra_attrs='id="refresh-btn"') }}
+{% endset %}
+
+{% block content %}
+{% call ds_page_shell(
+     title="Identity & Access",
+     subtitle="Entra ID users, guest accounts & privileged access",
+     actions=header_actions) %}
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {{ ds_stat_card(label="Total Users",       value="--", value_id="total-users",       caption="Across all tenants") }}
+        {{ ds_stat_card(label="Guest Users",       value="--", value_id="guest-count",       caption="External identities", border_accent="warning") }}
+        {{ ds_stat_card(label="Stale Accounts",    value="--", value_id="stale-count",       caption="No recent sign-in",   border_accent="danger") }}
+        {{ ds_stat_card(label="Privileged Users",  value="--", value_id="privileged-count",  caption="Admin role holders",  border_accent="info") }}
+    </div>
+
+    {% call ds_card(title="Privileged Users", extra_classes="!p-0 overflow-hidden") %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-tertiary">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Display Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">UPN</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Roles</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-surface-primary divide-y divide-border-default" id="privileged-table">
+                    <tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    {% endcall %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {% call ds_card(title="Guest Users", extra_classes="!p-0 overflow-hidden") %}
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-border-default">
                     <thead class="bg-surface-tertiary">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Display Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">UPN</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Roles</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Email</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="privileged-table">
-                        <tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
+                    <tbody class="bg-surface-primary divide-y divide-border-default" id="guests-table">
+                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
+        {% endcall %}
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Guest Users -->
-            <div class="bg-surface-primary rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-default">
-                    <h2 class="text-lg font-semibold text-primary-theme">Guest Users</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-border-default">
-                        <thead class="bg-surface-tertiary">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Email</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-surface-primary divide-y divide-border-default" id="guests-table">
-                            <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+        {% call ds_card(title="Stale Accounts", extra_classes="!p-0 overflow-hidden") %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-border-default">
+                    <thead class="bg-surface-tertiary">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Last Sign-in</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-surface-primary divide-y divide-border-default" id="stale-table">
+                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
+        {% endcall %}
+    </div>
 
-            <!-- Stale Accounts -->
-            <div class="bg-surface-primary rounded-xl shadow">
-                <div class="px-6 py-4 border-b border-default">
-                    <h2 class="text-lg font-semibold text-primary-theme">Stale Accounts</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-border-default">
-                        <thead class="bg-surface-tertiary">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Last Sign-in</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-surface-primary divide-y divide-border-default" id="stale-table">
-                            <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-</div>
+{% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">
 async function fetchJSON(url) {
@@ -174,15 +144,12 @@ async function loadAllData() {
     }
 }
 
-// Works on both full page load and HTMX navigation swap
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadAllData);
 } else {
     loadAllData();
 }
 
-// CSP-safe: replace inline onclick with addEventListener
 document.getElementById('refresh-btn')?.addEventListener('click', loadAllData);
 </script>
 {% endblock %}
-

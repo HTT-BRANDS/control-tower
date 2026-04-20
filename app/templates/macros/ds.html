@@ -40,7 +40,7 @@
          ... page body ...
      {% endcall %}
 #}
-{% macro ds_page_shell(title, subtitle=None, breadcrumb=None) %}
+{% macro ds_page_shell(title, subtitle=None, breadcrumb=None, actions=None) %}
 <div class="p-4 sm:p-6 lg:p-8 space-y-8">
     {% if breadcrumb %}
     <nav aria-label="Breadcrumb" class="text-sm text-secondary-theme">
@@ -59,10 +59,15 @@
     </nav>
     {% endif %}
 
-    <header>
-        <h1 class="text-3xl font-bold text-primary-theme">{{ title }}</h1>
-        {% if subtitle %}
-        <p class="mt-1 text-sm text-secondary-theme">{{ subtitle }}</p>
+    <header class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-primary-theme">{{ title }}</h1>
+            {% if subtitle %}
+            <p class="mt-1 text-sm text-secondary-theme">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        {% if actions %}
+        <div class="flex items-center gap-3">{{ actions|safe }}</div>
         {% endif %}
     </header>
 
@@ -133,7 +138,8 @@
                       icon_bg="bg-brand-primary-5 dark:bg-brand-primary-50",
                       icon_color="text-brand-primary dark:text-brand-secondary",
                       trend=None, caption=None, caption_html=False,
-                      footer=None, border_accent=None) %}
+                      footer=None, border_accent=None,
+                      value_id=None, caption_id=None) %}
 {% set accent_class = {
   "success": "border-l-4 border-l-success",
   "warning": "border-l-4 border-l-warning",
@@ -146,14 +152,14 @@
     <div class="flex items-center justify-between">
         <div class="min-w-0">
             <p class="text-sm font-medium text-secondary-theme">{{ label }}</p>
-            <p class="text-3xl font-bold text-primary-theme mt-1">{{ value }}</p>
+            <p class="text-3xl font-bold text-primary-theme mt-1"{% if value_id %} id="{{ value_id }}"{% endif %}>{{ value }}</p>
             {% if trend %}
             <p class="text-xs mt-2 {{ 'text-success' if trend.positive else 'text-danger' }}">
                 {{ trend.value }}
             </p>
             {% endif %}
             {% if caption %}
-            <p class="text-sm text-secondary-theme mt-2">
+            <p class="text-sm text-secondary-theme mt-2"{% if caption_id %} id="{{ caption_id }}"{% endif %}>
                 {% if caption_html %}{{ caption|safe }}{% else %}{{ caption }}{% endif %}
             </p>
             {% endif %}

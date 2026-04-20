@@ -1,106 +1,109 @@
 {% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_stat_card, ds_card, ds_button %}
 
 {% block title %}Cost Management{% endblock %}
-
 {% block nav_costs %}bg-brand-primary-110{% endblock %}
 
+{# ── Icons (inline Heroicons) ────────────────────────────────────────── #}
+{% set icon_refresh %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+{% endset %}
+
+{# Header actions — rendered into ds_page_shell's right-side slot. #}
+{% set header_actions %}
+{{ ds_button(
+     label="Refresh",
+     variant="primary",
+     icon_svg=icon_refresh,
+     extra_attrs='id="refresh-btn"'
+) }}
+{% endset %}
+
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-primary-theme">Cost Management</h1>
-                    <p class="mt-1 text-sm text-muted-theme">Azure spend across all managed tenants</p>
-                </div>
-                <button id="refresh-btn"
-                        class="inline-flex items-center px-4 py-2 bg-wm-blue-100 text-white text-sm font-medium rounded-lg hover:bg-wm-blue-110 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Refresh
-                </button>
+{% call ds_page_shell(
+     title="Cost Management",
+     subtitle="Azure spend across all managed tenants",
+     actions=header_actions) %}
+
+    {# ── Summary Cards (values populated client-side via /api/v1/costs/summary) ── #}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {# Total Spend — needs a dynamic caption (color changes on +/-), so it uses
+           ds_card with a caller body instead of ds_stat_card. #}
+        {% call ds_card() %}
+            <div class="text-sm font-medium text-muted-theme">Total Spend</div>
+            <div class="mt-2 text-3xl font-bold text-primary-theme" id="total-cost">--</div>
+            <div class="mt-1 text-sm" id="cost-change">--</div>
+        {% endcall %}
+
+        {{ ds_stat_card(
+             label="Tenants",
+             value="--",
+             value_id="tenant-count",
+             caption="Managed accounts"
+        ) }}
+
+        {{ ds_stat_card(
+             label="Subscriptions",
+             value="--",
+             value_id="subscription-count",
+             caption="Active billing"
+        ) }}
+
+        {{ ds_stat_card(
+             label="Anomalies",
+             value="--",
+             value_id="anomaly-count",
+             caption="Unacknowledged"
+        ) }}
     </div>
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Total Spend</div>
-                <div class="mt-2 text-3xl font-bold text-primary-theme" id="total-cost">--</div>
-                <div class="mt-1 text-sm" id="cost-change">--</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Tenants</div>
-                <div class="mt-2 text-3xl font-bold text-primary-theme" id="tenant-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">Managed accounts</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Subscriptions</div>
-                <div class="mt-2 text-3xl font-bold text-primary-theme" id="subscription-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">Active billing</div>
-            </div>
-            <div class="bg-surface-primary rounded-xl shadow p-6">
-                <div class="text-sm font-medium text-muted-theme">Anomalies</div>
-                <div class="mt-2 text-3xl font-bold text-primary-theme" id="anomaly-count">--</div>
-                <div class="mt-1 text-sm text-muted-theme">Unacknowledged</div>
-            </div>
-        </div>
 
-        <!-- Cost by Tenant -->
-        <div class="bg-surface-primary rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-default">
-                <h2 class="text-lg font-semibold text-primary-theme">Cost by Tenant</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Total Cost</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Subscriptions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="tenant-costs-table">
-                        <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    {# ── Cost by Tenant table (ds_card with title header) ─────────────── #}
+    {% call ds_card(title="Cost by Tenant", extra_classes="!p-0 overflow-hidden") %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-tertiary">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Total Cost</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Subscriptions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-surface-primary divide-y divide-border-default" id="tenant-costs-table">
+                    <tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
+    {% endcall %}
 
-        <!-- Top Services -->
-        <div class="bg-surface-primary rounded-xl shadow mb-8">
-            <div class="px-6 py-4 border-b border-default">
-                <h2 class="text-lg font-semibold text-primary-theme">Top Services by Spend</h2>
-            </div>
-            <div class="p-6">
-                <div class="space-y-4" id="top-services">
-                    <div class="text-center text-muted-theme">Loading...</div>
-                </div>
-            </div>
+    {# ── Top Services ─────────────────────────────────────────────────── #}
+    {% call ds_card(title="Top Services by Spend") %}
+        <div class="space-y-4" id="top-services">
+            <div class="text-center text-muted-theme">Loading...</div>
         </div>
+    {% endcall %}
 
-        <!-- Anomalies -->
-        <div class="bg-surface-primary rounded-xl shadow">
-            <div class="px-6 py-4 border-b border-default">
-                <h2 class="text-lg font-semibold text-primary-theme">Cost Anomalies</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-default">
-                    <thead class="bg-surface-tertiary">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Expected</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Actual</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Change</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-surface-primary divide-y divide-border-default" id="anomalies-table">
-                        <tr><td colspan="6" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    {# ── Anomalies ────────────────────────────────────────────────────── #}
+    {% call ds_card(title="Cost Anomalies", extra_classes="!p-0 overflow-hidden") %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-border-default">
+                <thead class="bg-surface-tertiary">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Expected</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Actual</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Change</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-surface-primary divide-y divide-border-default" id="anomalies-table">
+                    <tr><td colspan="6" class="px-6 py-4 text-center text-muted-theme">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
-</div>
+    {% endcall %}
+
+{% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">
 function formatCurrency(value) {
@@ -203,4 +206,3 @@ if (document.readyState === 'loading') {
 document.getElementById('refresh-btn')?.addEventListener('click', loadAllData);
 </script>
 {% endblock %}
-

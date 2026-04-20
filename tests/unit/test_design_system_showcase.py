@@ -211,6 +211,10 @@ class TestMigratedPages:
         "page,required_macros",
         [
             ("pages/dashboard.html", ["ds_stat_card", "ds_card"]),
+            ("pages/costs.html", ["ds_page_shell", "ds_stat_card", "ds_card", "ds_button"]),
+            ("pages/compliance.html", ["ds_page_shell", "ds_stat_card", "ds_card", "ds_button"]),
+            ("pages/resources.html", ["ds_page_shell", "ds_stat_card", "ds_card", "ds_button"]),
+            ("pages/identity.html", ["ds_page_shell", "ds_stat_card", "ds_card", "ds_button"]),
         ],
     )
     def test_page_imports_ds_macros(self, page, required_macros):
