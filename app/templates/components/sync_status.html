@@ -1,12 +1,33 @@
-{# Sync Status Card Component #}
-<div class="bg-white rounded-lg shadow p-6 border-l-4 {{ 'border-wm-green-100' if status.status == 'healthy' else ('border-wm-red-100' if status.status == 'critical' else 'border-wm-spark-100') }}">
+{# ─────────────────────────────────────────────────────────────────────
+   Sync Status Card Component — HTMX refresh partial.
+   Replaces an earlier nested-ternary pattern with status-keyed lookups.
+   ───────────────────────────────────────────────────────────────────── #}
+
+{# Status → visual mapping. Single source of truth so healthy/critical/
+   warning never drift out of sync between border/bg/icon-color selectors. #}
+{% set status_styles = {
+  "healthy":  {"border": "border-l-success", "bg": "bg-brand-primary-5 dark:bg-brand-primary-50", "text": "text-success"},
+  "critical": {"border": "border-l-danger",  "bg": "bg-brand-primary-5 dark:bg-brand-primary-50", "text": "text-danger"},
+} %}
+{# Fallback covers 'warning' / 'degraded' / unknown — keeps the template
+   open/closed to new statuses without growing the map. #}
+{% set default_style = {"border": "border-l-warning", "bg": "bg-brand-primary-5 dark:bg-brand-primary-50", "text": "text-warning"} %}
+{% set style = status_styles.get(status.status, default_style) %}
+
+{% set job_styles = {
+  "healthy":  {"bg": "bg-surface-secondary border-default", "dot": "bg-success"},
+  "degraded": {"bg": "bg-surface-secondary border-default", "dot": "bg-danger"},
+} %}
+{% set default_job_style = {"bg": "bg-surface-secondary border-default", "dot": "bg-secondary-theme"} %}
+
+<div class="bg-surface-primary rounded-lg shadow p-6 border-l-4 {{ style.border }}">
     <div class="flex items-center justify-between mb-4">
         <div>
-            <h3 class="text-lg font-semibold text-wm-gray-160">Sync Status</h3>
-            <p class="text-sm text-wm-gray-100">Overall system health: {{ status.status.title() }}</p>
+            <h3 class="text-lg font-semibold text-primary-theme">Sync Status</h3>
+            <p class="text-sm text-secondary-theme">Overall system health: {{ status.status.title() }}</p>
         </div>
-        <div class="p-3 rounded-full {{ 'bg-wm-green-10' if status.status == 'healthy' else ('bg-wm-red-10' if status.status == 'critical' else 'bg-wm-spark-10') }}">
-            <svg class="w-6 h-6 {{ 'text-wm-green-100' if status.status == 'healthy' else ('text-wm-red-100' if status.status == 'critical' else 'text-wm-spark-100') }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="p-3 rounded-full {{ style.bg }}" aria-hidden="true">
+            <svg class="w-6 h-6 {{ style.text }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {% if status.status == 'healthy' %}
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 {% elif status.status == 'critical' %}
@@ -18,60 +39,61 @@
         </div>
     </div>
 
-    {# Active Alerts Summary #}
+    {# ── Active Alerts Summary ───────────────────────────────────────── #}
     {% if status.alerts.total_active > 0 %}
-    <div class="mb-4 p-3 bg-wm-red-5 rounded-lg">
-        <div class="flex items-center space-x-2">
-            <span class="text-wm-red-100 font-medium">
+    <div class="mb-4 p-3 bg-surface-secondary border border-default rounded-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-danger font-medium">
                 {{ status.alerts.total_active }} Active Alert{{ 's' if status.alerts.total_active != 1 }}
             </span>
             {% if status.alerts.critical > 0 %}
-            <span class="px-2 py-1 text-xs font-medium bg-wm-red-100 text-white rounded">{{ status.alerts.critical }} Critical</span>
+            <span class="px-2 py-1 text-xs font-medium bg-danger text-white rounded">{{ status.alerts.critical }} Critical</span>
             {% endif %}
             {% if status.alerts.error > 0 %}
-            <span class="px-2 py-1 text-xs font-medium bg-wm-spark-100 text-wm-gray-160 rounded">{{ status.alerts.error }} Error</span>
+            <span class="px-2 py-1 text-xs font-medium bg-warning text-primary-theme rounded">{{ status.alerts.error }} Error</span>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    {# Job Status Grid #}
+    {# ── Per-job Status Grid ────────────────────────────────────────── #}
     <div class="grid grid-cols-2 gap-3">
         {% for job_type, job in status.jobs.items() %}
-        <div class="p-3 rounded-lg border {{ 'border-wm-green-50 bg-wm-green-5' if job.status == 'healthy' else ('border-wm-red-50 bg-wm-red-5' if job.status == 'degraded' else 'border-wm-gray-50 bg-wm-gray-5') }}">
+        {% set jstyle = job_styles.get(job.status, default_job_style) %}
+        <div class="p-3 rounded-lg border {{ jstyle.bg }}">
             <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-wm-gray-160 capitalize">{{ job_type }}</span>
-                <span class="w-2 h-2 rounded-full {{ 'bg-wm-green-100' if job.status == 'healthy' else ('bg-wm-red-100' if job.status == 'degraded' else 'bg-wm-gray-100') }}"></span>
+                <span class="text-sm font-medium text-primary-theme capitalize">{{ job_type }}</span>
+                <span class="w-2 h-2 rounded-full {{ jstyle.dot }}" aria-label="{{ job.status }}"></span>
             </div>
             {% if job.last_run %}
-            <p class="text-xs text-wm-gray-100 mt-1">
-                Last: {{ job.last_run[:10] }}
-            </p>
+            <p class="text-xs text-secondary-theme mt-1">Last: {{ job.last_run[:10] }}</p>
             {% else %}
-            <p class="text-xs text-wm-gray-100 mt-1">Never run</p>
+            <p class="text-xs text-secondary-theme mt-1">Never run</p>
             {% endif %}
             {% if job.success_rate is not none %}
-            <p class="text-xs text-wm-gray-100">Success: {{ "{:.0%}".format(job.success_rate) }}</p>
+            <p class="text-xs text-secondary-theme">Success: {{ "{:.0%}".format(job.success_rate) }}</p>
             {% endif %}
         </div>
         {% endfor %}
     </div>
 
-    {# Metrics Summary #}
+    {# ── Metrics Summary ────────────────────────────────────────────── #}
     {% if metrics %}
-    <div class="mt-4 pt-4 border-t border-wm-gray-50">
-        <h4 class="text-sm font-medium text-wm-gray-160 mb-2">Recent Performance</h4>
+    <div class="mt-4 pt-4 border-t border-default">
+        <h4 class="text-sm font-medium text-primary-theme mb-2">Recent Performance</h4>
         <div class="space-y-2">
             {% for metric in metrics[:4] %}
+            {# Success-rate → color: ≥90% ok, ≥70% warn, else danger. Keep the
+               threshold ternary here (3 buckets, not worth a dict). #}
+            {% set rate = metric.success_rate or 0 %}
+            {% set rate_class = "text-success" if rate >= 0.9 else ("text-warning" if rate >= 0.7 else "text-danger") %}
             <div class="flex items-center justify-between text-sm">
-                <span class="text-wm-gray-100 capitalize">{{ metric.job_type }}</span>
-                <div class="flex items-center space-x-2">
+                <span class="text-secondary-theme capitalize">{{ metric.job_type }}</span>
+                <div class="flex items-center gap-2">
                     {% if metric.avg_duration_ms %}
-                    <span class="text-wm-gray-100">{{ "{:.1f}".format(metric.avg_duration_ms / 1000) }}s avg</span>
+                    <span class="text-secondary-theme">{{ "{:.1f}".format(metric.avg_duration_ms / 1000) }}s avg</span>
                     {% endif %}
-                    <span class="{{ 'text-wm-green-100' if metric.success_rate and metric.success_rate >= 0.9 else ('text-wm-spark-100' if metric.success_rate and metric.success_rate >= 0.7 else 'text-wm-red-100') }}">
-                        {{ "{:.0%}".format(metric.success_rate or 0) }}
-                    </span>
+                    <span class="{{ rate_class }}">{{ "{:.0%}".format(rate) }}</span>
                 </div>
             </div>
             {% endfor %}
@@ -79,7 +101,7 @@
     </div>
     {% endif %}
 
-    <div class="mt-4 text-xs text-wm-gray-100 text-right">
+    <div class="mt-4 text-xs text-secondary-theme text-right">
         Updated: {{ status.last_updated[:19] if status.last_updated else 'Unknown' }}
     </div>
 </div>
