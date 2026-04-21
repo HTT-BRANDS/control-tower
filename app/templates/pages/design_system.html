@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row, ds_static_table, ds_toolbar %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row, ds_static_table, ds_toolbar, ds_modal %}
 
 {% block title %}Design System · Azure Governance{% endblock %}
 
@@ -210,6 +210,48 @@
         <p class="mt-1 text-primary-theme">rgba(22,27,34,0.7) + blur</p>
       </div>
     </div>
+  {% endcall %}
+
+  {# ── Section: Modal (py7u.2.3) ──────────────────────────────────
+     SHOWCASE-ONLY demo triggers. The inline `onclick` handlers on the
+     plain <button> elements below are a one-line demo so humans can
+     poke the modal on /design-system. Real production callers must
+     drive ds_modal from their own (CSP-nonced) script via
+     document.getElementById(id).showModal() / .close(). Do NOT copy
+     the inline onclick pattern into production pages — it bypasses the
+     CSP nonce workflow and the design-system button governance.
+     We deliberately use plain <button> here (not ds_button) to keep
+     this showcase-only escape hatch visibly off the governed path.
+  #}
+  {% call ds_card(title="Modal",
+                  subtitle="Native <dialog> primitive — focus trap, ESC, and backdrop close are all native.") %}
+    <div class="flex flex-wrap gap-3 items-center">
+      <button type="button"
+              class="btn-brand text-sm font-medium px-4 py-2 rounded-lg"
+              onclick="document.getElementById('showcase-modal-md').showModal()">
+        Open modal (md)
+      </button>
+      <button type="button"
+              class="text-sm font-medium px-4 py-2 rounded-lg border border-default bg-surface-primary text-primary-theme hover:bg-surface-secondary transition-colors"
+              onclick="document.getElementById('showcase-modal-lg').showModal()">
+        Open modal (lg, with describedby)
+      </button>
+    </div>
+
+    {% call ds_modal(id="showcase-modal-md", title="Edit user", size="md") %}
+      <p class="text-sm text-secondary-theme">
+        A standard medium modal. Press <kbd class="font-mono text-xs">Esc</kbd>,
+        click the × in the header, or click the backdrop to close.
+      </p>
+    {% endcall %}
+
+    {% call ds_modal(id="showcase-modal-lg", title="Large modal with description",
+                     size="lg", describedby="showcase-modal-lg-desc") %}
+      <p id="showcase-modal-lg-desc" class="text-sm text-secondary-theme">
+        This larger modal also wires <code class="font-mono text-xs">aria-describedby</code>
+        to this paragraph so assistive tech announces a summary alongside the title.
+      </p>
+    {% endcall %}
   {% endcall %}
 
 {% endcall %}
