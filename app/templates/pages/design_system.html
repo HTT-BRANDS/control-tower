@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row, ds_tabs, ds_tab_panel %}
 
 {% block title %}Design System · Azure Governance{% endblock %}
 
@@ -122,6 +122,42 @@
     </p>
   {% endcall %}
 
+
+
+
+  {# ── Section: Tabs ──────────────────────────────────────────── #}
+  {% call ds_card(title="Tabs", subtitle="WAI-ARIA APG pattern — use ←/→, Home/End to navigate. Third tab is disabled.") %}
+    {% call ds_tabs(
+        id="showcase-tabs",
+        tabs=[
+          {"label": "Overview"},
+          {"label": "Details"},
+          {"label": "Archived", "disabled": true},
+        ],
+        aria_label="Showcase tabs demo") %}
+      {% call ds_tab_panel(tabs_id="showcase-tabs", index=0, active=true) %}
+        <p class="text-sm text-secondary-theme">
+          Overview panel. Tabs use <code class="font-mono text-xs">role="tablist"</code>
+          + roving <code class="font-mono text-xs">tabindex</code> and a small
+          auto-initialising JS file (<code class="font-mono text-xs">ds-tabs.js</code>)
+          for keyboard nav. No JS framework required.
+        </p>
+      {% endcall %}
+      {% call ds_tab_panel(tabs_id="showcase-tabs", index=1) %}
+        <p class="text-sm text-secondary-theme">
+          Details panel. Each panel is focusable (<code class="font-mono text-xs">tabindex="0"</code>)
+          so keyboard users can reach content with no focusable children. Try
+          Tab after the active tab to land here.
+        </p>
+      {% endcall %}
+      {% call ds_tab_panel(tabs_id="showcase-tabs", index=2) %}
+        <p class="text-sm text-secondary-theme">
+          You should not be able to reach this panel — the Archived tab is
+          disabled and skipped by ← / → / Home / End.
+        </p>
+      {% endcall %}
+    {% endcall %}
+  {% endcall %}
 
   {# ── Section: SWA Glassmorphism Tokens (dark-mode only) ───────── #}
   {% call ds_card(title="SWA Glassmorphism (dark mode only)",

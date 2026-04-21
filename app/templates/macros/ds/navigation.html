@@ -1,0 +1,82 @@
+{#
+  ds/navigation.html — navigation primitives for the ds-template library.
+
+  Home for tabs, breadcrumbs, pagination, stepper, pager. Split from
+  display.html at py7u.2.4 to keep each concern file under the <250L
+  cohesion budget (ADR-0005 / py7u.2.1). When adding a new navigation
+  primitive here, also re-export it from macros/ds.html and add it to
+  REQUIRED_MACROS in tests/unit/test_design_system_showcase.py.
+
+  Macros: ds_tabs, ds_tab_panel
+#}
+
+
+{# ── ds_tabs ──────────────────────────────────────────────────────────
+   Tabbed interface per WAI-ARIA APG (https://www.w3.org/WAI/ARIA/apg/patterns/tabs/).
+
+   Ships with ds-tabs.js (loaded in base.html) for keyboard nav:
+     • ←/→  move focus between tabs (wraps)
+     • Home / End  first / last tab
+     • Roving tabindex — only the selected tab is in the tab order
+     • aria-disabled tabs are skipped by keyboard nav
+
+   WCAG 2.2 AAA notes:
+     • Each tab is ≥44×44 CSS px (min-h-[44px] + px-4) — 2.5.8 Target Size
+     • Focus indicator via focus-visible outline — 2.4.13 Focus Appearance
+     • Non-dragging interaction only — 2.5.7 Dragging Movements (n/a)
+     • Panel itself is focusable (tabindex=0) so keyboard users can reach
+       panel content that has no focusable children.
+
+   Args:
+     id            — root id; tab ids derive as {id}-tab-{i}, panel ids as {id}-panel-{i}
+     tabs          — list[dict]: {"label": str, "disabled": bool=False}
+     active        — zero-based index of initially-selected tab (default 0)
+     aria_label    — accessible name for the tablist (required when no visible
+                     heading immediately precedes the tabs)
+     extra_classes — additional classes on the outer wrapper
+
+   Nest ds_tab_panel calls inside via {% call %} — see the design-system
+   showcase for a runnable example.
+──────────────────────────────────────────────────────────────────────── #}
+{% macro ds_tabs(id, tabs, active=0, aria_label=None, extra_classes="") %}
+<div class="ds-tabs {{ extra_classes }}" id="{{ id }}" data-ds-tabs>
+  <div role="tablist" class="flex flex-wrap border-b border-default -mb-px"
+       {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}>
+    {% for tab in tabs %}
+    {% set act = (loop.index0 == active) %}
+    <button type="button" role="tab"
+            id="{{ id }}-tab-{{ loop.index0 }}"
+            aria-controls="{{ id }}-panel-{{ loop.index0 }}"
+            aria-selected="{{ 'true' if act else 'false' }}"
+            tabindex="{{ '0' if act else '-1' }}"
+            {% if tab.disabled %}aria-disabled="true" disabled{% endif %}
+            class="inline-flex items-center min-h-[44px] px-4 py-2 text-sm font-medium border-b-2 transition-colors
+                   {% if act %}border-brand-primary text-brand-primary{% else %}border-transparent text-secondary-theme hover:text-primary-theme{% endif %}
+                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary
+                   {% if tab.disabled %}opacity-50 cursor-not-allowed{% endif %}">{{ tab.label }}</button>
+    {% endfor %}
+  </div>
+  <div class="pt-4">{{ caller() }}</div>
+</div>
+{% endmacro %}
+
+
+{# ── ds_tab_panel ─────────────────────────────────────────────────────
+   Panel that pairs with a ds_tabs tab by shared id prefix + index.
+   Use inside {% call ds_tabs(...) %} — one ds_tab_panel per tab.
+
+   Args:
+     tabs_id — must match the parent ds_tabs id
+     index   — zero-based position; must match the order of `tabs` passed
+               to ds_tabs (index 0 pairs with the first tab, etc.)
+     active  — True for the initially-visible panel; all others render
+               with the `hidden` attribute and ds-tabs.js toggles it
+──────────────────────────────────────────────────────────────────────── #}
+{% macro ds_tab_panel(tabs_id, index, active=false) %}
+<div role="tabpanel" id="{{ tabs_id }}-panel-{{ index }}"
+     aria-labelledby="{{ tabs_id }}-tab-{{ index }}" tabindex="0"
+     {% if not active %}hidden{% endif %}
+     class="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary">
+  {{ caller() }}
+</div>
+{% endmacro %}
