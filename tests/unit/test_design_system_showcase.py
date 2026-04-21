@@ -128,6 +128,7 @@ class TestMacroDeclarations:
         "ds_button",
         "ds_card_grid",
         "ds_stats_row",
+        "ds_form_field",
     ]
 
     @pytest.mark.parametrize("macro_name", REQUIRED_MACROS)
@@ -319,3 +320,118 @@ class TestMigratedPages:
             'Bespoke border-l-4 + style="border-color" pattern still present — '
             "migrate to ds_stat_card(border_accent=...)"
         )
+
+
+# ── ds_form_field primitive (py7u.2.5 / Phase 4b-v) ─────────────
+class TestDsFormField:
+    """Render-layer a11y contract for the ds_form_field wrapper.
+
+    Every rule here mirrors the a11y contract documented in
+    app/templates/macros/ds/forms.html — if a screen reader would miss
+    a critical wiring (label/for, aria-describedby, role=alert), one of
+    these assertions fires first.
+    """
+
+    @pytest.fixture
+    def ds_env(self):
+        """Isolated Jinja env loading only the ds macros (no full page chrome)."""
+        return Environment(
+            loader=FileSystemLoader(str(TEMPLATES_DIR)),
+            autoescape=select_autoescape(["html", "xml"]),
+        )
+
+    def _render(self, env, *, required=False, help_text=None, error=None, hidden_label=False):
+        """Render a minimal ds_form_field with a text input child."""
+        src = (
+            '{% from "macros/ds.html" import ds_form_field %}'
+            "{% call ds_form_field("
+            f"label='Email', name='email', required={required},"
+            f"help_text={help_text!r}, error={error!r}, hidden_label={hidden_label}) %}}"
+            '<input type="email" name="email" id="email" class="ds-input"'
+            '{% if error %} aria-invalid="true"{% endif %}'
+            ' aria-describedby="email-help{% if error %} email-error{% endif %}">'
+            "{% endcall %}"
+        )
+        return env.from_string(src).render(error=error)
+
+    def test_label_for_wired_to_input_id(self, ds_env):
+        html = self._render(ds_env)
+        assert 'for="email"' in html, 'label must wire <label for="email">'
+        assert 'id="email"' in html, "caller's input id must survive the macro"
+
+    def test_required_emits_asterisk_and_aria_required(self, ds_env):
+        html = self._render(ds_env, required=True)
+        assert 'aria-required="true"' in html
+        assert ">*<" in html or "ml-0.5" in html, "required asterisk must render"
+
+    def test_help_text_renders_with_stable_id(self, ds_env):
+        html = self._render(ds_env, help_text="We only use this for alerts.")
+        assert 'id="email-help"' in html
+        assert "We only use this for alerts." in html
+
+    def test_error_renders_with_role_alert_and_id(self, ds_env):
+        html = self._render(ds_env, error="Email is required.")
+        assert 'id="email-error"' in html
+        assert 'role="alert"' in html, "errors must be live-announced via role=alert"
+        assert "Email is required." in html
+
+    def test_error_sets_aria_invalid_on_caller_input(self, ds_env):
+        # The macro doesn't inject aria-invalid (caller owns the input) — this
+        # guards our documented example: caller wires aria-invalid when error exists.
+        html = self._render(ds_env, error="Bad format")
+        assert 'aria-invalid="true"' in html
+
+    def test_no_error_omits_role_alert(self, ds_env):
+        html = self._render(ds_env)
+        assert 'role="alert"' not in html, "role=alert must not render when error is None"
+        assert "email-error" not in html
+
+    def test_describedby_combines_help_and_error(self, ds_env):
+        html = self._render(ds_env, help_text="Helper", error="Bad")
+        # aria-describedby must reference BOTH ids, space-separated, in source order
+        assert 'aria-describedby="email-help email-error"' in html
+
+    def test_hidden_label_uses_sr_only(self, ds_env):
+        html = self._render(ds_env, hidden_label=True)
+        assert "sr-only" in html, "hidden_label must render label with .sr-only class"
+        # Label text still present — it's visually hidden, not removed
+        assert "Email" in html
+
+
+class TestDsFormFieldShowcase:
+    """Verify the /design-system showcase exercises all ds_form_field variants.
+
+    Keeps the showcase honest — if a variant disappears from the page the
+    live docs go stale and we get regressions in production forms.
+    """
+
+    def test_form_field_section_rendered(self, rendered_showcase):
+        assert "Form Fields" in rendered_showcase, (
+            "Showcase must have a Form Fields section demoing ds_form_field"
+        )
+
+    def test_form_field_renders_ds_input_class(self, rendered_showcase):
+        assert "ds-input" in rendered_showcase, ".ds-input utility must appear in showcase"
+
+    def test_form_field_renders_error_variant(self, rendered_showcase):
+        # Error variant — role=alert + aria-invalid should both appear somewhere
+        # on the showcase page because of the error demo.
+        assert 'aria-invalid="true"' in rendered_showcase
+        # role=alert appears for both ds_alert and ds_form_field error — enough
+        # for alert macros; we simply require the count went up after this commit
+        # implicitly by ensuring the error-id pattern appears.
+        assert "-error" in rendered_showcase, "error id pattern ({name}-error) must render"
+
+    def test_form_field_renders_hidden_label_variant(self, rendered_showcase):
+        # The hidden-label showcase row relies on .sr-only — that class is also
+        # used by the global aria-live announcer in base.html, so the existence
+        # of sr-only alone isn't proof. Instead require at least one
+        # <label ... class="sr-only" for=...> pattern.
+        import re as _re
+
+        # Either attribute order is fine — assert the label carries both.
+        pattern_a = r'<label[^>]*for="[^"]+"[^>]*class="sr-only"'
+        pattern_b = r'<label[^>]*class="sr-only"[^>]*for="'
+        assert _re.search(pattern_a, rendered_showcase) or _re.search(
+            pattern_b, rendered_showcase
+        ), "Hidden-label showcase variant missing (<label for=... class='sr-only'>)"

@@ -520,3 +520,60 @@ textarea:focus-visible {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* ==========================================================================
+   .ds-input — base form input utility (py7u.2.5 / Phase 4b-v)
+   ==========================================================================
+
+   Minimal base styling for <input>/<select>/<textarea> elements used inside
+   the ds_form_field primitive (see macros/ds/forms.html). Keeps padding,
+   border, radius and focus behaviour consistent across every form in the
+   app without shipping a full input-variant system. Tokens only — no hex.
+   Dark mode inherits automatically because colors come from --bg-primary /
+   --text-primary / --border-color (all remapped in .dark in design-tokens).
+*/
+.ds-input {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;       /* py-2 px-3 — exceeds WCAG 2.5.8 min target */
+  font-size: 0.875rem;           /* text-sm */
+  line-height: 1.25rem;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;       /* rounded-md */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ds-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;                    /* Firefox dims by default; normalise. */
+}
+
+.ds-input:hover:not(:disabled):not([aria-invalid="true"]) {
+  border-color: var(--brand-primary-50);
+}
+
+/* Focus ring uses the brand-primary token (tenant-aware, matches buttons). */
+.ds-input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+  border-color: var(--brand-primary);
+}
+
+/* Error state — driven by the caller setting aria-invalid="true" on the input.
+   We don't style :invalid directly because browsers flag empty required fields
+   on first paint, which would blast red before the user has interacted. */
+.ds-input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+.ds-input[aria-invalid="true"]:focus-visible {
+  outline-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.ds-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--bg-secondary);
+}

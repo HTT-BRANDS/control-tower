@@ -4,7 +4,7 @@
   Part of the backward-compatible facade in macros/ds.html. See that file
   for the full library context and ADR-0005 for the layered CSS architecture.
 
-  Macros: ds_button
+  Macros: ds_button, ds_form_field
 #}
 
 
@@ -52,4 +52,60 @@
     <span>{{ label }}</span>
 </button>
 {% endif %}
+{% endmacro %}
+
+
+{# ─── ds_form_field ───────────────────────────────────────────────────
+   Wrapper that standardises the label/input/help/error pattern. The
+   caller provides the input element via {% call %} block — this macro
+   owns ONLY the surrounding structure (label, help, error, a11y wiring).
+
+   The caller MUST pass id="{{ name }}" on their input so <label for=...>
+   resolves, and should wire {{ name }}-help / {{ name }}-error into
+   aria-describedby + aria-invalid on the input when help/error exist.
+   We don't inject those onto the input itself because the caller owns
+   the input element entirely (input / select / textarea / custom widget).
+
+   Args:
+     label         — visible label text (required)
+     name          — HTML name/id stem; also <label for="{{ name }}"> target (required)
+     required      — render asterisk + advertise aria-required on the label
+     help_text     — optional muted helper copy under the input
+     error         — optional error string; renders role="alert" live region
+     hidden_label  — if true, label is visually-hidden (sr-only) for compact/search UIs
+     extra_classes — classes applied to the outer <div> wrapper
+
+   A11Y CONTRACT (py7u.2.5):
+     - <label for="{{ name }}"> wired to the caller's input id
+     - {{ name }}-help / {{ name }}-error ids emitted for aria-describedby
+     - Error rendered inside <div role="alert"> for live SR announcement
+     - Required fields show asterisk AND set aria-required on the <label>
+     - hidden_label collapses the label to .sr-only without removing it
+
+   Example:
+     {% call ds_form_field(label="Email", name="email", required=true,
+                           help_text="We'll only use this for alerts.",
+                           error=form_errors.get("email")) %}
+       <input type="email" name="email" id="email" class="ds-input"
+              required autocomplete="email"
+              aria-describedby="email-help{% if form_errors.get('email') %} email-error{% endif %}"
+              {% if form_errors.get('email') %}aria-invalid="true"{% endif %}>
+     {% endcall %}
+#}
+{% macro ds_form_field(label, name, required=False, help_text=None, error=None,
+                       hidden_label=False, extra_classes="") %}
+<div class="space-y-1 {{ extra_classes }}"{% if error %} data-invalid="true"{% endif %}>
+    <label for="{{ name }}"
+           class="{% if hidden_label %}sr-only{% else %}block text-sm font-medium text-secondary-theme{% endif %}"
+           {% if required %}aria-required="true"{% endif %}>
+        {{ label }}{% if required %}<span class="text-danger ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {{ caller() }}
+    {% if help_text %}
+    <small id="{{ name }}-help" class="block text-xs text-muted-theme">{{ help_text }}</small>
+    {% endif %}
+    {% if error %}
+    <div id="{{ name }}-error" role="alert" class="text-xs text-danger">{{ error }}</div>
+    {% endif %}
+</div>
 {% endmacro %}
