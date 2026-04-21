@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row, ds_static_table, ds_toolbar, ds_modal, ds_tabs, ds_tab_panel %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_stat_card, ds_alert, ds_button, ds_card_grid, ds_stats_row, ds_static_table, ds_toolbar, ds_modal, ds_tabs, ds_tab_panel, ds_form_field %}
 
 {% block title %}Design System · Azure Governance{% endblock %}
 
@@ -225,6 +225,43 @@
       {% endcall %}
     {% endcall %}
   {% endcall %}
+
+  {# ── Section: Form Fields ────────────────────────────────────── #}
+  {% call ds_card(title="Form Fields", subtitle="ds_form_field primitive + .ds-input utility — label/help/error a11y wiring baked in.") %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      {# (a) Basic required field #}
+      {% call ds_form_field(label="Full name", name="ds_demo_name", required=true) %}
+        <input type="text" name="ds_demo_name" id="ds_demo_name" class="ds-input"
+               placeholder="Ada Lovelace" required>
+      {% endcall %}
+
+      {# (b) Field with help text #}
+      {% call ds_form_field(label="Work email", name="ds_demo_email",
+                            help_text="We only use this for compliance alerts — never marketing.") %}
+        <input type="email" name="ds_demo_email" id="ds_demo_email" class="ds-input"
+               placeholder="ada@example.com"
+               aria-describedby="ds_demo_email-help" autocomplete="email">
+      {% endcall %}
+
+      {# (c) Field in error state (shows aria-invalid + role=alert wiring) #}
+      {% call ds_form_field(label="Tenant ID", name="ds_demo_tenant", required=true,
+                            error="Tenant ID must be a valid UUID.") %}
+        <input type="text" name="ds_demo_tenant" id="ds_demo_tenant" class="ds-input"
+               value="not-a-uuid"
+               aria-describedby="ds_demo_tenant-error"
+               aria-invalid="true">
+      {% endcall %}
+
+      {# (d) Hidden-label variant (compact search / filter UIs) #}
+      {% call ds_form_field(label="Quick search", name="ds_demo_search", hidden_label=true) %}
+        <input type="search" name="ds_demo_search" id="ds_demo_search" class="ds-input"
+               placeholder="Search resources…">
+      {% endcall %}
+
+    </div>
+  {% endcall %}
+
 
   {# ── Section: SWA Glassmorphism Tokens (dark-mode only) ───────── #}
   {% call ds_card(title="SWA Glassmorphism (dark mode only)",

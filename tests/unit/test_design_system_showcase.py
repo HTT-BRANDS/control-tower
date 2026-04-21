@@ -159,6 +159,7 @@ class TestMacroDeclarations:
         "ds_modal",
         "ds_tabs",
         "ds_tab_panel",
+        "ds_form_field",
     ]
 
     @pytest.mark.parametrize("macro_name", REQUIRED_MACROS)
@@ -484,7 +485,8 @@ class TestStaticTableDeclaration:
     def _render(env: Environment, body: str) -> str:
         """Render a tiny template that imports the facade and uses the macro."""
         tmpl = env.from_string(
-            '{% from "macros/ds.html" import ds_static_table, ds_tabs, ds_tab_panel %}' + body
+            '{% from "macros/ds.html" import ds_static_table, ds_tabs, ds_tab_panel, ds_form_field %}'
+            + body
         )
         return tmpl.render()
 
