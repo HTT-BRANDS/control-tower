@@ -349,6 +349,63 @@ class TestRiversideRequirementsEndpoint:
         # Service should have been called with status filter
         mock_riverside_service.get_requirements.assert_called_once()
 
+    @patch("app.api.routes.riverside.RiversideService")
+    def test_requirements_returns_html_partial_for_htmx_request(
+        self,
+        mock_service_cls,
+        authed_client,
+        mock_riverside_service,
+    ):
+        """HX-Request header → partial HTML (f8f2 content negotiation).
+
+        Pages/riverside.html uses HTMX to fetch this endpoint with hx-get.
+        HTMX always sends `HX-Request: true`. The route must detect that
+        and render partials/riverside_requirements_list.html directly so
+        no inline JS string-template rendering is needed in the page.
+        """
+        mock_service_cls.return_value = mock_riverside_service
+
+        response = authed_client.get(
+            "/api/v1/riverside/requirements",
+            headers={"HX-Request": "true"},
+        )
+
+        assert response.status_code == 200
+        # Content-type is HTML, not JSON
+        assert "text/html" in response.headers["content-type"], (
+            f"expected text/html, got {response.headers.get('content-type')}"
+        )
+        body = response.text
+        # Partial root element is rendered
+        assert 'id="riverside-requirements-list"' in body, (
+            "partial root div missing — TemplateResponse likely failed"
+        )
+        # Mock requirements flow through to the table
+        assert "IAM-001" in body and "GS-002" in body
+        assert "MFA Enforcement" in body
+
+    @patch("app.api.routes.riverside.RiversideService")
+    def test_requirements_returns_json_without_htmx_header(
+        self,
+        mock_service_cls,
+        authed_client,
+        mock_riverside_service,
+    ):
+        """Absence of HX-Request header → JSON (API-consumer path unchanged).
+
+        Programmatic consumers (preflight checks, staging e2e) don't send
+        HX-Request, so they still get the original JSON response.
+        """
+        mock_service_cls.return_value = mock_riverside_service
+
+        response = authed_client.get("/api/v1/riverside/requirements")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert "requirements" in data
+        assert data["total"] == 2
+
 
 # ============================================================================
 # GET /api/v1/riverside/gaps Tests
@@ -375,6 +432,29 @@ class TestRiversideGapsEndpoint:
         assert "critical_gaps" in data
         assert data["total"] == 2
         assert data["critical_gaps"][0]["severity"] == "critical"
+
+    @patch("app.api.routes.riverside.RiversideService")
+    def test_gaps_returns_html_partial_for_htmx_request(
+        self,
+        mock_service_cls,
+        authed_client,
+        mock_riverside_service,
+    ):
+        """HX-Request header → renders partials/riverside_alerts_panel.html (f8f2)."""
+        mock_service_cls.return_value = mock_riverside_service
+
+        response = authed_client.get(
+            "/api/v1/riverside/gaps",
+            headers={"HX-Request": "true"},
+        )
+
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        body = response.text
+        # Partial root element is rendered
+        assert 'id="riverside-alerts-panel"' in body, "alerts panel partial root div missing"
+        # Mock gap titles flow through
+        assert "MFA Gap" in body and "Legacy Auth" in body
 
 
 # ============================================================================

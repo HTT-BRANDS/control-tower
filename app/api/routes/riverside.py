@@ -99,8 +99,9 @@ async def get_maturity_scores(
     return await service.get_maturity_scores()
 
 
-@router.get("/api/v1/riverside/requirements", response_model=dict)
+@router.get("/api/v1/riverside/requirements")
 async def get_requirements(
+    request: Request,
     category: str | None = Query(default=None, description="Filter by category (IAM, GS, DS)"),
     priority: str | None = Query(default=None, description="Filter by priority (P0, P1, P2)"),
     status: str | None = Query(
@@ -109,21 +110,42 @@ async def get_requirements(
     db: Session = Depends(get_db),
     authz: TenantAuthorization = Depends(get_tenant_authorization),
 ):
-    """Get requirements list with optional filtering."""
+    """Get requirements list with optional filtering.
+
+    Content negotiation (f8f2):
+      - HX-Request header present → renders partials/riverside_requirements_list.html
+        so pages/riverside.html can HTMX-swap directly without JS re-rendering.
+      - Otherwise → returns JSON for programmatic API consumers (preflight
+        checks, external integrations, staging e2e).
+    """
     authz.ensure_at_least_one_tenant()
     service = RiversideService(db)
-    return service.get_requirements(category=category, priority=priority, status=status)
+    data = service.get_requirements(category=category, priority=priority, status=status)
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            request, "partials/riverside_requirements_list.html", data
+        )
+    return data
 
 
-@router.get("/api/v1/riverside/gaps", response_model=dict)
+@router.get("/api/v1/riverside/gaps")
 async def get_gaps(
+    request: Request,
     db: Session = Depends(get_db),
     authz: TenantAuthorization = Depends(get_tenant_authorization),
 ):
-    """Get critical gaps analysis."""
+    """Get critical gaps analysis.
+
+    Content negotiation (f8f2): see get_requirements docstring.
+    Renders partials/riverside_alerts_panel.html for HTMX requests,
+    returns JSON otherwise.
+    """
     authz.ensure_at_least_one_tenant()
     service = RiversideService(db)
-    return await service.get_gaps()
+    data = await service.get_gaps()
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(request, "partials/riverside_alerts_panel.html", data)
+    return data
 
 
 @router.post("/api/v1/riverside/sync")
