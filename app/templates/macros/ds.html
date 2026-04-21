@@ -9,7 +9,7 @@
   `macros/ds/` (phase 4b-i split / bd issue py7u.2.1):
 
     - macros/ds/layout.html   — ds_page_shell, ds_card_grid, ds_stats_row
-    - macros/ds/display.html  — ds_card, ds_stat_card, ds_alert, ds_badge, ds_table
+    - macros/ds/display.html  — ds_card, ds_stat_card, ds_alert, ds_badge, ds_table, ds_modal
     - macros/ds/forms.html    — ds_button
 
   Add new primitives to the appropriate concern file AND re-export below.
@@ -39,11 +39,11 @@
 {% set ds_page_shell = _layout.ds_page_shell %}
 {% set ds_card_grid  = _layout.ds_card_grid %}
 {% set ds_stats_row  = _layout.ds_stats_row %}
-
 {% set ds_card       = _display.ds_card %}
 {% set ds_stat_card  = _display.ds_stat_card %}
 {% set ds_alert      = _display.ds_alert %}
 {% set ds_badge      = _display.ds_badge %}
 {% set ds_table      = _display.ds_table %}
+{% set ds_modal      = _display.ds_modal %}
 
 {% set ds_button     = _forms.ds_button %}

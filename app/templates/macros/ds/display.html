@@ -4,7 +4,7 @@
   Part of the backward-compatible facade in macros/ds.html. See that file
   for the full library context and ADR-0005 for the layered CSS architecture.
 
-  Macros: ds_card, ds_stat_card, ds_alert, ds_badge, ds_table
+  Macros: ds_card, ds_stat_card, ds_alert, ds_badge, ds_table, ds_modal
 #}
 
 
@@ -221,4 +221,53 @@
         </table>
     </div>
 {% endcall %}
+{% endmacro %}
+
+
+{# ─── ds_modal ───────────────────────────────────────────────────────────
+   Native <dialog>-based modal. JS-free — caller drives open/close via
+   `document.getElementById(id).showModal()` / `.close()`. The native
+   <dialog> element provides focus trap, ESC-to-close, and backdrop-click
+   semantics automatically (>96% browser support; no polyfill needed).
+
+   A11y contract (WAI-ARIA APG Dialog pattern):
+     - Uses native <dialog> element (NOT role="dialog" on a div)
+     - aria-labelledby wired to "{id}-title" (the header <h2>)
+     - aria-describedby wired to `describedby` kwarg when provided
+     - Focus trap + initial focus: handled natively by showModal()
+     - Escape-to-close and backdrop-click close: native
+       (close button lives in <form method="dialog"> so submit closes)
+
+   Args:
+     id            dialog id (required; caller's JS target)
+     title         header text + aria-labelledby target (required)
+     size          sm|md|lg|xl → max-w-sm|md|2xl|4xl (default md)
+     dismissible   render close (×) button (default true)
+     close_label   i18n aria-label for the close button
+     describedby   optional id for aria-describedby wiring
+
+   Example:
+     {% call ds_modal(id="edit-user", title="Edit User", size="lg") %}
+       <form>…</form>
+     {% endcall %}
+#}
+{% macro ds_modal(id, title, size="md", dismissible=true, close_label="Close", describedby=None) %}
+{% set sizes = {"sm": "max-w-sm", "md": "max-w-md", "lg": "max-w-2xl", "xl": "max-w-4xl"} %}
+<dialog id="{{ id }}"
+        aria-labelledby="{{ id }}-title"
+        {% if describedby %}aria-describedby="{{ describedby }}"{% endif %}
+        class="ds-modal bg-surface-primary text-primary-theme rounded-xl shadow-xl border border-default p-0 w-full {{ sizes.get(size, sizes['md']) }} backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+        {% if dismissible %}data-ds-modal-dismissible="true"{% endif %}>
+    <header class="flex items-start justify-between gap-4 px-6 py-4 border-b border-default">
+        <h2 id="{{ id }}-title" class="text-lg font-semibold text-primary-theme">{{ title }}</h2>
+        {% if dismissible %}
+        <form method="dialog" class="m-0">
+            <button type="submit" aria-label="{{ close_label }}" class="p-1 rounded hover:bg-surface-secondary transition-colors">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            </button>
+        </form>
+        {% endif %}
+    </header>
+    <div class="px-6 py-4">{{ caller() }}</div>
+</dialog>
 {% endmacro %}
