@@ -12,6 +12,7 @@
     - macros/ds/display.html         — ds_card, ds_stat_card, ds_alert, ds_badge, ds_table, ds_static_table
     - macros/ds/display_dialogs.html — ds_modal  (dialog family — py7u.2.3 split)
     - macros/ds/forms.html           — ds_button
+    - macros/ds/navigation.html     — ds_tabs, ds_tab_panel
 
   Add new primitives to the appropriate concern file AND re-export below.
 
@@ -37,6 +38,8 @@
 {% import "macros/ds/display.html"         as _display  %}
 {% import "macros/ds/display_dialogs.html" as _dialogs  %}
 {% import "macros/ds/forms.html"           as _forms    %}
+{% import "macros/ds/navigation.html"      as _nav      %}
+
 {% set ds_page_shell = _layout.ds_page_shell %}
 {% set ds_card_grid  = _layout.ds_card_grid %}
 {% set ds_stats_row  = _layout.ds_stats_row %}
@@ -50,5 +53,7 @@
 {% set ds_static_table = _display.ds_static_table %}
 
 {% set ds_modal      = _dialogs.ds_modal %}
-
 {% set ds_button     = _forms.ds_button %}
+
+{% set ds_tabs       = _nav.ds_tabs %}
+{% set ds_tab_panel  = _nav.ds_tab_panel %}
