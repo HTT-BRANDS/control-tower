@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card, ds_card_grid %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_card_grid, ds_table %}
 
 {% block title %}Riverside Compliance Dashboard{% endblock %}
 
@@ -166,29 +166,12 @@
     {% endcall %}
 
     {# ── Tenant Breakdown ─────────────────────────────────────────────── #}
-    {% call ds_card(extra_classes="!p-0 overflow-hidden") %}
-        <div class="px-6 py-4 border-b border-theme">
-            <h2 class="text-lg font-semibold text-primary-theme">Tenant Compliance Status</h2>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-secondary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Tenant</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Maturity</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">MFA</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Admin MFA</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Devices</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Requirements</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Gaps</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-surface-primary divide-y divide-border-default" id="tenant-table">
-                    <!-- Populated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    {% endcall %}
+    {{ ds_table(
+        title="Tenant Compliance Status",
+        columns=["Tenant", "Maturity", "MFA", "Admin MFA", "Devices", "Requirements", "Gaps"],
+        body_id="tenant-table",
+        loading_message="Loading tenants…"
+    ) }}
 
     {# ── Requirements by Status & Priority ────────────────────────────── #}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
