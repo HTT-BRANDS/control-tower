@@ -22,6 +22,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 ROOT = Path(__file__).parent.parent.parent
 TEMPLATES_DIR = ROOT / "app" / "templates"
 DS_MACROS = TEMPLATES_DIR / "macros" / "ds.html"
+DS_CONCERN_DIR = TEMPLATES_DIR / "macros" / "ds"
 SHOWCASE_HTML = TEMPLATES_DIR / "pages" / "design_system.html"
 DESIGN_TOKENS_CSS = ROOT / "app" / "static" / "css" / "design-tokens.css"
 
@@ -75,18 +76,44 @@ class TestFilesExist:
     def test_showcase_page_exists(self):
         assert SHOWCASE_HTML.exists(), "app/templates/pages/design_system.html missing"
 
-    def test_ds_macros_under_400_lines(self):
-        """ADR-0005 cohesion budget for the primitive library.
+    def test_ds_facade_is_thin(self):
+        """ADR-0005 cohesion budget — the re-export facade stays tiny.
 
-        Phase 2 seeded this at <300. Phase 4 adds more primitives (ds_badge
-        first, then DataTable/Modal/Tabs/FormField/Toolbar per the ADR), so
-        the budget grows to 400 — still comfortably under the 600-line
-        per-file ceiling and small enough to keep everything in one scroll.
-        If the file crosses 400, split by concern (layout vs. form vs.
-        display) rather than bumping the number again.
+        Phase 4b-i (bd py7u.2.1) split the monolithic ds.html into
+        cohesion-based concern files (layout/display/forms) and turned
+        ds.html into a thin re-export facade. The facade should only
+        contain import+alias plumbing and a short docblock; new primitives
+        belong in the concern files, not here.
         """
         n = len(DS_MACROS.read_text().splitlines())
-        assert n < 400, f"ds.html is {n} lines — target <400 per ADR-0005"
+        assert n < 50, f"ds.html facade is {n} lines — target <50 (see py7u.2.1)"
+
+    def test_ds_concern_files_exist(self):
+        """Phase 4b-i: the 3 cohesion-based concern files must exist."""
+        for fname in ("layout.html", "display.html", "forms.html"):
+            fpath = DS_CONCERN_DIR / fname
+            assert fpath.exists(), f"missing concern file: macros/ds/{fname}"
+
+    def test_ds_concern_files_within_budget(self):
+        """ADR-0005 per-file cohesion budget for the split primitive library.
+
+        Each concern file holds a coherent slice of the ds-template library.
+        The budget is <250L per file — well under the 600-line project
+        ceiling and tight enough that any single concern fits on a couple
+        of screens. If a concern file crosses 250, split it further (e.g.
+        display → display + data) rather than bumping the number.
+
+        Note: the raw content of the existing byte-for-byte preserved
+        macro docstrings puts display.html in the 210-230L range; that is
+        expected and why the budget is 250, not 200. When adding new
+        primitives under py7u.2.2-.6, respect the 250 cap by slicing.
+        """
+        budget = 250
+        for fpath in sorted(DS_CONCERN_DIR.glob("*.html")):
+            n = len(fpath.read_text().splitlines())
+            assert n < budget, (
+                f"macros/ds/{fpath.name} is {n} lines — target <{budget} per ADR-0005"
+            )
 
 
 # ── Macro declaration invariants ───────────────────────────────
@@ -105,8 +132,36 @@ class TestMacroDeclarations:
 
     @pytest.mark.parametrize("macro_name", REQUIRED_MACROS)
     def test_macro_is_defined(self, macro_name):
-        content = DS_MACROS.read_text()
-        assert f"macro {macro_name}(" in content, f"Macro {macro_name} not defined in ds.html"
+        """Every required primitive must be defined in one of the concern files.
+
+        After py7u.2.1 the monolithic ds.html was split into layout/display/
+        forms concern files and ds.html became a re-export facade. The macro
+        definition lives in exactly one concern file; this test walks all of
+        them to find it.
+        """
+        needle = f"macro {macro_name}("
+        hits = [fpath for fpath in DS_CONCERN_DIR.glob("*.html") if needle in fpath.read_text()]
+        assert hits, f"Macro {macro_name} not defined in any macros/ds/*.html concern file"
+        assert len(hits) == 1, f"Macro {macro_name} defined in multiple concern files: {hits}"
+
+    @pytest.mark.parametrize("macro_name", REQUIRED_MACROS)
+    def test_macro_is_exported_via_facade(self, macro_name):
+        """Every required primitive must be reachable through the ds.html facade.
+
+        Callers depend on ``{% from "macros/ds.html" import ds_card, ... %}``.
+        After the py7u.2.1 split, ds.html re-exports macros from the concern
+        files via ``{% set ds_foo = _ns.ds_foo %}``. This test verifies the
+        re-export actually publishes each macro on the facade's module
+        namespace (Jinja's ``{% from ... import %}`` and ``{% include %}`` both
+        silently fail to re-export -- hence the alias pattern).
+        """
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        module = env.get_template("macros/ds.html").module
+        assert hasattr(module, macro_name), (
+            f"{macro_name} is not exported by macros/ds.html (facade broken)"
+        )
 
 
 # ── Render-layer invariants ─────────────────────────────────────

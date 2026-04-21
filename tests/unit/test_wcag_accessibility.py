@@ -572,17 +572,29 @@ class TestDsButtonTargetSize:
     """
 
     MACROS_FILE = ROOT / "app" / "templates" / "macros" / "ds.html"
+    MACROS_DIR = ROOT / "app" / "templates" / "macros" / "ds"
 
     def _macro_source(self, name: str) -> str:
-        """Return the raw body of a macro by name (between '{% macro foo' and '{% endmacro %}')."""
-        content = self.MACROS_FILE.read_text()
-        m = re.search(
+        """Return the raw body of a macro by name.
+
+        After py7u.2.1 ds.html became a re-export facade; the macro bodies
+        live in macros/ds/{layout,display,forms}.html. We search the facade
+        first and then walk the concern files.
+        """
+        pattern = re.compile(
             r"\{%\s*macro\s+" + re.escape(name) + r"\s*\([^)]*\)\s*%\}(.*?)\{%\s*endmacro\s*%\}",
-            content,
             re.DOTALL,
         )
-        assert m, f"macro {name} not found in ds.html"
-        return m.group(1)
+        candidates = [self.MACROS_FILE, *sorted(self.MACROS_DIR.glob("*.html"))]
+        for fpath in candidates:
+            if not fpath.exists():
+                continue
+            m = pattern.search(fpath.read_text())
+            if m:
+                return m.group(1)
+        raise AssertionError(
+            f"macro {name} not found in ds.html or any macros/ds/*.html concern file"
+        )
 
     def test_ds_button_has_adequate_vertical_padding(self):
         """ds_button's base classes must include py-2 or larger (=>16px vertical padding)."""
