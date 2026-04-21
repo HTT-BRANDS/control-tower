@@ -50,37 +50,21 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
          id="tenant-scores"></div>
 
-    {# ── Tenant status table with in-card filter pills ────────────────
-       ds_table doesn't expose header actions, so this one is hand-rolled
-       on top of ds_card to keep the filter buttons in the card header. #}
-    {% call ds_card(extra_classes="!p-0 overflow-hidden") %}
-        <header class="px-6 py-4 border-b border-default flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-primary-theme">Tenant Email Security Status</h3>
-            <div class="flex gap-2">
-                <button type="button" data-filter-tenant="all"
-                        class="px-3 py-1 text-sm rounded-full bg-brand-primary-5 text-brand-primary dark:text-brand-secondary">
-                    All
-                </button>
-                <button type="button" data-filter-tenant="riverside"
-                        class="px-3 py-1 text-sm rounded-full bg-surface-tertiary text-secondary-theme">
-                    Riverside Only
-                </button>
-            </div>
-        </header>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-tertiary">
-                    <tr>
-                        {% for col in ["Tenant", "Security Score", "DMARC Policy", "DKIM Status", "Domains", "Last Sync"] %}
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">{{ col }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody class="bg-surface-primary divide-y divide-border-default" id="tenant-table">
-                    <tr><td colspan="6" class="px-6 py-4 text-center text-muted-theme">Loading tenants…</td></tr>
-                </tbody>
-            </table>
-        </div>
+    {# ── Tenant status table with in-card filter pills ──────────────── #}
+    {% call ds_table(
+        title="Tenant Email Security Status",
+        columns=["Tenant", "Security Score", "DMARC Policy", "DKIM Status", "Domains", "Last Sync"],
+        body_id="tenant-table",
+        loading_message="Loading tenants…"
+    ) %}
+        <button type="button" data-filter-tenant="all"
+                class="px-3 py-1 text-sm rounded-full bg-brand-primary-5 text-brand-primary dark:text-brand-secondary">
+            All
+        </button>
+        <button type="button" data-filter-tenant="riverside"
+                class="px-3 py-1 text-sm rounded-full bg-surface-tertiary text-secondary-theme">
+            Riverside Only
+        </button>
     {% endcall %}
 
     {# ── DMARC / DKIM compliance breakdown (extracted partial) ───────── #}

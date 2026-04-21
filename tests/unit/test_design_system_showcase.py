@@ -552,6 +552,99 @@ class TestStaticTableDeclaration:
         )
 
 
+# ── ds_table header-slot (py7u.2.7 follow-up, hikx) ─────────────
+class TestDsTableHeaderSlot:
+    """ds_table must support an optional {% call %} caller for header extras.
+
+    py7u.2.7 left dmarc_dashboard.html and riverside_dashboard.html gaps-table
+    bespoke because their headers carry filter pills / live count badges that
+    ds_table's string-only `title` param couldn't express. hikx extends the
+    macro with a caller-based header slot while preserving backward compat
+    for the 5+ existing `{{ ds_table(...) }}` call sites.
+
+    Contract:
+      - `{{ ds_table(...) }}` (no caller): unchanged — delegates title to
+        ds_card(title=title), renders no inline <header>.
+      - `{% call ds_table(...) %}…{% endcall %}`: ds_card is called WITHOUT
+        title, and an inline <header> renders the title + slot content in a
+        flex-aligned row.
+      - Slot content is rendered exactly once (caller captured once, not
+        double-invoked).
+    """
+
+    @staticmethod
+    def _render(env: Environment, body: str) -> str:
+        tmpl = env.from_string('{% from "macros/ds.html" import ds_table %}' + body)
+        return tmpl.render()
+
+    def test_backward_compat_no_caller(self, macros_env):
+        """`{{ ds_table(...) }}` must render the pre-hikx shape unchanged."""
+        html = self._render(
+            macros_env,
+            '{{ ds_table(title="Alerts", columns=["A","B"], body_id="t1") }}',
+        )
+        # Title flows through ds_card header (aria-labelledby wiring)
+        assert 'id="card-alerts"' in html, (
+            "backward-compat path must still use ds_card's title header "
+            "(ds_card emits aria-labelledby='card-<slug>')"
+        )
+        # No inline slot-header markup leaks into no-caller path
+        assert "flex justify-between items-center" not in html, (
+            "slot header markup must NOT render when no caller is provided"
+        )
+        # Core table structure still there
+        assert 'id="t1"' in html
+        assert html.count('scope="col"') == 2
+
+    def test_caller_injects_slot_into_flex_header(self, macros_env):
+        """`{% call %}` body must render inside a flex-aligned <header>."""
+        html = self._render(
+            macros_env,
+            '{% call ds_table(title="Tenants", columns=["A","B"], body_id="t2") %}'
+            '<button class="pill-all">All</button>'
+            '<button class="pill-one">Filter</button>'
+            "{% endcall %}",
+        )
+        # Slot buttons rendered
+        assert "pill-all" in html and "pill-one" in html
+        # Slot lives in the flex header row (not in tbody)
+        assert "flex justify-between items-center" in html
+        # Title still displayed (inside the new <header>, not via ds_card.title)
+        assert ">Tenants<" in html
+        # ds_card must NOT render its own title header when slot is active
+        # (passing title=None to ds_card → no aria-labelledby emitted)
+        assert 'id="card-tenants"' not in html, (
+            "double-header regression: ds_card header rendered alongside slot header"
+        )
+
+    def test_slot_content_rendered_exactly_once(self, macros_env):
+        """Caller capture must not double-invoke the slot body."""
+        html = self._render(
+            macros_env,
+            '{% call ds_table(title="T", columns=["A"], body_id="t3") %}'
+            '<span class="sentinel">UNIQUE</span>'
+            "{% endcall %}",
+        )
+        assert html.count("UNIQUE") == 1, (
+            f"slot rendered {html.count('UNIQUE')} times — caller invoked twice? "
+            "The `{% set header_extras = caller if caller else None %}` capture "
+            "must be a callable reference, not an immediate invocation."
+        )
+
+    def test_slot_body_evaluates_jinja_expressions(self, macros_env):
+        """Slot body runs through the Jinja parser, not string interpolation."""
+        tmpl = macros_env.from_string(
+            '{% from "macros/ds.html" import ds_table %}'
+            "{% set badge_count = 42 %}"
+            '{% call ds_table(title="Gaps", columns=["A"], body_id="t4") %}'
+            '<span id="gaps-count">{{ badge_count }}</span>'
+            "{% endcall %}"
+        )
+        html = tmpl.render()
+        assert "42" in html, "nested Jinja expression didn't evaluate inside slot"
+        assert 'id="gaps-count"' in html
+
+
 # ── ds_modal render smoke tests (py7u.2.3) ─────────────────────
 class TestDsModalRendersWithA11yWiring:
     """ds_modal must render native <dialog> markup with correct a11y wiring.

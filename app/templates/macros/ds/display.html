@@ -200,12 +200,28 @@
        sets !p-0 overflow-hidden so the table sits flush inside the card)
 
    Rows are deliberately NOT a param: every consuming page renders rows from
-   fetched JSON via client-side JS. If a server-rendered row use case arises
-   later, add a {% call %} body (caller()) and an "if caller" branch.
+   fetched JSON via client-side JS. For server-rendered rows use
+   ds_static_table instead (its caller() supplies <tr>/<td> markup).
+
+   Header slot (py7u.2.7 follow-up, hikx):
+     Invoke as `{% call ds_table(...) %}<slot markup>{% endcall %}` to inject
+     caller content into a flex-aligned header row next to the title —
+     intended for filter pills, count badges, or action buttons. Plain
+     `{{ ds_table(...) }}` invocations are unaffected (backward-compat).
+     Reference usage: dmarc_dashboard.html tenant-table.
 ─────────────────────────────────────────────────────────────────────────────── #}
 {% macro ds_table(title, columns, body_id, loading_message="Loading...",
                    extra_card_classes="!p-0 overflow-hidden") %}
-{% call ds_card(title=title, extra_classes=extra_card_classes) %}
+{# Capture caller() once — invoking it twice would emit slot content twice. #}
+{% set header_extras = caller if caller else None %}
+{% call ds_card(title=(title if not header_extras else None),
+                extra_classes=extra_card_classes) %}
+    {% if header_extras %}
+    <header class="px-6 py-4 border-b border-default flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-primary-theme">{{ title }}</h3>
+        <div class="flex items-center gap-2">{{ header_extras() }}</div>
+    </header>
+    {% endif %}
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-border-default">
             <thead class="bg-surface-tertiary">
