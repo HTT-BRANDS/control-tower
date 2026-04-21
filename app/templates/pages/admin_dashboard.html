@@ -82,7 +82,17 @@
                 </div>
             </div>
 
-            {# Table #}
+            {# Users table.
+               Intentionally NOT using the ds_table macro (hbvt YAGNI audit, 2026-04):
+                 - Compact chrome (text-sm, no divide-y) vs ds_table's default
+                 - HTMX-load pattern with per-column skeleton widths (not a JS
+                   hydration pattern — ds_table expects post-load JS fill)
+                 - data-table="admin-users" e2e selector, role/aria wrapper
+                 - Column-aware alignment (left/center/right) — no precedent elsewhere
+               Only call site of this shape. Extending ds_table would balloon its
+               API surface for zero reuse. Column parity (thead/skeleton/partial)
+               is guarded by test_admin_users_table_column_parity.
+            #}
             <div class="overflow-x-auto" role="region" aria-label="Users table" tabindex="0">
                 <table class="w-full text-sm" data-table="admin-users">
                     <thead>

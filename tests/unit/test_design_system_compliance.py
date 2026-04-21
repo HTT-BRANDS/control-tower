@@ -476,3 +476,70 @@ def _contrast_ratio(color1: str, color2: str) -> float:
     lighter = max(l1, l2)
     darker = min(l1, l2)
     return (lighter + 0.05) / (darker + 0.05)
+
+
+# ── Structural invariants (hbvt) ────────────────────────────────
+# These aren't "color compliance" strictly — they guard template-level
+# invariants where a visual regression isn't caught by type checks or route
+# tests. Placed here because the file already encodes "prevent silent
+# template drift" (banned colors, banned gray, ghost classes).
+
+
+class TestAdminDashboardUsersTable:
+    """Guards the admin_dashboard users-table (intentionally bespoke per hbvt).
+
+    Because the table is NOT rendered via the ds_table macro, nothing else
+    checks that the three places defining its column shape stay in sync:
+
+      1. <thead> in pages/admin_dashboard.html       ← the visual contract
+      2. Skeleton <tr> (animate-pulse) same file     ← HTMX pre-load state
+      3. Data <tr> in partials/admin_users_table_body.html  ← HTMX post-load
+
+    If any of these drift out of alignment, the table "jumps" when HTMX
+    swaps in real data — a visible, user-facing bug that's easy to miss
+    in code review. This test makes the invariant explicit.
+    """
+
+    ADMIN_DASHBOARD = TEMPLATES_DIR / "pages" / "admin_dashboard.html"
+    USERS_PARTIAL = TEMPLATES_DIR / "partials" / "admin_users_table_body.html"
+
+    def test_admin_users_table_column_parity(self):
+        """Thead <th>, skeleton <td>, and partial data <td> counts must match."""
+        dash = self.ADMIN_DASHBOARD.read_text()
+        partial = self.USERS_PARTIAL.read_text()
+
+        # --- thead column count (the authoritative visual contract) ---
+        thead_match = re.search(
+            r'<table class="w-full text-sm" data-table="admin-users">.*?<thead>(.*?)</thead>',
+            dash,
+            re.DOTALL,
+        )
+        assert thead_match, "admin-users <thead> not found — did the table markup change?"
+        thead_cols = len(re.findall(r"<th\b", thead_match.group(1)))
+
+        # --- skeleton row (HTMX pre-load placeholder) ---
+        skeleton_match = re.search(
+            r'<tr class="border-b border-default animate-pulse">(.*?)</tr>',
+            dash,
+            re.DOTALL,
+        )
+        assert skeleton_match, "skeleton row not found — did the animate-pulse class change?"
+        skeleton_cols = len(re.findall(r"<td\b", skeleton_match.group(1)))
+
+        # --- data row in the HTMX partial (post-load) ---
+        data_match = re.search(
+            r'<tr class="border-b border-default hover:bg-surface-secondary[^"]*">(.*?)</tr>',
+            partial,
+            re.DOTALL,
+        )
+        assert data_match, "data row in users partial not found — did the row class change?"
+        data_cols = len(re.findall(r"<td\b", data_match.group(1)))
+
+        assert thead_cols == skeleton_cols == data_cols, (
+            f"Column count mismatch in admin_dashboard users table — "
+            f"the table will visibly jump on HTMX load:\n"
+            f"  thead:   {thead_cols} <th>\n"
+            f"  skeleton:{skeleton_cols} <td>\n"
+            f"  data:    {data_cols} <td>\n"
+            f"All three must match. Update all three when adding/removing columns."
+        )
