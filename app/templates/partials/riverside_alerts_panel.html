@@ -11,6 +11,7 @@
      * due_date: string
      * is_overdue: boolean
 #}
+{% from "macros/ds.html" import ds_static_table %}
 <div id="riverside-alerts-panel" class="bg-white rounded-lg shadow border-l-4 border-brand-error-100">
     {# Header #}
     <div class="p-6 border-b border-brand-gray-50 bg-brand-error-5">
@@ -44,19 +45,10 @@
     
     {# Alerts Content #}
     {% if critical_gaps and critical_gaps|length > 0 %}
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-brand-gray-50">
-            <thead class="bg-brand-error-5">
-                <tr>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">ID</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">Gap</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">Category</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">Priority</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">Risk</th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-brand-error-100 uppercase tracking-wider">Due</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-brand-gray-50">
+    {% call ds_static_table(
+        columns=["ID", "Gap", "Category", "Priority", "Risk", "Due"],
+        caption="Critical compliance gaps requiring immediate attention"
+    ) %}
                 {% for gap in critical_gaps[:10] %}
                 <tr class="{{ 'bg-brand-error-5' if gap.is_overdue else '' }} hover:bg-brand-gray-5 transition-colors">
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-primary-theme">{{ gap.requirement_id }}</td>
@@ -90,9 +82,7 @@
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% endcall %}
     
     {# View All Link (if more than 10) #}
     {% if critical_gaps|length > 10 %}

@@ -13,6 +13,7 @@
      * is_overdue: boolean
    - requirements_by_status: dict of status counts
 #}
+{% from "macros/ds.html" import ds_static_table %}
 <div id="riverside-requirements-list" class="bg-white rounded-lg shadow">
     {# Header with Filters #}
     <div class="p-6 border-b border-brand-gray-50">
@@ -70,19 +71,10 @@
     
     {# Requirements Table #}
     {% if requirements %}
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-brand-gray-50">
-            <thead class="bg-brand-gray-5">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">ID</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Requirement</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Category</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Priority</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Status</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Due Date</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-brand-gray-50">
+    {% call ds_static_table(
+        columns=["ID", "Requirement", "Category", "Priority", "Status", "Due Date"],
+        caption="Riverside requirements — filter, sort, and track compliance status"
+    ) %}
                 {% set status_colors = {
                     'completed': 'bg-brand-success-10 text-brand-success-100',
                     'in_progress': 'bg-brand-primary-10 text-brand-primary-100',
@@ -120,9 +112,7 @@
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% endcall %}
     
     {# Footer with Status Summary #}
     <div class="px-6 py-4 border-t border-brand-gray-50 bg-brand-gray-5">
