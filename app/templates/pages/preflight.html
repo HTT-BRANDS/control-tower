@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card, ds_button, ds_badge, ds_stat_card %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_button, ds_badge, ds_stat_card, ds_static_table %}
 
 {% block nav_preflight %}bg-brand-primary-110{% endblock %}
 
@@ -104,68 +104,58 @@
     {% endif %}
 
     {# ── Detailed Check Results ──────────────────────────────────────── #}
-    {% call ds_card(title="Check Results", extra_classes="!p-0 overflow-hidden") %}
-        {% if results %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-secondary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left  text-xs font-medium text-secondary-theme uppercase">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left  text-xs font-medium text-secondary-theme uppercase">Check</th>
-                        <th scope="col" class="px-6 py-3 text-left  text-xs font-medium text-secondary-theme uppercase">Category</th>
-                        <th scope="col" class="px-6 py-3 text-left  text-xs font-medium text-secondary-theme uppercase">Message</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-secondary-theme uppercase">Duration</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-secondary-theme uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border-default">
-                    {% for result in results %}
-                    {% set rstyle = result_status_styles.get(result.status, default_result_style) %}
-                    <tr class="hover:bg-surface-secondary" hx-vals='{{ {"check_id": result.check_id}|tojson }}'>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ ds_badge(rstyle.label, variant=rstyle.variant) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">
-                            {{ result.name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">
-                            <span class="px-2 py-1 text-xs rounded bg-surface-secondary">{{ result.category }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-primary-theme max-w-md truncate">
-                            {{ result.message }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme text-right">
-                            {{ "%.2f"|format(result.duration_ms) }}ms
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            {% if result.recommendations and result.status == 'fail' %}
-                            <button type="button"
-                                    class="text-brand-primary dark:text-brand-secondary hover:underline"
-                                    data-toggle-rec="{{ result.check_id }}">
-                                View Fixes
-                            </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% if result.recommendations and result.status == 'fail' %}
-                    <tr id="rec-{{ result.check_id }}" class="hidden">
-                        <td colspan="6" class="px-6 py-4 bg-surface-secondary">
-                            <div class="text-sm">
-                                <strong class="text-danger">Recommendations:</strong>
-                                <ul class="mt-2 ml-4 list-disc">
-                                    {% for rec in result.recommendations %}
-                                    <li class="text-primary-theme">{{ rec }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
+    {% if results %}
+    {% call ds_static_table(
+        columns=["Status", "Check", "Category", "Message", "Duration", "Actions"],
+        title="Check Results",
+        caption="Preflight compliance check results — per-check status, duration, and remediation"
+    ) %}
+        {% for result in results %}
+        {% set rstyle = result_status_styles.get(result.status, default_result_style) %}
+        <tr class="hover:bg-surface-secondary" hx-vals='{{ {"check_id": result.check_id}|tojson }}'>
+            <td class="px-6 py-4 whitespace-nowrap">
+                {{ ds_badge(rstyle.label, variant=rstyle.variant) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">
+                {{ result.name }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">
+                <span class="px-2 py-1 text-xs rounded bg-surface-secondary">{{ result.category }}</span>
+            </td>
+            <td class="px-6 py-4 text-sm text-primary-theme max-w-md truncate">
+                {{ result.message }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme text-right">
+                {{ "%.2f"|format(result.duration_ms) }}ms
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                {% if result.recommendations and result.status == 'fail' %}
+                <button type="button"
+                        class="text-brand-primary dark:text-brand-secondary hover:underline"
+                        data-toggle-rec="{{ result.check_id }}">
+                    View Fixes
+                </button>
+                {% endif %}
+            </td>
+        </tr>
+        {% if result.recommendations and result.status == 'fail' %}
+        <tr id="rec-{{ result.check_id }}" class="hidden">
+            <td colspan="6" class="px-6 py-4 bg-surface-secondary">
+                <div class="text-sm">
+                    <strong class="text-danger">Recommendations:</strong>
+                    <ul class="mt-2 ml-4 list-disc">
+                        {% for rec in result.recommendations %}
+                        <li class="text-primary-theme">{{ rec }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    {% endcall %}
+    {% else %}
+    {% call ds_card(extra_classes="!p-0 overflow-hidden") %}
         <div class="px-6 py-12 text-center">
             <div class="text-secondary-theme mb-4">
                 <svg class="w-12 h-12 mx-auto mb-4 text-muted-theme" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -176,48 +166,37 @@
             {{ ds_button(label="Run Preflight Checks", variant="primary",
                          extra_attrs='hx-post="/api/v1/preflight/run" hx-swap="none"') }}
         </div>
-        {% endif %}
     {% endcall %}
+    {% endif %}
 
     {# ── Tenant-Specific Summaries ───────────────────────────────────── #}
     {% if tenant_summaries %}
-    {% call ds_card(title="Tenant-Specific Results", extra_classes="!p-0 overflow-hidden") %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-secondary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left   text-xs font-medium text-secondary-theme uppercase">Tenant</th>
-                        <th scope="col" class="px-6 py-3 text-left   text-xs font-medium text-secondary-theme uppercase">Status</th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-secondary-theme uppercase">Passed</th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-secondary-theme uppercase">Warnings</th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-secondary-theme uppercase">Failed</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border-default">
-                    {% for summary in tenant_summaries %}
-                    {% set tstyle = tenant_status_styles.get(summary.overall_status, default_tenant_style) %}
-                    <tr class="hover:bg-surface-secondary">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-primary-theme">{{ summary.tenant_name }}</div>
-                            <div class="text-xs text-secondary-theme">{{ summary.tenant_id }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ ds_badge(tstyle.label, variant=tstyle.variant) }}
-                        </td>
-                        <td class="px-6 py-4 text-center text-sm">
-                            <span class="text-success font-medium">{{ summary.checks_passed }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-center text-sm">
-                            <span class="text-warning font-medium">{{ summary.checks_warning }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-center text-sm">
-                            <span class="text-danger font-medium">{{ summary.checks_failed }}</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    {% call ds_static_table(
+        columns=["Tenant", "Status", "Passed", "Warnings", "Failed"],
+        title="Tenant-Specific Results",
+        caption="Per-tenant preflight check breakdown — counts of passed, warning, and failed checks"
+    ) %}
+        {% for summary in tenant_summaries %}
+        {% set tstyle = tenant_status_styles.get(summary.overall_status, default_tenant_style) %}
+        <tr class="hover:bg-surface-secondary">
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-primary-theme">{{ summary.tenant_name }}</div>
+                <div class="text-xs text-secondary-theme">{{ summary.tenant_id }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                {{ ds_badge(tstyle.label, variant=tstyle.variant) }}
+            </td>
+            <td class="px-6 py-4 text-center text-sm">
+                <span class="text-success font-medium">{{ summary.checks_passed }}</span>
+            </td>
+            <td class="px-6 py-4 text-center text-sm">
+                <span class="text-warning font-medium">{{ summary.checks_warning }}</span>
+            </td>
+            <td class="px-6 py-4 text-center text-sm">
+                <span class="text-danger font-medium">{{ summary.checks_failed }}</span>
+            </td>
+        </tr>
+        {% endfor %}
     {% endcall %}
     {% endif %}
 
