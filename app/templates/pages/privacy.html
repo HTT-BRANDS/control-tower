@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/ds.html" import ds_page_shell, ds_card %}
+{% from "macros/ds.html" import ds_page_shell, ds_card, ds_static_table %}
 
 {% block title %}Privacy Policy - Azure Governance Platform{% endblock %}
 
@@ -83,43 +83,30 @@
         <h2 class="text-xl font-semibold mt-8 mb-4">5. Cookies and Tracking</h2>
         <p>We use cookies in the following categories:</p>
 
-        {# Table mirrors ds_table visual conventions (bg-surface-tertiary
-           header, divide-y borders, px-6 py-3 cells) so it looks identical
-           to the migrated dashboards — without forcing ds_table's
-           JS-populated-tbody contract onto static content. #}
-        <div class="mt-4 overflow-x-auto border border-default rounded-xl">
-            <table class="min-w-full divide-y divide-border-default">
-                <thead class="bg-surface-tertiary">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Category</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Purpose</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-theme uppercase tracking-wider">Required?</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-surface-primary divide-y divide-border-default">
-                    <tr>
-                        <td class="px-6 py-3 text-sm">Necessary</td>
-                        <td class="px-6 py-3 text-sm">Essential for site function (authentication, security)</td>
-                        <td class="px-6 py-3 text-sm font-semibold">Yes</td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-3 text-sm">Functional</td>
-                        <td class="px-6 py-3 text-sm">Preferences and settings (theme, language)</td>
-                        <td class="px-6 py-3 text-sm">No</td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-3 text-sm">Analytics</td>
-                        <td class="px-6 py-3 text-sm">Usage statistics and performance monitoring</td>
-                        <td class="px-6 py-3 text-sm">No</td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-3 text-sm">Marketing</td>
-                        <td class="px-6 py-3 text-sm">Advertising and personalization</td>
-                        <td class="px-6 py-3 text-sm">No</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        {% call ds_static_table(columns=["Category", "Purpose", "Required?"],
+                                caption="Cookie categories used on this site",
+                                extra_card_classes="!p-0 overflow-hidden mt-4") %}
+            <tr>
+                <td class="px-6 py-3 text-sm">Necessary</td>
+                <td class="px-6 py-3 text-sm">Essential for site function (authentication, security)</td>
+                <td class="px-6 py-3 text-sm font-semibold">Yes</td>
+            </tr>
+            <tr>
+                <td class="px-6 py-3 text-sm">Functional</td>
+                <td class="px-6 py-3 text-sm">Preferences and settings (theme, language)</td>
+                <td class="px-6 py-3 text-sm">No</td>
+            </tr>
+            <tr>
+                <td class="px-6 py-3 text-sm">Analytics</td>
+                <td class="px-6 py-3 text-sm">Usage statistics and performance monitoring</td>
+                <td class="px-6 py-3 text-sm">No</td>
+            </tr>
+            <tr>
+                <td class="px-6 py-3 text-sm">Marketing</td>
+                <td class="px-6 py-3 text-sm">Advertising and personalization</td>
+                <td class="px-6 py-3 text-sm">No</td>
+            </tr>
+        {% endcall %}
 
         <h2 class="text-xl font-semibold mt-8 mb-4">6. Data Retention</h2>
         <p>
