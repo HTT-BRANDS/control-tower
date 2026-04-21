@@ -1,0 +1,55 @@
+{#
+  ds/forms.html — form / action primitives for the ds-template library.
+
+  Part of the backward-compatible facade in macros/ds.html. See that file
+  for the full library context and ADR-0005 for the layered CSS architecture.
+
+  Macros: ds_button
+#}
+
+
+{# ─── ds_button ───────────────────────────────────────────────────────
+   Button OR anchor (set href to render an <a>). Brand-aware focus rings
+   come for free via design-utilities.css.
+
+   Args:
+     label     — button text
+     variant   — primary | secondary | danger | ghost
+     icon_svg  — optional inline SVG (rendered before the label)
+     type      — button type (default "button"); ignored when href is set
+     href      — if set, renders an <a> instead of a <button>
+     disabled  — disables the button
+     extra_classes
+     extra_attrs — string of extra HTML attrs (e.g. 'hx-post="/foo"')
+
+   Example:
+     {{ ds_button("Save", variant="primary", icon_svg=HEROICON_PLUS) }}
+     {{ ds_button("Cancel", variant="secondary", href="/back") }}
+#}
+{% macro ds_button(label, variant="primary", icon_svg=None, type="button",
+                   href=None, disabled=False, extra_classes="", extra_attrs="") %}
+{% set variants = {
+  "primary":   "bg-brand-primary-100 hover:bg-brand-primary-110 text-white shadow-sm hover:shadow-md",
+  "secondary": "bg-surface-primary text-secondary-theme hover:text-primary-theme border border-default",
+  "danger":    "btn-danger",
+  "ghost":     "bg-transparent text-brand-primary hover:bg-brand-primary-5 border border-brand-primary-50",
+} %}
+{% set base = "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" %}
+{% if href %}
+<a href="{{ href }}"
+   class="{{ base }} {{ variants[variant] }} {{ extra_classes }}"
+   {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+   {{ extra_attrs|safe }}>
+    {% if icon_svg %}<span aria-hidden="true">{{ icon_svg|safe }}</span>{% endif %}
+    <span>{{ label }}</span>
+</a>
+{% else %}
+<button type="{{ type }}"
+        class="{{ base }} {{ variants[variant] }} {{ extra_classes }}"
+        {% if disabled %}disabled aria-disabled="true"{% endif %}
+        {{ extra_attrs|safe }}>
+    {% if icon_svg %}<span aria-hidden="true">{{ icon_svg|safe }}</span>{% endif %}
+    <span>{{ label }}</span>
+</button>
+{% endif %}
+{% endmacro %}
