@@ -188,9 +188,13 @@
         {% endcall %}
     </div>
 
-    {# ── Critical Gaps Panel ──────────────────────────────────────────── #}
+    {# ── Critical Gaps Panel ────────────────────────────────────────────
+       Bespoke header by design (cwxu audit, 2026-04): this is the only
+       danger-themed table in the codebase, so adding a `variant='danger'`
+       kwarg to ds_table would be a YAGNI violation (single call site).
+       Keep the header hand-rolled; use ds_card + inline chrome. #}
     {% call ds_card(extra_classes="!p-0 overflow-hidden") %}
-        <div class="px-6 py-4 border-b border-theme bg-brand-error-5">
+        <div class="px-6 py-4 border-b border-default bg-brand-error-5">
             <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-danger">Critical Gaps Requiring Immediate Action</h2>
                 <span class="px-3 py-1 bg-brand-error-100 text-white text-sm font-medium rounded-full" id="gaps-count">0</span>
