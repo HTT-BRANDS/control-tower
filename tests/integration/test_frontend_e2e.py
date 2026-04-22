@@ -102,13 +102,25 @@ class TestTemplateIntegrity:
         assert (self.TEMPLATES_DIR / "login.html").exists()
 
     def test_macros_library_exists(self):
-        """REQ-907: Jinja2 UI component macro library."""
-        macro_file = self.TEMPLATES_DIR / "macros" / "ui.html"
-        assert macro_file.exists()
-        content = macro_file.read_text()
-        # Verify key macros are defined
-        assert "macro brand_button" in content
-        assert "macro brand_card" in content or "macro card" in content
+        """REQ-907: Jinja2 UI component macro library (design-system facade).
+
+        Post-py7u (ADR-0005): the legacy `macros/ui.html` was replaced by a
+        cohesion-based split under `macros/ds/` with `macros/ds.html` as a
+        backward-compatible re-export facade. Callers do:
+
+            {% from "macros/ds.html" import ds_button, ds_card, ... %}
+        """
+        facade = self.TEMPLATES_DIR / "macros" / "ds.html"
+        assert facade.exists(), "macros/ds.html facade should exist"
+        content = facade.read_text()
+        # Verify key primitives are re-exported via the `set alias = _ns.macro` pattern
+        assert "ds_button" in content, "ds.html must re-export ds_button"
+        assert "ds_card" in content, "ds.html must re-export ds_card"
+        # Primitives themselves live in the ds/ concern files
+        ds_dir = self.TEMPLATES_DIR / "macros" / "ds"
+        assert ds_dir.is_dir(), "macros/ds/ concern dir should exist"
+        assert (ds_dir / "forms.html").exists(), "forms.html holds ds_button"
+        assert (ds_dir / "display.html").exists(), "display.html holds ds_card"
 
     def test_dashboard_page_extends_base(self):
         """Dashboard page uses base template."""
@@ -423,49 +435,73 @@ class TestHTMXAttributes:
 
 
 class TestTailwindBuild:
-    """Validate the CSS build pipeline is properly configured."""
+    """Validate the CSS build pipeline is properly configured.
+
+    Architecture (per ADR-0005):
+      - Tailwind source:    app/static/css/input.css           (compiled by build-css.sh)
+      - Tailwind output:    app/static/css/tailwind-output.css (generated)
+      - Design tokens:      app/static/css/design-tokens.css   (hand-written, loaded BEFORE tailwind)
+      - Design utilities:   app/static/css/design-utilities.css (hand-written, loaded AFTER tailwind)
+
+    Build tool: `scripts/build-css.sh` downloads the Tailwind v3 standalone
+    binary (no Node/npm required, no package.json at repo root).
+    """
 
     def test_source_css_exists(self):
-        """Tailwind source file exists."""
+        """Design token file exists (Layer 1 of the CSS stack)."""
         assert Path("app/static/css/design-tokens.css").exists()
 
     def test_compiled_css_exists(self):
-        """Compiled CSS output exists."""
-        css_path = Path("app/static/css/tailwind-output.css")
-        assert css_path.exists()
-        # Compiled should be significantly larger than source
-        src_size = (
-            Path("app/static/css/design-tokens.css").stat().st_size
-            + Path("app/static/css/design-utilities.css").stat().st_size
-        )
-        compiled_size = css_path.stat().st_size
-        assert compiled_size > src_size * 2, (
-            f"Compiled CSS ({compiled_size}b) should be much larger than "
-            f"source ({src_size}b) — may not be compiled"
+        """Compiled Tailwind output exists and is meaningfully larger than its source.
+
+        The meaningful comparison is compiled-output vs its actual input
+        (`input.css`), NOT vs the sibling hand-written token/utility layers,
+        which are separate concerns loaded alongside — not inputs to Tailwind.
+        """
+        compiled = Path("app/static/css/tailwind-output.css")
+        source = Path("app/static/css/input.css")
+        assert compiled.exists(), "tailwind-output.css missing — run `scripts/build-css.sh`"
+        assert source.exists(), "input.css (Tailwind source) missing"
+        # Compiled expands @tailwind directives into thousands of utility classes;
+        # a real build is >>> 10x the tiny input file.
+        assert compiled.stat().st_size > source.stat().st_size * 10, (
+            f"Compiled CSS ({compiled.stat().st_size}b) should be much larger "
+            f"than source ({source.stat().st_size}b) — may not be compiled"
         )
 
-    def test_package_json_has_build_script(self):
-        """package.json has css:build script."""
-        import json
+    def test_build_script_exists(self):
+        """`scripts/build-css.sh` is the CSS build entrypoint.
 
-        pkg = json.loads(Path("package.json").read_text())
-        assert "css:build" in pkg.get("scripts", {}), "Missing css:build script"
+        There is intentionally no root `package.json` — Tailwind is invoked
+        via its standalone binary so the app has zero Node/npm dependency at
+        the repo root.
+        """
+        script = Path("scripts/build-css.sh")
+        assert script.exists(), "scripts/build-css.sh is the CSS build entrypoint"
+        assert script.stat().st_mode & 0o111, "build-css.sh must be executable"
+        body = script.read_text()
+        assert "tailwindcss" in body, "build-css.sh must invoke tailwindcss"
+        assert "app/static/css/input.css" in body, "build-css.sh must reference input.css"
 
-    def test_compiled_css_starts_with_tailwind_header(self):
-        """Compiled CSS has Tailwind header comment."""
-        css = (
-            Path("app/static/css/tailwind-output.css").read_text()
-            + Path("app/static/css/design-utilities.css").read_text()
+    def test_compiled_css_contains_tailwind_header(self):
+        """Compiled CSS carries the Tailwind provenance marker.
+
+        The Tailwind v3 binary embeds a `/*! tailwindcss vX.Y.Z | MIT License | ...*/`
+        banner in its output. It is not at byte 0 (Preflight reset rules
+        appear first) but it must be present — its absence means the file was
+        authored by hand or truncated.
+        """
+        css = Path("app/static/css/tailwind-output.css").read_text()
+        assert "/*! tailwindcss" in css, (
+            "Compiled CSS missing Tailwind banner — file was not produced by the Tailwind CLI"
         )
-        assert css.startswith("/*! tailwindcss"), "Compiled CSS doesn't start with Tailwind header"
 
-    def test_source_css_has_import_directive(self):
-        """Source CSS has @import 'tailwindcss' directive."""
-        css = (
-            Path("app/static/css/design-tokens.css").read_text()
-            + Path("app/static/css/design-utilities.css").read_text()
-        )
-        assert '@import "tailwindcss"' in css
+    def test_source_css_has_tailwind_directives(self):
+        """`input.css` is a Tailwind v3 source with the three @tailwind directives."""
+        css = Path("app/static/css/input.css").read_text()
+        assert "@tailwind base" in css, "input.css missing `@tailwind base`"
+        assert "@tailwind components" in css, "input.css missing `@tailwind components`"
+        assert "@tailwind utilities" in css, "input.css missing `@tailwind utilities`"
 
 
 # ============================================================================
