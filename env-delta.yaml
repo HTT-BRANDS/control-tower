@@ -48,8 +48,8 @@ environments:
       location: westus2
       secondary_location: westus2
       resource_group_pattern: rg-governance-staging-*
-      app_service_name: app-governance-staging-xncz
-      app_service_url: https://app-governance-staging-xncz.azurewebsites.net
+      app_service_name: app-governance-staging-xnczpwyv
+      app_service_url: https://app-governance-staging-xnczpwyv.azurewebsites.net
       container_image: ghcr.io/htt-brands/azure-governance-platform:staging
       container_registry: acrgovprod             # ACR reference (shared with prod)
     data:
@@ -63,7 +63,7 @@ environments:
     observability:
       log_retention_days: 14
     cors_origins:
-      - https://app-governance-staging-xncz.azurewebsites.net
+      - https://app-governance-staging-xnczpwyv.azurewebsites.net
     tags:
       Environment: staging
       ManagedBy: Bicep

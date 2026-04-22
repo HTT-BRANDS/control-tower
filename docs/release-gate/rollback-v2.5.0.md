@@ -35,12 +35,16 @@ the rollback mechanic. Rollback is done by re-pointing
 
 | Tag | Commit SHA | GHCR image tag | Role |
 |-----|-----------|----------------|------|
-| **`v2.5.0`** | `b1137cb` | `ghcr.io/htt-brands/azure-governance-platform:b1137cb` | **Rollback target** |
-| `v2.3.0` | `c4929227` | `...:c4929227` | Secondary fallback if v2.5.0 is also bad |
-| (HEAD) | `79d72c4` | `...:79d72c4` | The artifact being promoted |
+| **`v2.5.0`** | `b1137cb` | `ghcr.io/htt-brands/azure-governance-platform:sha-b1137cb10d3c8bea8ed2952652f5ea4fe2e791be` | **Primary rollback target** |
+| (recent) | `5c82c71` | `...:sha-5c82c7197eb45b5126f70311f2933cd51d348027` | Secondary fallback (intermediate-state, post-v2.5.0) |
+| (HEAD) | `79d72c4` | `...:sha-79d72c440669b1d721272ca42f6ce6939229ce80` | The artifact being promoted |
 
-**Verified**: both `b1137cb` and `c4929227` images exist in GHCR and have
-passed verify-production-image guard.
+**Verified 2026-04-22** (via `gh api /orgs/htt-brands/packages/.../versions`):
+- `v2.5.0` (`b1137cb`) image exists: package version id `800071134`, tag `sha-b1137cb10d3c8bea8ed2952652f5ea4fe2e791be`, created 2026-04-15 ✓
+- `5c82c71` image exists (secondary fallback) ✓
+- **`v2.3.0` (`c4929227`) image is NO LONGER in GHCR** — retention policy has pruned pre-April-18 images. If a two-version rollback is ever needed, image must be rebuilt via emergency `workflow_dispatch` on the `v2.3.0` tag first. (Only 79 SHA-tagged images currently retained in GHCR — recency cliff around 2026-04-18.)
+
+**IMAGE TAG FORMAT NOTE**: GHCR tags are `sha-<full 40-char SHA>`, NOT `<short 7-char SHA>`. The `az webapp config container set --container-image-name` command below uses the full-SHA form. Pasting a short-SHA form will silently fail with an opaque "manifest unknown" error.
 
 ---
 
@@ -107,17 +111,18 @@ If any answer is "no", first check `az webapp log tail` before deciding.
 
 ```bash
 # Pre-flight: confirm the target image exists in GHCR.
+# NOTE: tag is the FULL 40-char sha, prefixed with `sha-`.
 gh api -H "Accept: application/vnd.github+json" \
   /orgs/htt-brands/packages/container/azure-governance-platform/versions \
-  --jq '.[] | select(.metadata.container.tags[] == "b1137cb") | .id' \
+  --jq '.[] | select(.metadata.container.tags[]? == "sha-b1137cb10d3c8bea8ed2952652f5ea4fe2e791be") | .id' \
   | head -1
-# Expect: a non-empty numeric ID.
+# Expect: a non-empty numeric ID (was 800071134 at last audit 2026-04-22).
 
-# Pin prod to v2.5.0:
+# Pin prod to v2.5.0 (full-SHA tag is required):
 az webapp config container set \
   --name app-governance-prod \
   --resource-group rg-governance-prod-001 \
-  --container-image-name ghcr.io/htt-brands/azure-governance-platform:b1137cb \
+  --container-image-name ghcr.io/htt-brands/azure-governance-platform:sha-b1137cb10d3c8bea8ed2952652f5ea4fe2e791be \
   --container-registry-url https://ghcr.io \
   --container-registry-user "${GITHUB_ACTOR:-htt-brands-deploy}" \
   --container-registry-password "$GHCR_PAT"
@@ -159,12 +164,32 @@ curl -sf https://app-governance-prod.azurewebsites.net/healthz/data   | jq .
 # Both should return status=ok and no any_stale=true flags.
 ```
 
-### Step 5 — ONLY IF v2.5.0 also bad: drop to v2.3.0
+### Step 5 — ONLY IF v2.5.0 also bad
 
-Change the image tag in Step 1 from `:b1137cb` to `:c4929227` and
-re-run Steps 2–4. **Expect** `any_stale=true` on healthz/data because
-v2.3.0 predates the c56t/dais observability expansion — this is EXPECTED
-in a two-version rollback and is not a block.
+**v2.3.0 image (`c4929227`) is no longer available in GHCR** per the retention
+audit in §2 above. Two paths:
+
+**5a. Preferred — drop to `5c82c71` (intermediate-state, post-v2.5.0):**
+```bash
+az webapp config container set \
+  --name app-governance-prod \
+  --resource-group rg-governance-prod-001 \
+  --container-image-name ghcr.io/htt-brands/azure-governance-platform:sha-5c82c7197eb45b5126f70311f2933cd51d348027 \
+  --container-registry-url https://ghcr.io \
+  --container-registry-user "${GITHUB_ACTOR:-htt-brands-deploy}" \
+  --container-registry-password "$GHCR_PAT"
+# Then re-run Steps 2-4.
+```
+Note: `5c82c71` is the test-fix commit (closes bd 6o4g); it has identical app
+behavior to v2.5.0 for any runtime codepath, differing only in the test suite.
+Safe rollback target.
+
+**5b. Emergency — rebuild v2.3.0 from source tag:**
+If something is so broken that even `5c82c71` is inadequate, trigger the
+build workflow via `workflow_dispatch` on the `v2.3.0` tag to produce a fresh
+image. This is a ~8-minute operation and should not be attempted unless both
+`v2.5.0` and `5c82c71` are known-failing — it means you're in a cross-version
+data-compatibility scenario that warrants paging beyond Tyler.
 
 ---
 
