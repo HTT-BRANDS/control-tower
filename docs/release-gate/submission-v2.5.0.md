@@ -63,6 +63,32 @@ Total verified green: **3,713 tests** across 6 local suites + **6 green CI workf
 
 ---
 
+## 2bis. Gate scaffolding (addresses arbiter preconditions from prior run)
+
+In response to the first arbiter verdict (`PRECONDITIONS_NOT_MET`,
+run_id `rga-2026-04-22-azgov-v2.5.0-01`), four gate-infrastructure artifacts
+were stood up in commit `df84b18`:
+
+| # | Artifact | Size | Addresses precondition / pillar |
+|---|---|---|---|
+| 1 | `core_stack.yaml` | 197 lines | #2 (source mirror) + Pillar 5 (Stack Coherence) |
+| 2 | `env-delta.yaml` | 182 lines | #3 (env-delta.yaml) + Finding 2 (retroactive env-delta capture) |
+| 3 | `docs/release-gate/rollback-v2.5.0.md` | 208 lines | #5 (release-specific rollback) + Pillar 8 |
+| 4 | `docs/release-gate/rtm-v2.5.0.md` | 182 lines | #1 (RTM scoped to release) + Pillar 1 |
+
+**Validation of scaffolding itself**:
+- Both YAMLs parse cleanly via `python3 -c "import yaml; yaml.safe_load(...)"` (caught + fixed two parse errors during authoring).
+- RTM covers 64 bd tickets across 9 themes, 61 closed + 3 open.
+- Rollback plan matches actual `deploy-production.yml` mechanic (container-image-pin,
+  NOT slot-swap — this is a single-slot App Service).
+- Schema/data reversibility for v2.5.0..79d72c4 assessed: **CLEAN** (only alembic
+  change in window is `5292c5e` noqa-cleanup, zero DDL).
+
+Precondition #4 (change record / CAB artifact) is **this dossier**. Re-submission
+to arbiter is now appropriate.
+
+---
+
 ## 3. What is NOT green (with honest disclosure)
 
 ### 3.1 Staging validation suite — intermittent environment timeouts (bd `mvxt`)
