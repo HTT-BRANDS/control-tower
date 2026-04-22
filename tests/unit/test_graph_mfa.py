@@ -28,7 +28,7 @@ except ImportError:
             self.message = message
 
 
-from app.api.services.graph_client import (  # noqa: E402
+from app.api.services.graph_client import (
     ADMIN_ROLE_TEMPLATE_IDS,
     GraphClient,
     MFAError,

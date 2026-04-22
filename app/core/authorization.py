@@ -233,7 +233,7 @@ def filter_query_by_tenants(
 
     if not accessible_tenant_ids:
         # User has no tenant access - return empty result
-        return query.filter(False)  # noqa: F821
+        return query.filter(False)
 
     # Apply tenant filter
     entity_cls = query.column_descriptions[0]["entity"]

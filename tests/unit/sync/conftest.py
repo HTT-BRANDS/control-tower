@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 try:
     import azure.core.exceptions
     import azure.identity
-    import azure.mgmt.compute  # noqa: F401 - needed for quota_service
+    import azure.mgmt.compute
     import azure.mgmt.costmanagement
     import azure.mgmt.policyinsights
     import azure.mgmt.resource
@@ -17,11 +17,11 @@ except ImportError:
     AZURE_AVAILABLE = False
     raise  # Re-raise the error since Azure SDK should be installed
 
-import uuid  # noqa: E402
-from datetime import datetime, timedelta  # noqa: E402
-from unittest.mock import patch  # noqa: E402
+import uuid
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
-import pytest  # noqa: E402
+import pytest
 
 
 @pytest.fixture

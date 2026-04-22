@@ -426,7 +426,7 @@ def get_uami_provider(
     Returns:
         UAMICredentialProvider singleton instance
     """
-    global _provider  # noqa: PLW0603 — intentional module-level singleton
+    global _provider
     if _provider is None:
         from app.core.config import get_settings
 
@@ -457,6 +457,6 @@ def reset_provider() -> None:
     This clears the cached provider instance, forcing a new one to be
     created on the next get_uami_provider() call.
     """
-    global _provider  # noqa: PLW0603
+    global _provider
     _provider = None
     logger.debug("Reset UAMI provider singleton")

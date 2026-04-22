@@ -7,6 +7,6 @@ For now, just ensures the app package is importable.
 
 def test_app_module_imports():
     """The app package should be importable without errors."""
-    import app  # noqa: F811
+    import app
 
     assert app is not None

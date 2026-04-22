@@ -33,10 +33,10 @@ except ImportError:
         pass
 
 
-from app.models.riverside import (  # noqa: E402
+from app.models.riverside import (
     RequirementStatus,
 )
-from app.services.riverside_sync import (  # noqa: E402
+from app.services.riverside_sync import (
     ProgressTracker,
     SyncError,
     sync_all_tenants,

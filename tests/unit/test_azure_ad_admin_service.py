@@ -28,13 +28,13 @@ except ImportError:
             self.message = message
 
 
-from app.api.services.azure_ad_admin_service import (  # noqa: E402
+from app.api.services.azure_ad_admin_service import (
     AdminRoleError,
     AdminRoleMetrics,
     AzureADAdminService,
     azure_ad_admin_service,
 )
-from app.api.services.graph_client import (  # noqa: E402
+from app.api.services.graph_client import (
     AdminRoleSummary,
     DirectoryRole,
     PrivilegedAccessAssignment,

@@ -43,7 +43,7 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.par
 
 # Import submodules directly to avoid pulling app.core.__init__ (which
 # eagerly imports the scheduler + other heavy deps not needed here).
-import importlib  # noqa: E402
+import importlib
 
 _db = importlib.import_module("app.core.database")
 _tc = importlib.import_module("app.core.tenants_config")

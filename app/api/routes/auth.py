@@ -144,7 +144,7 @@ class TenantAccessInfo(BaseModel):
 
 # Dev-only credentials — never used outside ENVIRONMENT=development
 _DEV_USERNAME = "admin"
-_DEV_PASSWORD = "admin"  # noqa: S105
+_DEV_PASSWORD = "admin"
 
 
 @router.post("/login", response_model=TokenResponse)

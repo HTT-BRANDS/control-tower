@@ -33,9 +33,9 @@ with patch("app.core.cache.cached", no_op_cache):
         del sys.modules["app.api.services.cost_service"]
     from app.api.services.cost_service import CostService
 
-from app.models.cost import CostAnomaly  # noqa: E402
-from app.models.tenant import Tenant  # noqa: E402
-from app.schemas.cost import (  # noqa: E402
+from app.models.cost import CostAnomaly
+from app.models.tenant import Tenant
+from app.schemas.cost import (
     AnomaliesByService,
     BulkAcknowledgeResponse,
     TopAnomaly,

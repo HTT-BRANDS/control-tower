@@ -35,11 +35,11 @@ sys.modules.setdefault("azure.identity", _azure_mock)
 sys.modules.setdefault("azure.core", _azure_mock)
 sys.modules.setdefault("azure.core.exceptions", _azure_mock)
 
-from app.api.services.license_service import (  # noqa: E402
+from app.api.services.license_service import (
     LicenseService,
     LicenseServiceError,
 )
-from app.schemas.license import ServicePlanDetail, UserLicense, UserLicenseSummary  # noqa: E402
+from app.schemas.license import ServicePlanDetail, UserLicense, UserLicenseSummary
 
 # ---------------------------------------------------------------------------
 # Shared sample data

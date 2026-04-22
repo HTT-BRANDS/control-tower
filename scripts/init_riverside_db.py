@@ -15,9 +15,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from sqlalchemy import text  # noqa: E402
+from sqlalchemy import text
 
-from app.core.database import engine, init_db  # noqa: E402
+from app.core.database import engine, init_db
 
 # Riverside tables to verify
 RIVERSIDE_TABLES = [

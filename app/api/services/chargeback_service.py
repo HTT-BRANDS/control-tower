@@ -111,7 +111,7 @@ class ChargebackService:
         tenant_id: str,
         start_date: date,
         end_date: date,
-        format: str = "json",  # noqa: A002  — matches the API parameter name
+        format: str = "json",
     ) -> ExportedReport:
         """Return a chargeback report serialised to *format* (``"json"`` or ``"csv"``).
 

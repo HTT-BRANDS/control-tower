@@ -31,7 +31,7 @@ import httpx
 # Match the test's page list exactly — single source of truth is the test
 # file (avoid DRY drift between capturing and validating).
 sys.path.insert(0, str(Path(__file__).parent.parent / "tests" / "e2e"))
-from test_visual_parity import PAGES  # noqa: E402
+from test_visual_parity import PAGES
 
 BASELINE_DIR = Path(__file__).parent.parent / "tests" / "e2e" / "baselines"
 LOCAL_URL = "http://127.0.0.1:8099"

@@ -34,8 +34,8 @@ with patch("app.core.cache.cached", no_op_cache):
         del sys.modules["app.api.services.identity_service"]
     from app.api.services.identity_service import IdentityService
 
-from app.models.identity import IdentitySnapshot, PrivilegedUser  # noqa: E402
-from app.models.tenant import Tenant  # noqa: E402
+from app.models.identity import IdentitySnapshot, PrivilegedUser
+from app.models.tenant import Tenant
 
 
 class TestIdentityServiceSummary:

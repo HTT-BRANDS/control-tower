@@ -396,7 +396,7 @@ async def get_tenant_chargeback(
     tenant_id: str,
     start_date: date = Query(..., description="Inclusive start of the reporting period"),
     end_date: date = Query(..., description="Inclusive end of the reporting period"),
-    format: str = Query(  # noqa: A002
+    format: str = Query(
         default="json",
         pattern="^(json|csv)$",
         description="Export format: 'json' or 'csv'",
@@ -451,7 +451,7 @@ async def get_tenant_chargeback(
 async def get_multi_tenant_chargeback(
     start_date: date = Query(..., description="Inclusive start of the reporting period"),
     end_date: date = Query(..., description="Inclusive end of the reporting period"),
-    format: str = Query(  # noqa: A002
+    format: str = Query(
         default="json",
         pattern="^(json|csv)$",
         description="Export format: 'json' or 'csv'",

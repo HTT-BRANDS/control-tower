@@ -411,7 +411,7 @@ _provisioning_standards_service: ProvisioningStandardsService | None = None
 
 def get_provisioning_standards_service() -> ProvisioningStandardsService:
     """Get the ProvisioningStandardsService singleton instance."""
-    global _provisioning_standards_service  # noqa: PLW0603
+    global _provisioning_standards_service
     if _provisioning_standards_service is None:
         _provisioning_standards_service = ProvisioningStandardsService()
     return _provisioning_standards_service

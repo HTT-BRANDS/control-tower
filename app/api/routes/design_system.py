@@ -28,7 +28,7 @@ router = APIRouter(
 @router.get("/design-system", response_class=HTMLResponse)
 async def design_system_showcase(
     request: Request,
-    user: User = Depends(get_current_user),  # noqa: ARG001 — used by Depends
+    user: User = Depends(get_current_user),
 ):
     """Render every ds-template macro variant on one page.
 

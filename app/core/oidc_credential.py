@@ -160,7 +160,7 @@ def get_oidc_provider() -> OIDCCredentialProvider:
 
     Reads ``AZURE_MANAGED_IDENTITY_CLIENT_ID`` from settings on first call.
     """
-    global _provider  # noqa: PLW0603  — intentional module-level singleton
+    global _provider
     if _provider is None:
         from app.core.config import get_settings
 

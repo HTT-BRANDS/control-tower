@@ -12,7 +12,7 @@ from pathlib import Path
 # Ensure project root is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.services.retention_service import run_retention_cleanup  # noqa: E402
+from app.services.retention_service import run_retention_cleanup
 
 
 def main() -> None:

@@ -54,7 +54,7 @@ def _az_bicep_available() -> bool:
     if shutil.which("az") is None:
         return False
     try:
-        result = subprocess.run(  # noqa: S603 — fixed args, no shell
+        result = subprocess.run(
             ["az", "bicep", "version"],
             capture_output=True,
             timeout=10,
@@ -68,7 +68,7 @@ def _az_bicep_available() -> bool:
 def _compile_bicep(path: Path) -> tuple[bool, str]:
     """Return (ok, stderr) for a single `az bicep build --file …` invocation."""
     try:
-        result = subprocess.run(  # noqa: S603 — path is a validated Path
+        result = subprocess.run(
             ["az", "bicep", "build", "--file", str(path), "--stdout"],
             capture_output=True,
             timeout=60,

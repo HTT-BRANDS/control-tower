@@ -52,7 +52,7 @@ def _inject_and_run_axe(page: Page) -> dict:
     # Inject axe-core from CDN — may be blocked by Content-Security-Policy
     try:
         page.add_script_tag(url=AXE_CDN)
-    except Exception:  # noqa: BLE001
+    except Exception:
         pytest.skip(
             "axe-core CDN script injection failed (CSP nonce policy blocks external scripts)"
         )

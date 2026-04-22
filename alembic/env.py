@@ -28,7 +28,7 @@ if _db_url:
 
 # Import models so autogenerate can detect schema changes.
 # Uncomment target_metadata when you want autogenerate support.
-# from app.models import Base  # noqa: E402
+# from app.models import Base
 # target_metadata = Base.metadata
 target_metadata = None
 

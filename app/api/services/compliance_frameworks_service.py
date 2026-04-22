@@ -296,7 +296,7 @@ class ComplianceFrameworksService:
 # ---------------------------------------------------------------------------
 try:
     compliance_frameworks_service = ComplianceFrameworksService()
-except Exception as _e:  # noqa: BLE001
+except Exception as _e:
     logger.warning(
         "ComplianceFrameworksService failed to initialise at import time: %s. "
         "The service will be unavailable until the YAML is fixed.",

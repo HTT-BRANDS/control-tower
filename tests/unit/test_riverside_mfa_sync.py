@@ -20,7 +20,7 @@ except ImportError:
             self.message = message
 
 
-from app.services.riverside_sync import (  # noqa: E402
+from app.services.riverside_sync import (
     SyncError,
     sync_all_tenants,
     sync_tenant_mfa,
