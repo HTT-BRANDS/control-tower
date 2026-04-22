@@ -138,7 +138,6 @@ module cleanupJob '../modules/container-instances.bicep' = {
         value: join(resourceTypesToClean, ' ')
       }
     ]
-    timeoutSeconds: 3600
   }
 }
 

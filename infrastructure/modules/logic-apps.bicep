@@ -42,9 +42,6 @@ param notificationEmail string = ''
 @description('Resource groups to monitor for cleanup')
 param monitoredResourceGroups array = []
 
-@description('Schedule for cleanup workflow (cron expression)')
-param cleanupSchedule string = '0 0 2 * * *' // 2 AM daily
-
 @description('Resource age threshold in days for cleanup candidates')
 param cleanupAgeThresholdDays int = 30
 

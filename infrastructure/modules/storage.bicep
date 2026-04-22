@@ -4,12 +4,6 @@ param name string
 @description('Primary location')
 param location string
 
-@description('Secondary location for GRS replication')
-param secondaryLocation string
-
-@description('Environment name')
-param environment string
-
 @description('Tags to apply')
 param tags object = {}
 

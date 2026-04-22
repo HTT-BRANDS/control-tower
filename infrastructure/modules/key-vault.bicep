@@ -4,9 +4,6 @@ param name string
 @description('Location for the resource')
 param location string
 
-@description('Environment name')
-param environment string
-
 @description('Tags to apply')
 param tags object = {}
 

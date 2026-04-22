@@ -28,9 +28,6 @@ param enableAzureSql bool = false
 @description('Container image tag')
 param containerImage string = 'latest'
 
-@description('Azure Container Registry name (optional, for reference)')
-param acrName string = ''
-
 @description('Container registry URL for private registries like GHCR')
 param containerRegistryUrl string = 'https://ghcr.io'
 

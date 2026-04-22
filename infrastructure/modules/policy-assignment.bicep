@@ -85,7 +85,11 @@ resource remediationTask 'Microsoft.PolicyInsights/remediations@2021-10-01' = if
 }
 
 // Policy exemption (if needed)
-resource policyExemption 'Microsoft.Authorization/policyExemptions@2022-09-01' = if (exemptionCategory != 'Mitigated' || false) {
+// API version 2022-09-01 did not exist. Valid policyExemptions API versions
+// are 2020-07-01-preview, 2022-07-01-preview, 2024-12-01-preview, and
+// 2025-12-01-preview (all preview; no GA as of Azure API 2025). Picking
+// 2022-07-01-preview as the closest stable-ish match to the original intent.
+resource policyExemption 'Microsoft.Authorization/policyExemptions@2022-07-01-preview' = if (exemptionCategory != 'Mitigated' || false) {
   name: '${name}-exemption'
   properties: {
     policyAssignmentId: policyAssignment.id

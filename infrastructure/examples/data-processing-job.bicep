@@ -110,7 +110,6 @@ module processingJob '../modules/container-instances.bicep' = {
         value: storageAccountName
       }
     ]
-    timeoutSeconds: 7200
   }
 }
 

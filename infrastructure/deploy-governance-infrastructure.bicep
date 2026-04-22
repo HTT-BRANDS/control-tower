@@ -80,7 +80,6 @@ module logicApp './modules/logic-apps.bicep' = if (enableLogicApps) {
     enableCostOptimization: true
     notificationEmail: notificationEmail
     monitoredResourceGroups: [resourceGroupName]
-    cleanupSchedule: '0 0 2 * * *'
     costAlertThreshold: environment == 'production' ? 1000 : 100
   }
 }

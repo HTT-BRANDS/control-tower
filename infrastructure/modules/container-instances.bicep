@@ -73,9 +73,6 @@ param enableManagedIdentity bool = true
 @description('User-assigned managed identity resource ID (optional)')
 param userAssignedIdentityId string = ''
 
-@description('Job timeout in seconds (0 = no timeout)')
-param timeoutSeconds int = 3600
-
 @description('Tags to apply')
 param tags object = {}
 

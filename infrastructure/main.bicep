@@ -14,9 +14,6 @@ param environment string = 'production'
 @description('Primary location for resources')
 param location string = deployment().location
 
-@description('Secondary location for disaster recovery')
-param secondaryLocation string = 'westus2'
-
 @description('Unique suffix for resource naming')
 param resourceSuffix string = uniqueString(subscription().id, deployment().name)
 
@@ -74,9 +71,6 @@ param containerImage string = 'latest'
 
 @description('Use container deployment instead of code deployment')
 param useContainerDeployment bool = true
-
-@description('Azure Container Registry name (optional)')
-param acrName string = ''
 
 @description('Log retention in days')
 param logRetentionDays int = 30
@@ -173,8 +167,6 @@ module storage 'modules/storage.bicep' = {
   params: {
     name: validatedStorageName
     location: location
-    secondaryLocation: secondaryLocation
-    environment: environment
     tags: tags
   }
 }
@@ -205,7 +197,6 @@ module keyVault 'modules/key-vault.bicep' = if (enableKeyVault) {
   params: {
     name: validatedKeyVaultName
     location: location
-    environment: environment
     tags: tags
   }
 }
@@ -241,7 +232,6 @@ module vnet 'modules/vnet.bicep' = if (enableVNetIntegration) {
   params: {
     name: vnetName
     location: location
-    environment: environment
     tags: tags
   }
 }
@@ -290,7 +280,6 @@ module appService 'modules/app-service.bicep' = {
     sqlDatabaseName: sqlDatabaseName
     enableAzureSql: enableAzureSql
     containerImage: containerImage
-    acrName: acrName
     environment: environment
     tags: tags
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId

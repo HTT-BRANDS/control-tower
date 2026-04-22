@@ -84,7 +84,6 @@ module migrationJob '../modules/container-instances.bicep' = {
         value: '/migrations'
       }
     ]
-    timeoutSeconds: 3600
   }
 }
 
