@@ -57,6 +57,8 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          # Repo has no root package.json (post-py7u) - Node lives in tests/e2e/github-pages
+          cache-dependency-path: tests/e2e/github-pages/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -137,6 +139,8 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          # Repo has no root package.json (post-py7u) - Node lives in tests/e2e/github-pages
+          cache-dependency-path: tests/e2e/github-pages/package-lock.json
 
       - name: Install dependencies
         run: npm ci
