@@ -65,19 +65,27 @@ Total verified green: **3,713 tests** across 6 local suites + **6 green CI workf
 
 ## 3. What is NOT green (with honest disclosure)
 
-### 3.1 Staging validation suite — environment rot (bd `mvxt`)
+### 3.1 Staging validation suite — intermittent environment timeouts (bd `mvxt`)
 
-`Deploy to Staging` workflow post-deploy validation fails on every push with `requests.exceptions.ReadTimeout` against `app-governance-staging-xncz...azurewebsites.net`. Key evidence that this is NOT caused by application code:
+`Deploy to Staging` workflow post-deploy validation **frequently but not universally** fails with `requests.exceptions.ReadTimeout` against `app-governance-staging-xncz...azurewebsites.net`. *(Corrected after arbiter Finding 1: HEAD commit `79d72c4`'s most recent Staging Validation run `24804115031` succeeded — so "every push" in the prior draft was an overstatement.)*
 
-- Fails on commit `2f539c4`, which is **CHANGELOG.md changes only — zero code delta**. Pure docs commit; same failure mode.
-- Failures are uniformly network-level `ReadTimeout`, **not** application assertion failures. 0 / 45 failing tests fail on a test assertion; 45 / 45 fail/error on `ReadTimeout`.
-- Pattern extends back through dozens of unrelated commits (infra, docs, refactors) going to at least 2026-04-22T18:04.
+Evidence that the failure surface is environment-coupled, not code-coupled:
 
-**Diagnosis**: staging App Service is not responding to HTTP. Most likely candidates: cold-start on a downsized plan post-April-16-cost-optimization, boot-time regression on the app image, or resource-group config drift. Requires Application Insights + Azure Portal access to investigate, which I do not have as an agent role.
+- Fails on commit `2f539c4`, which is **CHANGELOG.md only — zero code delta**. Pure docs commit; same failure mode.
+- Failures are uniformly network-level `ReadTimeout`, not application assertion failures. On a failing run, 100% of the failing/erroring tests are `ReadTimeout`.
+- Pattern is **intermittent** — the same immutable image can pass one run and fail the next, consistent with cold-start on a resource-constrained plan rather than a deterministic code defect.
 
-**Ticket**: `azure-governance-platform-mvxt` (P2, filed 2026-04-22) with a concrete investigation playbook.
+**Revised diagnosis**: staging App Service is slow to warm on a downsized plan; when the validation suite's first few requests arrive during cold-start, they time out at the HTTP client's read timeout. Plausible contributors: April 16 cost-optimization downsized governance SQL to Basic (startup migration-check round-trip adds latency); staging App Service plan itself may be sub-Basic.
 
-### 3.2 Retroactive tag workflow side-effects (cosmetic)
+**Not** a plausible cause (investigated per arbiter Finding 2): the `enableRedis=true → false` flip in commit `0f47f33` (sf24). See §5.4 below — Redis was never deployed in staging and the app never used it. Disabling a never-connected switch cannot cause timeouts.
+
+**Ticket**: `azure-governance-platform-mvxt` (P2, filed 2026-04-22) with a concrete investigation playbook. Requires Application Insights + Azure Portal access to root-cause.
+
+### 3.2 Submission artifact scope (arbiter Finding 3)
+
+This submission is **formally scoped to `79d72c4`**. The later `a5fce6a` commit is 100% docs (this submission document itself) and does not change the gated artifact. Any CI results on `a5fce6a` are informational only.
+
+### 3.3 Retroactive tag workflow side-effects (cosmetic)
 
 Pushing the retroactive `v2.3.0` and `v2.5.0` tags triggered three tag-scoped workflows (`dependency-update.yml`, `topology-diagram.yml`, `backup.yml`) on the old tagged commits. These failed instantly with "workflow file issue" (duration ≈ 0s). Root cause: those workflow files at the tagged SHAs (April 14 / April 15) reference actions versions that are now stale. **This is an artifact of retroactive tagging and affects only the historical runs, not any current workflow.** No remediation needed; documented here for completeness.
 
@@ -122,6 +130,22 @@ New sections added in commit `2f539c4`:
 
 22 files remain on the `known_large_files` ratchet. The ratchet prevents *new* additions but does not shrink the backlog. This session cleared three of the largest offenders (1432L / 1230L / 1208L → all <500L) under ticket 6oj7. Backlog now skews toward the remaining 19 files, all in the 600–1200L range.
 
+### 5.4 Undisclosed environment deltas (arbiter Finding 2) — investigated, safe
+
+Arbiter correctly flagged that `infrastructure/parameters.staging.json` has two in-scope deltas that were not enumerated in the original submission:
+
+1. **Line 43 `containerImage`**: `ghcr.io/tygranlund/...` → `ghcr.io/htt-brands/...` (commit `399c209`, 2026-04-17, closes ticket 265y).
+2. **Line 70 `enableRedis`**: `true` → `false` (commit `0f47f33`, 2026-04-17, closes ticket sf24).
+
+**Investigation (both changes audited on demand, receipts in commit messages):**
+
+- **#1 Registry org**: Per `399c209` commit message, this was a **documentation-drift fix, not a runtime change**. Production was already correctly running `ghcr.io/htt-brands/*:6a7306a` manually set by `deploy-production.yml`. Only the Bicep parameter files were stale. Had anyone run `az deployment group create` against the stale param files, *that* would have been a live bug; but without that, no runtime surface was affected.
+- **#2 Redis disable**: Per `0f47f33` and the sf24 ticket close-out — the application has **never used Redis** in staging or prod. It uses FastAPI in-memory `TTLCache` with a ~100% hit rate. The `enableRedis=true` param was a **latent booby-trap** — any `az deployment` would have spawned a phantom ~$16/mo Azure Cache for Redis C0 that nothing connected to. Flipping to `false` aligns the Bicep param file with the deployed reality. Zero runtime behavior change; zero impact on sessions, cache, or latency.
+
+**Neither delta can cause `mvxt`'s `ReadTimeout`** because neither touched the running image or its config. Arbiter was right to ask; the answer is: both are safe.
+
+**Lesson learned**: the submission should have enumerated these up front. Future submissions should include an "environment deltas since previous tag" section built from `git diff <prev-tag>..HEAD -- infrastructure/parameters.*.json`.
+
 ---
 
 ## 6. Open release-related tickets
@@ -129,9 +153,10 @@ New sections added in commit `2f539c4`:
 | ID | Priority | Title | Release-blocker? |
 |---|---|---|---|
 | `mvxt` | P2 | ops(staging): Deploy to Staging validation suite consistently times out on every push | **Blocks full staging workflow green** — but the code itself deploys; only validation fails on env |
+| `7mk8` | P1 | security(supply-chain): implement SLSA L3 + Sigstore cosign + SBOM in release-production workflow | **Yes, for prod transition** — filed per arbiter Finding 4; 1–2 engineer-days estimate |
 | `rtwi` | P3 | ops: stop domain-intelligence App Service + pause PG if zero-traffic at 60-day mark (~2026-05-17) | **No** — future-dated ops task |
 
-Total: **2 open tickets**, **0 that block a code-level release gate**, **1 that blocks a full-green staging-workflow claim**.
+Total: **3 open tickets**, **0 that block a code-level release gate for staging**, **1 that blocks a full-green staging-workflow claim** (`mvxt`), **1 that blocks a future prod transition** (`7mk8`).
 
 ---
 
