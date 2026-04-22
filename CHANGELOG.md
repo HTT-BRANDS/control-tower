@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+_131 commits since `v2.5.0` (b1137cb, 2026-04-15). Pre-release state on `main`; no release tag yet._
+
+### Added
+- **Design-system primitives — py7u Wave 2**: `ds_static_table`, `ds_toolbar`, `ds_modal` (native `<dialog>`), `ds_tabs` + `ds_tab_panel` (full keyboard nav), `ds_form_field` (with `.ds-input` utility).
+- **py7u.4 visual parity testing infrastructure** — cross-browser screenshot diffing scaffold.
+- **`ds_table` header-slot via `{% call %}` pattern** (hikx) — lets callers inject fully-custom header markup; dmarc tenant-table migrated.
+- **Server-rendered HTMX partials** (f8f2) — riverside partials use `HX-Request` content negotiation instead of client-side composition.
+- **Bicep architecture fitness function + ratchet** (kj0p) — prevents warning-count regression in IaC.
+- **Ready-to-execute scaffolds** for 4 ops tickets (rtwi, 6wyk, 3cs7, gz6i).
+
+### Changed / Refactored
+- **File-size policy enforced** (6oj7): three oversized Python files split into cohesion-based packages with preserved public import paths — `graph_client.py` (1208L), `riverside_checks.py` (1432L), `test_sync_api.py` (1230L). All resulting modules < 600 lines; zero behavior change.
+- **Table primitive adoption**: `ds_(static_)table` adopted across dashboards, privacy, preflight, and riverside (− 95 lines net).
+- **Ghost-class cleanup** (9v9u, cwxu): 20 `border-theme` uses normalized to `border-default`; legacy `wm-*` tokens retired.
+- **Stale code removal**: 53 stale `# noqa` directives (RUF100 now enforced); orphaned Bicep modules deleted (app-service-optimized −804L + 2 more, −410L); dead dark-mode generator paths removed (ADR-0005 Phase 4e).
+- **`users-table` bespoke** (hbvt) documented with column-parity guard — closed as acceptable exception to the DS migration.
+
+### Fixed
+- **CI test bitrot after py7u migration** (6o4g): 5 stale assertions in `tests/integration/test_frontend_e2e.py` were blocking CI on every commit for ~36 hours (40+ consecutive red runs). Assertions updated for the `macros/ds/` facade + Tailwind-v3-standalone-binary architecture. This is a governance incident as much as a test fix; no one was watching CI.
+- **All Bicep templates compile** (dv90) — 5 templates with scope/schema issues repaired; zero warnings across the IaC surface (kj0p).
+- **Swagger UI markdown rendering** (ncxl) — dedent FastAPI description block.
+
+### Release-gate retroactive governance (April 22, 2026)
+- **Retroactive tags added** to restore release provenance: `v2.3.0` → `c492922`, `v2.5.0` → `b1137cb`. Prior to this sweep, `git tag -l 'v2*'` stopped at `v2.2.0` despite `pyproject.toml` declaring `2.5.0` — cryptographic linkage between artifacts and source commits was broken.
+- **CHANGELOG back-populated** for the `[2.5.0]` window and the skipped `[2.4.0]` documented below.
+- **Release-gate submission dossier** published at `docs/release-gate/submission-v2.5.0.md`.
+
+---
+
+## [2.4.0] — SKIPPED
+
+No `2.4.0` was ever published. `pyproject.toml` jumped directly from `2.3.0`
+to `2.5.0` at commit `b1137cb` (2026-04-15). This entry exists solely to
+preserve SemVer continuity in the historical record.
+
+---
+
+## [2.5.0] - 2026-04-15
+
+_25 commits since `v2.3.0` (c492922). Tagged retroactively on 2026-04-22._
+
+### Added
+- **WCAG 2.2 AA full audit** — all six new success criteria covered (focus not obscured, dragging movements, target size, etc.).
+- **Phase 21 ops foundation**: ADR-0010 (configurable sync thresholds), Node.js 22 introduction.
+- **ADR-0011** (granular RBAC architecture) and ADR-0010 published; architecture diagram (Mermaid) refreshed; OpenAPI examples for core schemas.
+
+### Changed
+- **Python 3.11 → 3.12** (active LTS) across `pyproject.toml`, Dockerfile, mypy, `.python-version`, PEP 695 type parameters.
+- **Node.js 22 → 24 LTS** in CI workflows.
+- **CodeQL action v3 → v4** in CI.
+
+### Performance
+- **Session-scoped TestClient** — 3× overall test-suite speedup, 11× for route tests.
+- **Concurrent dashboard service calls** via `asyncio.gather`.
+- **SQL-level pagination for admin users** (F-05).
+
+### Security
+- **F-04**: Rate limiting on admin endpoints.
+- **CVE-2026-28390 (libssl3)** patched via `apt-get upgrade` in Dockerfile.
+
+### Fixed
+- **CI repair**: 4 broken workflows rescued, cross-browser tests hardened, accessibility workflow graceful staging skip, riverside badge test, `ruff format --check` gate.
+- **asyncio deprecation**: replaced `asyncio.iscoroutinefunction` with the `inspect` equivalent.
+
+---
+
 ## [Infrastructure] - 2026-04-16
 
 ### Cost Optimization Session (no code changes)
