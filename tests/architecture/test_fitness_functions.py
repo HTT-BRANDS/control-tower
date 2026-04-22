@@ -471,9 +471,13 @@ def test_file_size_limit():
     violations = []
 
     # Known large files (technical debt) - grandfathered in
-    # These should be refactored over time
+    # These should be refactored over time.
+    #
+    # RATCHET INVARIANT: a file appears here only if it currently exceeds the
+    # limit. If a file shrinks below the limit OR is deleted, it must be
+    # removed from this list — the test below enforces that. This stops the
+    # allowlist from silently growing stale and masking re-introduced bloat.
     known_large_files = {
-        "app/preflight/azure_checks.py",
         "app/preflight/riverside_checks.py",
         "app/api/services/graph_client.py",
         "app/core/riverside_scheduler.py",
@@ -500,6 +504,10 @@ def test_file_size_limit():
         "app/core/metrics.py",  # Prometheus + App Insights metrics
     }
 
+    # Track each allowlisted file's current state so we can ratchet it out
+    # the moment it shrinks below the limit or disappears.
+    allowlist_state: dict[str, int | None] = dict.fromkeys(known_large_files)
+
     for py_file in app_path.rglob("*.py"):
         if "__pycache__" in str(py_file):
             continue
@@ -509,6 +517,9 @@ def test_file_size_limit():
                 line_count = sum(1 for _ in f)
 
             rel_path = str(py_file.relative_to(app_path.parent))
+
+            if rel_path in allowlist_state:
+                allowlist_state[rel_path] = line_count
 
             if line_count > max_lines:
                 # Only flag as violation if NOT in known large files
@@ -522,6 +533,32 @@ def test_file_size_limit():
                     )
         except (OSError, UnicodeDecodeError):
             continue
+
+    # Ratchet invariant: allowlist must not contain stale entries.
+    # This is what catches deleted files (like the old azure_checks.py) and
+    # files that shrank under the threshold — both should be removed from
+    # the allowlist so the next size regression is caught, not silently
+    # grandfathered.
+    stale_allowlist_entries = [
+        (path, observed)
+        for path, observed in allowlist_state.items()
+        if observed is None or observed <= max_lines
+    ]
+    if stale_allowlist_entries:
+        msg_lines = [
+            f"\n❌ {len(stale_allowlist_entries)} stale entries in "
+            "known_large_files allowlist — ratchet them out:"
+        ]
+        for path, observed in stale_allowlist_entries:
+            if observed is None:
+                msg_lines.append(f"  - {path}: file no longer exists")
+            else:
+                msg_lines.append(f"  - {path}: now {observed} lines (≤ {max_lines} limit)")
+        msg_lines.append(
+            "\nRemove these from known_large_files. Leaving stale entries lets "
+            "future re-introductions bypass the size check silently."
+        )
+        raise AssertionError("\n".join(msg_lines))
 
     if violations:
         # Sort by line count (worst offenders first)
