@@ -1,0 +1,273 @@
+# =============================================================================
+# Azure Governance Platform — Bicep Drift Detection (bd x692)
+# =============================================================================
+# Runs `az deployment group what-if` on the live Azure state against each
+# environment's parameter file, weekly. A non-zero changeset means the
+# deployed infra has drifted from the Bicep source-of-truth — exactly the
+# latent-footgun pattern that sf24 (Redis enableRedis=true) and 265y (GHCR
+# org drift) already demonstrated.
+#
+# On drift: opens (or updates) a single persistent GitHub issue per
+# environment so the signal isn't lost in notification noise. If a Teams
+# webhook is configured (TEAMS_WEBHOOK_CONFIGURED var = 'true'), also
+# notifies via the governance-alerts webhook.
+#
+# Closes bd x692 (arbiter Finding N-3).
+# =============================================================================
+
+name: Bicep Drift Detection
+
+on:
+  schedule:
+    # Mondays 1 PM UTC (~9 AM Central) — right before the team starts the week.
+    - cron: '0 13 * * 1'
+  workflow_dispatch: {}
+  # Manual triggers run all three envs (same as the scheduled run).
+  # If you want to re-run a single env, use GitHub's "Re-run failed jobs"
+  # from the failed-run UI — or rely on fail-fast: false below to isolate.
+
+permissions:
+  id-token: write     # OIDC Azure login
+  contents: read
+  issues: write       # open/update drift issue
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ===========================================================================
+  # Job: what-if per environment
+  #
+  # strategy.fail-fast is false so one env's failure doesn't mask another's.
+  # Each env emits a JSON artifact plus step-output "drift_detected=true|false"
+  # that the notify job consumes.
+  # ===========================================================================
+  what-if:
+    name: what-if (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: dev
+            resource_group: rg-governance-dev-001
+            parameters_file: infrastructure/parameters.dev.json
+          - env: staging
+            resource_group: rg-governance-staging
+            parameters_file: infrastructure/parameters.staging.json
+          - env: production
+            resource_group: rg-governance-production
+            parameters_file: infrastructure/parameters.production.json
+
+    outputs:
+      drift_detected: ${{ steps.summary.outputs.drift_detected }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set subscription context
+        run: az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+
+      - name: Run az deployment group what-if
+        id: what_if
+        env:
+          RG: ${{ matrix.resource_group }}
+          PARAMS: ${{ matrix.parameters_file }}
+        run: |
+          set -euo pipefail
+
+          # Emit JSON for machine parsing; the human-readable form (default
+          # `Format` output) is streamed to the log for auditors.
+          echo "::group::Human-readable what-if"
+          az deployment group what-if \
+            --resource-group "$RG" \
+            --template-file infrastructure/main.bicep \
+            --parameters @"$PARAMS" \
+            --result-format FullResourcePayloads \
+            > what-if-human.txt || true
+          cat what-if-human.txt
+          echo "::endgroup::"
+
+          echo "::group::JSON what-if"
+          az deployment group what-if \
+            --resource-group "$RG" \
+            --template-file infrastructure/main.bicep \
+            --parameters @"$PARAMS" \
+            --no-pretty-print \
+            --result-format FullResourcePayloads \
+            > what-if.json
+          echo "::endgroup::"
+
+      - name: Summarize drift
+        id: summary
+        env:
+          ENV_NAME: ${{ matrix.env }}
+        run: |
+          set -euo pipefail
+
+          # what-if change types per Azure docs:
+          #   Create | Delete | Deploy | Modify | NoChange | NoEffect | Ignore
+          # "drift" = any NON-(NoChange|Ignore|NoEffect) entry.
+          DRIFT_COUNT=$(jq '[.changes[]? | select(.changeType != "NoChange" and .changeType != "Ignore" and .changeType != "NoEffect")] | length' what-if.json)
+          TOTAL=$(jq '.changes | length' what-if.json)
+
+          echo "drift_count=${DRIFT_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "total_evaluated=${TOTAL}"  >> "$GITHUB_OUTPUT"
+
+          if [[ "${DRIFT_COUNT}" -gt 0 ]]; then
+            echo "drift_detected=true" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Bicep drift detected (${ENV_NAME})::${DRIFT_COUNT} of ${TOTAL} resources would change on next deploy"
+          else
+            echo "drift_detected=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=No Bicep drift (${ENV_NAME})::${TOTAL} resources all NoChange/Ignore"
+          fi
+
+          # Build a short markdown block the notify job can paste into Teams
+          # or into a GH issue body.
+          {
+            echo "### ${ENV_NAME}"
+            echo ""
+            echo "- Resource group: \`${{ matrix.resource_group }}\`"
+            echo "- Parameters file: \`${{ matrix.parameters_file }}\`"
+            echo "- Drift changes: **${DRIFT_COUNT}** (of ${TOTAL} evaluated)"
+            echo ""
+            if [[ "${DRIFT_COUNT}" -gt 0 ]]; then
+              echo "<details><summary>First 20 drifted resources</summary>"
+              echo ""
+              echo '```'
+              jq -r '[.changes[]? | select(.changeType != "NoChange" and .changeType != "Ignore" and .changeType != "NoEffect")][:20] | .[] | "\(.changeType) \(.resourceId)"' what-if.json
+              echo '```'
+              echo "</details>"
+            fi
+          } > "drift-summary-${ENV_NAME}.md"
+
+      - name: Upload what-if artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bicep-what-if-${{ matrix.env }}
+          path: |
+            what-if.json
+            what-if-human.txt
+            drift-summary-${{ matrix.env }}.md
+          retention-days: 90
+
+  # ===========================================================================
+  # Job: notify on drift
+  #
+  # Runs after all what-if jobs regardless of their outcome; only fires
+  # its actual notification steps when at least one environment reports drift.
+  # ===========================================================================
+  notify:
+    name: Notify on drift
+    runs-on: ubuntu-latest
+    needs: what-if
+    if: always() && needs.what-if.outputs.drift_detected == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all drift summaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bicep-what-if-*
+          merge-multiple: true
+
+      - name: Assemble combined summary
+        id: combined
+        run: |
+          set -euo pipefail
+
+          {
+            echo "# Bicep Drift Detection Report"
+            echo ""
+            echo "Run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "Commit: \`${{ github.sha }}\`"
+            echo "Triggered by: ${{ github.event_name }}"
+            echo ""
+            echo "One or more environments have drifted from their Bicep source-of-truth."
+            echo "This is the same latent-footgun class as bd sf24 (Redis) and bd 265y (GHCR org)."
+            echo "Either:"
+            echo "1. **Update Bicep / parameter files** to match live state (preferred, if the"
+            echo "   live state is correct), or"
+            echo "2. **Run \`az deployment group create\`** to re-sync live state to Bicep"
+            echo "   (only if Bicep is correct and live has drifted)."
+            echo ""
+            for f in drift-summary-*.md; do
+              [[ -e "$f" ]] || continue
+              cat "$f"
+              echo ""
+            done
+          } > combined-drift-report.md
+
+          # Expose a truncated body for Teams (JSON-safe).
+          python3 - <<'PY'
+          import json, pathlib
+          body = pathlib.Path("combined-drift-report.md").read_text()
+          # Teams MessageCard has a 28 KB practical limit; trim hard to be safe.
+          trimmed = body if len(body) <= 8000 else body[:8000] + "\n\n...(truncated — see workflow artifact)"
+          pathlib.Path("teams-body.json").write_text(json.dumps(trimmed))
+          PY
+          echo "report_bytes=$(wc -c < combined-drift-report.md)" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update GitHub drift issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          TITLE="[drift] Bicep what-if detected infrastructure drift"
+
+          # Find an existing open drift issue by title (single rolling issue —
+          # avoids creating N issues across N weeks of detected drift).
+          EXISTING=$(gh issue list --state open --label drift \
+            --search "in:title \"${TITLE}\"" \
+            --json number --jq '.[0].number // empty')
+
+          BODY_FILE=combined-drift-report.md
+
+          if [[ -n "${EXISTING}" ]]; then
+            echo "Updating existing drift issue #${EXISTING}"
+            gh issue comment "${EXISTING}" --body-file "${BODY_FILE}"
+          else
+            echo "Opening new drift issue"
+            gh issue create \
+              --title "${TITLE}" \
+              --body-file "${BODY_FILE}" \
+              --label drift \
+              --label infrastructure \
+              --label automated
+          fi
+
+      - name: Notify Teams (if webhook configured)
+        if: ${{ vars.TEAMS_WEBHOOK_CONFIGURED == 'true' }}
+        env:
+          WEBHOOK: ${{ secrets.PRODUCTION_TEAMS_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          BODY=$(cat teams-body.json)
+          curl -s -X POST "$WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"@type\": \"MessageCard\",
+              \"themeColor\": \"ff9800\",
+              \"title\": \"⚠️ Bicep drift detected\",
+              \"text\": ${BODY},
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Workflow Run\",
+                \"targets\": [{\"os\": \"default\", \"uri\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}]
+              }]
+            }" || true
+
+      - name: Fail the workflow so drift is visible in branch-protection views
+        run: |
+          echo "::error title=Drift detected::At least one environment drifted from Bicep. See issue + artifacts for details."
+          exit 1
