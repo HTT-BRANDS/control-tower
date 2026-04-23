@@ -1,8 +1,32 @@
 # Azure Infrastructure Inventory
 
-**Generated:** 2026-03-27  
-**Subscription:** HTT-BRANDS (32a28177-6fb2-4668-a528-6d6cafb9665e)  
-**Status:** All resources operational
+> # ⚠️ SUPERSEDED — 2026-04-23
+>
+> This document is a **2026-03-27 point-in-time snapshot** and has not been
+> kept current through the April 2026 cost-optimization work. Specifically:
+>
+> - SQL Databases: shows `S0 Standard @ $15/mo` — actually **Basic (5 DTU) @ $4.90/mo** since 2026-04-16
+> - Production container registry: shows `acrgovprod` — **deleted 2026-04-16**; prod now pulls from GHCR
+> - Staging storage: shows `Standard_GRS` — **downgraded to LRS** 2026-04-16
+> - Total cost estimate: shows `~$73/mo` — actual is **~$53.40/mo** (Azure only)
+>
+> **For current infrastructure state, see:**
+>
+> | Authoritative source | What it covers |
+> |---|---|
+> | [`INFRASTRUCTURE_END_TO_END.md`](./INFRASTRUCTURE_END_TO_END.md) | End-to-end architecture + live resources |
+> | [`docs/COST_MODEL_AND_SCALING.md`](./docs/COST_MODEL_AND_SCALING.md) | Authoritative cost model (Apr 18, 2026) |
+> | [`core_stack.yaml`](./core_stack.yaml) | Canonical stack declaration (machine-readable) |
+> | [`env-delta.yaml`](./env-delta.yaml) | Per-environment config deltas |
+>
+> Retained (not archived) because 11 other docs still link here from
+> historical context. The content below is preserved for provenance only.
+
+---
+
+**Generated:** 2026-03-27 (⚠️ stale — see banner above)
+**Subscription:** HTT-BRANDS (32a28177-6fb2-4668-a528-6d6cafb9665e)
+**Status (as of 2026-03-27):** All resources operational
 
 ---
 
