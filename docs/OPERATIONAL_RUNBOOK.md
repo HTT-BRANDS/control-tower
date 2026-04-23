@@ -158,6 +158,7 @@ curl -s https://app-governance-prod.azurewebsites.net/health
 1. Review alert thresholds
 2. Check if alerts are actionable
 3. Verify no false positives
+4. For sync-related alert storms, use `docs/runbooks/sync-recovery-verification.md`
 
 **Resolution:**
 ```bash
