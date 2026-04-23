@@ -47,6 +47,18 @@ body {
 .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); }
 .dark .shadow-md { box-shadow: 0  4px  6px -1px rgba(0, 0, 0, 0.3); }
 
+/* Soft status surfaces need dark-mode-specific backgrounds; the light-mode
+   5% tints are too pale once text tokens flip to light foregrounds. */
+.dark .bg-brand-success-5 { background-color: rgba(20, 83, 45, 0.2); }
+.dark .bg-brand-error-5   { background-color: rgba(127, 29, 29, 0.2); }
+.dark .bg-brand-warning-5 { background-color: rgba(120, 53, 15, 0.2); }
+.dark .bg-brand-gray-5    { background-color: var(--bg-tertiary); }
+
+.dark .border-brand-success-10 { border-color: #166534; }
+.dark .border-brand-error-10   { border-color: #991b1b; }
+.dark .border-brand-warning-10 { border-color: #92400e; }
+.dark .border-brand-gray-50    { border-color: var(--border-default); }
+
 /* ==========================================================================
    Brand Color Utilities
    ========================================================================== */

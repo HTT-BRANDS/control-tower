@@ -59,10 +59,10 @@
     {# Job Status Grid #}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {% for job_type, job in status.jobs.items() %}
-        <div class="p-4 rounded-lg border-2 transition-all hover:shadow-md
+        <div data-sync-job-card class="p-4 rounded-lg border-2 transition-all hover:shadow-md
             {{ 'border-brand-success-100 bg-brand-success-5' if job.status == 'healthy' else ('border-brand-error-100 bg-brand-error-5' if job.status == 'degraded' else 'border-brand-gray-50 bg-brand-gray-5') }}">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-primary-theme capitalize">{{ job_type }}</span>
+                <span data-sync-job-label class="font-semibold text-primary-theme capitalize">{{ job_type }}</span>
                 <span class="w-3 h-3 rounded-full
                     {{ 'bg-brand-success-100' if job.status == 'healthy' else ('bg-brand-error-100' if job.status == 'degraded' else 'bg-brand-gray-100') }}">
                 </span>
