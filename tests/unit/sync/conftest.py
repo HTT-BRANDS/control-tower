@@ -33,8 +33,8 @@ def mock_tenant():
     tenant.name = "Test Tenant"
     tenant.is_active = True
     tenant.use_lighthouse = True
-    tenant.client_id = None
-    tenant.client_secret_ref = None
+    tenant.client_id = "test-client-id"
+    tenant.client_secret_ref = "test-client-secret-ref"  # pragma: allowlist secret
     return tenant
 
 
