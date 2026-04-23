@@ -36,6 +36,51 @@ _131 commits since `v2.5.0` (b1137cb, 2026-04-15). Pre-release state on `main`; 
 - **CHANGELOG back-populated** for the `[2.5.0]` window and the skipped `[2.4.0]` documented below.
 - **Release-gate submission dossier** published at `docs/release-gate/submission-v2.5.0.md`.
 
+### Supply-chain hardening (April 23, 2026)
+- **SLSA Build Level 3 provenance** on every production image (bd `7mk8`):
+  `actions/attest-build-provenance@v2` produces an in-toto SLSA v1 predicate,
+  signs it via Sigstore keyless (GitHub OIDC → Fulcio short-lived cert →
+  Rekor log), and attaches it as an OCI referrer on the pushed image.
+- **SBOM (Syft / SPDX-JSON)** generated and attested on every production
+  image (bd `7mk8`). Closes security-audit finding M-3 which had been open
+  since the March 2026 audit.
+- **Cosign 4-claim verification** (bd `7mk8`) gates the prod deploy job:
+  subject digest + predicate type + certificate identity (regex-pinned to
+  `deploy-production.yml@refs/heads/(main|release/*)`) + OIDC issuer.
+  Verification failure aborts before any Azure API call; the container is
+  also now set BY DIGEST (not tag) to eliminate TOCTOU between verify and
+  deploy.
+- **Arbiter policy file** (`arbiter/policies/verify.yaml`) serves as
+  machine-readable source of truth for the 4-claim policy; the workflow
+  steps mirror it step-for-step so drift is detectable.
+- **All supply-chain actions SHA-pinned** (bd `dq49`): `attest-*`,
+  `cosign-installer`, `sbom-action` — each pinned to a full commit SHA
+  with a version comment so Dependabot can continue to propose updates.
+
+### CI gates added (April 23, 2026)
+- **`env-delta.yaml` schema + literal-rejection validator** (bd `my5r`):
+  new `scripts/validate_env_delta.py` (Pydantic v2, StrictBool on
+  security-sensitive flags, path-scoped allowlist, 4 exit codes) runs as
+  a pre-commit hook AND as a dedicated CI job in `security-scan.yml`,
+  feeding into the overall security-summary gate. 24-test suite in
+  `tests/unit/test_validate_env_delta.py`. Closes HTT P0 Security
+  Requirement #7 (arbiter finding N-4).
+- **Scheduled Bicep drift detection** (bd `x692`): new
+  `.github/workflows/bicep-drift-detection.yml` runs
+  `az deployment group what-if` weekly (Mon 13:00 UTC) against all three
+  environments, opens/updates a rolling GitHub issue on drift, and
+  optionally pings Teams when the webhook var is configured. The workflow
+  itself fails on drift so it becomes visible in branch-protection views.
+
+### Fixed
+- **Staging validation suite cold-start flakes** (bd `mvxt` — partial):
+  `tests/staging/conftest.py` now runs a progressive warmup loop
+  (5 attempts with 10s → 30s → 60s → 90s → 120s timeouts) before the
+  first real test, and the shared `requests.Session` gets a urllib3 retry
+  adapter for GET/HEAD/OPTIONS on 502/503/504 + connect/read timeouts.
+  This is a compensating control — root cause investigation still requires
+  Azure Portal / App Insights access and stays tracked in `mvxt`.
+
 ---
 
 ## [2.4.0] — SKIPPED

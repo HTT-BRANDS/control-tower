@@ -184,10 +184,16 @@ cicd:
       - Trivy FS scan in security-scan.yml
       - pip-audit in security-scan.yml
       - Dockerfile: non-root USER, pinned base image, multi-stage build
-    absent:
-      - SLSA L3 provenance                      # bd 7mk8 (P1) — blocks prod gate
-      - Sigstore cosign signing/verification    # bd 7mk8 (P1)
-      - SBOM generation + attestation           # bd 7mk8 (P1)
+      - SLSA L3 provenance via actions/attest-build-provenance        # bd 7mk8 CLOSED 2026-04-23
+      - Sigstore cosign keyless signing + 4-claim verify              # bd 7mk8 CLOSED 2026-04-23
+      - SBOM generation (Syft/SPDX) + Sigstore attestation            # bd 7mk8 CLOSED 2026-04-23
+      - All supply-chain actions SHA-pinned (+ version comment)       # bd dq49 CLOSED 2026-04-23
+      - arbiter/policies/verify.yaml — 4-claim policy source-of-truth # bd 7mk8 CLOSED 2026-04-23
+      - env-delta.yaml schema + literal-rejection (scripts/validate_env_delta.py)  # bd my5r CLOSED 2026-04-23
+      - Scheduled Bicep drift detection (.github/workflows/bicep-drift-detection.yml)  # bd x692 CLOSED 2026-04-23
+    absent: []
+    # No known supply-chain gaps as of 2026-04-23. If one is identified,
+    # file a bd ticket AND list it here with the ticket reference.
 
 # ---------------------------------------------------------------------------
 # Known deviations from the "default HTT SDLC stack"

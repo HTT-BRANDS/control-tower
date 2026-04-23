@@ -384,7 +384,7 @@ Sprint 16.4 focused on frontend consistency (brand tokens, CSS consolidation, de
 |-------------|----------|---------|---------------------|--------|
 | M-1 | Medium | `.env.production` tracked in git | Superseded — template contains only placeholders; `.gitignore` rule active | ✅ RESOLVED |
 | M-2 | Medium | No password hashing for dev login | Accepted — dev login blocked in production (`config.py:42` defaults to production); path unreachable | ✅ ACCEPTED RISK |
-| M-3 | Medium | No SBOM generation | Tracked for Phase 17; compensated by `uv.lock` pinning + `detect-secrets` baseline | 🔶 DEFERRED |
+| M-3 | Medium | No SBOM generation | Closed 2026-04-23 (bd 7mk8) — Syft SBOM + Sigstore attestation in `deploy-production.yml`; verified at deploy time by cosign | ✅ RESOLVED |
 | L-1 | Low | Rate limiter fails open on error | Fixed — `app/main.py:203-211` fails closed on `/auth/` endpoints | ✅ RESOLVED |
 | L-2 | Low | CSP `style-src 'unsafe-inline'` | Accepted — required for Tailwind CSS variables; mitigated by strict nonce-based `script-src` | 🔶 ACCEPTED RISK |
 
@@ -398,7 +398,7 @@ Sprint 16.4 focused on frontend consistency (brand tokens, CSS consolidation, de
 |----|----------|-------------|-----------------|----------------------|----------------|
 | L-2 | Low (CVSS 2.0) | CSP `style-src 'unsafe-inline'` | CSS injection possible but limited to visual defacement; no script execution | Strict nonce-based `script-src`; `frame-ancestors 'none'`; XSS-Protection header | Monitor Tailwind CSS for nonce support; migrate when available |
 | OBS-1 | Observation | Redis Basic tier uses public network | Basic SKU limitation; no Private Endpoint support | TLS 1.2 enforced; non-SSL port disabled; access key authentication | Upgrade to Standard tier when scaling beyond single instance |
-| OBS-2 | Observation | SBOM generation not yet in CI/CD | Reduced supply chain visibility for zero-day response | `uv.lock` pins all versions; `detect-secrets` baseline; PyJWT actively maintained | Add `cyclonedx-py` to CI/CD in Phase 17 |
+| ~~OBS-2~~ | ~~Observation~~ | ~~SBOM generation not yet in CI/CD~~ | ✅ CLOSED 2026-04-23 (bd 7mk8) — Syft SPDX-JSON SBOM + Sigstore attestation land on every prod build; cosign verify-attestation fails deploy closed | — |
 | OBS-3 | Observation | No automated DAST in pipeline | Dynamic vulnerabilities require manual testing | Comprehensive SAST via 2,994 tests; CSP headers; rate limiting; input validation | Integrate ZAP baseline scan in staging pipeline |
 
 ### Risk Quantification
@@ -481,7 +481,7 @@ Sprint 16.4 focused on frontend consistency (brand tokens, CSS consolidation, de
 - [x] **PyJWT 2.12.1** — 3 CVEs eliminated by python-jose removal (SEC-D1) 🆕
 - [x] Lock file (`uv.lock`) with pinned versions
 - [x] detect-secrets baseline maintained
-- [ ] SBOM generation in CI/CD (deferred to Phase 17)
+- [x] SBOM generation in CI/CD — closed 2026-04-23 via bd 7mk8 (Syft + Sigstore keyless)
 
 ### Accessibility (Security-Adjacent)
 - [x] **scope="col" on all table headers** (Sprint 16.3) 🆕
@@ -496,7 +496,7 @@ Sprint 16.4 focused on frontend consistency (brand tokens, CSS consolidation, de
 
 | Priority | Item | Owner | Timeline | Success Criteria |
 |----------|------|-------|----------|-----------------|
-| Medium | SBOM generation in CI/CD | DevOps | 2 weeks | `cyclonedx-py` artifact per build; integrated with dependency-track |
+| ~~Medium~~ | ~~SBOM generation in CI/CD~~ | ~~DevOps~~ | ✅ DONE 2026-04-23 | Syft SBOM + Sigstore attestation on every prod build (bd 7mk8, commits `7d816f6`..`3042624`). Dependency-track integration not opened — will file if zero-day response reveals a real gap. |
 | Medium | Automated DAST (ZAP baseline) | AppSec | 2 weeks | ZAP scan in staging pipeline; zero high-severity findings |
 | Low | Redis upgrade to Standard tier | Infrastructure | When scaling | Private Endpoint enabled; zone redundancy |
 | Low | CSP `style-src` nonce migration | Frontend | When Tailwind supports it | `unsafe-inline` removed from `style-src` |
