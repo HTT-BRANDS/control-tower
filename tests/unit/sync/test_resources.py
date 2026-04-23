@@ -399,6 +399,9 @@ class TestResourceSync:
         tenant2.tenant_id = "test-tenant-id-456"
         tenant2.name = "Test Tenant 2"
         tenant2.is_active = True
+        tenant2.use_lighthouse = True
+        tenant2.client_id = None
+        tenant2.client_secret_ref = None
 
         # The fixture sets query.side_effect (routing by model type), which
         # takes precedence over return_value. Override the side_effect so

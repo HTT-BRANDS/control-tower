@@ -32,6 +32,9 @@ def mock_tenant():
     tenant.tenant_id = "test-tenant-id-123"
     tenant.name = "Test Tenant"
     tenant.is_active = True
+    tenant.use_lighthouse = True
+    tenant.client_id = None
+    tenant.client_secret_ref = None
     return tenant
 
 
