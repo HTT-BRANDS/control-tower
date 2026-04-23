@@ -419,7 +419,7 @@ jobs:
           set -euo pipefail
           echo "Verifying SLSA provenance on: ${IMAGE_REF}"
           cosign verify-attestation \
-            --type slsaprovenance1 \
+            --type https://slsa.dev/provenance/v1 \
             --certificate-identity-regexp "${CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer "${OIDC_ISSUER}" \
             "${IMAGE_REF}" > /tmp/slsa-verdict.json
@@ -434,7 +434,7 @@ jobs:
           set -euo pipefail
           echo "Verifying SBOM attestation on: ${IMAGE_REF}"
           cosign verify-attestation \
-            --type spdxjson \
+            --type https://spdx.dev/Document/v2.3 \
             --certificate-identity-regexp "${CERT_IDENTITY_REGEXP}" \
             --certificate-oidc-issuer "${OIDC_ISSUER}" \
             "${IMAGE_REF}" > /tmp/sbom-verdict.json
