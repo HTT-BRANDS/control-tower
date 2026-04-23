@@ -1,0 +1,124 @@
+# =============================================================================
+# Arbiter Verification Policy — azure-governance-platform production releases
+# =============================================================================
+# Single source of truth for the supply-chain verification claims enforced in
+# .github/workflows/deploy-production.yml before any production deploy.
+#
+# When an operator or auditor asks "what exactly does the deploy gate check?"
+# this file is the answer — the workflow steps are the executable mirror.
+#
+# Filed in response to release-gate arbiter verdict
+# rga-2026-04-22-azgov-v2.5.0-02 (Finding 4, P0 Security #1 + #2).
+# =============================================================================
+
+apiVersion: arbiter.htt.dev/v1
+kind: VerificationPolicy
+metadata:
+  name: azgov-production-attestations
+  repository: htt-brands/azure-governance-platform
+  bd_ticket: "7mk8"
+  created: "2026-04-22"
+
+spec:
+  # ---------------------------------------------------------------------------
+  # The 4 claims every attestation must satisfy, in order of verification cost
+  # (cheapest first — fail fast on the pure-string checks before crypto).
+  # ---------------------------------------------------------------------------
+  claims:
+
+    subject:
+      # Claim 1 — WHAT artifact.
+      # MUST be an immutable content-addressed digest. Never a tag. The deploy
+      # workflow pulls this from the build-image job's image_digest output,
+      # which in turn comes from docker buildx's --metadata-file.
+      description: "Image is pinned by content-addressed digest, not by tag."
+      pin: "by-digest"
+      format: "sha256:<64-hex>"
+
+    predicate_type:
+      # Claim 2 — WHAT KIND of attestation.
+      # Both predicates are REQUIRED on every production image. Absence of
+      # either fails the gate closed.
+      description: "Both SLSA v1 provenance and SPDX SBOM must be attached."
+      required:
+        - type: "slsaprovenance1"
+          spec: "https://slsa.dev/provenance/v1"
+          produced_by: "actions/attest-build-provenance@v2"
+        - type: "spdxjson"
+          spec: "https://spdx.dev/spdx-specification-2-3/"
+          produced_by: "actions/attest-sbom@v2 (syft-generated)"
+
+    certificate_identity:
+      # Claim 3 — WHICH workflow produced it.
+      # Sigstore/Fulcio embeds the builder's OIDC identity in the short-lived
+      # certificate. We pin the workflow file path AND restrict the ref to
+      # main or release/* branches — PRs and feature branches cannot produce
+      # a passing attestation even if they somehow push to GHCR.
+      description: "OIDC subject identifying the build workflow + branch."
+      mode: "regexp"
+      pattern: '^https://github\.com/htt-brands/azure-governance-platform/\.github/workflows/deploy-production\.yml@refs/heads/(main|release/.*)$'
+
+    certificate_oidc_issuer:
+      # Claim 4 — WHO vouched for the identity.
+      # Fixed string, exact match. The Sigstore Fulcio instance that signed
+      # the cert MUST be the public-good GitHub Actions issuer. Prevents
+      # attestations from any other OIDC issuer (self-hosted, dev laptop,
+      # compromised CI on a fork) from being accepted.
+      description: "Sigstore Fulcio OIDC issuer for GitHub Actions."
+      mode: "exact"
+      value: "https://token.actions.githubusercontent.com"
+
+  # ---------------------------------------------------------------------------
+  # Where/how this policy is enforced. Arbiter pre-flight cross-checks that
+  # the workflow actually implements every claim below — if this block gets
+  # out of sync with the workflow, pre-flight fails before submission.
+  # ---------------------------------------------------------------------------
+  enforcement:
+    mode: "blocking"  # fail closed; never skip on verify error
+    applies_to:
+      - workflow: ".github/workflows/deploy-production.yml"
+        job: "deploy"
+        gate_steps:
+          - "Verify SLSA provenance attestation (4-claim)"
+          - "Verify SBOM attestation (4-claim)"
+    produced_by:
+      - workflow: ".github/workflows/deploy-production.yml"
+        job: "build-image"
+        produce_steps:
+          - "Attest SBOM (Sigstore keyless → OCI referrer)"
+          - "Attest SLSA build provenance (SLSA v1 / Build L3)"
+
+  # ---------------------------------------------------------------------------
+  # SLSA Build Level 3 conformance rationale.
+  # Cited so future auditors don't have to reconstruct the argument.
+  # ---------------------------------------------------------------------------
+  slsa_level: "L3"
+  slsa_rationale:
+    - "Build platform: GitHub-hosted ephemeral runner (ubuntu-latest) —
+       untampered, isolated per job, destroyed after run."
+    - "Builder identity: workflow-scoped ephemeral OIDC token minted by
+       GitHub — cannot be forged off-platform or by a different workflow."
+    - "Provenance authenticity: Fulcio short-lived X.509 cert bound to the
+       OIDC identity, logged in Rekor transparency log."
+    - "Non-falsifiable: cosign verify-attestation checks cert chain → Fulcio
+       → Rekor inclusion proof before any claim is trusted."
+    - "Isolated: no user-controlled inputs alter the provenance-generation
+       action's behavior (push-to-registry toggle only)."
+
+  # ---------------------------------------------------------------------------
+  # Known gaps / ratchet targets. Arbiter should flag these if unaddressed
+  # after their respective deadlines.
+  # ---------------------------------------------------------------------------
+  ratchet_followups:
+    - id: "7mk8-sha-pin"
+      description: "Pin actions/attest-build-provenance + actions/attest-sbom
+                    + sigstore/cosign-installer to full commit SHAs (not @v2 /
+                    @v3 major tags) for supply-chain-of-trust completeness."
+      severity: "low"
+      deadline: "2026-07-21"  # aligns with WAV-v2.5.0-7mk8 expiry
+    - id: "7mk8-rekor-offline"
+      description: "Consider passing --rekor-url and --offline to cosign verify
+                    for air-gapped production environments. N/A today because
+                    App Service + GitHub Actions both have public-internet egress."
+      severity: "info"
+      deadline: null
