@@ -20,6 +20,10 @@ This runbook verifies that production behavior matches that intent:
 - active alerts burn down
 - only intended tenants are being synced
 
+If you export the evidence to JSON, you can summarize it with
+`python scripts/verify_sync_recovery_report.py` instead of eyeballing five
+separate query outputs like a martyr.
+
 ---
 
 ## Production targets

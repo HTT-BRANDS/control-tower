@@ -15,6 +15,7 @@
 #   ./scripts/verify-sync-recovery.sh --sql
 #   ./scripts/verify-sync-recovery.sh --logs
 #   ./scripts/verify-sync-recovery.sh --all
+#   uv run python scripts/verify_sync_recovery_report.py --output-md /tmp/sync-recovery.md
 # =============================================================================
 
 set -euo pipefail
@@ -84,6 +85,7 @@ section() {
 cat <<EOF
 Sync Recovery Verification Helper
 - Runbook: docs/runbooks/sync-recovery-verification.md
+- Summary tool: scripts/verify_sync_recovery_report.py
 - Fix commit: $FIX_COMMIT
 - Prod URL: $PROD_URL
 - App: $PROD_APP
@@ -229,6 +231,20 @@ az webapp log tail \
   --resource-group "$PROD_RG"
 EOF
 fi
+
+section "OPTIONAL SUMMARY REPORT"
+cat <<'EOF'
+After exporting API / SQL / KQL results to JSON, summarize them with:
+
+uv run python scripts/verify_sync_recovery_report.py \
+  --sync-status-json /path/to/sync_status.json \
+  --recent-runs-json /path/to/recent_runs.json \
+  --alerts-json /path/to/alerts.json \
+  --traces-json /path/to/traces.json \
+  --exceptions-json /path/to/exceptions.json \
+  --output-json /tmp/sync-recovery-report.json \
+  --output-md /tmp/sync-recovery-report.md
+EOF
 
 section "PASS / FAIL REMINDER"
 cat <<EOF
