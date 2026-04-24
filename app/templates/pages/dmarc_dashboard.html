@@ -27,6 +27,7 @@
     title="DMARC/DKIM Security Dashboard",
     subtitle="Email authentication compliance for Riverside tenants",
     actions=header_actions) %}
+<div data-testid="dmarc-shell">
 
     {# ── Top KPIs ─────────────────────────────────────────────────────
        Four high-level counters populated client-side. `value_id` lets the
@@ -44,11 +45,11 @@
     {% endcall %}
 
     {# Alert banner — populated by JS when ≥1 critical/high severity alert. #}
-    <div id="alert-banner" class="hidden"></div>
+    <div id="alert-banner" data-testid="dmarc-alert-banner" class="hidden"></div>
 
     {# Per-tenant score cards (populated by updateTenantScores). #}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-         id="tenant-scores"></div>
+         id="tenant-scores" data-testid="dmarc-tenant-scores"></div>
 
     {# ── Tenant status table with in-card filter pills ──────────────── #}
     {% call ds_table(
@@ -101,6 +102,7 @@
                 body_id="failures-table",
                 loading_message="Loading failures…") }}
 
+</div>
 {% endcall %}
 
 

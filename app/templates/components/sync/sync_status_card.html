@@ -1,5 +1,5 @@
 {# Sync Status Card Component - Main dashboard status overview #}
-<div id="sync-status-card" class="bg-white rounded-lg shadow-lg p-6 border-l-4 
+<div id="sync-status-card" data-testid="sync-status-card" class="bg-white rounded-lg shadow-lg p-6 border-l-4 
     {{ 'border-brand-success-100' if status.status == 'healthy' else ('border-brand-error-100' if status.status == 'critical' else 'border-brand-warning-100') }}">
     {# Header with Status #}
     <div class="flex items-center justify-between mb-6">
@@ -25,7 +25,7 @@
 
     {# Active Alerts Summary #}
     {% if status.alerts.total_active > 0 %}
-    <div class="mb-6 p-4 bg-brand-error-5 rounded-lg border border-brand-error-10">
+    <div class="mb-6 p-4 bg-brand-error-5 rounded-lg border border-brand-error-10" data-testid="sync-status-alert-summary">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <svg class="w-5 h-5 text-brand-error-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -46,7 +46,7 @@
         </div>
     </div>
     {% else %}
-    <div class="mb-6 p-4 bg-brand-success-5 rounded-lg border border-brand-success-10">
+    <div class="mb-6 p-4 bg-brand-success-5 rounded-lg border border-brand-success-10" data-testid="sync-status-empty-healthy">
         <div class="flex items-center gap-3">
             <svg class="w-5 h-5 text-brand-success-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>

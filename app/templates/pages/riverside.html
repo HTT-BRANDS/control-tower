@@ -27,6 +27,7 @@
     title="Riverside Executive Dashboard",
     subtitle="Compliance tracking for July 8, 2026 deadline",
     actions=header_actions) %}
+<div data-testid="riverside-shell">
 
     {# ── Deadline Countdown (bespoke gradient — marketing hero) ──────── #}
     <div class="bg-gradient-to-r from-brand-primary-100 to-brand-primary-130 rounded-xl shadow-lg p-6 text-white">
@@ -58,6 +59,7 @@
 
     {# ── Executive Summary Cards (HTMX auto-refresh, 60s) ────────── #}
     <div hx-get="/api/v1/riverside/summary"
+         data-testid="riverside-executive-summary-region"
          hx-trigger="load, every 60s"
          hx-target="#executive-cards"
          hx-swap="innerHTML"
@@ -97,7 +99,7 @@
                 Refresh
             </button>
         </div>
-        <div id="mfa-chart-container" hx-get="/api/v1/riverside/mfa-status" hx-trigger="load" hx-swap="innerHTML">
+        <div id="mfa-chart-container" hx-get="/api/v1/riverside/mfa-status" hx-trigger="load" hx-swap="innerHTML" data-testid="riverside-mfa-region">
             <div class="h-64 flex items-center justify-center">
                 <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -123,7 +125,7 @@
                 Refresh
             </button>
         </div>
-        <div id="maturity-gauges" hx-get="/api/v1/riverside/maturity-scores" hx-trigger="load" hx-swap="innerHTML">
+        <div id="maturity-gauges" hx-get="/api/v1/riverside/maturity-scores" hx-trigger="load" hx-swap="innerHTML" data-testid="riverside-maturity-region">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {% for domain in ['IAM', 'GS', 'DS'] %}
                 <div class="text-center p-4 bg-brand-gray-5 rounded-lg animate-pulse">
@@ -141,6 +143,7 @@
        and footer with status counts. See /api/v1/riverside/requirements in
        app/api/routes/riverside.py. #}
     <div id="requirements-table-container"
+         data-testid="riverside-requirements-region"
          hx-get="/api/v1/riverside/requirements" hx-trigger="load" hx-swap="innerHTML">
         <div class="p-8 flex items-center justify-center bg-white rounded-lg shadow">
             <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -156,6 +159,7 @@
        refresh button, and alerts table. See /api/v1/riverside/gaps in
        app/api/routes/riverside.py. #}
     <div id="critical-alerts-container"
+         data-testid="riverside-alerts-region"
          hx-get="/api/v1/riverside/gaps" hx-trigger="load" hx-swap="innerHTML">
         <div class="p-8 flex items-center justify-center bg-white rounded-lg shadow border-l-4 border-brand-error-100">
             <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -188,6 +192,7 @@
             </a>
         </div>
     {% endcall %}
+</div>
 {% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">

@@ -27,6 +27,46 @@ def _get_data_freshness_threshold() -> timedelta:
     return timedelta(hours=settings.sync_stale_threshold_hours)
 
 
+def _build_scheduler_check(
+    request: Request, include_jobs: bool, has_auth: bool
+) -> tuple[dict[str, Any], str | None]:
+    """Return scheduler health payload and optional overall-status override."""
+    scheduler_status = getattr(request.app.state, "scheduler_status", None)
+    if scheduler_status == "disabled_for_test":
+        payload: dict[str, Any] = {
+            "status": "disabled_for_test",
+            "reason": "Background schedulers intentionally disabled for browser-test harness",
+            "active_jobs": 0,
+        }
+        if include_jobs:
+            payload["jobs"] = [] if has_auth else "redacted (auth required)"
+        return payload, None
+
+    scheduler = get_scheduler()
+    if scheduler and scheduler.running:
+        jobs = scheduler.get_jobs()
+        payload = {
+            "status": "healthy",
+            "active_jobs": len(jobs),
+        }
+        if include_jobs:
+            payload["jobs"] = (
+                [
+                    {
+                        "id": job.id,
+                        "name": job.name,
+                        "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                    }
+                    for job in jobs[:10]
+                ]
+                if has_auth
+                else "redacted (auth required)"
+            )
+        return payload, None
+
+    return {"status": "degraded", "error": "Scheduler not running"}, "degraded"
+
+
 @router.get("")
 async def api_health_check(
     request: Request,
@@ -99,16 +139,13 @@ async def api_health_check(
 
     # Check scheduler
     try:
-        scheduler = get_scheduler()
-        if scheduler and scheduler.running:
-            checks["scheduler"] = {
-                "status": "healthy",
-                "active_jobs": len(scheduler.get_jobs()),
-            }
-        else:
-            checks["scheduler"] = {"status": "degraded", "error": "Scheduler not running"}
-            if overall_status == "healthy":
-                overall_status = "degraded"
+        checks["scheduler"], scheduler_overall = _build_scheduler_check(
+            request=request,
+            include_jobs=False,
+            has_auth=False,
+        )
+        if scheduler_overall and overall_status == "healthy":
+            overall_status = scheduler_overall
     except Exception as e:
         checks["scheduler"] = {"status": "degraded", "error": str(e)}
         if overall_status == "healthy":
@@ -220,27 +257,13 @@ async def api_health_check_detailed(
 
     # Scheduler details
     try:
-        scheduler = get_scheduler()
-        if scheduler and scheduler.running:
-            jobs = scheduler.get_jobs()
-            checks["scheduler"] = {
-                "status": "healthy",
-                "active_jobs": len(jobs),
-                "jobs": [
-                    {
-                        "id": job.id,
-                        "name": job.name,
-                        "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
-                    }
-                    for job in jobs[:10]  # Limit job details
-                ]
-                if has_auth
-                else "redacted (auth required)",
-            }
-        else:
-            checks["scheduler"] = {"status": "degraded", "error": "Scheduler not running"}
-            if overall_status == "healthy":
-                overall_status = "degraded"
+        checks["scheduler"], scheduler_overall = _build_scheduler_check(
+            request=request,
+            include_jobs=True,
+            has_auth=has_auth,
+        )
+        if scheduler_overall and overall_status == "healthy":
+            overall_status = scheduler_overall
     except Exception as e:
         checks["scheduler"] = {"status": "degraded", "error": str(e)}
         if overall_status == "healthy":

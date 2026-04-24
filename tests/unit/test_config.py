@@ -139,6 +139,16 @@ def test_is_development_returns_false_for_production(monkeypatch):
     assert settings.is_development is False
 
 
+def test_allows_direct_login_for_explicit_test_harness(monkeypatch):
+    """Direct login is allowed for the explicit browser-test harness."""
+    monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("E2E_HARNESS", "1")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.allows_direct_login is True
+
+
 def test_is_configured_returns_true_with_azure_creds(monkeypatch):
     """Test is_configured returns True when Azure credentials present."""
     monkeypatch.setenv("AZURE_TENANT_ID", "test-tenant-id")
@@ -221,6 +231,30 @@ def test_validate_debug_mode_allows_debug_in_development(monkeypatch):
 
     assert settings.debug is True
     assert settings.environment == "development"
+
+
+def test_browser_test_scheduler_disable_requires_allowlisted_context(monkeypatch):
+    """Scheduler disable flag must fail closed outside explicit test harness context."""
+    monkeypatch.setenv("ENVIRONMENT", "development")
+    monkeypatch.setenv("BROWSER_TEST_DISABLE_SCHEDULERS", "true")
+    monkeypatch.delenv("E2E_HARNESS", raising=False)
+
+    with pytest.raises(ValueError, match="BROWSER_TEST_DISABLE_SCHEDULERS"):
+        Settings(_env_file=None)
+
+
+def test_browser_test_scheduler_disable_allowed_for_test_harness(monkeypatch):
+    """Scheduler disable flag is allowed only for the explicit browser-test harness."""
+    monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("E2E_HARNESS", "1")
+    monkeypatch.setenv("BROWSER_TEST_DISABLE_SCHEDULERS", "true")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.environment == "test"
+    assert settings.is_test is True
+    assert settings.disable_background_schedulers is True
+    assert settings.e2e_harness is True
 
 
 def test_validate_cors_origins_prevents_wildcard_in_production(monkeypatch):

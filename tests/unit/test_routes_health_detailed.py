@@ -106,6 +106,7 @@ class TestHealthEndpoint:
             return_value={"backend": "memory", "hit_rate_percent": 90}
         )
         mock_get_sched.return_value = _mock_scheduler_running()
+        client.app.state.scheduler_status = None
 
         resp = client.get(HEALTH_URL)
         data = resp.json()
@@ -220,6 +221,7 @@ class TestHealthEndpoint:
             return_value={"backend": "memory", "hit_rate_percent": 0}
         )
         mock_get_sched.return_value = _mock_scheduler_stopped()
+        client.app.state.scheduler_status = None
 
         resp = client.get(HEALTH_URL)
         data = resp.json()
@@ -242,6 +244,7 @@ class TestHealthEndpoint:
             return_value={"backend": "memory", "hit_rate_percent": 0}
         )
         mock_get_sched.return_value = None
+        client.app.state.scheduler_status = None
 
         resp = client.get(HEALTH_URL)
         data = resp.json()
@@ -263,12 +266,40 @@ class TestHealthEndpoint:
             return_value={"backend": "memory", "hit_rate_percent": 0}
         )
         mock_get_sched.side_effect = RuntimeError("scheduler init failed")
+        client.app.state.scheduler_status = None
 
         resp = client.get(HEALTH_URL)
         data = resp.json()
 
         assert data["checks"]["scheduler"]["status"] == "degraded"
         assert "scheduler init failed" in data["checks"]["scheduler"]["error"]
+
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_health_scheduler_disabled_for_test_is_distinct_from_degraded(
+        self,
+        mock_get_sched,
+        mock_cache,
+        client,
+    ):
+        """Browser-test disabled scheduler state should not be reported as degraded."""
+        mock_cache.set = AsyncMock()
+        mock_cache.get = AsyncMock(return_value="ok")
+        mock_cache.get_metrics = MagicMock(
+            return_value={"backend": "memory", "hit_rate_percent": 0}
+        )
+        mock_get_sched.return_value = None
+        client.app.state.scheduler_status = "disabled_for_test"
+
+        try:
+            resp = client.get(HEALTH_URL)
+        finally:
+            client.app.state.scheduler_status = None
+
+        data = resp.json()
+        assert data["status"] == "healthy"
+        assert data["checks"]["scheduler"]["status"] == "disabled_for_test"
+        assert data["checks"]["scheduler"]["active_jobs"] == 0
 
     @patch("app.api.routes.health.get_settings")
     @patch("app.api.routes.health.cache_manager")
@@ -537,6 +568,7 @@ class TestHealthDetailedEndpoint:
             }
         )
         mock_get_sched.return_value = _mock_scheduler_running(num_jobs=2)
+        client.app.state.scheduler_status = None
 
         resp = client.get(DETAILED_URL, headers={"Authorization": "Bearer tok123"})
         sched_check = resp.json()["checks"]["scheduler"]
@@ -573,6 +605,7 @@ class TestHealthDetailedEndpoint:
             }
         )
         mock_get_sched.return_value = _mock_scheduler_running(num_jobs=2)
+        client.app.state.scheduler_status = None
 
         resp = client.get(DETAILED_URL)  # no auth
         sched_check = resp.json()["checks"]["scheduler"]
@@ -614,6 +647,43 @@ class TestHealthDetailedEndpoint:
         data = resp.json()
         assert data["status"] == "degraded"
         assert data["checks"]["database"]["status"] == "unhealthy"
+
+    @patch("app.core.database.get_db_stats", return_value={})
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_detailed_scheduler_disabled_for_test_reports_distinct_status(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_db_stats,
+        client,
+    ):
+        """Detailed endpoint should surface disabled_for_test instead of degraded."""
+        mock_cache.set = AsyncMock()
+        mock_cache.get = AsyncMock(return_value="ok")
+        mock_cache.get_metrics = MagicMock(
+            return_value={
+                "backend": "memory",
+                "hit_rate_percent": 0,
+                "hits": 0,
+                "misses": 0,
+                "sets": 0,
+                "deletes": 0,
+                "avg_get_time_ms": 0,
+            }
+        )
+        mock_get_sched.return_value = None
+        client.app.state.scheduler_status = "disabled_for_test"
+
+        try:
+            resp = client.get(DETAILED_URL, headers={"Authorization": "Bearer tok123"})
+        finally:
+            client.app.state.scheduler_status = None
+
+        sched_check = resp.json()["checks"]["scheduler"]
+        assert sched_check["status"] == "disabled_for_test"
+        assert sched_check["active_jobs"] == 0
+        assert sched_check["jobs"] == []
 
     @patch("app.api.routes.health.get_settings")
     @patch("app.core.database.get_db_stats", return_value={})

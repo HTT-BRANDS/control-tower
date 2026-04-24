@@ -47,6 +47,7 @@
     title="Riverside Compliance Dashboard",
     subtitle="July 8, 2026 Compliance Deadline",
     actions=header_actions) %}
+<div data-testid="riverside-shell">
 
     {# ── Countdown Card (marketing-style gradient; bespoke on purpose) ── #}
     <div class="bg-hero-gradient rounded-xl shadow-lg p-6 text-white">
@@ -75,6 +76,7 @@
        NOTE: these are KPI cards with embedded progress bars, which the
        ds_stat_card macro doesn't model. Kept inline to avoid bloating
        the macro API with a one-off caller. Tokens still fully migrated. #}
+    <div data-testid="riverside-executive-summary-region">
     {% call ds_card_grid() %}
         <!-- Maturity Score -->
         <article class="bg-surface-primary rounded-xl shadow p-6">
@@ -164,14 +166,17 @@
             </div>
         </article>
     {% endcall %}
+    </div>
 
     {# ── Tenant Breakdown ─────────────────────────────────────────────── #}
+    <div data-testid="riverside-requirements-region">
     {{ ds_table(
         title="Tenant Compliance Status",
         columns=["Tenant", "Maturity", "MFA", "Admin MFA", "Devices", "Requirements", "Gaps"],
         body_id="tenant-table",
         loading_message="Loading tenants…"
     ) }}
+    </div>
 
     {# ── Requirements by Status & Priority ────────────────────────────── #}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -262,6 +267,7 @@
             View All Gaps
         </a>
     </div>
+</div>
 {% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">
@@ -367,7 +373,17 @@
 
         // Update tenant table
         const tenantTable = document.getElementById('tenant-table');
-        tenantTable.innerHTML = data.tenant_summaries.map(t => `
+        const tenantSummaries = (data.tenant_summaries || []).map(t => ({
+            ...t,
+            maturity_score: asNumber(t.maturity_score) ?? 0,
+            mfa_coverage: asNumber(t.mfa_coverage) ?? 0,
+            admin_mfa_pct: asNumber(t.admin_mfa_pct) ?? 0,
+            device_compliance: asNumber(t.device_compliance) ?? 0,
+            requirements_completed: asNumber(t.requirements_completed) ?? 0,
+            requirements_total: asNumber(t.requirements_total) ?? 0,
+            critical_gaps: asNumber(t.critical_gaps) ?? 0,
+        }));
+        tenantTable.innerHTML = tenantSummaries.map(t => `
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">

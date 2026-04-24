@@ -38,24 +38,25 @@
     title="Sync Status Dashboard",
     subtitle="Real-time monitoring for DevOps/SRE teams",
     actions=header_actions) %}
+<div data-testid="sync-dashboard-shell">
 
     {# ── Main Status (auto-refreshing HTMX target) ───────────────────── #}
-    <div hx-get="/partials/sync-status-card" hx-trigger="load" hx-swap="outerHTML">
+    <div hx-get="/partials/sync-status-card" hx-trigger="load" hx-swap="outerHTML" data-testid="sync-status-region">
         {% call _loading_panel() %}Loading sync status...{% endcall %}
     </div>
 
     {# ── Two-column: Alerts & History ────────────────────────────────── #}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div hx-get="/partials/active-alerts" hx-trigger="load" hx-swap="outerHTML">
+        <div hx-get="/partials/active-alerts" hx-trigger="load" hx-swap="outerHTML" data-testid="sync-alerts-region">
             {% call _loading_panel(extra_classes="h-64") %}Loading alerts...{% endcall %}
         </div>
-        <div hx-get="/partials/sync-history-table" hx-trigger="load" hx-swap="outerHTML">
+        <div hx-get="/partials/sync-history-table" hx-trigger="load" hx-swap="outerHTML" data-testid="sync-history-region">
             {% call _loading_panel(extra_classes="h-64") %}Loading history...{% endcall %}
         </div>
     </div>
 
     {# ── Per-tenant status (auto-refreshing) ─────────────────────────── #}
-    <div hx-get="/partials/tenant-sync-status" hx-trigger="load" hx-swap="outerHTML">
+    <div hx-get="/partials/tenant-sync-status" hx-trigger="load" hx-swap="outerHTML" data-testid="tenant-sync-region">
         {% call _loading_panel() %}Loading tenant status...{% endcall %}
     </div>
 
@@ -117,6 +118,7 @@
             </div>
         </div>
     {% endcall %}
+</div>
 {% endcall %}
 
 {# Sync dashboard specific scripts — CSP-safe event delegation for the

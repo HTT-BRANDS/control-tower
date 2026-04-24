@@ -167,8 +167,15 @@ async def login(
     """
     settings = get_settings()
 
-    # ── Production / Staging: reject direct login entirely ──────────
-    if not settings.is_development:
+    # ── Reject direct login outside development / explicit browser-test harness ──
+    allow_direct_login = getattr(settings, "allows_direct_login", None)
+    if not isinstance(allow_direct_login, bool):
+        is_development = getattr(settings, "is_development", False) is True
+        is_test = getattr(settings, "is_test", False) is True
+        e2e_harness = getattr(settings, "e2e_harness", False) is True
+        allow_direct_login = is_development or (is_test and e2e_harness)
+
+    if not allow_direct_login:
         logger.warning("Direct login attempt blocked in %s environment", settings.environment)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

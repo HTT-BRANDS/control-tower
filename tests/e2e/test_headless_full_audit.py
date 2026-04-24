@@ -1,7 +1,8 @@
-"""Full headless browser audit — every page, partial, API, and integration.
+"""Exploratory full headless browser audit — pages, partials, APIs, and integration.
 
-This is the definitive E2E test suite that exercises the entire application
-through a real Chromium browser with proper cookie-based authentication.
+This is the broad non-gating E2E suite that exercises large swaths of the
+application through a real Chromium browser with proper cookie-based authentication.
+The focused must-pass smoke gate lives in ``tests/e2e/test_browser_smoke.py``.
 
 Run: uv run pytest tests/e2e/test_headless_full_audit.py -v --headed (visual)
      uv run pytest tests/e2e/test_headless_full_audit.py -v             (headless)
@@ -10,74 +11,13 @@ Run: uv run pytest tests/e2e/test_headless_full_audit.py -v --headed (visual)
 import json
 
 import pytest
-from playwright.sync_api import BrowserContext, Page, expect
-
-# ---------------------------------------------------------------------------
-# Cookie-authenticated browser context
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="session")
-def cookie_context(browser, base_url: str) -> BrowserContext:
-    """Create a browser context with auth cookie injected via API login.
-
-    Uses httpx to acquire a JWT token (faster, avoids JS form visibility
-    race conditions), then injects it as a cookie into the browser context.
-    Retries on rate limiting (429) with exponential backoff.
-    """
-    import time
-
-    import httpx
-
-    token = None
-    for attempt in range(5):
-        resp = httpx.post(
-            f"{base_url}/api/v1/auth/login",
-            data={"username": "admin", "password": "admin"},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=10,
-        )
-        if resp.status_code == 200:
-            # Token is set as httpOnly cookie, not in JSON body
-            token = resp.cookies.get("access_token")
-            if not token:
-                token = resp.json().get("access_token")
-            break
-        if resp.status_code == 429:
-            time.sleep(2**attempt)  # 1, 2, 4, 8, 16s
-            continue
-        pytest.fail(f"API login failed: {resp.status_code} {resp.text}")
-
-    assert token is not None, "Login failed after 5 retries (rate limited)"
-
-    from urllib.parse import urlparse
-
-    domain = urlparse(base_url).hostname
-    context = browser.new_context(
-        viewport={"width": 1280, "height": 720},
-        ignore_https_errors=True,
-    )
-    context.add_cookies(
-        [
-            {
-                "name": "access_token",
-                "value": token,
-                "domain": domain,
-                "path": "/",
-            }
-        ]
-    )
-    yield context
-    context.close()
+from playwright.sync_api import Page, expect
 
 
 @pytest.fixture
-def page(cookie_context: BrowserContext, base_url: str) -> Page:
-    """Fresh page with auth cookie already set."""
-    p = cookie_context.new_page()
-    p._base_url = base_url  # type: ignore[attr-defined]
-    yield p
-    p.close()
+def page(authenticated_page: Page) -> Page:
+    """Alias the shared authenticated page fixture for the legacy full audit suite."""
+    return authenticated_page
 
 
 # ===========================================================================

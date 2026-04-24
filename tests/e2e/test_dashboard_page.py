@@ -1,4 +1,7 @@
-"""E2E browser tests for the main dashboard page."""
+"""Legacy exploratory E2E browser tests for the main dashboard page.
+
+Focused must-pass coverage lives in ``tests/e2e/test_browser_smoke.py``.
+"""
 
 import pytest
 from playwright.sync_api import Page

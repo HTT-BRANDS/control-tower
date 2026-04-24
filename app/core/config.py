@@ -320,7 +320,7 @@ class Settings(BaseSettings):
     # Environment Detection
     # =========================================================================
 
-    environment: Literal["development", "staging", "production"] = Field(
+    environment: Literal["development", "test", "staging", "production"] = Field(
         default="production",
         alias="ENVIRONMENT",
     )
@@ -519,6 +519,19 @@ class Settings(BaseSettings):
     compliance_sync_interval_hours: int = 4
     resource_sync_interval_hours: int = 1
     identity_sync_interval_hours: int = 24
+    disable_background_schedulers: bool = Field(
+        default=False,
+        alias="BROWSER_TEST_DISABLE_SCHEDULERS",
+        description=(
+            "Disable background schedulers for the browser-test harness only. "
+            "This is allowlisted to explicit non-deployable test contexts and must fail closed elsewhere."
+        ),
+    )
+    e2e_harness: bool = Field(
+        default=False,
+        alias="E2E_HARNESS",
+        description="Explicit allowlist marker for the browser-test harness.",
+    )
     sync_stale_threshold_hours: int = Field(
         default=24,
         alias="SYNC_STALE_THRESHOLD_HOURS",
@@ -767,6 +780,21 @@ class Settings(BaseSettings):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_browser_test_scheduler_disable_scope(self):
+        """Fail closed unless scheduler disable is explicitly allowlisted for browser tests."""
+        if not self.disable_background_schedulers:
+            return self
+
+        allowed_context = self.environment == "test" and self.e2e_harness
+        if not allowed_context:
+            raise ValueError(
+                "BROWSER_TEST_DISABLE_SCHEDULERS is allowed only when ENVIRONMENT=test "
+                "and E2E_HARNESS=true in the browser-test harness"
+            )
+
+        return self
+
     @field_validator("managed_tenant_ids", mode="before")
     @classmethod
     def parse_managed_tenant_ids(cls, v: str | list[str]) -> list[str]:
@@ -835,6 +863,16 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if running in development environment."""
         return self.environment == "development"
+
+    @property
+    def is_test(self) -> bool:
+        """Check if running in the explicit test environment."""
+        return self.environment == "test"
+
+    @property
+    def allows_direct_login(self) -> bool:
+        """Allow direct login only for development or the explicit browser-test harness."""
+        return self.is_development or (self.is_test and self.e2e_harness)
 
     @property
     def is_configured(self) -> bool:

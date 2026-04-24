@@ -75,6 +75,10 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
+    current_settings = get_settings()
+    scheduler = None
+    riverside_sched = None
+
     # Startup
     logger.info("Starting Azure Governance Platform...")
 
@@ -86,22 +90,31 @@ async def lifespan(app: FastAPI):
     await cache_manager.initialize()
     logger.info("Cache initialized")
 
-    # Initialize and start data sync scheduler
-    scheduler = init_scheduler()
-    scheduler.start()
-    logger.info("Background scheduler started")
+    if current_settings.disable_background_schedulers:
+        app.state.scheduler_status = "disabled_for_test"
+        logger.info(
+            "Background schedulers intentionally disabled for browser-test harness "
+            "(ENVIRONMENT=test, E2E_HARNESS=1)"
+        )
+    else:
+        # Initialize and start data sync scheduler
+        scheduler = init_scheduler()
+        scheduler.start()
+        app.state.scheduler_status = "running"
+        logger.info("Background scheduler started")
 
-    # Initialize Riverside compliance monitoring scheduler
-    # Lazy import to avoid circular dependency at module level
-    riverside_sched = None
-    try:
-        from app.core.riverside_scheduler import init_riverside_scheduler
+        # Initialize Riverside compliance monitoring scheduler
+        # Lazy import to avoid circular dependency at module level
+        try:
+            from app.core.riverside_scheduler import init_riverside_scheduler
 
-        riverside_sched = init_riverside_scheduler()
-        riverside_sched.start()
-        logger.info("Riverside compliance scheduler started")
-    except Exception:
-        logger.exception("Failed to start Riverside compliance scheduler — continuing without it")
+            riverside_sched = init_riverside_scheduler()
+            riverside_sched.start()
+            logger.info("Riverside compliance scheduler started")
+        except Exception:
+            logger.exception(
+                "Failed to start Riverside compliance scheduler — continuing without it"
+            )
 
     yield
 
@@ -109,7 +122,8 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
     if riverside_sched is not None:
         riverside_sched.shutdown()
-    scheduler.shutdown()
+    if scheduler is not None:
+        scheduler.shutdown()
 
 
 # Create FastAPI application with enhanced OpenAPI configuration

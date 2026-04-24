@@ -1,5 +1,5 @@
 {# Tenant Sync Status Grid Component #}
-<div id="tenant-sync-grid" class="bg-white rounded-lg shadow-lg p-6">
+<div id="tenant-sync-grid" data-testid="tenant-sync-grid" class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex items-center justify-between mb-6">
         <div>
             <h3 class="text-lg font-bold text-primary-theme">Per-Tenant Sync Status</h3>
@@ -37,13 +37,13 @@
 
     {# Tenant Cards Grid #}
     {% if tenant_status %}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" data-testid="tenant-sync-cards">
         {% for tenant_data in tenant_status %}
         {% include "components/sync/tenant_status_card.html" with context %}
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-12 bg-brand-gray-5 rounded-lg">
+    <div class="text-center py-12 bg-brand-gray-5 rounded-lg" data-testid="tenant-sync-empty-state">
         <svg class="w-12 h-12 mx-auto mb-3 text-brand-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
         </svg>

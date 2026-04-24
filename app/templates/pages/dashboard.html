@@ -25,7 +25,7 @@
 {% set has_any_data = has_cost_data or has_compliance_data or has_resource_data or has_identity_data %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" data-testid="dashboard-shell">
     {# ================================================================
        Page Header + Tenant Scope
        ================================================================ #}
@@ -75,7 +75,7 @@
     {# ================================================================
        Empty State: First-time onboarding
        ================================================================ #}
-    <div class="card-brand p-8 text-center">
+    <div class="card-brand p-8 text-center" data-testid="dashboard-empty-state">
         <div class="max-w-md mx-auto">
             <svg class="w-16 h-16 mx-auto mb-4 text-brand-primary-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -103,7 +103,7 @@
        ================================================================ #}
     <h2 class="sr-only">Key Performance Indicators</h2>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-surface-secondary rounded-xl"
-         role="region" aria-label="Key metrics summary">
+         role="region" aria-label="Key metrics summary" data-testid="dashboard-kpi-summary">
         <div class="text-center">
             <div class="text-xs text-muted-theme uppercase tracking-wide">Monthly Cost</div>
             <div class="text-xl font-bold text-primary-theme">${{ "{:,.0f}".format(cost_summary.total_cost) }}</div>
@@ -143,7 +143,7 @@
        Level 2: Summary Cards (with last-synced timestamps)
        ================================================================ #}
     <h2 class="text-lg font-semibold text-primary-theme">Overview</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="dashboard-overview-grid">
         {# Cost Summary — migrated from bespoke card → ds_stat_card #}
         {% if cost_summary.cost_change_percent is not none %}
           {% set cost_trend = {

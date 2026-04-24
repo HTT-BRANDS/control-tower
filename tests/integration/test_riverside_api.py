@@ -60,6 +60,23 @@ def riverside_admin() -> User:
 
 
 @pytest.fixture
+def riverside_reader() -> User:
+    """Create a limited-role user with tenant access but no sync permissions."""
+    return User(
+        id="reader-riverside",
+        email="reader@riverside.com",
+        name="Riverside Reader",
+        roles=["reader"],
+        tenant_ids=[
+            "11111111-1111-1111-1111-111111111111",
+            "22222222-2222-2222-2222-222222222222",
+        ],
+        is_active=True,
+        auth_provider="internal",
+    )
+
+
+@pytest.fixture
 def mock_riverside_authz():
     """Mock TenantAuthorization with Riverside tenant access."""
     authz = MagicMock()
@@ -144,6 +161,34 @@ def riverside_admin_client(riverside_db, riverside_admin, mock_riverside_authz):
         return mock_riverside_authz
 
     # Override dependencies globally for all routes
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_tenant_authorization] = override_get_tenant_authorization
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def riverside_reader_client(riverside_db, riverside_reader, mock_riverside_authz):
+    """Test client with limited reader authentication."""
+    from app.core.auth import get_current_user
+    from app.core.authorization import get_tenant_authorization
+
+    def override_get_db():
+        try:
+            yield riverside_db
+        finally:
+            pass
+
+    async def override_get_current_user():
+        return riverside_reader
+
+    async def override_get_tenant_authorization():
+        return mock_riverside_authz
+
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_tenant_authorization] = override_get_tenant_authorization
@@ -554,15 +599,13 @@ class TestRiversideSyncEndpoint:
         assert "requirements" in results
         assert "maturity_scores" in results
 
-    def test_sync_requires_admin_or_operator(self, riverside_client: TestClient):
-        """Sync endpoint requires operator or admin role."""
-        # Regular user should be forbidden
-        response = riverside_client.post("/api/v1/riverside/sync")
+    def test_sync_requires_admin_or_operator(self, riverside_reader_client: TestClient):
+        """Sync endpoint rejects a limited reader role for the admin-facing action."""
+        response = riverside_reader_client.post("/api/v1/riverside/sync")
         assert response.status_code == 403
 
         data = response.json()
-        assert "detail" in data
-        assert "operator or admin" in data["detail"].lower()
+        assert data["detail"] == "Riverside sync requires operator or admin role"
 
     def test_sync_requires_auth(self, unauthenticated_riverside_client: TestClient):
         """Sync endpoint requires authentication."""

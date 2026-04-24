@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/static/css/design-utilities.css">
 </head>
 <body class="min-h-screen flex items-center justify-center bg-surface-secondary font-sans">
-    <div class="max-w-md w-full mx-4">
+    <div class="max-w-md w-full mx-4" data-testid="login-shell">
         <div class="bg-white rounded-lg shadow-md p-8">
             <!-- Logo / Branding -->
             <div class="text-center mb-8">
@@ -31,7 +31,7 @@
             </div>
 
             <!-- Azure AD SSO Button (Primary for staging/production) -->
-            <div id="azure-login-section">
+            <div id="azure-login-section" data-testid="login-azure-entry">
                 <button id="azure-login-btn" type="button"
                         class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors bg-brand-primary-100 hover:bg-brand-primary-110"
                         >
@@ -57,7 +57,7 @@
             </div>
 
             <!-- Dev Login Form (only shown in development) -->
-            <form id="login-form" class="space-y-5 hidden">
+            <form id="login-form" class="space-y-5 hidden" data-testid="login-dev-form">
                 <div>
                     <label for="username" class="block text-sm font-medium text-secondary-theme">Username</label>
                     <input type="text" id="username" name="username" required
@@ -82,7 +82,7 @@
                 </button>
             </form>
 
-            <div id="error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4 text-brand-error bg-brand-error-5"></div>
+            <div id="error-message" data-testid="login-error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4 text-brand-error bg-brand-error-5"></div>
 
             <div class="mt-6 text-center">
                 <p class="text-xs text-muted-theme">Access restricted to authorized users</p>

@@ -3,6 +3,13 @@
 import httpx
 from playwright.sync_api import Page, Response
 
+CONSOLE_ERROR_ALLOWLIST: tuple[str, ...] = ()
+SERVER_ERROR_TEXT_SNIPPETS: tuple[str, ...] = (
+    "Internal Server Error",
+    "Traceback",
+    "Server got itself in trouble",
+)
+
 
 def get_auth_token(base_url: str, username: str = "admin", password: str = "admin") -> str:
     """Acquire JWT token via API login."""
@@ -72,28 +79,54 @@ def assert_no_console_errors(page: Page) -> list[str]:
     return warnings
 
 
-def setup_console_listener(page: Page) -> dict:
-    """Set up console message listener. Call BEFORE navigation.
+def setup_console_listener(page: Page) -> dict[str, list[str]]:
+    """Set up console and page-error listeners. Call BEFORE navigation.
 
-    Returns a dict that will be populated with errors/warnings as they occur.
+    Returns a dict populated with:
+    - ``errors``: console error messages + uncaught page errors
+    - ``warnings``: console warning messages
+
     Usage:
         console = setup_console_listener(page)
         page.goto("/dashboard")
-        assert len(console["errors"]) == 0
+        assert_console_errors_clean(console["errors"])
     """
     console: dict[str, list[str]] = {"errors": [], "warnings": []}
 
     def on_console(msg):
         if msg.type == "error":
-            # Ignore common benign errors
-            text = msg.text
-            if "favicon" not in text.lower():
-                console["errors"].append(text)
+            console["errors"].append(msg.text)
         elif msg.type == "warning":
             console["warnings"].append(msg.text)
 
+    def on_page_error(exc):
+        console["errors"].append(str(exc))
+
     page.on("console", on_console)
+    page.on("pageerror", on_page_error)
     return console
+
+
+def assert_console_errors_clean(
+    errors: list[str],
+    allowlist: tuple[str, ...] = CONSOLE_ERROR_ALLOWLIST,
+) -> None:
+    """Fail only on non-allowlisted error-severity console/page errors."""
+    real_errors = []
+    for error in errors:
+        lowered = error.lower()
+        if "favicon" in lowered:
+            continue
+        if any(allowed in error for allowed in allowlist):
+            continue
+        real_errors.append(error)
+    assert not real_errors, f"Unexpected console/page errors: {real_errors}"
+
+
+def assert_no_server_error_text(content: str) -> None:
+    """Fail on obvious server-side error page text."""
+    for snippet in SERVER_ERROR_TEXT_SNIPPETS:
+        assert snippet not in content, f"Unexpected server error text found: {snippet}"
 
 
 def assert_page_accessible(page: Page) -> None:

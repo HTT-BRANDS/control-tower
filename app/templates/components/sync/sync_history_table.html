@@ -1,5 +1,5 @@
 {# Sync History Table Component #}
-<div id="sync-history-table" class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div id="sync-history-table" data-testid="sync-history-table" class="bg-white rounded-lg shadow-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-brand-gray-50 flex items-center justify-between">
         <div>
             <h3 class="text-lg font-bold text-primary-theme">Recent Sync Jobs</h3>
@@ -14,7 +14,7 @@
         </div>
     </div>
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-brand-gray-50">
+        <table class="min-w-full divide-y divide-brand-gray-50" data-testid="sync-history-table-grid">
             <thead class="bg-brand-gray-5">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-brand-gray-130 uppercase tracking-wider">Job</th>
@@ -142,7 +142,7 @@
                 </tr>
                 {% endif %}
                 {% else %}
-                <tr>
+                <tr data-testid="sync-history-empty-state">
                     <td colspan="6" class="px-6 py-12 text-center">
                         <svg class="w-12 h-12 mx-auto mb-3 text-brand-gray-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>

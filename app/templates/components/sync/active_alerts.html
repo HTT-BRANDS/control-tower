@@ -1,5 +1,5 @@
 {# Active Alerts Panel Component #}
-<div id="active-alerts-panel" class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div id="active-alerts-panel" data-testid="active-alerts-panel" class="bg-white rounded-lg shadow-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-brand-gray-50 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="p-2 rounded-full {{ 'bg-brand-success-10' if stats.active == 0 else 'bg-brand-error-10' }}">
@@ -46,7 +46,7 @@
         {% for alert in alerts %}
         {% include "components/sync/alert_card.html" with context %}
         {% else %}
-        <div class="text-center py-12">
+        <div class="text-center py-12" data-testid="active-alerts-empty-state">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-success-10 flex items-center justify-center">
                 <svg class="w-8 h-8 text-brand-success-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>

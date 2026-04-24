@@ -132,6 +132,27 @@ class TestLoginEndpoint:
         assert "Invalid credentials" in response.json()["detail"]
 
     @patch("app.api.routes.auth.get_settings")
+    def test_login_allowed_for_explicit_test_harness(self, mock_settings, client_with_db):
+        """Login remains available for the explicit browser-test harness in ENVIRONMENT=test."""
+        settings = MagicMock()
+        settings.is_development = False
+        settings.is_test = True
+        settings.e2e_harness = True
+        settings.allows_direct_login = True
+        settings.environment = "test"
+        settings.jwt_access_token_expire_minutes = 30
+        mock_settings.return_value = settings
+
+        response = client_with_db.post(
+            "/api/v1/auth/login",
+            data={"username": "admin", "password": "admin"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["cookies_set"] is True
+        assert "access_token" in response.cookies
+
+    @patch("app.api.routes.auth.get_settings")
     def test_login_blocked_in_production(self, mock_settings, client_with_db):
         """Login is blocked in production environment."""
         settings = MagicMock()
