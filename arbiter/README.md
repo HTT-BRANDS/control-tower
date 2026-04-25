@@ -9,19 +9,20 @@ executable-mirrored in GitHub Actions workflows.
 arbiter/
 ├── README.md                 ← you are here
 └── policies/
-    └── verify.yaml           ← 4-claim attestation verification policy
+    └── verify.yaml           ← production attestation verification policy
 ```
 
 ## `policies/verify.yaml` — supply-chain verification
 
-Defines the four claims every production image attestation must satisfy
-before `deploy-production.yml`'s deploy job will run `az webapp config
-container set`:
+Defines the release-critical claims every production image attestation
+must satisfy before `deploy-production.yml`'s deploy job will run
+`az webapp config container set`:
 
 1. **Subject** — immutable `sha256:...` digest (never a tag)
 2. **Predicate type** — both SLSA v1 provenance AND SPDX SBOM required
-3. **Certificate identity** — workflow path + branch (main / release/*)
-4. **OIDC issuer** — Sigstore Fulcio for GitHub Actions
+3. **Signer workflow** — exact workflow path
+4. **Source ref** — current deploy ref, limited to `main` / `release/*`
+5. **OIDC issuer** — Sigstore Fulcio for GitHub Actions
 
 The policy is the source-of-truth. The workflow steps named under
 `spec.enforcement.applies_to.gate_steps` are the executable mirror. If
@@ -38,8 +39,9 @@ bearing, so YAML wins over JSON.
 | Event | Expected action |
 |---|---|
 | New predicate type added to workflow | Update `spec.claims.predicate_type.required` |
-| Deploy gate moved to a different workflow | Update `spec.enforcement.applies_to.workflow` |
-| Branches allowed to produce prod attestations change | Update `spec.claims.certificate_identity.pattern` |
+| Deploy gate moved to a different workflow | Update `spec.enforcement.applies_to.workflow` and `spec.claims.certificate_identity.value` |
+| Branches/refs allowed to produce prod attestations change | Update `spec.claims.source_ref.allowed_patterns` |
+| Verification tool changed (e.g. cosign → GitHub CLI) | Update `spec.enforcement.verification_method`, `spec.enforcement.verification_tool`, and mirrored claim language |
 | actions/attest-* major version bump | Update `produced_by` fields + validate claim compatibility |
 
 ## Filing new policies

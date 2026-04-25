@@ -388,21 +388,19 @@ jobs:
 
     steps:
       # -----------------------------------------------------------------
-      # Supply-chain gate: cosign 4-claim verify on BOTH attestations.
+      # Supply-chain gate: GitHub Attestations API verify on BOTH predicates.
       # Fails closed — any verification failure aborts deploy before a
-      # single Azure API call is made. The 4 claims per attestation:
-      #   1. subject        — pinned to image_digest (immutable sha256)
-      #   2. predicate-type — SLSA v1 provenance OR SPDX SBOM
-      #   3. cert-identity  — workflow ref regexp (main or release/*)
-      #   4. oidc-issuer    — Sigstore Fulcio (GitHub Actions)
+      # single Azure API call is made. The enforced claims are:
+      #   1. subject         — pinned to image_digest (immutable sha256)
+      #   2. predicate-type  — SLSA v1 provenance OR SPDX SBOM
+      #   3. signer-workflow — exact workflow path in this repository
+      #   4. source-ref      — exact current ref, restricted to main/release/*
+      #   5. oidc-issuer     — GitHub Actions issuer
+      # Deterministic source of truth: GitHub Attestations API instead of
+      # GHCR OCI referrer discovery (which proved eventually consistent).
       # Policy source of truth: arbiter/policies/verify.yaml
       # Closes bd 7mk8 (P0 Security #1 + #2 enforcement).
       # -----------------------------------------------------------------
-      - name: Install cosign
-        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
-        with:
-          cosign-release: 'v2.4.1'
-
       - name: Docker Login (GHCR)
         uses: docker/login-action@v3
         with:
@@ -410,55 +408,71 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify SLSA provenance attestation (4-claim)
+      - name: Verify SLSA provenance attestation
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_REF: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}@${{ needs.build-image.outputs.image_digest }}
-          CERT_IDENTITY_REGEXP: '^https://github\.com/${{ github.repository }}/\.github/workflows/deploy-production\.yml@refs/heads/(main|release/.*)$'
-          OIDC_ISSUER: 'https://token.actions.githubusercontent.com'
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/deploy-production.yml
+          OIDC_ISSUER: https://token.actions.githubusercontent.com
         run: |
           set -euo pipefail
+          case "${GITHUB_REF}" in
+            refs/heads/main|refs/heads/release/*) ;;
+            *)
+              echo "::error::Unsupported deploy ref for attestation verification: ${GITHUB_REF}"
+              exit 1
+              ;;
+          esac
           echo "Verifying SLSA provenance on: ${IMAGE_REF}"
-          for attempt in 1 2 3 4 5 6; do
-            if cosign verify-attestation \
-              --type https://slsa.dev/provenance/v1 \
-              --certificate-identity-regexp "${CERT_IDENTITY_REGEXP}" \
-              --certificate-oidc-issuer "${OIDC_ISSUER}" \
-              "${IMAGE_REF}" > /tmp/slsa-verdict.json; then
-              echo "::notice::SLSA provenance verified for ${IMAGE_REF}"
-              exit 0
-            fi
-            if [ "$attempt" -lt 6 ]; then
-              echo "Attestation not discoverable yet (attempt ${attempt}/6); retrying in 20s..."
-              sleep 20
-            fi
-          done
-          echo "::error::SLSA provenance verification failed after 6 attempts"
-          exit 1
+          gh attestation verify \
+            "oci://${IMAGE_REF}" \
+            --repo "${{ github.repository }}" \
+            --predicate-type "https://slsa.dev/provenance/v1" \
+            --signer-workflow "${SIGNER_WORKFLOW}" \
+            --source-ref "${GITHUB_REF}" \
+            --cert-oidc-issuer "${OIDC_ISSUER}" \
+            --deny-self-hosted-runners \
+            --format json > /tmp/slsa-verdict.json
+          echo "::notice::SLSA provenance verified for ${IMAGE_REF}"
+          jq '.[0].verificationResult | {predicateType: .statement.predicateType, sourceRepository: .signature.certificate.sourceRepository, sourceRef: .signature.certificate.sourceRepositoryRef, workflow: .signature.certificate.subjectAlternativeName}' /tmp/slsa-verdict.json
 
-      - name: Verify SBOM attestation (4-claim)
+      - name: Verify SBOM attestation
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_REF: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}@${{ needs.build-image.outputs.image_digest }}
-          CERT_IDENTITY_REGEXP: '^https://github\.com/${{ github.repository }}/\.github/workflows/deploy-production\.yml@refs/heads/(main|release/.*)$'
-          OIDC_ISSUER: 'https://token.actions.githubusercontent.com'
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/deploy-production.yml
+          OIDC_ISSUER: https://token.actions.githubusercontent.com
         run: |
           set -euo pipefail
+          case "${GITHUB_REF}" in
+            refs/heads/main|refs/heads/release/*) ;;
+            *)
+              echo "::error::Unsupported deploy ref for attestation verification: ${GITHUB_REF}"
+              exit 1
+              ;;
+          esac
           echo "Verifying SBOM attestation on: ${IMAGE_REF}"
-          for attempt in 1 2 3 4 5 6; do
-            if cosign verify-attestation \
-              --type https://spdx.dev/Document/v2.3 \
-              --certificate-identity-regexp "${CERT_IDENTITY_REGEXP}" \
-              --certificate-oidc-issuer "${OIDC_ISSUER}" \
-              "${IMAGE_REF}" > /tmp/sbom-verdict.json; then
-              echo "::notice::SBOM attestation verified for ${IMAGE_REF}"
-              exit 0
-            fi
-            if [ "$attempt" -lt 6 ]; then
-              echo "Attestation not discoverable yet (attempt ${attempt}/6); retrying in 20s..."
-              sleep 20
-            fi
-          done
-          echo "::error::SBOM attestation verification failed after 6 attempts"
-          exit 1
+          gh attestation verify \
+            "oci://${IMAGE_REF}" \
+            --repo "${{ github.repository }}" \
+            --predicate-type "https://spdx.dev/Document/v2.3" \
+            --signer-workflow "${SIGNER_WORKFLOW}" \
+            --source-ref "${GITHUB_REF}" \
+            --cert-oidc-issuer "${OIDC_ISSUER}" \
+            --deny-self-hosted-runners \
+            --format json > /tmp/sbom-verdict.json
+          echo "::notice::SBOM attestation verified for ${IMAGE_REF}"
+          jq '.[0].verificationResult | {predicateType: .statement.predicateType, sourceRepository: .signature.certificate.sourceRepository, sourceRef: .signature.certificate.sourceRepositoryRef, workflow: .signature.certificate.subjectAlternativeName}' /tmp/sbom-verdict.json
+
+      - name: Upload attestation verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-verdicts-${{ github.run_id }}
+          path: |
+            /tmp/slsa-verdict.json
+            /tmp/sbom-verdict.json
+          retention-days: 90
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -480,7 +494,7 @@ jobs:
           # GITHUB_TOKEN, which expires after the workflow ends. Without a PAT,
           # App Service restarts outside CI may fail to re-pull the image.
           GHCR_PASSWORD="${GHCR_PAT:-$GITHUB_TOKEN}"
-          # Deploy by DIGEST (not tag) so the exact cosign-verified artifact
+          # Deploy by DIGEST (not tag) so the exact attestation-verified artifact
           # is what App Service pulls. Pinning to the mutable :sha-<commit>
           # tag would open a TOCTOU window between verify and deploy.
           az webapp config container set \

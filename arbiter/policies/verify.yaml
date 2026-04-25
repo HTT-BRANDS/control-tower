@@ -18,6 +18,7 @@ metadata:
   repository: htt-brands/azure-governance-platform
   bd_ticket: "7mk8"
   created: "2026-04-22"
+  updated: "2026-04-24"
 
 spec:
   # ---------------------------------------------------------------------------
@@ -50,20 +51,27 @@ spec:
 
     certificate_identity:
       # Claim 3 — WHICH workflow produced it.
-      # Sigstore/Fulcio embeds the builder's OIDC identity in the short-lived
-      # certificate. We pin the workflow file path AND restrict the ref to
-      # main or release/* branches — PRs and feature branches cannot produce
-      # a passing attestation even if they somehow push to GHCR.
-      description: "OIDC subject identifying the build workflow + branch."
-      mode: "regexp"
-      pattern: '^https://github\.com/htt-brands/azure-governance-platform/\.github/workflows/deploy-production\.yml@refs/heads/(main|release/.*)$'
+      # GitHub Attestations verification pins the exact workflow path via
+      # --signer-workflow, which is easier to reason about than a SAN regexp.
+      description: "Exact workflow path that signed the attestation."
+      mode: "exact-workflow"
+      value: "htt-brands/azure-governance-platform/.github/workflows/deploy-production.yml"
+
+    source_ref:
+      # Claim 4 — WHICH ref the workflow ran from.
+      # The deploy workflow only accepts attestations from main or release/*.
+      # Verification passes the current GITHUB_REF explicitly, and the shell
+      # gate fails closed on any unsupported ref before attestation lookup.
+      description: "Git ref of the signer workflow run."
+      mode: "exact-runtime-ref"
+      allowed_patterns:
+        - "refs/heads/main"
+        - "refs/heads/release/*"
 
     certificate_oidc_issuer:
-      # Claim 4 — WHO vouched for the identity.
-      # Fixed string, exact match. The Sigstore Fulcio instance that signed
-      # the cert MUST be the public-good GitHub Actions issuer. Prevents
-      # attestations from any other OIDC issuer (self-hosted, dev laptop,
-      # compromised CI on a fork) from being accepted.
+      # Claim 5 — WHO vouched for the identity.
+      # gh attestation verify still enforces the OIDC issuer explicitly so the
+      # policy remains auditor-readable and tool-agnostic at the claim level.
       description: "Sigstore Fulcio OIDC issuer for GitHub Actions."
       mode: "exact"
       value: "https://token.actions.githubusercontent.com"
@@ -75,12 +83,19 @@ spec:
   # ---------------------------------------------------------------------------
   enforcement:
     mode: "blocking"  # fail closed; never skip on verify error
+    verification_method: "github-attestations-api"
+    verification_tool: "gh attestation verify"
+    evidence_artifacts:
+      - "/tmp/slsa-verdict.json"
+      - "/tmp/sbom-verdict.json"
+      - "artifact:attestation-verdicts-${github.run_id}"
     applies_to:
       - workflow: ".github/workflows/deploy-production.yml"
         job: "deploy"
         gate_steps:
-          - "Verify SLSA provenance attestation (4-claim)"
-          - "Verify SBOM attestation (4-claim)"
+          - "Verify SLSA provenance attestation"
+          - "Verify SBOM attestation"
+          - "Upload attestation verification evidence"
     produced_by:
       - workflow: ".github/workflows/deploy-production.yml"
         job: "build-image"
@@ -100,8 +115,12 @@ spec:
        GitHub — cannot be forged off-platform or by a different workflow."
     - "Provenance authenticity: Fulcio short-lived X.509 cert bound to the
        OIDC identity, logged in Rekor transparency log."
-    - "Non-falsifiable: cosign verify-attestation checks cert chain → Fulcio
-       → Rekor inclusion proof before any claim is trusted."
+    - "Non-falsifiable: gh attestation verify checks the signed attestation
+       bundle, Fulcio-backed cert chain, and timestamped transparency evidence
+       before any claim is trusted."
+    - "Deterministic verification path: GitHub Attestations API is queried
+       directly during deploy instead of waiting for GHCR OCI referrer
+       discoverability to converge."
     - "Isolated: no user-controlled inputs alter the provenance-generation
        action's behavior (push-to-registry toggle only)."
 
@@ -119,9 +138,18 @@ spec:
       severity: "resolved"
       deadline: "2026-07-21"
       resolved_by: "bd dq49"
+    - id: "7mk8-gh-attestation-api"
+      description: "DONE (bd g1cc, 2026-04-24). Deploy verification now uses
+                    gh attestation verify against GitHub's attestation API,
+                    preserving the same signed-bundle checks while removing
+                    GHCR OCI-referrer propagation flakiness from the release path."
+      severity: "resolved"
+      deadline: null
+      resolved_by: "bd g1cc"
     - id: "7mk8-rekor-offline"
-      description: "Consider passing --rekor-url and --offline to cosign verify
-                    for air-gapped production environments. N/A today because
-                    App Service + GitHub Actions both have public-internet egress."
+      description: "If release verification ever has to run in an air-gapped
+                    environment, export attestation bundles ahead of time and
+                    document an offline verification path. N/A today because
+                    GitHub Actions and Azure App Service both have public egress."
       severity: "info"
       deadline: null
