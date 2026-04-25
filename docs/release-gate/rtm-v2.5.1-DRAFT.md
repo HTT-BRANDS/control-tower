@@ -135,7 +135,7 @@ land in v2.5.1. Each has a declared home.
 - `docs/release-gate/rtm-v2.5.0.md` — previous (retroactive) RTM, template
 - `docs/release-gate/submission-v2.5.0.md` — full release-gate dossier pattern
 - `docs/release-gate/verdicts/rga-2026-04-22-azgov-v2.5.0-02.md` — previous arbiter verdict
-- `arbiter/policies/verify.yaml` — 4-claim supply-chain policy (machine-readable)
+- `arbiter/policies/verify.yaml` — production supply-chain verification policy (machine-readable)
 - `docs/SLO.md` — SLO that governs what counts as "good enough for prod"
 - `docs/DATA_RETENTION_POLICY.md` — retention contract
 - `docs/GITHUB_SEAT_AUDIT.md` — seat-management procedure

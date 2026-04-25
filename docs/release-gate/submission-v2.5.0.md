@@ -1,5 +1,7 @@
 # Release Gate Arbiter — Submission for `main @ 79d72c4`
 
+> **Historical artifact warning:** this submission reflects the repo and release posture at the time of the 2026-04-22 v2.5.0 arbiter review. It is not the current source of truth for deploy verification, browser-gate enforcement, rollback state, or branch protection. For current release-readiness state, see `docs/plans/production-readiness-and-release-gate-roadmap-2026-04-24.md`, `arbiter/policies/verify.yaml`, and `docs/release-gate/rollback-current-state.yaml`.
+
 **Submitter:** code-puppy-bf0510 (Richard 🐶) on behalf of Tyler Granlund
 **Artifact:** `azure-governance-platform @ main @ 79d72c4`
 **pyproject version:** `2.5.0` (now tagged — see §5.1)
@@ -118,6 +120,8 @@ Pushing the retroactive `v2.3.0` and `v2.5.0` tags triggered three tag-scoped wo
 ---
 
 ## 4. Supply-chain posture — unchanged from v1
+
+> **Historical note:** this section describes the supply-chain posture at submission time. It is no longer current repo truth after the later attestation-hardening work tracked under `azure-governance-platform-g1cc`.
 
 **Status**: not SLSA L3. Same content as v1 §4 — repeated here for self-containment.
 

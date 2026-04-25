@@ -3,35 +3,32 @@
 [![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](./CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
-[![Tests](https://img.shields.io/badge/tests-4,300+-brightgreen.svg)](./tests/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 A lightweight, cost-effective platform for managing Azure/M365 governance across multiple tenants. Built with Python, FastAPI, HTMX, and Tailwind CSS.
 
-**🏆 Production Ready | 💰 75% Cost Optimized | 🔐 Zero-Secrets Auth | ✅ 328 Tasks Complete | 🧪 4,300+ Tests**
+> **Current release truth:** the package version in `pyproject.toml` is **2.5.0**. Production-readiness work toward the next strict release-gate pass is tracked in `docs/plans/production-readiness-and-release-gate-roadmap-2026-04-24.md` and the linked bd issues.
 
-## ✨ What's New in v2.3.0
+## Release status snapshot
 
-**April 2026 Release — "Granular RBAC & Admin Dashboard"**
+- **Package version:** `2.5.0`
+- **Deploy workflow:** `.github/workflows/deploy-production.yml`
+- **Current production app URL:** `https://app-governance-prod.azurewebsites.net`
+- **Current production resource group:** `rg-governance-production`
+- **Current rollback/waiver source of truth:** `docs/release-gate/rollback-current-state.yaml`
+- **Change history:** `CHANGELOG.md`
 
-### 🎯 Phase 20 Highlights
+## Recent release work highlights
 
-- **Granular RBAC** — 35 `resource:action` permissions, 4 predefined roles with strict containment hierarchy
-- **Admin Dashboard** — HTMX-powered user management with search, filter, inline role editing
-- **Security Audit** — Self-modification guard, persistent audit logging, generic 403s, XSS defense-in-depth
-- **ADR-0011** — Architecture decision record with STRIDE threat analysis
-- **14 Architecture Tests** — Fitness functions enforcing RBAC invariants
-- **4,300+ Tests** — 236 new tests for RBAC, admin, and security
+Recent release-hardening work completed in this repo includes:
 
-### Previous: v2.2.0 — "Release Hygiene & Production Deploy"
+- deterministic deploy-time attestation verification via GitHub Attestations API
+- browser smoke promoted from advisory soak to a required merge gate
+- machine-verifiable rollback/waiver state aligned to the production workflow
+- environment-delta validation for release evidence hygiene
+- scheduled Bicep drift detection and post-deploy verification tooling
 
-### 🎯 Major Highlights
-
-- **328 Roadmap Tasks Complete** — 18 phases of development, zero open issues
-- **3,800 Tests Passing** — 1.27x test-to-source ratio, zero failures
-- **Security Headers Hardening** — Environment-specific HSTS, 12 security headers, 70 integration tests
-- **WCAG 2.2 Accessibility** — aria-hidden on decorative SVGs, enhanced skip links, focus indicators
-- **Interactive OpenAPI Examples** — Request/response JSON samples on /docs
+For historical release dossiers and arbiter artifacts, see `docs/release-gate/`.
 
 ### 🔐 Security & Authentication
 - Environment-specific SecurityHeadersConfig (dev/staging/prod HSTS presets)
@@ -149,49 +146,38 @@ open http://localhost:8000/docs
 
 ## Live Environments
 
-| Environment | URL | Status | Version |
-|-------------|-----|--------|---------|
-| **Production** | https://app-governance-prod.azurewebsites.net | 🟢 Live | v1.9.0 |
-| **Staging** | https://app-governance-staging-xnczpwyv.azurewebsites.net | 🟢 Live | v1.9.0 |
-| **Dev** | https://app-governance-dev-001.azurewebsites.net | 🟡 Limited | v0.2.0 |
+Only include values here that are expected to remain current. Historical version claims and cost snapshots drift too fast to trust.
 
-### Production Environment (eastus)
-| Resource | Name | Tier | Monthly Cost |
-|----------|------|------|--------------|
-| Resource Group | `rg-governance-production` | — | — |
-| App Service | `app-governance-prod` | B1 | ~$13 |
-| Azure SQL | `sql-gov-prod` | S0 | ~$15 |
-| Key Vault | `kv-gov-prod` | Standard | ~$1 |
-| Container Registry | GHCR | Free | $0 |
-| **Total** | | | **~$30/mo** |
+| Environment | URL | Notes |
+|-------------|-----|-------|
+| **Production** | https://app-governance-prod.azurewebsites.net | Canonical production endpoint |
+| **Staging** | see deployment/env docs | URL may change; treat workflow/env configuration as source of truth |
+| **Dev** | environment-specific | Not a release-gate truth source |
 
-### Staging Environment (westus2)
-| Resource | Name | Tier | Monthly Cost |
-|----------|------|------|--------------|
-| Resource Group | `rg-governance-staging` | — | — |
-| App Service | `app-governance-staging-xnczpwyv` | B1 | ~$13 |
-| Azure SQL | `sql-gov-staging` | **Free Tier** | **$0** ✅ |
-| Key Vault | `kv-gov-staging` | Standard | ~$1 |
-| Container Registry | GHCR | Free | $0 |
-| **Total** | | | **~$15/mo** |
+### Production environment references
+| Resource | Name |
+|----------|------|
+| Resource Group | `rg-governance-production` |
+| App Service | `app-governance-prod` |
+| Deploy workflow | `.github/workflows/deploy-production.yml` |
+| Rollback state artifact | `docs/release-gate/rollback-current-state.yaml` |
 
-**💰 Total Active Savings: $165/month** (Staging SQL Free Tier + GHCR migration)
-
-**🎯 Potential Additional Savings: $180/month** (Production SQL Free Tier + GHCR ready to deploy)
+For cost snapshots, migration history, and environment-specific operational nuance, prefer the dedicated docs under `docs/` rather than this top-level README.
 
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Release Notes v1.9.0](./docs/RELEASE_NOTES_v1.9.0.md) | v1.9.0 release notes and migration guide |
+| [CHANGELOG.md](./CHANGELOG.md) | Release history and current package version |
+| [Release-gate docs](./docs/release-gate/) | Arbiter submissions, RTMs, rollback artifacts, and verdict history |
+| [Production readiness roadmap](./docs/plans/production-readiness-and-release-gate-roadmap-2026-04-24.md) | Current release-readiness workstreams and blockers |
 | [API Reference](./docs/API.md) | Complete REST API documentation |
 | [Deployment Guide](./docs/DEPLOYMENT.md) | Deployment options and procedures |
-| [Operations Runbook](./docs/operations/playbook.md) | Complete operations guide |
+| [Disaster Recovery Runbook](./docs/runbooks/disaster-recovery.md) | Current operational recovery guidance |
 | [Developer Guide](./docs/DEVELOPMENT.md) | Setup and contribution guidelines |
 | [Implementation Guide](./docs/IMPLEMENTATION_GUIDE.md) | Detailed setup instructions |
 | [Common Pitfalls](./docs/COMMON_PITFALLS.md) | Troubleshooting guide |
 | [Design System](./docs/design-system.md) | Multi-brand theming architecture |
-| [Traceability Matrix](./TRACEABILITY_MATRIX.md) | Requirements → Tests mapping |
 
 ### Interactive API Documentation
 
