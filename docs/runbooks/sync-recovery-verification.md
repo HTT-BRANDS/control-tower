@@ -266,6 +266,8 @@ uv run python scripts/investigate_sync_tenant_auth.py \
 
 That report will tell you whether each noisy tenant looks like Lighthouse, explicit per-tenant secret-ref, OIDC/UAMI app-ID based, legacy standard Key Vault pair, or just plain misconfigured.
 
+For the dedicated 918b investigation flow and the five impacted tenant IDs, use `docs/runbooks/sync-tenant-auth-investigation-918b.md`.
+
 ---
 
 ## Phase 3 — App Insights / KQL verification

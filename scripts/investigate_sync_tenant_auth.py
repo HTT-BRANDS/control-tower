@@ -131,6 +131,58 @@ def _runtime_mode(settings: dict[str, Any]) -> str:
     return "shared_secret"
 
 
+def _recommended_action(
+    *,
+    runtime_mode: str,
+    scheduler_eligible: bool,
+    scheduler_reason: str,
+    expected_auth_path: str,
+    standard_secret_pair_present: bool,
+    explicit_secret_present: bool,
+    use_lighthouse: bool,
+) -> str:
+    if not scheduler_eligible:
+        if scheduler_reason == "missing_db_declared_secret_path":
+            return "disable tenant for scheduled sync or add an explicit auth path"
+        if scheduler_reason in {
+            "missing_shared_settings_credentials",
+            "lighthouse_missing_shared_settings_credentials",
+        }:
+            return "fix shared secret settings before treating tenant as schedulable"
+        if scheduler_reason in {"missing_app_id_for_uami", "missing_app_id_for_oidc"}:
+            return "add tenant app ID mapping or disable scheduled sync for this tenant"
+        return "confirm tenant should be excluded from scheduled sync"
+
+    if runtime_mode == "secret_keyvault":
+        if expected_auth_path == "explicit_per_tenant_secret_ref" and not explicit_secret_present:
+            return "create or repair the explicit client_secret_ref secret in Key Vault"
+        if (
+            expected_auth_path == "standard_key_vault_secret_pair"
+            and not standard_secret_pair_present
+        ):
+            return "create the standard {tenant-id}-client-id/client-secret pair or move tenant to explicit refs"
+        if expected_auth_path == "lighthouse_shared_credentials":
+            return "confirm Lighthouse is intended and shared settings creds are still valid"
+
+    return "configuration appears internally consistent; inspect runtime logs/evidence for remaining mismatch"
+
+
+def _config_status(
+    *,
+    scheduler_eligible: bool,
+    expected_auth_path: str,
+    standard_secret_pair_present: bool,
+    explicit_secret_present: bool,
+) -> str:
+    if not scheduler_eligible:
+        return "ineligible"
+    if expected_auth_path == "explicit_per_tenant_secret_ref":
+        return "ready" if explicit_secret_present else "missing_secret_metadata"
+    if expected_auth_path == "standard_key_vault_secret_pair":
+        return "ready" if standard_secret_pair_present else "missing_secret_metadata"
+    return "ready"
+
+
 def _classify_tenant(
     row: dict[str, Any], app_settings: dict[str, Any], secret_names: set[str]
 ) -> dict[str, Any]:
@@ -171,6 +223,22 @@ def _classify_tenant(
     else:
         expected_path = "no_declared_secret_path"
 
+    config_status = _config_status(
+        scheduler_eligible=decision.eligible,
+        expected_auth_path=expected_path,
+        standard_secret_pair_present=standard_secret_pair_present,
+        explicit_secret_present=explicit_secret_present,
+    )
+    recommended_action = _recommended_action(
+        runtime_mode=_runtime_mode(app_settings),
+        scheduler_eligible=decision.eligible,
+        scheduler_reason=decision.reason,
+        expected_auth_path=expected_path,
+        standard_secret_pair_present=standard_secret_pair_present,
+        explicit_secret_present=explicit_secret_present,
+        use_lighthouse=_as_bool(row.get("use_lighthouse", False)),
+    )
+
     return {
         "name": row.get("name"),
         "tenant_id": tenant_id,
@@ -186,8 +254,10 @@ def _classify_tenant(
         "scheduler_eligible": decision.eligible,
         "scheduler_reason": decision.reason,
         "expected_auth_path": expected_path,
+        "config_status": config_status,
         "standard_secret_pair_present": standard_secret_pair_present,
         "explicit_secret_metadata_present": explicit_secret_present,
+        "recommended_action": recommended_action,
     }
 
 
@@ -238,24 +308,26 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             "## Tenant classification",
             "",
-            "| Tenant | Scheduler eligible | Reason | Expected auth path | YAML known | Standard KV pair | Explicit secret metadata |",
-            "|---|---|---|---|---|---|---|",
+            "| Tenant | Scheduler eligible | Reason | Expected auth path | Config status | YAML known | Standard KV pair | Explicit secret metadata | Recommended action |",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
     )
     for tenant in report["tenants"]:
         lines.append(
-            "| {name} | {eligible} | `{reason}` | `{path}` | {yaml_known} | {std_pair} | {explicit_present} |".format(
+            "| {name} | {eligible} | `{reason}` | `{path}` | `{config_status}` | {yaml_known} | {std_pair} | {explicit_present} | {action} |".format(
                 name=tenant.get("name") or tenant.get("tenant_id") or "unknown",
                 eligible="yes" if tenant["scheduler_eligible"] else "no",
                 reason=tenant["scheduler_reason"],
                 path=tenant["expected_auth_path"],
+                config_status=tenant["config_status"],
                 yaml_known="yes" if tenant["yaml_known"] else "no",
                 std_pair="yes" if tenant["standard_secret_pair_present"] else "no",
                 explicit_present=("yes" if tenant["explicit_secret_metadata_present"] else "no"),
+                action=tenant["recommended_action"],
             )
         )
     if not report["tenants"]:
-        lines.append("| _none_ | no | `n/a` | `n/a` | no | no | no |")
+        lines.append("| _none_ | no | `n/a` | `n/a` | `n/a` | no | no | no | n/a |")
     return "\n".join(lines) + "\n"
 
 
