@@ -62,14 +62,13 @@ jobs:
         run: uv run pytest tests/unit/ tests/integration/ -q --tb=short
 
   # ===========================================================================
-  # Job 2: Browser Smoke (initially non-blocking during soak)
+  # Job 2: Browser Smoke (required merge gate)
   # ===========================================================================
   browser-smoke:
     name: Browser Smoke
     runs-on: ubuntu-latest
     needs: lint-and-test
     timeout-minutes: 15
-    continue-on-error: true
     env:
       ENVIRONMENT: test
       E2E_HARNESS: '1'
@@ -139,12 +138,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Browser smoke rollout note
+      - name: Browser smoke gate note
         if: always()
         run: |
-          echo "## Browser smoke rollout status" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Current mode: non-blocking soak (continue-on-error=true)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Required-check promotion policy: docs/testing/browser_smoke_ci_rollout.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Browser smoke gate status" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Current mode: blocking CI gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Expected merge protection: require the Browser Smoke check on main" >> "$GITHUB_STEP_SUMMARY"
           echo "- Artifact policy: failure-only screenshots + concise logs; no cookies, storage-state, auth headers, or traces" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop browser smoke app harness

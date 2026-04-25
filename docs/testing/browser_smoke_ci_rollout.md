@@ -9,7 +9,7 @@ This document operationalizes the browser-smoke CI rollout from
 - Job name: `browser-smoke`
 - Dependency: runs after `lint-and-test`
 - Parallelism: runs in parallel with `security-scan`
-- Initial rollout mode: non-blocking (`continue-on-error: true`)
+- Current rollout mode: blocking CI gate (non-blocking soak has ended)
 - Test selection: `tests/e2e/test_browser_smoke.py`
 
 ## Pinned execution environment
@@ -48,23 +48,29 @@ intentionally boring and much safer than clever trace hoarding.
 
 ## Soak and promotion policy
 
-Initial rollout is non-blocking. Promote to required only after:
+The initial non-blocking soak is complete. `browser-smoke` is now expected to
+run as a blocking CI gate.
 
-1. at least 10 consecutive green `browser-smoke` runs across several days of PR traffic
-2. non-actionable failure rate stays below 5%
-3. runtime remains within the p95 target budget (<7 minutes)
-4. failure artifacts remain actionable and sanitized
+Promotion criteria that justified the move:
+
+1. the stabilization children under `azure-governance-platform-aiob` were completed
+2. scheduler interference was removed for browser/e2e startup
+3. deterministic seeded/empty-state contracts were defined for gated routes and partials
+4. failure artifacts remain intentionally sanitized and actionable
 
 If the promoted gate exceeds the flake threshold for 3 consecutive runs,
-demote it from required status and fix forward.
+demote it from required status only with an explicit tracked issue/incident and
+fix forward immediately.
 
 ## Branch protection / ruleset follow-up
 
-After soak promotion, GitHub branch protection or rulesets for `main` must
-require both of these checks to pass and be up to date before merge:
+GitHub branch protection or rulesets for `main` must require both of these
+checks to pass and be up to date before merge:
 
 - `browser-smoke`
 - `security-scan`
 
+Repository administrators should treat missing branch protection/rulesets as a
+release-readiness gap, not as an excuse to pretend the workflow alone is enough.
 Any temporary bypass or demotion must be explicitly approved and tracked in an
 issue or incident note. No invisible "just this once" nonsense.
