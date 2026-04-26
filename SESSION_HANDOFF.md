@@ -1,81 +1,203 @@
-# Session Handoff — 2026-04-17 (late afternoon)
+# Session Handoff — 2026-04-26
 
-**Branch:** `main` · clean · pushed (HEAD `c321525`)
-**Backlog:** 4 ready issues, all P3/P4, all genuinely deferrable
-**Stashes:** none
+**Branch:** `main` · session state documented below  
+**Relevant pre-handoff pushed HEAD:** `fbb3e95`  
+**Primary live blockers:** `azure-governance-platform-g1cc`, `azure-governance-platform-918b`, `azure-governance-platform-0gz3`, `azure-governance-platform-0nup`
+
+---
+
+## Executive summary
+
+We are no longer confused about the main production problem.
+
+### What is now true
+- Production App Service is still running **stale image** `ghcr.io/htt-brands/azure-governance-platform:6a7306a`.
+- That image **predates** commit `5647fab` (`fix: skip unconfigured tenants in scheduled sync`).
+- Read-only production evidence confirms runtime is **secret Key Vault mode** (`USE_OIDC_FEDERATION=false`), not OIDC mode.
+- The five noisy tenants behind `918b` are all active + `use_oidc=true` but have **no** `client_secret_ref`; under current repo logic they are **scheduler-ineligible** and should be skipped.
+- Therefore the most credible current explanation is simple: **prod is still on old code**, so old behavior is still live.
+
+### What blocked progress today
+A fresh production workflow run on current `main` never reached deploy.
+
+- **Run ID:** `24961635696`
+- **SHA:** `a929791c46ae29ac6aa63cf9caf925c54f5da30b`
+- **Result:** failed in **QA Gate** during `Full test suite`
+
+So prod is still stale, and `0gz3` remains blocked on getting a newer image into production.
 
 ---
 
 ## What got done this session
 
-### Closed (5 issues, 6 commits)
+### Evidence / investigation work
+- Tightened and used the `918b` read-only evidence tooling.
+- Added/finished the production evidence collector and sanitized export path.
+- Ran a real production evidence pass against HTT-CORE.
+- Confirmed:
+  - secret Key Vault runtime mode in prod
+  - no tenant auth secrets exist in `kv-gov-prod` for the five noisy tenants
+  - the five noisy tenants are scheduler-ineligible under current repo logic
+- Downloaded and analyzed fresh App Service logs.
+- Confirmed fallback spam is still happening in prod, so the issue is not historical.
 
-| Commit | Issue | What |
-|---|---|---|
-| `0f47f33` | `sf24` | **P0 Redis booby trap defused** — `enableRedis=false` in staging+prod params (was provisioning $80/mo unused Redis cache on next infra deploy) |
-| `f668ab3` | (no issue) | Executed ADR 0001 Option C — deleted dead `blue-green-deploy.yml` |
-| `f2eaaf7` | `fuy4` | Sweep of stale/wrong cost claims in docs (3 files corrected) |
-| `399c209` | `265y` | GHCR path standardized on `htt-brands` across 13 active files |
-| `65517d8` | `5xd5` | Cost Management Reader role granted to BCC/FN/TLL SPNs (cross-tenant cost discovery) |
-| `143014e` | (carry-over) | Built `scripts/reconcile_tenants.py` — YAML↔DB tenant drift detector |
-| `900c3dc` | `c7aa` | Extended reconciler to detect `is_active` drift |
-| `92c5b1c` | `mrgy` | Documented Bicep-vs-reality drift table (ADR 0002 Option C) |
-| `e35ec35` | `c56t` | `/health/data` Phase 1 — DMARC + Riverside MFA freshness monitoring + 6699 CI guard |
-| `6ab2261` | `ll49` | Purged 21 stale tags + 54 manifests from dev ACR (52% storage reduction) |
-| `f3e21da` | `dais` | `/health/data` Phase 2 — now monitors **10 sync domains** (DKIM + 3 Riverside snapshot tables added). 98/98 tests pass. |
-| `f21f8d6` | `w1cc` | Audited `rg-htt-domain-intelligence` — original cost estimate was **2x overstated** (Cosmos is on free tier). Real spend ~$30/mo, not $65/mo. |
-| `c321525` | `832c` | **Renamed** `rg-identity-puppy-prod` → `rg-httbrands-identity-prod` via `az resource move`. Zero downtime, 19 secrets + 4 access policies intact. |
+### Production deploy / CI work
+- Investigated prior failed production workflow runs and proved they were from older workflow revisions.
+- Dispatched a fresh production workflow run on current `main`:
+  - run `24961635696`
+  - SHA `a929791`
+- Observed that run fail in QA before deploy.
 
-### Filed (carry-outs from completed work)
+### Documentation / planning updates
+Updated the planning files that currently drive release-readiness and next-session execution:
+- `docs/plans/production-readiness-and-release-gate-roadmap-2026-04-24.md`
+- `docs/plans/ci-browser-gate-and-prod-sync-plan-2026-04-24.md`
+- `SESSION_HANDOFF.md`
 
-| ID | Why |
-|---|---|
-| `gz6i` | Migrate dev app `acrgovernancedev` → GHCR (carved out of `ll49`) |
-| `3cs7` | Deploy Azure Monitor alert for `/health/data any_stale=true` (carved out of `dais`) |
-| `rtwi` | Stop domain-intelligence App Service if zero-traffic at 60-day mark (~2026-05-17, carved out of `w1cc`) |
+### Issue tracker updates
+Added current-state notes to:
+- `azure-governance-platform-g1cc`
+- `azure-governance-platform-0gz3`
 
 ---
 
-## Ready backlog (4 issues, all P3/P4)
+## The exact blocker from run `24961635696`
 
+### Workflow result
+- QA Gate: **failed**
+- Security: skipped
+- Build: skipped
+- Deploy: skipped
+
+### Four failing tests
+These are the immediate next-session unblockers:
+
+1. `tests/unit/test_browser_smoke_ci_rollout.py::TestBrowserSmokeCiWorkflow::test_ci_workflow_contains_browser_smoke_job`
+   - expects `continue-on-error: true`
+   - workflow has moved on, test is stale
+
+2. `tests/unit/test_browser_smoke_ci_rollout.py::TestBrowserSmokeCiDocs::test_rollout_doc_covers_soak_and_branch_protection`
+   - expects docs to still describe browser smoke as non-blocking
+   - docs/test expectations drifted from current intended rollout
+
+3. `tests/unit/test_investigate_sync_tenant_auth.py::test_classifies_oidc_runtime_from_app_settings`
+   - now stale versus the current script/runtime-classification behavior
+
+4. `tests/unit/test_investigate_sync_tenant_auth.py::test_render_markdown_includes_table_and_counts`
+   - `KeyError: 'config_status'`
+   - report/test fixture shape drift
+
+### Why this matters
+Until these four are fixed, every “let’s deploy current main” attempt is theater.
+
+---
+
+## Current issue status map
+
+### `azure-governance-platform-918b` — prod tenant auth fallback investigation
+**Status:** in progress, but now mostly explained
+
+What we know:
+- prod runtime mode is secret Key Vault mode
+- noisy tenants are scheduler-ineligible under current repo logic
+- prod still emits fallback spam because it is still on stale image `6a7306a`
+
+What remains:
+- verify behavior after a successful deploy of a post-`5647fab` image
+
+### `azure-governance-platform-0gz3` — post-deploy sync recovery verification
+**Status:** blocked by stale prod image / failed deploy pipeline
+
+Do **not** pretend this is ready for closure until:
+1. newer image lands in prod
+2. fresh evidence pass is run
+3. fallback noise / alert burn-down is verified honestly
+
+### `azure-governance-platform-g1cc` — deterministic production deploy verification
+**Status:** still open
+
+Important nuance:
+- The attestation-verification design has already been pushed forward.
+- The newest proof attempt did **not** fail in deploy attestation verification.
+- It failed earlier in QA, so the next step is **restore QA**, then re-test deploy end to end.
+
+### `azure-governance-platform-0nup` — release readiness evidence bundle
+**Status:** still blocked
+
+Highest remaining blockers:
+- `g1cc` not yet proven end-to-end on current main
+- `0gz3` cannot be honestly verified until prod updates
+- browser gate work (`aiob`) still needs follow-through
+
+---
+
+## Recommended next session order
+
+### 1. Fix the four QA failures from run `24961635696`
+Start with local repro and keep it surgical.
+
+Useful command:
+```bash
+uv run pytest \
+  tests/unit/test_browser_smoke_ci_rollout.py \
+  tests/unit/test_investigate_sync_tenant_auth.py
 ```
-1. [P3] gz6i  ops: migrate dev app acrgovernancedev → GHCR (then delete ACR)
-2. [P3] 3cs7  obs: deploy Azure Monitor alert for /health/data any_stale=true → governance-alerts
-3. [P3] rtwi  ops: stop domain-intelligence App Service + pause PG if zero-traffic at ~2026-05-17
-4. [P4] 6wyk  ops: add Teams incoming webhook to governance-alerts action group
+
+### 2. Re-run the full local quality slice that matches the failed area
+At minimum:
+```bash
+uv run pytest tests/unit/test_browser_smoke_ci_rollout.py tests/unit/test_investigate_sync_tenant_auth.py
+```
+And ideally re-run the workflow-relevant suite if the fix touches adjacent expectations.
+
+### 3. Dispatch production workflow again
+Only after the QA blockers are green.
+
+Reference command pattern:
+```bash
+gh workflow run "Deploy to Production" --ref main \
+  -f reason='Retry after fixing QA blockers from run 24961635696' \
+  -f skip_tests=false
 ```
 
-**No urgent work.** All P0/P1/P2 issues are closed. The platform is in steady state.
+### 4. If deploy succeeds, immediately verify prod truth
+Focus on:
+- current app image tag no longer `6a7306a`
+- fresh logs no longer show the same fallback spam pattern
+- recovery verification evidence for `0gz3`
+
+### 5. Only then move back to release-packet aggregation
+That means `0nup` work stays downstream of a real prod deploy and verification pass.
 
 ---
 
-## Next session pickup notes
+## Practical breadcrumbs
 
-### If you want to keep momentum:
-- **`gz6i`** is the highest-leverage P3 — saves $5/mo and unifies image source. Needs a GHCR PAT setup (Tyler-gated). The hard work was already done in `ll49` (ACR is purged of stale junk; only the "current" image needs migrating).
+### Run to inspect first
+- `24961635696`
 
-### If you want strategic work instead:
-- **`3cs7`** has a 3-option design discussion baked into the issue body (telemetry-driven vs availability test vs scheduled query). Pick A/B/C and execute. Recommended: Option A (telemetry-driven).
+### Fast log commands
+```bash
+gh run view 24961635696 --json status,conclusion,headSha,jobs,url | jq .
+gh run view 24961635696 --log-failed | sed -n '1,260p'
+```
 
-### Cron-style follow-up:
-- **`rtwi`** is calendar-triggered. Run the verification command in the issue body around 2026-05-17. If still zero traffic → execute the stop recipe.
+### Known stale prod image
+- `ghcr.io/htt-brands/azure-governance-platform:6a7306a`
 
-### Whenever Tyler is in the Teams admin UI:
-- **`6wyk`** is the only thing blocked on a UI click (incoming webhook setup). Drop it in conversation when you're already there.
+### Commit the prod image needs to be newer than
+- `5647fab`
 
 ---
 
-## Health of the platform
+## Session-end expectation
+When coming back later today, the most leverage is **not** broad roadmap work.
+It is:
+1. fix the 4 failing tests
+2. rerun deploy
+3. verify prod moved off `6a7306a`
+4. re-check `918b` / `0gz3`
 
-✅ All P0/P1/P2 closed
-✅ Tests: 98/98 health passing (was 94 at session start)
-✅ `/health/data` now monitors **10 of 10 sync domains** (was 4 at session start)
-✅ Infra docs reflect reality (no more inflated $65/mo claims, no more stale RG names)
-✅ Tenant drift detection automated (`scripts/reconcile_tenants.py`)
-✅ Cross-tenant cost discovery wired up (BCC/FN/TLL SPNs have Cost Mgmt Reader)
-✅ ACR storage cleaned (52% reduction in dev ACR)
-✅ KV moved to properly-named RG (no more "identity-puppy" misnomer)
-
-The boring kind of healthy. Good thing.
+Everything else is downstream of that.
 
 — Richard 🐶

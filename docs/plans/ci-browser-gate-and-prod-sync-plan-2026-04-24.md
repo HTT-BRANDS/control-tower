@@ -2,7 +2,7 @@
 
 **Author:** Richard (`code-puppy-824f08`)
 **Date:** 2026-04-24
-**Status:** Revised draft for final sign-off
+**Status:** Executed in part; updated 2026-04-26 with production evidence and current QA blocker state
 
 ---
 
@@ -14,12 +14,21 @@
 
 ---
 
+## Status update (2026-04-26)
+
+### What is now known
+- Production is **not** currently in OIDC mode; the read-only evidence pass confirmed **secret Key Vault mode** with `USE_OIDC_FEDERATION=false`.
+- Production App Service is still running image `ghcr.io/htt-brands/azure-governance-platform:6a7306a`, which predates commit `5647fab` (`fix: skip unconfigured tenants in scheduled sync`).
+- The five noisy tenants from `918b` are now classified as scheduler-ineligible under current repo logic because they lack `client_secret_ref` in secret mode.
+- Fresh production workflow run `24961635696` on current `main` failed in QA before deploy, so prod never received the newer image.
+- Immediate unblock for the next session is therefore: fix the four QA test regressions, rerun deploy, then perform the post-deploy verification pass.
+
 ## Problem Summary
 
 ### A. Production sync inconsistency
-Observed production behavior indicates repeated tenant auth fallback messages involving Key Vault and shared settings credentials. Current repository logic and infrastructure defaults suggest production should be operating in **OIDC federation mode** unless explicitly overridden by UAMI mode.
+Observed production behavior showed repeated tenant auth fallback messages involving Key Vault and shared settings credentials. That ambiguity has now been narrowed substantially: production is in **secret Key Vault mode**, the five impacted tenants are ineligible under current repo logic, and the live app is still running a **stale pre-fix image**.
 
-This creates a high-confidence hypothesis of **runtime/config drift** (App Service settings, tenant DB state, image version, or a code path mismatch).
+So the dominant current hypothesis is no longer generic auth ambiguity; it is **stale deployment truth**. The remaining production task is to land a post-`5647fab` image and then verify the observed fallback noise actually burns down.
 
 ### B. CI blind spot for real UI behavior
 Current CI/deploy gates strongly validate linting, unit/integration behavior, auth walls, health endpoints, and supply-chain integrity. They do **not** meaningfully validate rendered application pages in a browser before promotion.
@@ -63,7 +72,7 @@ App-backed E2E tests currently start the full FastAPI lifespan, which launches A
 ## Workstream 1 — Production Sync Investigation (Read-Only Evidence)
 
 ### Objective
-Determine whether production is truly running UAMI mode, OIDC mode, or secret mode, and whether tenant records/runtime config align with observed sync failures.
+Confirm the already-established production mode/image facts, preserve the evidence trail, and drive the remaining gap to closure: deploy a post-fix image and verify sync recovery against fresh production evidence.
 
 ### Deliverables
 1. **Runbook/checklist** for prod verification.
@@ -127,8 +136,9 @@ Determine whether production is truly running UAMI mode, OIDC mode, or secret mo
 
 ### Exit criteria
 - We can explain **why** the observed fallback messages occur.
-- We can classify the issue as config drift, data drift, code mismatch, or unresolved infra behavior.
-- A follow-up execution ticket exists if remediation is non-trivial.
+- We can show production is off stale image `6a7306a`.
+- A post-deploy verification pass confirms whether the fallback noise and alert load actually burn down.
+- A follow-up execution ticket exists if remediation is still non-trivial after the real deploy lands.
 
 ---
 

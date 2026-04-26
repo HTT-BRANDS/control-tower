@@ -2,7 +2,7 @@
 
 **Author:** Richard (`code-puppy-824f08`)  
 **Date:** 2026-04-24  
-**Status:** Active execution roadmap  
+**Status:** Active execution roadmap (updated 2026-04-26 after prod evidence pass + current-main deploy retry)  
 **Goal:** Get the Azure Governance Platform production-ready, fully functional, compliant, and able to pass the release-gate arbiter with evidence instead of wishful thinking.
 
 ---
@@ -35,6 +35,13 @@ But the current release story still has five material blockers:
 
 This roadmap turns those into tracked execution work.
 
+### Latest verified state (2026-04-26)
+- Production App Service is still running image `ghcr.io/htt-brands/azure-governance-platform:6a7306a`, which predates commit `5647fab` (`fix: skip unconfigured tenants in scheduled sync`).
+- Read-only prod evidence confirmed runtime is **secret Key Vault mode** (`USE_OIDC_FEDERATION=false`), not OIDC mode.
+- The five noisy tenants behind `918b` are all active + `use_oidc=true` but have no `client_secret_ref`; under current repo logic they are **scheduler-ineligible** and should be skipped.
+- Fresh production workflow run `24961635696` on current `main` (`a929791`) failed in **QA Gate**, so deploy never happened and prod is still stale.
+- The immediate blocker is now concrete instead of mystical: fix the four QA regressions, rerun deploy, then verify prod burn-down honestly.
+
 ---
 
 ## Current arbiter blockers
@@ -47,6 +54,8 @@ This roadmap turns those into tracked execution work.
 - deterministic attestation verification source of truth
 - successful end-to-end run on `main`
 - evidence linking policy → digest → verification → deploy
+
+**Current state:** workflow has already been pivoted toward deterministic attestation verification, but the newest proof attempt (`24961635696`) died in QA before the deploy/attestation stages even ran. So this blocker is now split into two sub-steps: restore QA to green, then prove the deploy path end to end.
 
 ### 2. Browser/UI gate still advisory
 **Issue:** `azure-governance-platform-aiob`  
@@ -94,9 +103,18 @@ This roadmap turns those into tracked execution work.
 **Execution mode:** parallel-safe, but release-critical
 
 ### Scope
-- inspect current `deploy-production.yml` attestation verification flow
-- determine whether to keep GHCR/cosign OCI-referrer verification or pivot to a more deterministic source of truth
+- confirm the current `deploy-production.yml` deterministic verification path is the intended source of truth
+- fix the current QA blockers preventing the workflow from even reaching deploy
 - produce one successful mainline proof run with evidence
+
+### Immediate resume point
+- inspect failing run `24961635696`
+- fix these four failing tests so QA can clear again:
+  - `tests/unit/test_browser_smoke_ci_rollout.py::TestBrowserSmokeCiWorkflow::test_ci_workflow_contains_browser_smoke_job`
+  - `tests/unit/test_browser_smoke_ci_rollout.py::TestBrowserSmokeCiDocs::test_rollout_doc_covers_soak_and_branch_protection`
+  - `tests/unit/test_investigate_sync_tenant_auth.py::test_classifies_oidc_runtime_from_app_settings`
+  - `tests/unit/test_investigate_sync_tenant_auth.py::test_render_markdown_includes_table_and_counts`
+- rerun production workflow only after those regressions are green locally and in CI
 
 ### Done means
 - one recent run proves SLSA + SBOM verification succeeded for the deployed digest
@@ -133,13 +151,14 @@ This roadmap turns those into tracked execution work.
   - `scripts/investigate_sync_tenant_auth.py`
   - `scripts/verify_sync_recovery_report.py`
   - `docs/runbooks/sync-recovery-verification.md`
-- classify runtime mode, tenant rows, YAML mapping, and secret metadata
-- explain fallback noise and confirm whether it is config drift, data drift, code-path mismatch, or unresolved infra behavior
-- verify alert burn-down and successful intended syncs only
+- preserve the now-established explanation that prod is secret mode + stale image, not some abstract auth mystery
+- deploy a post-`5647fab` image to production
+- only then verify alert burn-down and successful intended syncs
 
 ### Done means
 - `918b` has a real explanation, not a hypothesis cloud
-- `0gz3` has a report-backed verification outcome
+- prod is no longer running stale image `6a7306a`
+- `0gz3` has a report-backed verification outcome after a successful modern deploy
 - release packet can honestly describe sync health in production
 
 **Note:** beads currently records a `discovered-from` linkage from `918b` to `0gz3`, but the intended execution order is still **solve/explain `918b` before claiming `0gz3` complete**.
@@ -245,12 +264,12 @@ If any of those are missing, the repo may be improved, but it is still not hones
 ## Recommended execution moves
 
 ### Immediate next 3
-1. Work `azure-governance-platform-g1cc` and `azure-governance-platform-aiob` in parallel
-2. Continue `azure-governance-platform-918b` as the lead prod investigation thread
-3. Move `azure-governance-platform-213e` / `azure-governance-platform-j875` forward before the waiver clock becomes its own self-inflicted clown show
+1. Fix the four QA regressions exposed by run `24961635696`, then rerun production deploy on current `main`
+2. Once a deploy actually lands, re-run `azure-governance-platform-0gz3` verification from fresh prod evidence
+3. In parallel, keep `azure-governance-platform-aiob`, `azure-governance-platform-213e`, and `azure-governance-platform-j875` moving so release readiness does not become a one-thread traffic jam
 
 ### Near-term after that
-4. Run `0gz3` verification from real prod evidence
+4. Confirm prod is off image `6a7306a` and that fallback spam burns down for the five misconfigured tenants
 5. Reconcile release docs/resource/version drift (`3ogi`)
 6. Assemble the first full evidence bundle (`0nup`)
 
