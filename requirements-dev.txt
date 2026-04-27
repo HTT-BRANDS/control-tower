@@ -21,7 +21,7 @@ blinker==1.9.0
     # via flask
 brotli==1.2.0
     # via geventhttpclient
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   geventhttpclient
     #   requests
@@ -31,7 +31,7 @@ cffi==2.0.0 ; (implementation_name == 'pypy' and platform_python_implementation 
     #   pyzmq
 charset-normalizer==3.4.7
     # via requests
-click==8.3.2
+click==8.3.3
     # via flask
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
@@ -62,7 +62,7 @@ greenlet==3.4.0
     #   playwright
 h11==0.16.0
     # via wsproto
-idna==3.11
+idna==3.13
     # via requests
 iniconfig==2.3.0
     # via pytest
@@ -80,12 +80,12 @@ markupsafe==3.0.3
     #   werkzeug
 msgpack==1.1.2
     # via locust
-mypy==1.20.1
+mypy==1.20.2
 mypy-extensions==1.1.0
     # via mypy
-packaging==26.0
+packaging==26.2
     # via pytest
-pathspec==1.0.4
+pathspec==1.1.1
     # via mypy
 playwright==1.58.0
     # via pytest-playwright
@@ -130,7 +130,7 @@ requests==2.33.1
     #   locust
     #   pytest-base-url
     #   python-socketio
-ruff==0.15.10
+ruff==0.15.12
 simple-websocket==1.1.0
     # via python-engineio
 text-unidecode==1.3
@@ -159,5 +159,5 @@ wsproto==1.3.2
     # via simple-websocket
 zope-event==6.1
     # via gevent
-zope-interface==8.3
+zope-interface==8.4
     # via gevent
