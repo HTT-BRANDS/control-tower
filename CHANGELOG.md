@@ -5,6 +5,15 @@ All notable changes to the Azure Governance Platform will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **For current state, defer to:**
+> - [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) — live blocker dashboard
+> - [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) — in-flight session detail
+> - `bd ready` — live work backlog (10 ready issues + 4 in_progress as of 2026-04-28)
+>
+> Historical release notes below are accurate for the release they describe.
+> Claims like "zero open issues" referred to that release window only.
+> The current `[Unreleased]` window has open P1 work — see the bd issues above.
+
 ---
 
 ## [Unreleased]

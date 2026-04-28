@@ -4,6 +4,20 @@
 **Managed By:** Planning Agent 📋 (planning-agent-8ae68e) + Pack Leader 🐺
 **Created:** March 6, 2026
 
+> **Honesty banner (added 2026-04-28):** This document is the source of truth
+> **for the `/wiggum ralph` autonomous protocol** as it executes through
+> historical phases. It is **not** the source of truth for current
+> operational state, current backlog, or current production health.
+>
+> For live truth, defer to:
+> - [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) — live blocker dashboard
+> - [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) — in-flight session detail
+> - `bd ready` — live work backlog
+> - [`CONTROL_TOWER_MASTERMIND_PLAN_2026.md`](./CONTROL_TOWER_MASTERMIND_PLAN_2026.md) — forward strategic plan
+>
+> Phases marked `✅ FULLY COMPLETE` below were complete *at the time they were
+> marked*. They do not imply the platform is currently bug-free.
+
 ---
 
 ## Usage

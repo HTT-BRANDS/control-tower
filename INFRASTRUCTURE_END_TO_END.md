@@ -1,9 +1,15 @@
 # Azure Governance Platform — End-to-End Infrastructure Overview
 
-**Document Date:** April 16, 2026 (updated post-cost-optimization)
-**System Version:** 2.5.0
-**Status:** Operational (Production + Staging healthy, all pipelines green)
+**Document Date:** April 28, 2026 (post-staging-recovery diligence pass)
+**System Version:** 2.5.0 (HEAD `43eaff9` — production still serving stale image `:6a7306a`)
+**Status:** ⚠️ Operational with caveats — see [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) for the live truth dashboard and [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) for in-flight blockers. Staging green as of 2026-04-28 20:39 UTC after 5+ consecutive failed pushes. Production deploy chain blocked pending manual re-dispatch.
 **Owner:** Tyler Granlund — IT Support & Systems Engineer, HTT Brands
+
+> **Honesty banner (added 2026-04-28):** Earlier revisions of this doc claimed
+> "all pipelines green" while staging was failing on every push. That was
+> wrong then and dangerous now. This file is **infrastructure topology**
+> (which is reasonably stable), not **operational state** (which lives in
+> `CURRENT_STATE_ASSESSMENT.md` and `bd ready`).
 
 ---
 
@@ -189,13 +195,13 @@ All pipelines use **OIDC Workload Identity Federation** — zero stored client s
 
 | Metric              | Value          |
 |---------------------|----------------|
-| Test files          | 223            |
-| Test count          | 3,800          |
-| Test pass rate      | 100% (0 fails) |
-| Ruff lint errors    | 0              |
-| Format violations   | 0              |
-| Roadmap phases      | 19 complete    |
-| Roadmap tasks       | 328 complete   |
+| Test files          | 245                  |
+| Test count          | 4,192 (pytest --collect-only, 2026-04-28) |
+| Test pass rate      | 100% on green CI runs; staging suite has cold-start flakes (bd `mvxt`) |
+| Ruff lint errors    | 0                    |
+| Format violations   | 0                    |
+| Roadmap phases      | 19 historical (legacy WIGGUM_ROADMAP) |
+| Roadmap tasks       | 328 historical complete; current backlog tracked in `bd` not in roadmap doc |
 
 ---
 
@@ -241,16 +247,39 @@ domain.
 
 ---
 
-## 11. Known Follow-ups (Low Priority)
+## 11. Known Follow-ups & Active Blockers
+
+### Active P1 Blocker Chain (in_progress as of 2026-04-28)
+
+| bd ID | Title | Status |
+|---|---|---|
+| `g1cc` | ci/release: deterministic deploy-production attestation verification | in_progress |
+| `918b` | bug: persistent prod per-tenant Key Vault fallback failures | in_progress (gated on prod fresh image) |
+| `0gz3` | task: post-deploy verify sync recovery + alert burn-down | in_progress (gated on `918b`) |
+| `0nup` | release: assemble production-readiness evidence bundle | open (gated on full chain) |
+| `aiob` | meta(ci): no frontend smoke / visual-regression in CI | in_progress |
+
+### Active P2 Operational Issues
+
+| bd ID | Title | Notes |
+|---|---|---|
+| `mvxt` | ops(staging): validation suite cold-start timeouts | Compensating warmup in commit `68c0baa`; monitoring after 2026-04-28 first green |
+| `fifh` | ops(ci): Database Backup workflow fails on broken `mda590/teams-notify` action | Filed 2026-04-28 |
+| `q8lt` | ops(ci): Bicep Drift Detection what-if scope mismatch | Filed 2026-04-28; all 3 envs failing |
+| `213e` | ops: name a second rollback human before 2026-06-22 waiver expiry | Waiver-clock |
+
+### Lower-Priority Follow-ups
 
 | Item                                     | Notes                                                     |
 |------------------------------------------|-----------------------------------------------------------|
 | Make GHCR package public                 | Requires org admin via GitHub UI (Package Settings)       |
 | Node.js 20 → 24 in GitHub Actions        | Forced migration by June 2026                             |
 | CodeQL v3 → v4                           | Upgrade before December 2026                              |
-| Migrate dev app ACR → GHCR + delete ACR  | bd issue `gz6i` — saves $5/mo, needs GHCR PAT (ll49 cleanup done) |
-| Azure Monitor alert: stale sync data     | bd issue (forthcoming) — wire `/health/data` `any_stale=true` → governance-alerts |
+| Migrate dev app ACR → GHCR + delete ACR  | bd issue `gz6i` — saves $5/mo, needs GHCR PAT             |
+| Azure Monitor alert: stale sync data     | bd issue forthcoming — wire `/health/data` `any_stale=true` → governance-alerts |
 | Reconcile `INFRASTRUCTURE_INVENTORY.md`  | Mar 27 doc needs GHCR + HTT-CORE + Basic SQL refresh      |
+| `xkgp` Tech debt: replace `datetime.utcnow()` | Deprecation warnings across tests/fixtures           |
+| Refactor 10 files >900 LOC               | See `CONTROL_TOWER_MASTERMIND_PLAN_2026.md` Phase 1       |
 
 ---
 
@@ -269,4 +298,6 @@ domain.
 ---
 
 **Prepared for:** Tyler Granlund — IT Support & Systems Engineer, HTT Brands
-**Source of truth:** `CURRENT_STATE_ASSESSMENT.md`, `SESSION_HANDOFF.md`, `INFRASTRUCTURE_INVENTORY.md`, `ARCHITECTURE.md`, Azure CLI live queries (as of April 16, 2026)
+**Source of truth:** `CURRENT_STATE_ASSESSMENT.md` (live blocker dashboard), `SESSION_HANDOFF.md` (in-flight session detail), `bd ready` (live work backlog), `INFRASTRUCTURE_INVENTORY.md` (stable topology — last refreshed Mar 27), `ARCHITECTURE.md` (system design), `CONTROL_TOWER_MASTERMIND_PLAN_2026.md` (forward strategic plan), Azure CLI live queries.
+
+*Last fact-checked: 2026-04-28 by code-puppy-ab8d6a during diligence pass.*
