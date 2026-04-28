@@ -12,8 +12,20 @@ class TestBrowserSmokeCiWorkflow:
         assert "browser-smoke:" in content
         assert "name: Browser Smoke" in content
         assert "needs: lint-and-test" in content
-        assert "continue-on-error: true" in content
         assert "timeout-minutes: 15" in content
+
+    def test_browser_smoke_job_is_a_blocking_gate(self):
+        """After the soak ended, browser-smoke must NOT be best-effort.
+
+        We pin this so accidentally re-introducing ``continue-on-error: true``
+        in the browser-smoke job (or anywhere else in the workflow) trips a
+        loud test instead of silently re-demoting the gate.
+        """
+        content = CI_WORKFLOW.read_text()
+        assert "continue-on-error: true" not in content
+        # The workflow advertises its blocking status in the step summary so
+        # operators see the current rollout mode in every run.
+        assert "blocking CI gate" in content
 
     def test_ci_workflow_pins_browser_runtime_and_readiness(self):
         content = CI_WORKFLOW.read_text()
@@ -35,11 +47,20 @@ class TestBrowserSmokeCiDocs:
     def test_rollout_doc_exists(self):
         assert ROLLOUT_DOC.exists()
 
-    def test_rollout_doc_covers_soak_and_branch_protection(self):
+    def test_rollout_doc_describes_current_blocking_gate(self):
+        """The rollout doc must reflect the *current* mode, not historic soak.
+
+        After promotion, the doc must clearly state the gate is blocking, that
+        the soak has ended, and what to do if the gate goes flaky. We also
+        keep asserting the artifact-policy guardrails so a future edit can't
+        accidentally re-allow cookies/storage-state in failure artifacts.
+        """
         content = ROLLOUT_DOC.read_text()
-        assert "non-blocking (`continue-on-error: true`)" in content
-        assert "10 consecutive green `browser-smoke` runs" in content
+        assert "blocking CI gate" in content
+        assert "soak" in content.lower()
         assert "branch protection or rulesets" in content
-        assert (
-            "no cookies, storage state files, auth headers" in content or "cookie dumps" in content
-        )
+        # Demotion / flake handling must be documented, not implicit.
+        assert "flake threshold" in content
+        # Artifact policy must keep prohibiting auth-bearing material.
+        assert "cookie dumps" in content
+        assert "storage state files" in content

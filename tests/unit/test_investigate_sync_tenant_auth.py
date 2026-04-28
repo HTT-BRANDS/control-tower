@@ -116,9 +116,13 @@ def test_render_markdown_includes_table_and_counts():
                 "scheduler_eligible": False,
                 "scheduler_reason": "missing_db_declared_secret_path",
                 "expected_auth_path": "no_declared_secret_path",
+                "config_status": "ineligible",
                 "yaml_known": True,
                 "standard_secret_pair_present": False,
                 "explicit_secret_metadata_present": False,
+                "recommended_action": (
+                    "disable tenant for scheduled sync or add an explicit auth path"
+                ),
             }
         ],
     }
@@ -129,3 +133,7 @@ def test_render_markdown_includes_table_and_counts():
     assert "`no_declared_secret_path`: 1" in markdown
     assert "Noisy Tenant" in markdown
     assert "`missing_db_declared_secret_path`" in markdown
+    # Pin that the rendered table actually surfaces the new columns the
+    # render path now depends on; otherwise drift here goes undetected.
+    assert "`ineligible`" in markdown
+    assert "disable tenant for scheduled sync" in markdown
