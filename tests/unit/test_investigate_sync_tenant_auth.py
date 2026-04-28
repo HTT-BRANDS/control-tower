@@ -79,16 +79,26 @@ def test_classifies_keyvault_tenants_with_explicit_ref_and_standard_pair(tmp_pat
 
 
 def test_classifies_oidc_runtime_from_app_settings(tmp_path):
+    """OIDC runtime mode is detected and an explicit client_id resolves eligibility.
+
+    We pass ``client_id`` directly on the tenant row instead of relying on a
+    YAML lookup. Locally ``config/tenants.yaml`` may carry real production app
+    IDs; in CI only ``config/tenants.yaml.example`` exists, with placeholder
+    IDs. Pinning the assertion to YAML-resolved app IDs would couple this
+    test to environment-specific config files. Passing ``client_id`` keeps
+    the test focused on the unit it actually exercises: runtime-mode
+    classification + eligibility decision under OIDC.
+    """
     tenants = tmp_path / "tenants.json"
     tenants.write_text(
         """
         [
           {
-            "name": "HTT",
-            "tenant_id": "0c0e35dc-188a-4eb3-b8ba-61752154b407",
+            "name": "OIDC Tenant",
+            "tenant_id": "f6f0c6f5-6f6f-4f6f-9f6f-6f6f6f6f6f6f",
             "is_active": true,
             "use_lighthouse": false,
-            "client_id": null,
+            "client_id": "oidc-app-client-id",
             "client_secret_ref": null
           }
         ]

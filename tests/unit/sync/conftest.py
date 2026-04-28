@@ -24,6 +24,48 @@ from unittest.mock import patch
 import pytest
 
 
+# ---------------------------------------------------------------------------
+# Autouse: bypass tenant sync-eligibility filtering for sync unit tests.
+#
+# The sync orchestrators (compliance / costs / resources / identity) call
+# ``get_sync_eligible_tenants`` which inspects global ``app.core.config``
+# settings (USE_UAMI_AUTH, USE_OIDC_FEDERATION, KEY_VAULT_URL,
+# AZURE_CLIENT_ID/SECRET) plus per-tenant YAML config to decide whether a
+# tenant should be scheduled.
+#
+# That decision is its own unit of work and is exercised exhaustively in
+# ``tests/unit/test_sync_utils.py``. The tests in this directory want to
+# pin behavior of the form "given a tenant the scheduler accepts, the
+# sync calls Azure correctly" — coupling them to environment-derived
+# settings introduces a CI-vs-local determinism leak (the same tests pass
+# locally with a populated ``.env`` and fail in CI where those settings
+# are unset).
+#
+# The cleanest, DRY-aligned fix is to bypass the filter in this scope only.
+# Eligibility behavior remains owned by ``test_sync_utils``; orchestrator
+# behavior remains owned here.
+# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def _bypass_sync_eligibility_filter():
+    """Pass tenants through ``get_sync_eligible_tenants`` unchanged.
+
+    Patched on every sync orchestrator that imported the symbol at module
+    load time, so the production binding sites (``app.core.sync.compliance``,
+    ``...costs``, ``...resources``, ``...identity``) all see the no-op.
+    """
+
+    def _passthrough(tenants):
+        return list(tenants)
+
+    with (
+        patch("app.core.sync.compliance.get_sync_eligible_tenants", _passthrough),
+        patch("app.core.sync.costs.get_sync_eligible_tenants", _passthrough),
+        patch("app.core.sync.resources.get_sync_eligible_tenants", _passthrough),
+        patch("app.core.sync.identity.get_sync_eligible_tenants", _passthrough),
+    ):
+        yield
+
+
 @pytest.fixture
 def mock_tenant():
     """Create a mock tenant for testing."""
