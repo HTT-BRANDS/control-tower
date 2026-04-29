@@ -2,7 +2,7 @@
 
 **Branch:** `main` (clean working tree, up to date with origin)
 **Latest pushed HEAD at start of 2026-04-29 session:** `1a7e929`
-**Latest pushed work commit before final handoff metadata:** `cc755ac` (run `git log -1` for the handoff commit itself)
+**Latest pushed work commit before final handoff metadata:** `1765cee` (run `git log -1` for the handoff commit itself)
 **Active P1 chain (unchanged from 2026-04-26):** `g1cc` → `918b` → `0gz3` → `0nup`
 
 > **Read this first if you are inheriting the platform mid-flight.**
@@ -100,12 +100,13 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 ### Still in `bd ready` (Tyler-blocking or autonomous)
 - `9lfn` — **Tyler-authored** SECRETS_OF_RECORD.md (P1, ~30 min). Bus-factor blocker.
-- `mvxt` — staging cold-start (P2, monitoring after 1st green; 2026-04-29 push runs still in progress when session closed)
-- `213e` — name second rollback human (P2, waiver expires 2026-06-22)
-- `aiob` — no frontend smoke/visual-regression in CI (P1)
-- `cz89` — automate weekly BACPAC export (P4) — **partially implemented; open on staging Free-tier validation blocker**
-- `rtwi` — domain-intelligence App Service idle (P3, 2026-05-17 trigger)
-- `m4xw` — automate quarterly audit-log archive (P4)
+- `213e` — name second rollback human (P2, waiver expires 2026-06-22).
+- `cz89` — automate weekly BACPAC export (P4) — **partially implemented; open on staging Free-tier validation blocker**.
+- `g1cc` / `918b` / `0gz3` — production deploy/recovery chain; do not claim unless Tyler coordinates the prod dispatch path.
+
+### Deferred out of `bd ready` 2026-04-29
+- `rtwi` — deferred to 2026-05-17 trigger date; zero-traffic shutdown script is already scaffolded.
+- `m4xw` — deferred to 2026-07-01 quarterly review; issue trigger says automate only after `audit_logs` >100k rows or compliance requires it, while docs still say ~200 rows.
 
 ### In_progress chain (unchanged P1)
 - `g1cc` — deterministic deploy-production attestation verification
@@ -210,6 +211,20 @@ Committed and pushed this session:
   - Filed + closed `3flq` after scheduled backup run `25089002576` failed before backup creation.
   - Added `permissions: contents: read / id-token: write` for `azure/login@v2`.
   - Added `tests/unit/test_backup_workflow_oidc.py`; actionlint clean for `backup.yml`.
+- `fe1724a` — `fix(ci): harden staging health readiness gate (bd mvxt)`
+  - Reasserts `alwaysOn=true` and `/health` health-check path after container settings, because live staging had drifted to `alwaysOn=false` with no health-check despite Bicep declaring both.
+  - Replaces fixed 90s sleep with bounded `/health` readiness loop and diagnostics.
+- `ef36023` — `test(staging): add B1 headroom for route probes (bd mvxt)`
+  - Gives staging route-mount probes 30s timeout so post-deploy B1 latency flakes report real 404/500 failures instead of transient read timeouts.
+  - Added unit contract test for the timeout expectation.
+- `b865af5` — `bd: close staging deploy instability (mvxt)`
+  - Closed `mvxt` with evidence from successful `Deploy to Staging` run `25128507657`.
+- `e85860a` — `bd: close browser smoke CI umbrella (aiob)`
+  - Closed stale umbrella after verifying blocking Browser Smoke CI and required branch protection context.
+- `81870e2` — `bd: defer audit archive automation until trigger`
+  - Deferred `m4xw` to 2026-07-01 because current row count/requirements do not justify automation yet.
+- `1765cee` — `bd: defer domain-intelligence shutdown check`
+  - Deferred `rtwi` to its explicit 2026-05-17 60-day zero-traffic trigger.
 
 Validation run locally:
 
@@ -224,9 +239,11 @@ Validation run locally:
 At handoff time:
 
 - Working tree clean and pushed to `origin/main`.
-- `gh run list --branch main --limit 10` showed push-triggered CI/security/staging runs still in progress.
+- `mvxt` closed after staging runtime drift was corrected and push run `25128507657` completed `Deploy to Staging` successfully on `ef36023`.
+- `aiob` umbrella closed after confirming all child issues complete, `Browser Smoke` is a blocking CI job, and branch protection requires `Browser Smoke` + `Security Scan`.
+- `rtwi` and `m4xw` deferred to their actual trigger windows so `bd ready` stops showing future/YAGNI work.
 - `SECRETS_OF_RECORD.md` still absent; `9lfn` remains Tyler-only.
-- `gh run list --workflow=deploy-production.yml --limit 3` still showed no recent successful prod deploy off current main.
+- `gh run list --workflow=deploy-production.yml --limit 5` still showed no recent successful prod deploy off current main.
 
 ---
 
