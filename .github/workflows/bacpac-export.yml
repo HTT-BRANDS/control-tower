@@ -115,11 +115,27 @@ jobs:
         env:
           SQL_ADMIN_USER: ${{ vars.SQL_ADMIN_USER || 'sqladmin' }}
           SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+          SQL_ADMIN_PASSWORD_SECRET_NAME: ${{ vars.SQL_ADMIN_PASSWORD_SECRET_NAME || 'sql-admin-password' }}
         run: |
           set -euo pipefail
 
           if [ -z "$SQL_ADMIN_PASSWORD" ]; then
-            echo "SQL_ADMIN_PASSWORD environment secret is required for az sql db export" >&2
+            KEY_VAULT_NAME=$(az keyvault list \
+              --resource-group "${{ steps.config.outputs.resource_group }}" \
+              --query '[0].name' \
+              --output tsv)
+
+            if [ -n "$KEY_VAULT_NAME" ]; then
+              SQL_ADMIN_PASSWORD=$(az keyvault secret show \
+                --vault-name "$KEY_VAULT_NAME" \
+                --name "$SQL_ADMIN_PASSWORD_SECRET_NAME" \
+                --query value \
+                --output tsv)
+            fi
+          fi
+
+          if [ -z "$SQL_ADMIN_PASSWORD" ]; then
+            echo "SQL_ADMIN_PASSWORD secret is unset and Key Vault fallback did not return $SQL_ADMIN_PASSWORD_SECRET_NAME" >&2
             exit 1
           fi
 

@@ -302,9 +302,12 @@ az sql db import \
 #    RESTORE_DB to governance, restart app, then verify /health.
 ```
 
-**Required secrets/vars:** `AZURE_STORAGE_ACCOUNT`, `SQL_ADMIN_PASSWORD`, and
-optionally `SQL_ADMIN_USER`. Do not paste SQL admin credentials into tickets,
-commit messages, or chat. Yes, this sentence exists because entropy is mean.
+**Required secrets/vars:** `AZURE_STORAGE_ACCOUNT` is optional when exactly
+one storage account exists in the target resource group. `SQL_ADMIN_PASSWORD`
+can be supplied as a GitHub environment secret or resolved from Key Vault
+secret `sql-admin-password`; optionally set `SQL_ADMIN_USER`. <!-- pragma: allowlist secret --> Do not paste SQL
+admin credentials into tickets, commit messages, or chat. Yes, this sentence
+exists because entropy is mean.
 
 ---
 
