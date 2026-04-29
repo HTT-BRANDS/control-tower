@@ -26,6 +26,15 @@ def test_staging_deploy_reasserts_runtime_health_settings_after_container_update
     assert "WEBSITE_HEALTHCHECK_MAXPINGFAILURES=3" in workflow
 
 
+def test_staging_deploy_serializes_mutable_app_service_environment():
+    """Multiple pushes must not restart staging under another validation run."""
+    workflow = workflow_text()
+
+    assert "concurrency:" in workflow
+    assert "group: deploy-staging-${{ github.ref }}" in workflow
+    assert "cancel-in-progress: true" in workflow
+
+
 def test_staging_health_gate_uses_bounded_readiness_loop_with_diagnostics():
     """A single curl after sleep is not a readiness strategy. It is a wish."""
     workflow = workflow_text()

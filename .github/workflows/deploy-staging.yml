@@ -47,6 +47,13 @@ permissions:
   security-events: write # Trivy SARIF upload
   packages: write        # GHCR push
 
+# Staging is one mutable App Service, not an infinitely parallel test fixture.
+# Cancel older pushes so they cannot restart the app under the newest run's
+# validation suite.
+concurrency:
+  group: deploy-staging-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ===========================================================================
   # Job 1: QA Gate — hard gate, no continue-on-error
