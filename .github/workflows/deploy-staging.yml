@@ -329,6 +329,7 @@ jobs:
 
           for attempt in $(seq 1 "$max_attempts"); do
             echo "Health attempt ${attempt}/${max_attempts}: ${health_url}"
+            set +e
             http_code=$(curl --silent --show-error --location \
               --connect-timeout 10 \
               --max-time 30 \
@@ -336,6 +337,7 @@ jobs:
               --write-out "%{http_code}" \
               "$health_url")
             curl_exit=$?
+            set -e
             body=$(cat /tmp/staging-health-body.txt 2>/dev/null || true)
 
             if [ "$curl_exit" -eq 0 ] && [ "$http_code" = "200" ]; then

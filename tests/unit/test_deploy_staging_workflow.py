@@ -32,6 +32,8 @@ def test_staging_health_gate_uses_bounded_readiness_loop_with_diagnostics():
 
     assert "Health gate readiness loop" in workflow
     assert "max_attempts=12" in workflow
+    assert "set +e\n            http_code=$(curl" in workflow
+    assert "curl_exit=$?\n            set -e" in workflow
     assert "curl --silent --show-error --location" in workflow
     assert "--connect-timeout 10" in workflow
     assert "--max-time 30" in workflow
