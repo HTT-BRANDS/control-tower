@@ -262,7 +262,7 @@ jobs:
         id: set-output
         run: |
           IMAGE_FULL="${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
-          echo "image_full=${IMAGE_FULL}" >> $GITHUB_OUTPUT
+          echo "image_full=${IMAGE_FULL}" >> "$GITHUB_OUTPUT"
           echo "Built: ${IMAGE_FULL}"
 
   # ===========================================================================
@@ -304,21 +304,68 @@ jobs:
             --container-registry-url https://${{ env.GHCR_REGISTRY }} \
             --container-registry-user ${{ github.repository_owner }} \
             --container-registry-password "$GHCR_PASSWORD"
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings WEBSITE_HEALTHCHECK_MAXPINGFAILURES=3 \
+            --output none
+          az webapp config set \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --always-on true \
+            --generic-configurations '{"healthCheckPath":"/health"}' \
+            --output none
           az webapp restart \
             --name ${{ env.AZURE_APP_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
 
-      - name: Wait for startup (90s)
-        run: sleep 90
-
-      - name: Health gate
+      - name: Health gate readiness loop
         run: |
-          STATUS=$(curl -sf ${{ env.STAGING_URL }}/health -w "%{http_code}" -o /dev/null)
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Health check failed (HTTP $STATUS)"
-            exit 1
-          fi
-          echo "✅ Health check passed"
+          set -uo pipefail
+
+          max_attempts=12
+          sleep_seconds=20
+          health_url="${{ env.STAGING_URL }}/health"
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Health attempt ${attempt}/${max_attempts}: ${health_url}"
+            http_code=$(curl --silent --show-error --location \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --output /tmp/staging-health-body.txt \
+              --write-out "%{http_code}" \
+              "$health_url")
+            curl_exit=$?
+            body=$(cat /tmp/staging-health-body.txt 2>/dev/null || true)
+
+            if [ "$curl_exit" -eq 0 ] && [ "$http_code" = "200" ]; then
+              echo "✅ Health check passed"
+              cat /tmp/staging-health-body.txt
+              exit 0
+            fi
+
+            echo "Health not ready: curl_exit=${curl_exit}, http_code=${http_code}, body=${body}"
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              sleep "$sleep_seconds"
+            fi
+          done
+
+          echo "❌ Staging did not become healthy after $((max_attempts * sleep_seconds)) seconds"
+          az webapp show \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query '{state:state, availabilityState:availabilityState, hostNames:hostNames}' \
+            --output json || true
+          az webapp config show \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query '{alwaysOn:alwaysOn, healthCheckPath:healthCheckPath, linuxFxVersion:linuxFxVersion}' \
+            --output json || true
+          timeout 30s az webapp log tail \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            2>&1 | sed -n '1,120p' || true
+          exit 1
 
   # ===========================================================================
   # Job 5: Staging Validation — pytest suite against live URL
