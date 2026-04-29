@@ -2,8 +2,8 @@
 
 **Branch:** `main` (clean working tree, up to date with origin)
 **Latest pushed HEAD at start of 2026-04-29 session:** `1a7e929`
-**Latest pushed work commit before final handoff metadata:** `b4359c4` (run `git log -1` for the handoff commit itself)
-**Active P1 chain (unchanged from 2026-04-26):** `g1cc` → `918b` → `0gz3` → `0nup`
+**Latest pushed work commit before final handoff metadata:** `3134576` (run `git log -1` for the handoff commit itself)
+**Former P1 chain:** `g1cc` → `918b` → `0gz3` is now closed; `0nup` remains the next release-evidence gate.
 
 > **Read this first if you are inheriting the platform mid-flight.**
 > This handoff doc replaces the 2026-04-26 single-session handoff. Today's
@@ -30,6 +30,38 @@ System for HTT Brands." Three documents were produced and pushed:
 ---
 
 ## ✅ What got done this session (chronological)
+
+### Continuation — 2026-04-29 afternoon/evening (commits `3c9c317` → `3134576`)
+- Reproduced the production deploy QA gate locally on current `main`:
+  `4047 passed, 1 deselected` for `tests/unit/ tests/integration/ -m "not visual"`.
+- Dispatched and watched production workflow run `25131829042`; it completed
+  end-to-end successfully on head `3c9c3177cdf5c1e01806f9bf166cbf552a1c345c`.
+- Closed `g1cc` after verifying deterministic GitHub Attestations evidence for
+  both SLSA (`https://slsa.dev/provenance/v1`) and SBOM
+  (`https://spdx.dev/Document/v2.3`) predicates. Production `/health` returned
+  `200 healthy`.
+- Verified `918b`/`0gz3` production recovery after the fresh image landed:
+  - Prod image digest: `sha256:a76f3eeb9f7c0f28b27c196a8f9c8cf06368fc47875c51ea7a95f0bbbdd680e4`.
+  - Post-deploy SyncJobLog: costs, compliance, resources, and identity all
+    completed with zero errors.
+  - App Insights old tenant-auth/fallback signatures returned zero hits.
+  - Five previously noisy tenants classified as scheduler-ineligible in
+    `secret_keyvault` mode with no declared secret path.
+  - Stale pre-deploy costs/compliance/resources/identity alerts were resolved
+    with `resolved_by=code-puppy-661ed0/0gz3`; active alerts dropped `229 → 10`
+    (below the 222 baseline).
+  - Filed `tg2z` for the remaining unrelated Riverside batch / DMARC alerts.
+  - Closed `918b` and `0gz3` in `bd`.
+- Phase 1 domain boundary docs are now underway and unblocked:
+  - `32d8` cost ✅ — added `domains/cost/README.md` and
+    `domains/cost/DATA_CLASSIFICATION.md`; scoped validation `58 passed`.
+  - `fos1` identity ✅ — added `domains/identity/README.md` and
+    `domains/identity/DATA_CLASSIFICATION.md`; scoped validation `184 passed`.
+  - `htnh` compliance ✅ — added `domains/compliance/README.md` and
+    `domains/compliance/DATA_CLASSIFICATION.md`; scoped validation `234 passed`.
+- `DATA_CLASSIFICATION.md` success metric advanced from `0/6` to `3/6`.
+- Cleaned local production evidence artifacts after use; none were committed.
+
 
 ### Track D — Phase 0 hygiene (commit `41126f8`)
 - `.venv/` rebuilt (`uv venv --clear && uv sync --dev --frozen`); pytest 9.0.3 alive; 12/12 health_data smoke passes; **4,192 tests collected** (was claiming 3,800).
@@ -98,21 +130,25 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 - `uchp` Q3 DR test, depends on `213e` + `fifh`
 - `3flq` backup OIDC token permission regression (filed and closed same session)
 
-### Still in `bd ready` (Tyler-blocking or autonomous)
+### Still in `bd ready` after continuation (Tyler-blocking or autonomous)
 - `9lfn` — **Tyler-authored** SECRETS_OF_RECORD.md (P1, ~30 min). Bus-factor blocker.
+- `c10e` — resources domain README + DATA_CLASSIFICATION.
+- `ewdp` — lifecycle domain README + DATA_CLASSIFICATION.
+- `sl01` — bi_bridge domain README + DATA_CLASSIFICATION; currently assigned to Tyler.
+- Phase 1.5 refactors are starting to appear ready now that their boundary docs landed; only claim one at a time and respect the documented domain boundaries.
 - `213e` — name second rollback human (P2, waiver expires 2026-06-22).
-- `cz89` — automate weekly BACPAC export (P4) — **partially implemented; open on staging Free-tier validation blocker**.
-- `g1cc` / `918b` / `0gz3` — production deploy/recovery chain; do not claim unless Tyler coordinates the prod dispatch path.
+- `cz89` — automate weekly BACPAC export (P4) remains open on the staging Free-tier ImportExport validation blocker.
 
 ### Deferred out of `bd ready` 2026-04-29
 - `rtwi` — deferred to 2026-05-17 trigger date; zero-traffic shutdown script is already scaffolded.
 - `m4xw` — deferred to 2026-07-01 quarterly review; issue trigger says automate only after `audit_logs` >100k rows or compliance requires it, while docs still say ~200 rows.
 
-### In_progress chain (unchanged P1)
-- `g1cc` — deterministic deploy-production attestation verification
-- `918b` — persistent prod per-tenant Key Vault fallback failures (gated on prod fresh image)
-- `0gz3` — post-deploy verify sync recovery (gated on `918b`)
-- `0nup` — assemble production-readiness evidence bundle (gated on full chain)
+### Former P1 chain status after continuation
+- `g1cc` ✅ closed — production deploy run `25131829042` succeeded with deterministic SLSA + SBOM attestation verification.
+- `918b` ✅ closed — prod tenant-auth fallback investigation verified the noisy tenants are now scheduler-ineligible and old fallback signatures are absent.
+- `0gz3` ✅ closed — post-deploy sync recovery verified and stale platform-sync alerts resolved.
+- `0nup` — next release-evidence gate; should now be unblocked by the closed chain.
+- `tg2z` — newly filed follow-up for remaining unrelated Riverside batch / DMARC active alerts.
 
 ---
 
@@ -120,11 +156,11 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 Per planning-agent's analysis, smallest set that unblocks the autonomous pipeline:
 
-1. **Dispatch the prod deploy off `main`** (2 min) — unblocks `g1cc → 918b → 0gz3 → 0nup`. Prod is still presumed on stale `:6a7306a`; latest main at session close is `bc78195`.
-2. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully + raises bus-factor metric to 2.
-3. **Pick a name from V2 §11** (~15 min) — Switchyard / Aerie / Hangar / Meridian / Dispatch (or request more candidates). Unblocks Phase 3 prep.
+1. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully + raises bus-factor metric to 2.
+2. **Pick a name from V2 §11** (~15 min) — Switchyard / Aerie / Hangar / Meridian / Dispatch (or request more candidates). Unblocks Phase 3 prep.
+3. **Name a second rollback human** (`213e`) before the 2026-06-22 waiver expiry.
 
-After those three, agents can claim from `bd ready` autonomously.
+Agents can continue autonomous Phase 1 docs/refactors from `bd ready`; the Tyler items above improve bus-factor and naming direction but no longer block the domain-doc track.
 
 ---
 
@@ -174,10 +210,10 @@ For session-to-session context  → SESSION_HANDOFF.md (THIS FILE)
 ✅ bd sync working
 ✅ git worktree list confirms only valid worktrees remain
 ⚠️  pre-commit missing from pyproject.toml dev deps (manual install needed after each venv rebuild)
-⚠️  Production still on stale image :6a7306a (Tyler must dispatch)
+✅ Production deploy run `25131829042` succeeded; prod is on fresh attested digest `sha256:a76f3eeb9f7c0f28b27c196a8f9c8cf06368fc47875c51ea7a95f0bbbdd680e4`.
 ⚠️  backup.yml had a second regression after fifh: missing OIDC id-token permission; fixed in bc78195, next scheduled/manual run must verify actual backup lands
 ⚠️  bicep-drift-detection.yml scope mismatch fixed in 40bea97; next scheduled/manual run must verify all env matrix jobs reach real drift signal
-⚠️  push-triggered CI/staging/security runs for latest commits were still in progress at session close
+⚠️  Push-triggered CI/staging/security runs may still be in progress for the latest doc commits; check `gh run list --branch main --limit 10` next session.
 ⚠️  weekly BACPAC workflow exists, but staging validation is blocked because staging SQL is Free edition and Azure SQL ImportExport rejects Free (`UnSupportedImportExportEdition`)
 ```
 
@@ -190,19 +226,28 @@ If picking up cold:
 1. Read this `SESSION_HANDOFF.md` (5 min)
 2. Read `PORTFOLIO_PLATFORM_PLAN_V2.md` §1, §5, §9 (15 min)
 3. Run `bd ready` and `git status` to confirm state
-4. If prod deploy is still not dispatched, do **not** claim Phase 1. Prefer: monitor `mvxt`, then pick `aiob`, `xkgp` (split carefully), `cz89`, or `m4xw` from `bd ready`.
+4. Prod deploy/recovery is no longer the blocker. Continue with `bd ready`: resources/lifecycle docs, carefully scoped Phase 1.5 refactors, or the remaining ops follow-ups.
 
 If picking up after Tyler's minimum-viable-path lands:
 
-1. Verify prod is on a fresh digest (i.e., `g1cc → 918b → 0gz3 → 0nup` chain progressing)
-2. Verify `SECRETS_OF_RECORD.md` exists and update RUNBOOK.md TYLER-ONLY markers
-3. Proceed with Phase 1 paper exercises in parallel (6 domain READMEs, ~1h each)
+1. Verify `SECRETS_OF_RECORD.md` exists and update RUNBOOK.md TYLER-ONLY markers.
+2. Continue Phase 1 paper exercises: resources (`c10e`) and lifecycle (`ewdp`) remain unclaimed; bi_bridge (`sl01`) is still assigned to Tyler.
+3. If choosing refactors instead, respect the new domain boundary docs and keep one issue per commit.
 
 ---
 
 ## 💾 End-of-Session Status (2026-04-29)
 
-Committed and pushed this session:
+Committed and pushed this continuation after the earlier session entries below:
+
+- `3c9c317` — `bd: record current prod QA gate evidence (g1cc)`
+- `57d3e25` — `bd: close deterministic prod attestation gate (g1cc)`
+- `831a882` — `bd: close prod sync recovery chain (918b, 0gz3)`
+- `a442b7e` — `docs(cost): define domain boundary and data classification`
+- `6989c32` — `docs(identity): define domain boundary and data classification`
+- `3134576` — `docs(compliance): define domain boundary and data classification`
+
+Earlier committed and pushed work from this 2026-04-29 handoff file:
 
 - `40bea97` — `fix(ci): align Bicep drift what-if scope (bd q8lt)`
   - Replaced resource-group-scoped Bicep drift `what-if` with subscription-scoped `az deployment sub what-if`.
@@ -249,7 +294,8 @@ At handoff time:
 - `aiob` umbrella closed after confirming all child issues complete, `Browser Smoke` is a blocking CI job, and branch protection requires `Browser Smoke` + `Security Scan`.
 - `rtwi` and `m4xw` deferred to their actual trigger windows so `bd ready` stops showing future/YAGNI work.
 - `SECRETS_OF_RECORD.md` still absent; `9lfn` remains Tyler-only.
-- `gh run list --workflow=deploy-production.yml --limit 5` still showed no recent successful prod deploy off current main.
+- Production deploy run `25131829042` succeeded off current-main lineage and prod is on fresh digest `sha256:a76f3eeb9f7c0f28b27c196a8f9c8cf06368fc47875c51ea7a95f0bbbdd680e4`.
+- Phase 1 domain docs complete for cost, identity, and compliance; remaining docs are resources and lifecycle, plus bi_bridge if Tyler unassigns/dispatches it.
 
 ---
 
