@@ -2,7 +2,7 @@
 
 **Branch:** `main` (clean working tree, up to date with origin)
 **Latest pushed HEAD at start of 2026-04-29 session:** `1a7e929`
-**Latest pushed work commit before final handoff metadata:** `989ae03` (run `git log -1` for the handoff commit itself)
+**Latest pushed work commit before final handoff metadata:** `b4359c4` (run `git log -1` for the handoff commit itself)
 **Active P1 chain (unchanged from 2026-04-26):** `g1cc` → `918b` → `0gz3` → `0nup`
 
 > **Read this first if you are inheriting the platform mid-flight.**
@@ -228,6 +228,9 @@ Committed and pushed this session:
 - `989ae03` — `fix(ci): let staging health loop retry curl timeouts`
   - Fixed the readiness loop bug where `bash -e` exited immediately on a curl timeout before the loop could capture `curl_exit` and retry.
   - Validation: `pytest tests/unit/test_deploy_staging_workflow.py tests/unit/test_staging_api_coverage_contract.py`, `actionlint .github/workflows/deploy-staging.yml`, and full pre-commit all passed.
+- `b4359c4` — `fix(ci): serialize staging deploy workflow`
+  - Added `concurrency` to `deploy-staging.yml` so back-to-back pushes cannot run overlapping deploy/validation cycles against the same mutable staging App Service.
+  - This was discovered after a doc-only handoff push failed staging validation while another staging deploy was concurrently restarting the app.
 
 Validation run locally:
 
@@ -242,7 +245,7 @@ Validation run locally:
 At handoff time:
 
 - Working tree clean and pushed to `origin/main`.
-- `mvxt` closed after staging runtime drift was corrected and push run `25128507657` completed `Deploy to Staging` successfully on `ef36023`; later follow-up `989ae03` fixed a bash `set -e` bug discovered in the new health readiness loop.
+- `mvxt` closed after staging runtime drift was corrected and push run `25128507657` completed `Deploy to Staging` successfully on `ef36023`; later follow-ups fixed a bash `set -e` retry bug (`989ae03`) and serialized staging deploys to avoid concurrent restarts during validation (`b4359c4`).
 - `aiob` umbrella closed after confirming all child issues complete, `Browser Smoke` is a blocking CI job, and branch protection requires `Browser Smoke` + `Security Scan`.
 - `rtwi` and `m4xw` deferred to their actual trigger windows so `bd ready` stops showing future/YAGNI work.
 - `SECRETS_OF_RECORD.md` still absent; `9lfn` remains Tyler-only.
