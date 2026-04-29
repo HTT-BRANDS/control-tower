@@ -36,6 +36,7 @@ def test_bacpac_workflow_exports_sql_to_cool_blob_storage():
     """Pin the actual long-term recovery primitive: az sql db export -> Cool blob."""
     workflow = workflow_text()
 
+    assert "az storage account list" in workflow
     assert "az sql db export" in workflow
     assert "--storage-key-type StorageAccessKey" in workflow
     assert '--storage-uri "${{ steps.config.outputs.storage_uri }}"' in workflow
