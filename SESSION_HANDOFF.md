@@ -31,6 +31,18 @@ System for HTT Brands." Three documents were produced and pushed:
 
 ## ✅ What got done this session (chronological)
 
+### Continuation — 2026-04-29 pack-leader parallel batch (commits `ba3260e` → `a062345`)
+- Richard/Pack Leader (`pack-leader-e1ab1d`) coordinated safe parallel work from base branch `main`; Tyler-only issues `9lfn` and `213e` were not claimed.
+- Claimed/delegated and closed after critic approval:
+  - `gvpt` ✅ — split `app/core/cache.py` into `app/core/cache/` package modules while preserving `app.core.cache` imports. Merge `1c07eb3`; post-merge cache validation `22 passed`.
+  - `wnpf` ✅ — split `app/preflight/admin_risk_checks.py` into `app/preflight/admin_risk/` strategy/domain modules while preserving `SessionLocal` patch compatibility. Merge `75f8b06`; admin-risk validation `26 passed`; file-size ratchet passed.
+  - `a3oq` ✅ — split `app/services/riverside_sync.py` into `app/services/riverside_sync/` per-table modules while preserving historical package-level patch/import surface. Merge `22ebe70`; Riverside sync/API validations `33 passed` + `36 passed`.
+  - `tg2z` ✅ — documented Riverside batch / DMARC alert investigation in `docs/operations/riverside-dmarc-alert-investigation-2026-04-29.md`; no alert suppression or fabricated live checks. Merge `a062345`; docs sanity + detect-secrets passed.
+- `fbx8` was intentionally not run concurrently with `a3oq` to avoid compliance merge overlap; it remains the next autonomous Phase 1.5 refactor candidate.
+- Worktrees were preserved for audit/debug: sibling directories `azure-governance-platform-{gvpt,wnpf,a3oq,tg2z}`.
+- Latest pushed HEAD after this batch: `a062345852135e8d8e6ae9a2fb47658dff0e5832` before bd/handoff closeout metadata.
+
+
 ### Continuation — 2026-04-29 afternoon/evening (commits `3c9c317` → `3134576`)
 - Reproduced the production deploy QA gate locally on current `main`:
   `4047 passed, 1 deselected` for `tests/unit/ tests/integration/ -m "not visual"`.
@@ -340,8 +352,8 @@ At handoff time:
   - `c8e43bf` budget service split (`qb8u`)
   - `8c1373b` backfill service split (`uxzr`)
   - `7c0295a` FastAPI app wiring split (`bu72`)
-- `bd ready` now shows 8 items: Tyler-only `9lfn`, autonomous refactors `gvpt`/`wnpf`/`a3oq`/`fbx8`, ops follow-up `tg2z`, Tyler decision `213e`, and blocked/low-priority `cz89`.
-- Remaining files >600 LOC in `app/` after this session: `identity.py`, `onboarding.py`, `azure_client.py`, `dmarc_service.py`, `monitoring_service.py`, `riverside_requirements.py`, `azure_service_health.py`, `cache.py`, `metrics.py`, `notifications.py`, `rate_limit.py`, `riverside_scheduler.py`, `admin_risk_checks.py`, `checks.py`, `mfa_checks.py`, `email_service.py`, `riverside_sync.py`.
+- `bd ready` after the pack-leader batch should be rechecked live. Expected remaining items: Tyler-only `9lfn`, autonomous refactor `fbx8`, Tyler decision `213e`, and blocked/low-priority `cz89` (plus anything unblocked by new closures).
+- Remaining files >600 LOC in `app/` after the latest Phase 1.5 batch should be rechecked live; `cache.py`, `admin_risk_checks.py`, and `riverside_sync.py` were remediated in the pack-leader batch. Known remaining candidates include `identity.py`, `onboarding.py`, `azure_client.py`, `dmarc_service.py`, `monitoring_service.py`, `riverside_requirements.py`, `azure_service_health.py`, `metrics.py`, `notifications.py`, `rate_limit.py`, `riverside_scheduler.py`, `checks.py`, `mfa_checks.py`, and `email_service.py`.
 
 ---
 
