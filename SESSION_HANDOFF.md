@@ -2,7 +2,7 @@
 
 **Branch:** `main` (clean working tree, up to date with origin)
 **Latest pushed HEAD at start of 2026-04-29 session:** `1a7e929`
-**Latest pushed HEAD at end of 2026-04-29 session:** `a24d940`
+**Latest pushed HEAD at end of 2026-04-29 session:** `cc755ac`
 **Active P1 chain (unchanged from 2026-04-26):** `g1cc` → `918b` → `0gz3` → `0nup`
 
 > **Read this first if you are inheriting the platform mid-flight.**
@@ -88,6 +88,7 @@ After Tyler said "continue on next steps based on your recommendations outlined"
   - `5ebd880` made storage account discovery derive from target resource group when `AZURE_STORAGE_ACCOUNT` is unset.
   - `82fb0a0` added Key Vault fallback for SQL admin password (`sql-admin-password`).
   - `a24d940` records the staging validation blocker in bd.
+  - `cc755ac` unclaims `cz89` at session close with the blocker preserved in bd notes.
   - Local validation passed: `pytest tests/unit/test_bacpac_export_workflow.py`, `actionlint .github/workflows/bacpac-export.yml`, pre-commit.
   - Staging dispatches progressed through hidden blockers: missing storage secret → missing SQL password → KV RBAC → missing staging KV secret → **current hard blocker: staging SQL Free edition does not support ImportExport** (`run 25126517281`, `UnSupportedImportExportEdition`).
   - Also set GitHub staging environment secret `SQL_ADMIN_PASSWORD` from existing staging app `DATABASE_URL` without printing the value; do not treat that as final secrets architecture.
