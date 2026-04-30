@@ -17,9 +17,9 @@ progress.
 - Production health: `https://app-governance-prod.azurewebsites.net/health` returns `healthy` / `2.5.0`.
 - Staging health: `https://app-governance-staging-xnczpwyv.azurewebsites.net/health` returns `healthy` / `2.5.0`.
 - Mainline CI and Security Scan were green for `00c3745`.
-- GitHub Pages deployed for `00c3745`, but the Pages cross-browser check failed because the homepage title no longer matched the expected pattern; the title now includes `Azure Governance Platform` again and needs rerun evidence.
-- Staging deploy for `00c3745` failed because `astral-sh/setup-uv` could not resolve wildcard `0.5.x`; workflows now pin `UV_VERSION` to `0.9.27` and need rerun evidence.
-- Scheduled/manual Database Backup is still red under bd `jzpa`; latest known blocker before this update was missing ODBC Driver 18 on the GitHub runner.
+- GitHub Pages deployed for `246e454`, and cross-browser tests passed after the homepage title compatibility fix.
+- Staging deploy run `25168188519` passed QA, security, build/push, deploy, and staging validation.
+- Scheduled/manual Database Backup is still red under bd `jzpa`; latest validation moved past ODBC. Staging now needs an upload re-test after storage data-plane RBAC grant; production still has a SQL server/login blocker.
 - Tyler-only continuity gates remain: `9lfn` secret inventory completion and `213e` second rollback human.
 
 ---
@@ -30,7 +30,7 @@ progress.
 |---|---|---|---|
 | Production | <https://app-governance-prod.azurewebsites.net/health> | ✅ `healthy`, version `2.5.0` | Checked 2026-04-30 during this session. |
 | Staging | <https://app-governance-staging-xnczpwyv.azurewebsites.net/health> | ✅ `healthy`, version `2.5.0` | The older `xncz` hostname is stale; use `xnczpwyv`. |
-| GitHub Pages | <https://htt-brands.github.io/azure-governance-platform/> | ⚠️ Deploy succeeded, browser check failed for `00c3745` | Homepage title compatibility fix is in this session; rerun pending. |
+| GitHub Pages | <https://htt-brands.github.io/azure-governance-platform/> | ✅ Deploy and browser checks passed for `246e454` | Public site is refreshed with continuity status and portfolio-platform framing. |
 
 ---
 
@@ -38,13 +38,14 @@ progress.
 
 | Workflow | Run | Conclusion | Meaning |
 |---|---:|---|---|
-| CI | `25167652385` | ✅ success | Source checks passed for `00c3745`. |
-| Security Scan | `25167652318` | ✅ success | Security scan passed for `00c3745`. |
-| Deploy GitHub Pages | `25167652314` | ✅ success | Pages content was published for `00c3745`. |
-| GitHub Pages Cross-Browser Tests | `25167652311` | ❌ failure | Homepage title expected `/Azure Governance Platform/`; fixed by including that phrase in the portfolio title. |
-| Deploy to Staging | `25167652308` | ❌ failure | `astral-sh/setup-uv` could not resolve wildcard `0.5.x`; workflows now pin `0.9.27`. |
-| Database Backup production manual | `25167657417` | ❌ failure | Reached configured secrets and SQLAlchemy fallback, then failed because ODBC Driver 18 was absent. |
-| Database Backup staging manual | `25167659155` | ❌ failure | Same ODBC Driver 18 blocker. |
+| CI | `25168188513` | ✅ success | Source checks passed for `246e454`. |
+| Security Scan | `25168188503` | ✅ success | Security scan passed for `246e454` after `UV_VERSION=0.9.27` pin. |
+| Deploy GitHub Pages | `25168188577` | ✅ success | Pages content was published for `246e454`. |
+| GitHub Pages Cross-Browser Tests | `25168188537` | ✅ success | Homepage title compatibility fix passed all browser/device projects. |
+| Deploy to Staging | `25168188519` | ✅ success | QA, security, build/push, deploy, and staging validation passed. |
+| Topology Diagram | `25168188576` | ❌ failure | Generated timestamp-only topology diff but bot could not push to protected `main`; local commit includes refreshed diagram. |
+| Database Backup production manual | `25168192604` | ❌ failure | Reached ODBC/SQLAlchemy; production SQL server/login blocker remains. |
+| Database Backup staging manual | `25168194585` | ❌ failure | Created and verified SQL backup; upload failed `AuthorizationPermissionMismatch`, then Blob Data Contributor was granted to the GitHub OIDC SP. |
 | Scheduled Database Backup | `25145371945` | ❌ failure | Original prod/staging empty `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT` failure. |
 
 ---
@@ -80,6 +81,7 @@ The backup story is not green yet.
 5. Production backup storage account `stgovprodbkup001` was created in `rg-governance-production`.
 6. Manual validation runs `25167657417` and `25167659155` then exposed missing runner SQL tooling: optional `mssqlscripter` and ODBC Driver 18.
 7. Current code makes `backup_database.py` fall back to SQLAlchemy and updates `backup.yml` to install `msodbcsql18` / `unixodbc-dev` before running `pyodbc`.
+8. Validation runs `25168192604` and `25168194585` moved past ODBC. Staging created and verified a SQL backup, then failed Blob upload on `AuthorizationPermissionMismatch`; Storage Blob Data Contributor is now granted on staging/prod backup storage to the GitHub OIDC SP. Production still fails opening the SQL server/login and needs follow-up.
 
 Do **not** declare RPO backup hygiene complete until production and staging backup evidence runs pass and bd `jzpa` is closed with run IDs.
 

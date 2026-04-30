@@ -4,7 +4,7 @@ title: Platform Status
 
 # Platform Status
 
-Updated: `2026-04-30T13:29:17.533078+00:00`
+Updated: `2026-04-30T13:38:20.564868+00:00`
 Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` was available.
 
 ## Current mainline health
@@ -13,9 +13,10 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 |---|---|---|
 | CI | ✅ Green | Run `25167652385` passed for `00c3745`; rerun pending after docs/workflow refresh. |
 | Security Scan | ✅ Green | Run `25167652318` passed for `00c3745`; `UV_VERSION` is now pinned to `0.9.27` across setup-uv workflows. |
-| Deploy to Staging | ⚠️ Needs rerun | Run `25167652308` failed because `astral-sh/setup-uv` could not resolve wildcard `0.5.x`; workflows now pin `0.9.27`. |
-| Deploy GitHub Pages | ✅ Green | Run `25167652314` published Pages for `00c3745`. |
-| GitHub Pages Cross-Browser Tests | ⚠️ Needs rerun | Run `25167652311` failed because homepage title changed; title now includes `Azure Governance Platform` again. |
+| Deploy to Staging | ✅ Green | Run `25168188519` passed QA, security, build/push, deploy, and staging validation. |
+| Deploy GitHub Pages | ✅ Green | Run `25168188577` published Pages for `246e454`. |
+| GitHub Pages Cross-Browser Tests | ✅ Green | Run `25168188537` passed after homepage title included `Azure Governance Platform` again. |
+| Topology Diagram | ⚠️ Follow-up | Run `25168188576` generated a timestamp-only topology diff but could not push to protected `main`; local commit includes the refreshed diagram. |
 
 ## Ready work
 
@@ -23,7 +24,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 |---|---|---|---|
 | `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |
 | `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |
-| `jzpa` | In progress | code-puppy-661ed0 | Environment secret names configured; backup workflow now installs ODBC Driver 18; production/staging validation pending. |
+| `jzpa` | In progress | code-puppy-661ed0 | Backup workflow now reaches SQL/storage. Staging needs RBAC re-test after Blob Data Contributor grant; production still has SQL login/server blocker. |
 
 ## Blocked work
 
@@ -35,7 +36,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 
 ## Backup / RPO watch
 
-Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. This remains tracked as bd `jzpa` until production and staging evidence runs pass.
+Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. Validation runs `25168192604` / `25168194585` moved past ODBC; staging created and verified a backup but failed upload RBAC, so Blob Data Contributor was granted to the GitHub OIDC SP on both backup storage accounts. Production still fails opening the SQL server/login. This remains tracked as bd `jzpa`.
 
 ## Audit output
 
