@@ -96,6 +96,27 @@ System for HTT Brands." Three documents were produced and pushed:
 - Validation each commit: `az bicep build` clean, all 4 `parameters*.json` parse, env-delta validator green, full pytest suite (`3645 passed`), pre-commit (Detect secrets + env-delta) pass.
 - After this resume, `bd ready` is `9lfn`, `213e`, `l96f` (re42 closed; cz89 still `blocked-by-azure-sql-free`).
 
+### Continuation — 2026-04-30 evening: auto-rollback + cost analysis + checklist rewrite (commits `ac8db9a` → `a2a18bf`)
+
+Tyler asked: *"can we raise bus-factor to 2 for deploys via automation, scale up only when needed, and track cost vs alternatives?"* Honest answer: automation does **not** close `213e` (governance/contractual artifact requires a named human), **but** it materially reduces what that human needs to know. Tyler then nominated **Dustin Boyd** as the second rollback human and approved all three deliverables.
+
+**Commit chain (4 commits):**
+- `ac8db9a` — `docs(dr)`: record Dustin Boyd nomination in `docs/dr/second-rollback-human-checklist.md` §1. bd `213e` progress (not closure — access provisioning + tabletop still pending).
+- `d9d9d88` — `ops(release)`: auto-rollback in `deploy-production.yml`. Replaced 3-attempt single-endpoint health gate with 5-min multi-endpoint probe loop + automatic rollback to captured previous-good digest on failure. Run summary records every outcome (✅ healthy / ⚠️ rollback succeeded / 🔴 rollback failed / 🔴🔴 rollback also failed). actionlint clean. Closes bd `39yp`.
+- `a92cf9b` — `docs(cost)`: `docs/cost/consumption-vs-reserved-analysis.md` models B1 ($13.64/mo) vs Container Apps lift-and-shift ($34.02/mo) vs split architecture ($17.90/mo). Conclusion: **keep B1**; consumption breakeven on a 20-hr migration is ~50 years. Schedulers (17+ jobs, 4 of them hourly) prevent scale-to-zero. Closes bd `j6tq`.
+- `a2a18bf` — `docs(continuity)`: rewrote second-rollback-human checklist for the post-auto-rollback world. Added §0 explicit "auto-rollback handles X / second-human handles Y" decision table. Required reading shrank ~3hr → ~75min. Tabletop scenario shifted from A.3 (now automated) to A.4 (auto-rollback failed, manual recovery). Updated `disaster-recovery.md §A.3` to point at automation. Closes bd `q46o`.
+
+**Net effect on bus-factor (Phase 0.5 metric):**
+- Auto-rollback handles all `/health`-detectable failure modes without human intervention.
+- Second-human role re-scoped to: judgment calls on unforeseen SEV1s, verifying auto-rollback worked, manual recovery when auto-rollback itself failed, non-deploy SEV1s (DB / KV / region / GitHub).
+- Dustin Boyd nominated; remaining work for `213e` closure: Tyler provisions access (8 categories) + Dustin completes ~75 min reading + tabletop on Scenario A.4.
+- Once Tyler updates `current_authorized_humans` in `rollback-current-state.yaml` and records the tabletop, `213e` closes → unblocks `0nup` (release-evidence bundle) and `uchp` (Q3 DR test).
+
+**Validation:**
+- `actionlint .github/workflows/deploy-production.yml` → 0 new shellcheck issues introduced (8 pre-existing SC2086 warnings in build-push/set-output/notify steps are unchanged and out of scope).
+- All commits pushed to `main`. Pre-commit (Detect secrets + env-delta) green.
+- bd state: 3 open issues remain (`9lfn`, `l96f`, `213e`). All three are Tyler-only.
+
 ### Continuation — 2026-04-30 morning resume (commit `4b30db7`)
 - Checked live CI after the 2026-04-29 pack/scheduler split handoff and found latest `main` red:
   - CI run `25136461925` failed with `ImportError: cannot import name 'schedule_deadline_checks' from app.core.riverside_scheduler`.
@@ -279,9 +300,10 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 - `uchp` Q3 DR test, depends on `213e` + `fifh`
 - `3flq` backup OIDC token permission regression (filed and closed same session)
 
-### Still in `bd ready` after 2026-04-30 resume
+### Still in `bd ready` after 2026-04-30 evening session
 - `9lfn` — **Tyler-authored** SECRETS_OF_RECORD.md (P1, ~30 min). Skeleton exists; Tyler must fill non-secret pointers/access/rotation metadata. Bus-factor blocker.
-- `213e` — name second rollback human (P2, waiver expires 2026-06-22). Tyler-only.
+- `213e` — second rollback human (P2, waiver expires 2026-06-22). **Dustin Boyd nominated 2026-04-30.** Remaining: Tyler provisions access (8 categories per `docs/dr/second-rollback-human-checklist.md` §2) + Dustin completes ~75 min reading + tabletop on Scenario A.4. Required reading shrank materially after auto-rollback (`d9d9d88`) shifted the role's scope.
+- `l96f` — JWT iss claim rotation (P3). Deferred — requires coordinated session window because dual-issuer rotation will log all users out otherwise.
 - `jzpa` — scheduled Database Backup run `25145371945` failed because production and staging `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT` were empty. On 2026-04-30 those GitHub environment secret names were configured from App Service/storage without printing values; production storage `stgovprodbkup001` was created. Manual validation (`25167474294`, `25167657417`, `25167659155`) then exposed missing runner SQL tooling: optional `mssqlscripter` and ODBC Driver 18. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev`. Later validation (`25168192604`, `25168194585`, `25168804362`) moved past ODBC; staging created/verified a backup but failed Blob upload with `AuthorizationPermissionMismatch` even after Storage Blob Data Contributor was granted. Workflow now derives ephemeral `AZURE_STORAGE_KEY` after OIDC login for upload/cleanup. Staging schema backup passed end-to-end in `25169438794`. Production then created/uploaded/verified a schema backup in `25171161761`; only SQL firewall cleanup failed because `az sql server firewall-rule delete` does not support `--yes`. Leftover rule was removed manually, `--yes` was removed from `backup.yml`, and production validation passed end-to-end in `25171354807`. Post-run checks found no temporary `GitHubActions-*` SQL firewall rules. bd `jzpa` is closed.
 - Phase 1.5 autonomous ready refactor queue was drained in the Pack Leader batch plus `fbx8`; run `bd ready` for any newly unblocked work before inventing tasks.
 
@@ -301,15 +323,18 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 ---
 
-## 🎯 Tyler's minimum-viable-path (~45 min of human time)
+## 🎯 Tyler's minimum-viable-path (~75 min of Tyler-time + ~75 min of Dustin-time)
 
-Per planning-agent's analysis, smallest set that unblocks the autonomous pipeline:
+Smallest set that unblocks the autonomous pipeline + closes the second-human waiver:
 
 1. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully + raises bus-factor metric to 2.
-2. **Pick a name from V2 §11** (~15 min) — Switchyard / Aerie / Hangar / Meridian / Dispatch (or request more candidates). Unblocks Phase 3 prep.
-3. **Name a second rollback human** (`213e`) before the 2026-06-22 waiver expiry.
+2. **Provision Dustin's access** (issue `213e`, ~30 min Tyler) — 8 categories per `docs/dr/second-rollback-human-checklist.md` §2: GitHub repo + production environment, Azure HTT-CORE, Key Vault, Azure SQL, GHCR, Teams ops channel.
+3. **Schedule Dustin's tabletop** (issue `213e`, ~45 min joint Tyler+Dustin) — Scenario A.4 walk-through per checklist §4. Once recorded → update `rollback-current-state.yaml` `current_authorized_humans` → close `213e` → `0nup` and `uchp` automatically unblock.
+4. **Dustin completes required reading** (~75 min Dustin-time, async, fits before tabletop).
 
-Agents can continue autonomous Phase 1 docs/refactors from `bd ready`; the Tyler items above improve bus-factor and naming direction but no longer block the domain-doc track.
+Name decision (D-Name) was already settled — **Control Tower** for internal use (rebrand cutover landed 2026-04-30).
+
+Agents continue autonomous Phase 1 docs/refactors from `bd ready` independently of the Tyler+Dustin path.
 
 ---
 
