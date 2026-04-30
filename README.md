@@ -9,16 +9,25 @@ HTT Control Tower is an internal multi-brand governance hub for cost, identity, 
 
 > **Naming note:** Control Tower is HTT's internal name for this platform. It is unrelated to AWS Control Tower. Do not use this name for external commercialization without a separate naming/legal review.
 
-> **Current release truth:** the package version in `pyproject.toml` is **2.5.0**. Production-readiness work toward the next strict release-gate pass is tracked in `docs/plans/production-readiness-and-release-gate-roadmap-2026-04-24.md` and the linked bd issues.
+> **Current release truth:** the package version in `pyproject.toml` is **2.5.0**. The v2.5.1 internal release-gate rehearsal verdict is `PASS-pending-9lfn` as of 2026-04-30 22:54 UTC — only the Tyler-only `SECRETS_OF_RECORD.md` task (bd `9lfn`) remains. See [`STATUS.md`](./STATUS.md) for the live single-glance state.
 
 ## Release status snapshot
 
 - **Package version:** `2.5.0`
-- **Deploy workflow:** `.github/workflows/deploy-production.yml`
-- **Current production app URL:** `https://app-governance-prod.azurewebsites.net`
-- **Current production resource group:** `rg-governance-production`
-- **Current rollback/waiver source of truth:** `docs/release-gate/rollback-current-state.yaml`
-- **Change history:** `CHANGELOG.md`
+- **Latest commit on `main`:** [`6c75220`](https://github.com/HTT-BRANDS/control-tower/commit/6c75220) (2026-04-30)
+- **Last successful prod deploy:** [run `25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) — 2026-04-30 22:54 UTC, 9m 52s wall-clock
+- **Live prod image:** `ghcr.io/htt-brands/control-tower@sha256:f762c98a03c40f2d6cc77912d8bd13a82ed64e41969a9545094da262c8ff21ef`
+- **Current production app URL:** <https://app-governance-prod.azurewebsites.net> · `/health` ✅ 200
+- **Current production resource group:** `rg-governance-production` (West US 2)
+- **Current staging app URL:** <https://app-governance-staging-xnczpwyv.azurewebsites.net>
+- **Public docs:** <https://htt-brands.github.io/control-tower/>
+- **Deploy workflow:** `.github/workflows/deploy-production.yml` (auto-rollback active; field-tested 2026-04-30 via bd `1vui` cycle)
+- **Rollback/waiver source of truth:** [`docs/release-gate/rollback-current-state.yaml`](./docs/release-gate/rollback-current-state.yaml) (`waiver.status: resolved`, `current_authorized_humans: [Tyler, Dustin]`)
+- **v2.5.1 evidence bundle:** [`docs/release-gate/evidence-bundle-2026-04-30.md`](./docs/release-gate/evidence-bundle-2026-04-30.md)
+- **v2.5.1 internal verdict:** [`docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md`](./docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md) — `PASS-pending-9lfn`
+- **Change history:** [`CHANGELOG.md`](./CHANGELOG.md)
+- **Live state dashboards:** [`STATUS.md`](./STATUS.md), [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md), [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md)
+- **Smoke / UAT recipes:** [`TEST_PLAYBOOK.md`](./TEST_PLAYBOOK.md)
 
 ## Recent release work highlights
 

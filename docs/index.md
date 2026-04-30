@@ -15,10 +15,22 @@ unrelated to AWS Control Tower._
 
 ## Live links
 
-- **Project board** — <https://github.com/orgs/htt-brands/projects> (pinned board: Control Tower / Azure Governance during cutover)
+- **Production app** — <https://app-governance-prod.azurewebsites.net> · `/health` ✅
+- **Staging app** — <https://app-governance-staging-xnczpwyv.azurewebsites.net> · `/health` ✅ (allow 30–90s cold-start on first hit)
 - **Repository** — <https://github.com/htt-brands/control-tower>
-- **Staging app** — <https://app-governance-staging-xnczpwyv.azurewebsites.net>
+- **Project board** — <https://github.com/orgs/htt-brands/projects>
 - **Continuity status** — [operations/continuity-status.html](operations/continuity-status.html)
+- **Live single-glance status** — [STATUS.md on GitHub](https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md) · [TEST_PLAYBOOK.md](https://github.com/HTT-BRANDS/control-tower/blob/main/TEST_PLAYBOOK.md)
+
+## Live release-gate state (2026-04-30)
+
+| Surface | Status |
+|---|---|
+| Production image | `ghcr.io/htt-brands/control-tower@sha256:f762c98a…` (run [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385), 2026-04-30 22:54 UTC) |
+| Production `/health` | ✅ 200 — `healthy / 2.5.0 / production` |
+| v2.5.1 internal verdict | `PASS-pending-9lfn` (only Tyler-only `SECRETS_OF_RECORD.md` remains) |
+| Auto-rollback | ✅ field-tested via bd `1vui` cycle |
+| Bus-factor | 1 → 2 (Tyler + Dustin Boyd, bd `213e` closed) |
 
 ## What's on this page
 

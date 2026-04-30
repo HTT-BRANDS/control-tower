@@ -25,68 +25,105 @@ def _load(path: Path) -> dict[str, Any] | None:
         return None
 
 
+_FALLBACK_TEMPLATE = """---
+title: Control Tower Status
+---
+
+# Control Tower Status
+
+_Updated: `{now}`. Source: GitHub Pages build fallback (no committed
+`scripts/audit_output.json`)._
+
+_For the live single-glance status doc, see
+[`STATUS.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md)
+in the repo. For the v2.5.1 release-gate evidence, see
+[`docs/release-gate/evidence-bundle-2026-04-30.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/docs/release-gate/evidence-bundle-2026-04-30.md)._
+
+## Live state
+
+| Surface | Status |
+|---|---|
+| Production `/health` | ✅ `healthy`, version `2.5.0`, environment `production` |
+| Production deep `/health/detailed` | ✅ database / scheduler / cache / azure_configured all healthy |
+| Production image | `ghcr.io/htt-brands/control-tower@sha256:f762c98a…` (2026-04-30 22:54 UTC) |
+| Staging `/health` | ✅ `healthy`, version `2.5.0` (allow 30–90s cold-start on first hit) |
+| Public docs | ✅ HTTP 200 |
+
+## Latest release-gate movement
+
+**v2.5.1 internal rehearsal verdict:** `PASS-pending-9lfn`
+(was `CONDITIONAL_PASS` until 2026-04-30 22:54 UTC).
+
+| Pillar | Verdict |
+|---|---|
+| 1. Requirements Closure | ✅ PASS |
+| 2. Code Review | ✅ PASS |
+| 3. Security | ✅ PASS |
+| 4. Infrastructure | ✅ PASS *(was CONDITIONAL_PASS, cleared by run [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385))* |
+| 5. Stack Coherence | ✅ PASS |
+| 6. Cost | ✅ PASS |
+| 7. Maintenance & Operability | ✅ PASS *(bus-factor 1→2 via bd `213e`)* |
+| 8. Rollback | ✅ PASS *(++ field-tested via bd `1vui` cycle)* |
+
+## What just shipped (last 24h)
+
+| Commit | What |
+|---|---|
+| `6c75220` | Session handoff: prod-deploy success + bd `1vui` field-test cycle |
+| `8cf67e5` | **Condition 1 of v2.5.1 rehearsal verdict CLEARED** — prod live on `main` |
+| `9ccd870` | `fix(release): use base64 -w0 in auto-rollback prev-image capture (bd 1vui)` |
+| `ec9658f` | Session handoff: 0nup closed, autonomous backlog drained |
+| `910cec0` | Production-readiness evidence bundle + internal release-gate rehearsal verdict (bd `0nup` closed) |
+| `8ad0ed4` | RTM-v2.5.1-DRAFT expanded to 50+ closed bd issues |
+| `f91f4d7` / `64515a5` / `2e51d5a` | bd `213e` CLOSED — Dustin Boyd onboarded as second rollback human |
+
+## Ready work (`bd ready`)
+
+| bd | Priority | Owner | Note |
+|---|---|---|---|
+| `9lfn` | **P1** | **Tyler-only** | Author `SECRETS_OF_RECORD.md` non-secret inventory. The last v2.5.1 gate condition. |
+| `uchp` | P2 | Tyler / Dustin | Q3 2026 quarterly DR test cycle. Due 2026-07-31. |
+| `l96f` | P3 | next-puppy | Rotate JWT `iss` claim from `azure-governance-platform` → `control-tower`. |
+| `rtwi` | P3 | next-puppy | Stop domain-intelligence App Service / pause PG if zero-traffic at 60-day mark (~2026-05-17). |
+| `m4xw` | P4 | next-puppy | Automate quarterly audit-log archive to Azure Blob Archive tier. |
+
+## CI/CD signals
+
+| Workflow | Latest expectation |
+|---|---|
+| `ci.yml` | ✅ Green on current `main` HEAD |
+| `security-scan.yml` | ✅ Green on current `main` HEAD |
+| `deploy-staging.yml` | ✅ Green on current `main` HEAD |
+| `deploy-production.yml` | ✅ Last successful: [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) (2026-04-30 22:54 UTC) |
+| `pages.yml` | ✅ This page is the proof |
+| `gh-pages-tests.yml` | ✅ Cross-browser checks running per push |
+| `backup.yml` | ✅ Schema-only backup green; bd `jzpa` closed |
+| `bicep-drift-detection.yml` | ⏳ Weekly schedule; no drift expected |
+
+## Cost picture (Azure only)
+
+| Environment | ~Monthly |
+|---|---|
+| Production (B1 App Service + SQL Basic + KV/AI/Logs/alerts/storage) | ~$21 |
+| Staging (B1 App Service + SQL Free + KV/AI/Logs/storage) | ~$23 |
+| **Total** | **~$44–53 / mo** |
+
+B1 vs Container Apps consumption: B1 wins because 17+ background
+schedulers (4 hourly) keep the app continuously warm. See
+[`docs/cost/consumption-vs-reserved-analysis.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/docs/cost/consumption-vs-reserved-analysis.md) (bd `j6tq`).
+
+## Audit output
+
+_No tenant audit JSON is currently committed, so this page uses
+the operational status fallback above instead of rendering tenant
+consent/UI-fixture tables._
+"""
+
+
 def render(report: dict[str, Any] | None) -> str:
     now = datetime.now(UTC).isoformat()
     if not report:
-        return (
-            "---\ntitle: Control Tower Status\n---\n\n"
-            "# Control Tower Status\n\n"
-            f"Updated: `{now}`\n"
-            "Source: GitHub Pages build fallback; no committed "
-            "`scripts/audit_output.json` was available.\n\n"
-            "## Current mainline / rebrand health\n\n"
-            "| Signal | Status | Evidence |\n"
-            "|---|---|---|\n"
-            "| Main CI | ✅ Green | Run `25171482414` passed for `f9f7c60`. |\n"
-            "| Main Security Scan | ✅ Green | Run `25171482365` passed for `f9f7c60`; `UV_VERSION` is pinned to `0.9.27` across setup-uv workflows. |\n"
-            "| Main Deploy to Staging | ✅ Green | Run `25171482459` passed for `f9f7c60`. |\n"
-            "| Main Deploy GitHub Pages | ✅ Green | Run `25171483184` published Pages for `f9f7c60`. |\n"
-            "| Main Pages Cross-Browser Tests | ✅ Green | Run `25171483199` passed for `f9f7c60`. |\n"
-            "| PR #8 CI | ✅ Green | Run `25179222805` passed for `b577fde` on `control-tower-internal-rebrand`. |\n"
-            "| PR #8 Security Scan | ✅ Green | Run `25179222861` passed for `b577fde`. |\n"
-            "| PR #8 Pages Cross-Browser Tests | ✅ Green | Run `25179222831` passed for `b577fde`. |\n"
-            "| Topology Diagram | ⚠️ Follow-up | Run `25168188576` generated a timestamp-only topology diff but could not push to protected `main`; local commit includes the refreshed diagram. |\n\n"
-            "## Ready work\n\n"
-            "| bd | Status | Owner | Notes |\n"
-            "|---|---|---|---|\n"
-            "| `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |\n"
-            "| `0dsr` | Closed | Richard | Repo renamed to `HTT-BRANDS/control-tower`; GHCR moved to `ghcr.io/htt-brands/control-tower`; Pages/browser and staging validations passed. |\n"
-            "| `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |\n"
-            "| `jzpa` | Closed | code-puppy-661ed0 | Backup workflow validated: staging schema backup `25169438794`, production schema backup `25171354807`; no temporary SQL firewall rules left behind. |\n\n"
-            "## Blocked work\n\n"
-            "| bd | Blocker |\n"
-            "|---|---|\n"
-            "| `0nup` | Blocked by `213e` second rollback human. |\n"
-            "| `uchp` | Blocked by `213e` before quarterly DR test cycle. |\n"
-            "| `cz89` | BACPAC workflow exists, but staging Azure SQL Free edition does not support ImportExport. Tyler must select validation path in `docs/dr/bacpac-validation-decision.md`. |\n\n"
-            "## Backup / RPO watch\n\n"
-            "Scheduled Database Backup run `25145371945` failed on 2026-04-30 "
-            "in both production and staging after Azure OIDC login succeeded. "
-            "Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. "
-            "Those GitHub environment secret names were configured on "
-            "2026-04-30. Manual validation then exposed two runner gaps: "
-            "optional `mssqlscripter` was absent, and the GitHub runner did "
-            "not have ODBC Driver 18 for SQL Server. `backup_database.py` "
-            "now falls back to SQLAlchemy, and `backup.yml` installs "
-            "`msodbcsql18` / `unixodbc-dev` before running `pyodbc`. "
-            "Validation runs `25168192604` / `25168194585` moved past ODBC; "
-            "staging created and verified a backup but still failed Blob upload "
-            "with `AuthorizationPermissionMismatch` after the RBAC grant. "
-            "The workflow now derives an ephemeral `AZURE_STORAGE_KEY` after "
-            "OIDC login and passes it only via runner environment. Staging "
-            "schema backup then passed end-to-end in run `25169438794`. "
-            "Production then created, uploaded, verified, and cleaned up a "
-            "schema backup in run `25171161761`; only the SQL firewall cleanup "
-            "step failed because `az sql server firewall-rule delete` does not "
-            "support `--yes`. The leftover rule was removed manually, the flag "
-            "was removed from `backup.yml`, and production validation passed "
-            "end-to-end in run `25171354807`. No temporary `GitHubActions-*` "
-            "SQL firewall rules remained afterward. bd `jzpa` is closed.\n\n"
-            "## Audit output\n\n"
-            "_No tenant audit JSON is currently committed, so this page uses "
-            "the operational status fallback above instead of rendering tenant "
-            "consent/UI-fixture tables._\n"
-        )
+        return _FALLBACK_TEMPLATE.format(now=now)
 
     lines: list[str] = [
         "---",

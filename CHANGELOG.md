@@ -18,7 +18,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_131 commits since `v2.5.0` (b1137cb, 2026-04-15). Pre-release state on `main`; no release tag yet._
+_Pre-release state on `main` toward v2.5.1; no release tag yet. Internal release-gate verdict is `PASS-pending-9lfn` as of 2026-04-30 22:54 UTC._
+
+### Production deploy off `main` (April 30, 2026)
+- **Fresh production deploy off current `main`**: [run `25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) (commit `9ccd870`, 9m 52s wall-clock). All 6 jobs ✅. Prod live on the post-rebrand canonical GHCR path: `ghcr.io/htt-brands/control-tower@sha256:f762c98a03c40f2d6cc77912d8bd13a82ed64e41969a9545094da262c8ff21ef`. Cleared Condition 1 of the v2.5.1 internal rehearsal verdict; pillar 4 Infrastructure moved `CONDITIONAL_PASS` → `PASS`. Resolved the §6.1 stale-image disclosure in the v2.5.1 evidence bundle.
+- **Auto-rollback field-tested** (commits `8cf67e5`, `9ccd870`): the first prod-deploy attempt of the day (run `25192183149`) failed at the *first step* of the Deploy job ("Capture previous-good container image") due to bd `1vui` — GNU `base64` default-wraps at 76 chars, the wrapped second line broke `$GITHUB_OUTPUT` parsing. **The safety property held:** failure occurred before any `az webapp config container set`; production `/health` remained 200 OK with version 2.5.0 throughout. Fix landed in `9ccd870` (`base64 -w0`); re-deploy run `25193020385` succeeded fully. The §N-2 rehearsal-time risk "auto-rollback merged but not yet field-tested" is now retired with field evidence; pillar 8 Rollback moved `PASS` → `PASS (++ field-tested)`.
+
+### Continuity / DR (April 28–30, 2026)
+- **Bus-factor 1 → 2** (bd `213e` closed; commits `2e51d5a`, `64515a5`, `f91f4d7`): Dustin Boyd onboarded as second authorized rollback human. Both Tyler and Dustin hold required-reviewer status on the production environment. Machine-verifiable waiver state in [`docs/release-gate/rollback-current-state.yaml`](./docs/release-gate/rollback-current-state.yaml) updated: `waiver.status: resolved`, `current_authorized_humans: [Tyler, Dustin]`, `requires_min_authorized_humans: 2`.
+- **Auto-rollback** (bd `39yp`, commit `d9d9d88`): `deploy-production.yml` captures previous-good `linuxFxVersion` pre-deploy and restores it on health-gate failure. Per [`docs/runbooks/disaster-recovery.md`](./docs/runbooks/disaster-recovery.md) §A.3.
+- **Second-rollback-human checklist rewritten** for the post-auto-rollback world (commit `a2a18bf`).
+- **First scheduled DR exercise filed** (bd `uchp`): Q3 2026 quarterly DR test cycle (PITR + redeploy + Key Vault recover), due 2026-07-31. Will absorb Dustin's first formal hands-on tabletop.
+
+### Cost / scaling decision (April 30, 2026)
+- **B1 vs Container Apps consumption analysis published** (bd `j6tq` closed; commit `a92cf9b`): see [`docs/cost/consumption-vs-reserved-analysis.md`](./docs/cost/consumption-vs-reserved-analysis.md). **Decision: stay on App Service B1.** 17+ background schedulers (4 hourly) keep the app continuously warm, so a naive Container Apps consumption migration would cost more (~$34/mo vs $13/mo). A split architecture (API as Container App + schedulers as Container App Jobs) saves ~$5/mo at breakeven, but the migration cost (20–40 eng-hrs) means payback measured in years. Decision-ready, no migration recommended.
+- Total Azure footprint: **~$44–53/mo** (prod ~$21, staging ~$23). 75% reduction from $298/mo pre-April-2026 sweep.
+
+### Release-gate evidence (April 30, 2026)
+- **v2.5.1 production-readiness evidence bundle published** (bd `0nup` closed; commit `910cec0`): single index of release-gate evidence at [`docs/release-gate/evidence-bundle-2026-04-30.md`](./docs/release-gate/evidence-bundle-2026-04-30.md). Links supply-chain receipts, browser/UI gate proof (bd `aiob` and 5 sub-issues), prod sync verification, rollback readiness, and waivers/exceptions (none active; 6 carve-outs explicitly non-blocking).
+- **Internal release-gate rehearsal verdict** ([`docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md`](./docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md)): `PASS-pending-9lfn` post-prod-deploy. 5 of 8 pillars improved vs the 2026-04-22 external `CONDITIONAL_PASS-staging-only` verdict.
+- **RTM-v2.5.1-DRAFT** expanded from 5 rows / 2 themes to **56 tickets / 8 themes** (commit `8ad0ed4`).
+
+### Backup / RPO hygiene (April 24–30, 2026)
+- **Schema-only database backup workflow validated end-to-end** (bd `jzpa` closed): staging schema backup [`25169438794`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25169438794), production schema backup [`25171354807`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25171354807). Path required several diagnostic fixes documented in `CURRENT_STATE_ASSESSMENT.md`: OIDC permission (bd `3flq`), runner ODBC tooling, ephemeral `AZURE_STORAGE_KEY` derivation after RBAC `AuthorizationPermissionMismatch`, removal of unsupported `--yes` flag on firewall cleanup. No temporary `GitHubActions-*` SQL firewall rules left behind.
+- **Database Backup workflow Teams-notify action fixed** (bd `fifh` closed; commit `1a7e929`): replaced broken `mda590/teams-notify@v1` with the inline `curl` pattern used in `deploy-production.yml`.
+
+### Documentation freshness (April 30, 2026)
+- **`STATUS.md` published** (NEW, repo root): single-glance "where are we right now" doc.
+- **`TEST_PLAYBOOK.md` published** (NEW, repo root): copy-paste-runnable smoke commands and a manual UAT checklist.
+- **`CURRENT_STATE_ASSESSMENT.md` rewritten** to reflect prod-live, bd `213e`/`1vui` outcomes, and current work queue.
+- **`docs/operations/continuity-status.html` rewritten** for the post-prod-deploy state.
+- **`scripts/render_status.py` fallback content refreshed** so GitHub Pages `/status/` reflects current reality without a committed `audit_output.json`.
+- **`README.md`, `INFRASTRUCTURE_END_TO_END.md`, `docs/index.md` snapshots refreshed** with current commit, image, run, and verdict.
 
 ### Added
 - **Design-system primitives — py7u Wave 2**: `ds_static_table`, `ds_toolbar`, `ds_modal` (native `<dialog>`), `ds_tabs` + `ds_tab_panel` (full keyboard nav), `ds_form_field` (with `.ds-input` utility).

@@ -1,8 +1,10 @@
 # HTT Control Tower — End-to-End Infrastructure Overview
 
-**Document Date:** April 28, 2026 (post-staging-recovery diligence pass)
-**System Version:** 2.5.0 (HEAD `43eaff9` — production still serving stale image `:6a7306a`)
-**Status:** ⚠️ Operational with caveats — see [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) for the live truth dashboard and [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) for in-flight blockers. Staging green as of 2026-04-28 20:39 UTC after 5+ consecutive failed pushes. Production deploy chain blocked pending manual re-dispatch.
+**Document Date:** April 30, 2026 (post-prod-deploy refresh)
+**System Version:** 2.5.0 — package version per `pyproject.toml`; internal v2.5.1 release-gate verdict is `PASS-pending-9lfn` as of 2026-04-30 22:54 UTC.
+**HEAD on `main`:** [`6c75220`](https://github.com/HTT-BRANDS/control-tower/commit/6c75220).
+**Production live image:** `ghcr.io/htt-brands/control-tower@sha256:f762c98a03c40f2d6cc77912d8bd13a82ed64e41969a9545094da262c8ff21ef` — deployed by run [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) at 2026-04-30 22:54 UTC.
+**Status:** ✅ Operational. Production `/health` 200 (`healthy / 2.5.0 / production`). Staging `/health` 200 after warm-up. Auto-rollback field-tested via bd `1vui` cycle. See [`STATUS.md`](./STATUS.md) for the single-glance live state, [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) for the dashboard, and [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) for in-flight session detail.
 **Owner:** Tyler Granlund — IT Support & Systems Engineer, HTT Brands
 
 > **Honesty banner (added 2026-04-28):** Earlier revisions of this doc claimed

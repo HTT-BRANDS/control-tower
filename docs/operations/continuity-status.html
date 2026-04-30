@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Continuity Status — HTT Control Tower</title>
-  <meta name="description" content="Current continuity, DR, backup, and bus-factor status for HTT Control Tower.">
+  <meta name="description" content="Current continuity, DR, backup, deploy, and release-gate status for HTT Control Tower.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,24 +35,25 @@
     <div class="page-header-inner">
       <div class="breadcrumb"><a href="../">Home</a><span>›</span><a href="./">Operations</a><span>›</span> Continuity Status</div>
       <h1 class="page-title">Continuity Status</h1>
-      <p class="page-subtitle">Current DR, backup, bus-factor, and release-readiness state as of 2026-04-30.</p>
+      <p class="page-subtitle">Current DR, backup, deploy, bus-factor, and release-gate state as of 2026-04-30 22:55 UTC.</p>
     </div>
   </div>
 
   <main id="main">
+
     <section class="section">
       <div class="grid grid--3">
         <div class="card">
-          <h2 class="card-title">CI / deploy</h2>
-          <p class="card-description">Latest mainline CI, security scan, staging deploy, Pages deploy, and Pages cross-browser checks are green.</p>
+          <h2 class="card-title">Production live ✅</h2>
+          <p class="card-description"><code>/health</code> 200, version <code>2.5.0</code>. Image refreshed 2026-04-30 22:54 UTC to <code>ghcr.io/htt-brands/control-tower@sha256:f762c98a…</code> via run <a href="https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385">25193020385</a>.</p>
         </div>
         <div class="card">
-          <h2 class="card-title">Human gates</h2>
-          <p class="card-description">Three ready items remain: Tyler-owned <code>9lfn</code> secret inventory, <code>213e</code> second rollback human, and <code>0dsr</code> Control Tower repo/GHCR/Pages cutover.</p>
+          <h2 class="card-title">v2.5.1 release-gate</h2>
+          <p class="card-description">Internal rehearsal verdict moved <code>CONDITIONAL_PASS</code> → <code>PASS-pending-9lfn</code>. Only Tyler-only <code>9lfn</code> (<code>SECRETS_OF_RECORD.md</code>) remains. Pillar 4 Infrastructure cleared; Pillar 8 Rollback now field-tested.</p>
         </div>
         <div class="card">
-          <h2 class="card-title">Backup watch</h2>
-          <p class="card-description">Scheduled Database Backup exposed missing secrets and runner SQL/firewall gaps. Staging and production schema backup evidence is now green; bd <code>jzpa</code> is closed.</p>
+          <h2 class="card-title">Auto-rollback field-tested</h2>
+          <p class="card-description">First real-world auto-rollback execution surfaced bd <code>1vui</code> (GNU <code>base64</code> line-wrap broke <code>$GITHUB_OUTPUT</code>); fix landed in <code>9ccd870</code>; redeploy clean. Fail-closed safety property held throughout — prod was never mutated by the failed run.</p>
         </div>
       </div>
     </section>
@@ -64,19 +65,58 @@
       </div>
       <div class="doc-list">
         <div class="doc-list-item">
-          <h3>Ready — Tyler-owned</h3>
-          <p><code>9lfn</code>: fill <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/SECRETS_OF_RECORD.md">SECRETS_OF_RECORD.md</a> with non-secret pointers, access, and rotation metadata.</p>
-          <p><code>213e</code>: name a second rollback human and complete <a href="../dr/second-rollback-human-checklist.md">the readiness/tabletop checklist</a>.</p>
+          <h3>Tyler-only (P1)</h3>
+          <p><code>9lfn</code>: fill <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/SECRETS_OF_RECORD.md">SECRETS_OF_RECORD.md</a> with non-secret pointers, owners, access, and rotation metadata. ~30 min. <strong>The last v2.5.1 gate condition.</strong></p>
         </div>
         <div class="doc-list-item">
-          <h3>Ready — operational follow-up</h3>
-          <p><code>0dsr</code>: execute the GitHub repo/GHCR/Pages Control Tower cutover after PR #8 merge decision. <code>jzpa</code> is closed: staging schema backup <code>25169438794</code>, production schema backup <code>25171354807</code>.</p>
+          <h3>Scheduled (P2)</h3>
+          <p><code>uchp</code>: execute Q3 2026 quarterly DR test cycle (PITR + redeploy + Key Vault recover). Due 2026-07-31. Will absorb Dustin Boyd's first hands-on tabletop.</p>
         </div>
         <div class="doc-list-item">
-          <h3>Blocked</h3>
-          <p><code>cz89</code>: weekly BACPAC export code exists, but staging validation is blocked by Azure SQL Free edition ImportExport support. See <a href="../dr/bacpac-validation-decision.md">BACPAC validation decision</a>.</p>
-          <p><code>0nup</code> and <code>uchp</code> remain blocked by <code>213e</code>.</p>
+          <h3>Cleanup (P3 / P4)</h3>
+          <p><code>l96f</code>: rotate JWT <code>iss</code> claim from <code>azure-governance-platform</code> → <code>control-tower</code>.</p>
+          <p><code>rtwi</code>: stop domain-intelligence App Service / pause PG if zero-traffic at 60-day mark (~2026-05-17).</p>
+          <p><code>m4xw</code>: automate quarterly audit-log archive to Azure Blob Archive tier.</p>
         </div>
+        <div class="doc-list-item">
+          <h3>Recently closed (last 48h)</h3>
+          <p><code>0nup</code> production-readiness gate · <code>213e</code> second rollback human (Dustin Boyd) · <code>39yp</code> auto-rollback · <code>1vui</code> auto-rollback base64 line-wrap regression (discovered + fixed in field-test cycle today) · <code>j6tq</code> cost analysis · <code>jzpa</code> backup workflow · <code>fifh</code> teams-notify action · <code>0dsr</code> Control Tower repo/GHCR/Pages cutover.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Bus-factor and rollback authority</h2>
+        <p class="section-subtitle">Who can recover production when</p>
+      </div>
+      <div class="grid grid--2">
+        <div class="card">
+          <h2 class="card-title">Authorized humans</h2>
+          <p class="card-description"><strong>Tyler Granlund</strong> (lead engineer) and <strong>Dustin Boyd</strong> (second rollback human). Both hold required-reviewer status on the <code>production</code> environment. Provisioned 2026-04-30 (bd <code>213e</code> closed). Bus-factor moved 1→2.</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Auto-rollback</h2>
+          <p class="card-description">Active in <code>deploy-production.yml</code>. Captures previous-good <code>linuxFxVersion</code> pre-deploy; fail-closed if image swap fails its post-deploy health gate; restores prior digest. Field-tested 2026-04-30: bd <code>1vui</code> regression discovered + fixed; safety property held (prod un-mutated).</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Machine-verifiable waiver state</h2>
+          <p class="card-description">See <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/docs/release-gate/rollback-current-state.yaml"><code>docs/release-gate/rollback-current-state.yaml</code></a>. <code>waiver.status: resolved</code>, <code>current_authorized_humans: [Tyler, Dustin]</code>, <code>requires_min_authorized_humans: 2</code>.</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">First scheduled DR exercise</h2>
+          <p class="card-description">bd <code>uchp</code> — Q3 2026 quarterly DR test cycle, due 2026-07-31. Will exercise PITR restore, image redeploy, Key Vault soft-delete recovery, and Dustin's formal tabletop.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="section-header">
+        <h2 class="section-title">Backup / RPO state</h2>
+        <p class="section-subtitle">Schema-only validation green; bd <code>jzpa</code> closed</p>
+      </div>
+      <div class="card">
+        <p class="card-description">Schema-only database backup workflow (<code>backup.yml</code>) is fully green end-to-end on both environments after a multi-day diagnostic series in late April 2026 (OIDC permission fix in bd <code>3flq</code>; runner ODBC + SQL tooling gaps; ephemeral <code>AZURE_STORAGE_KEY</code> path after RBAC <code>AuthorizationPermissionMismatch</code>; <code>--yes</code> flag removal on the firewall cleanup). Final passing runs: staging <code>25169438794</code>, production <code>25171354807</code>. No temporary <code>GitHubActions-*</code> SQL firewall rules left behind. Long-form BACPAC validation (<code>cz89</code>) remains operationally blocked by Azure SQL Free edition's lack of ImportExport — see the BACPAC validation decision doc below.</p>
       </div>
     </section>
 
@@ -86,6 +126,16 @@
         <p class="section-subtitle">Canonical places to update — no treasure maps hidden under the carpet</p>
       </div>
       <div class="grid grid--2">
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md" class="doc-card">
+          <div class="doc-card-title">STATUS.md</div>
+          <div class="doc-card-description">Single-glance "where are we right now" doc. Live URLs, deployed image, cost picture, recent commits, open work.</div>
+          <div class="doc-card-link">Open →</div>
+        </a>
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/TEST_PLAYBOOK.md" class="doc-card">
+          <div class="doc-card-title">TEST_PLAYBOOK.md</div>
+          <div class="doc-card-description">Copy-paste-runnable smoke commands and a manual UAT checklist for prod, staging, and Pages.</div>
+          <div class="doc-card-link">Open →</div>
+        </a>
         <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/RUNBOOK.md" class="doc-card">
           <div class="doc-card-title">RUNBOOK.md</div>
           <div class="doc-card-description">Emergency operating entry point, deploy/rollback flow, alert triage, and successor readiness pointers.</div>
@@ -93,7 +143,7 @@
         </a>
         <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/SECRETS_OF_RECORD.md" class="doc-card">
           <div class="doc-card-title">SECRETS_OF_RECORD.md</div>
-          <div class="doc-card-description">Safe skeleton for credential pointers. Tyler must fill values as non-secret references only.</div>
+          <div class="doc-card-description">Skeleton-only inventory (bd <code>9lfn</code>): Tyler-only authorship of credential pointers, owners, access, and rotation metadata.</div>
           <div class="doc-card-link">Open →</div>
         </a>
         <a href="../dr/rto-rpo.md" class="doc-card">
@@ -101,9 +151,19 @@
           <div class="doc-card-description">Stated recovery targets, quarterly test cadence, and known DR gaps.</div>
           <div class="doc-card-link">Open →</div>
         </a>
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/docs/runbooks/disaster-recovery.md" class="doc-card">
+          <div class="doc-card-title">Disaster Recovery Runbook</div>
+          <div class="doc-card-description">Full DR procedures including auto-rollback paths, rollback-also-failed scenarios, and Key Vault recovery.</div>
+          <div class="doc-card-link">Open →</div>
+        </a>
         <a href="../dr/bacpac-validation-decision.md" class="doc-card">
           <div class="doc-card-title">BACPAC validation decision</div>
-          <div class="doc-card-description">Options and runbooks for unblocking long-term SQL export validation.</div>
+          <div class="doc-card-description">Options and runbooks for unblocking long-term SQL export validation (bd <code>cz89</code>).</div>
+          <div class="doc-card-link">Open →</div>
+        </a>
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/docs/release-gate/evidence-bundle-2026-04-30.md" class="doc-card">
+          <div class="doc-card-title">v2.5.1 evidence bundle</div>
+          <div class="doc-card-description">Single index of release-gate evidence for the v2.5.1 prod-gate: supply-chain receipts, browser/UI gate proof, prod sync verification, rollback readiness, waivers/exceptions.</div>
           <div class="doc-card-link">Open →</div>
         </a>
       </div>
@@ -122,7 +182,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>HTT Control Tower · Continuity state current as of 2026-04-30</p>
+      <p>HTT Control Tower · Continuity state current as of 2026-04-30 22:55 UTC</p>
     </div>
   </footer>
 
