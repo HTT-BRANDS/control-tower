@@ -15,11 +15,11 @@ the commands for them.
 
 | Field | Value |
 |---|---|
-| Name | 🔴 TODO Tyler |
-| Role / org | 🔴 TODO Tyler |
-| Backup contact method | 🔴 TODO Tyler |
-| Date nominated | 🔴 TODO Tyler |
-| Date accepted | 🔴 TODO Tyler |
+| Name | **Dustin Boyd** |
+| Role / org | 🔴 TODO Tyler (HTT IT / role title) |
+| Backup contact method | 🔴 TODO Tyler (Teams handle + cell + email) |
+| Date nominated | 2026-04-30 |
+| Date accepted | 🔴 TODO Tyler (after Dustin confirms) |
 
 ---
 
