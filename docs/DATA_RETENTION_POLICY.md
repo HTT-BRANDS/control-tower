@@ -243,11 +243,10 @@ missing runner SQL tooling: optional `mssqlscripter` was absent and the runner
 lacked ODBC Driver 18. `backup_database.py` now falls back to SQLAlchemy,
 `backup.yml` installs `msodbcsql18` / `unixodbc-dev`, and Blob upload uses an
 ephemeral runner-only `AZURE_STORAGE_KEY` derived after OIDC login. Staging
-schema backup passed end-to-end in run `25169438794`; production still failed
-opening SQL from the GitHub runner in run `25169514387`. SQL metadata exists,
-and `backup.yml` now adds/removes a temporary runner-IP Azure SQL firewall rule
-for backup validation. This remains tracked as bd `jzpa` until production
-evidence passes.
+schema backup passed end-to-end in run `25169438794`; production schema backup
+passed end-to-end in run `25171354807`. `backup.yml` now adds/removes a temporary
+runner-IP Azure SQL firewall rule for backup validation, and post-run checks found
+no leftover `GitHubActions-*` rules. bd `jzpa` is closed.
 
 Retention is operationally defined as 12 months. Once validated, the BACPAC
 workflow deletes expired BACPAC blobs after each successful export using a

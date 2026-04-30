@@ -4,7 +4,7 @@ title: Platform Status
 
 # Platform Status
 
-Updated: `2026-04-30T14:33:26.922568+00:00`
+Updated: `2026-04-30T14:35:59.554836+00:00`
 Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` was available.
 
 ## Current mainline health
@@ -24,7 +24,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 |---|---|---|---|
 | `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |
 | `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |
-| `jzpa` | In progress | code-puppy-661ed0 | Staging schema backup passes end-to-end (`25169438794`). Production backup/upload/verification passed in `25171161761`, but firewall cleanup failed on an unsupported `--yes` flag; fix pending validation. |
+| `jzpa` | Closed | code-puppy-661ed0 | Backup workflow validated: staging schema backup `25169438794`, production schema backup `25171354807`; no temporary SQL firewall rules left behind. |
 
 ## Blocked work
 
@@ -36,7 +36,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 
 ## Backup / RPO watch
 
-Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. Validation runs `25168192604` / `25168194585` moved past ODBC; staging created and verified a backup but still failed Blob upload with `AuthorizationPermissionMismatch` after the RBAC grant. The workflow now derives an ephemeral `AZURE_STORAGE_KEY` after OIDC login and passes it only via runner environment. Staging schema backup then passed end-to-end in run `25169438794`. Production then created, uploaded, verified, and cleaned up a schema backup in run `25171161761`; only the SQL firewall cleanup step failed because `az sql server firewall-rule delete` does not support `--yes`. The leftover rule was removed manually, the flag was removed from `backup.yml`, and validation is pending. This remains tracked as bd `jzpa` until the full workflow is green.
+Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. Validation runs `25168192604` / `25168194585` moved past ODBC; staging created and verified a backup but still failed Blob upload with `AuthorizationPermissionMismatch` after the RBAC grant. The workflow now derives an ephemeral `AZURE_STORAGE_KEY` after OIDC login and passes it only via runner environment. Staging schema backup then passed end-to-end in run `25169438794`. Production then created, uploaded, verified, and cleaned up a schema backup in run `25171161761`; only the SQL firewall cleanup step failed because `az sql server firewall-rule delete` does not support `--yes`. The leftover rule was removed manually, the flag was removed from `backup.yml`, and production validation passed end-to-end in run `25171354807`. No temporary `GitHubActions-*` SQL firewall rules remained afterward. bd `jzpa` is closed.
 
 ## Audit output
 

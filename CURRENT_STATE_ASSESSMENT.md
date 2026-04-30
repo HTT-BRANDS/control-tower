@@ -19,7 +19,7 @@ progress.
 - Mainline CI and Security Scan were green for `00c3745`.
 - GitHub Pages deployed for `246e454`, and cross-browser tests passed after the homepage title compatibility fix.
 - Staging deploy run `25168188519` passed QA, security, build/push, deploy, and staging validation.
-- Scheduled/manual Database Backup is nearly green under bd `jzpa`: staging schema backup passes end-to-end (`25169438794`), and production backup/upload/verification passed in `25171161761`; that run only failed because the SQL firewall cleanup command used unsupported `--yes`. The flag is removed and validation is pending.
+- Scheduled/manual Database Backup is green and bd `jzpa` is closed: staging schema backup passed end-to-end (`25169438794`), production schema backup passed end-to-end (`25171354807`), and no temporary `GitHubActions-*` SQL firewall rules remained afterward.
 - Tyler-only continuity gates remain: `9lfn` secret inventory completion and `213e` second rollback human.
 
 ---
@@ -44,7 +44,7 @@ progress.
 | GitHub Pages Cross-Browser Tests | `25168188537` | ✅ success | Homepage title compatibility fix passed all browser/device projects. |
 | Deploy to Staging | `25168188519` | ✅ success | QA, security, build/push, deploy, and staging validation passed. |
 | Topology Diagram | `25168188576` | ❌ failure | Generated timestamp-only topology diff but bot could not push to protected `main`; local commit includes refreshed diagram. |
-| Database Backup production manual | `25171161761` | ⚠️ partial | Backup/upload/verification/retention cleanup succeeded; SQL firewall cleanup failed on unsupported `--yes`. Flag removed; rerun pending. |
+| Database Backup production manual | `25171354807` | ✅ success | Schema-only production backup created, uploaded, verified, retention-cleaned, and temporary SQL firewall rule removed. |
 | Database Backup staging manual | `25169438794` | ✅ success | Schema-only staging backup created, verified, uploaded, integrity-checked, and cleanup completed after ephemeral `AZURE_STORAGE_KEY` workflow change. |
 | Scheduled Database Backup | `25145371945` | ❌ failure | Original prod/staging empty `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT` failure. |
 
@@ -83,7 +83,8 @@ The backup story is not green yet.
 7. Current code makes `backup_database.py` fall back to SQLAlchemy and updates `backup.yml` to install `msodbcsql18` / `unixodbc-dev` before running `pyodbc`.
 8. Validation runs `25168192604`, `25168194585`, and `25168804362` moved past ODBC. Staging created and verified a SQL backup, then failed Blob upload on `AuthorizationPermissionMismatch` even after Storage Blob Data Contributor was granted. The workflow now derives an ephemeral `AZURE_STORAGE_KEY` after OIDC login and passes it only through runner environment.
 9. Staging schema backup passed end-to-end in run `25169438794`.
-10. Production schema backup then created, uploaded, verified, and completed retention cleanup in run `25171161761`; only the firewall cleanup step failed because `az sql server firewall-rule delete` does not support `--yes`. The leftover firewall rule was removed manually, the unsupported flag is removed from `backup.yml`, and production validation is pending.
+10. Production schema backup then created, uploaded, verified, and completed retention cleanup in run `25171161761`; only the firewall cleanup step failed because `az sql server firewall-rule delete` does not support `--yes`.
+11. The leftover firewall rule was removed manually, the unsupported flag was removed from `backup.yml`, and production validation passed end-to-end in run `25171354807`. Post-run checks found no temporary `GitHubActions-*` SQL firewall rules in production or staging. bd `jzpa` is closed.
 
 Do **not** declare RPO backup hygiene complete until production and staging backup evidence runs pass and bd `jzpa` is closed with run IDs.
 
