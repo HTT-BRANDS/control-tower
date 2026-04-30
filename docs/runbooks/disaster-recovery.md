@@ -104,6 +104,13 @@ curl https://app-governance-prod.azurewebsites.net/health
 
 ### A.3 Rollback to previous known-good container digest
 
+> **Auto-rollback note (since commit `d9d9d88`):** `deploy-production.yml`
+> performs this scenario automatically when post-deploy `/health` checks fail.
+> The procedure below is for **§A.4** cases where auto-rollback itself failed,
+> or for manual rollback initiated outside the deploy workflow. The workflow
+> run summary records every auto-rollback decision (see the
+> `Health gate with auto-rollback` step output).
+
 **Authoritative current-state source:**
 `docs/release-gate/rollback-current-state.yaml`
 
