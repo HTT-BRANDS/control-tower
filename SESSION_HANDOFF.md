@@ -72,6 +72,30 @@ System for HTT Brands." Three documents were produced and pushed:
   - `.venv/bin/pytest tests/unit/test_version.py tests/unit/test_config.py tests/unit/test_main_app.py tests/unit/test_onboarding.py tests/unit/test_templates.py tests/unit/test_tracing.py -q` → `128 passed`.
   - `.venv/bin/pre-commit run --all-files` → passed.
 
+### Continuation — 2026-04-30 cutover residue cleanup (bd `re42`, commits `6094863` + `6d4d7db`)
+- After the GHCR/Pages cutover landed on `main`, ran a deep audit for stale `azure-governance-platform` references and found 41 files still referencing the old name across active IaC, supply-chain policy, scripts, and operational runbooks.
+- Filed bd `re42` (P2) covering the long-tail residue, then closed it after fixing.
+- **Active correctness fix (commit `6094863`, 21 files):**
+  - `arbiter/policies/verify.yaml` SLSA `certificate_identity` workflow path — without this, the next production deploy would have failed at `gh attestation verify` because new images sign attestations under `htt-brands/control-tower/.github/workflows/deploy-production.yml`.
+  - All 4 `infrastructure/parameters*.json` `containerImage` + `Application` tag.
+  - `env-delta.yaml` 3 active environment `container_image` fields (delta history block preserved).
+  - `infrastructure/modules/uami.bicep` Project tag + default `uamiName`; regenerated `uami.json` via `az bicep build`.
+  - `infrastructure/deploy-governance-infrastructure.bicep`, `infrastructure/examples/{data-processing-job,database-migration-job}.bicep`, `infrastructure/deploy.sh`.
+  - 6 scripts: `check-github-secrets.sh`, `cleanup-old-acr.sh`, `verify-federated-creds.sh`, `fix-dev-runtime.sh`, `migrate-dev-to-ghcr.sh`, `setup-github-pages.sh`.
+  - `requirements.txt` regenerated via `uv export --no-hashes --no-dev`.
+- **Operational docs fix (commit `6d4d7db`, 20 files):**
+  - `Makefile`, `docker-compose.yml`, `docker-compose.prod.yml`, `fix-production-503.sh`.
+  - `STAGING_DEPLOYMENT.md` replaced retired `acrgovstaging19859` build flow with current GHCR pattern.
+  - `infrastructure/README.md`, `AZURE_DEVOPS_DEPLOYMENT_GUIDE.md`.
+  - 7 `docs/runbooks/` files (notably the DR rollback `--container-image-name` template that would have been a footgun during a real incident).
+  - 6 user-facing docs (`DEPLOYMENT.md`, `DEVELOPMENT.md`, `IMPLEMENTATION_GUIDE.md`, `GITHUB_CLI_GUIDE.md`, `index.html`, `STAGING_DEPLOYMENT_CHECKLIST.md`, `DEV_RECOVERY_RUNBOOK.md`).
+  - `tests/e2e/github-pages/package.json` + regenerated `package-lock.json`.
+- **Intentionally preserved:** `infrastructure/github-oidc.bicep:73` + `infrastructure/setup-oidc.sh:201` (deployed Entra app reg name; renaming would orphan 14 federated identity credentials — inline comment block added documenting rationale); `env-delta.yaml` delta history; all bd issue ID prefixes; historical strategic docs (V2 plan, mastermind, redteam, ADRs, release notes); `INFRASTRUCTURE_INVENTORY.md` (already self-banners SUPERSEDED).
+- **Deferred to bd `l96f` (P3):** `app/core/auth.py` JWT `iss` claim still emits `azure-governance-platform`. Renaming in-flight would invalidate every active session token because the validator on line 350 only accepts the literal old value. Needs a coordinated dual-issuer rotation, not a hot fix.
+- Local working dir rename `azure-governance-platform/` → `control-tower/` performed at end of session; venv recreated.
+- Validation each commit: `az bicep build` clean, all 4 `parameters*.json` parse, env-delta validator green, full pytest suite (`3645 passed`), pre-commit (Detect secrets + env-delta) pass.
+- After this resume, `bd ready` is `9lfn`, `213e`, `l96f` (re42 closed; cz89 still `blocked-by-azure-sql-free`).
+
 ### Continuation — 2026-04-30 morning resume (commit `4b30db7`)
 - Checked live CI after the 2026-04-29 pack/scheduler split handoff and found latest `main` red:
   - CI run `25136461925` failed with `ImportError: cannot import name 'schedule_deadline_checks' from app.core.riverside_scheduler`.
