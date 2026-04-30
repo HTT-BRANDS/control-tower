@@ -97,8 +97,9 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history.
 
 ```bash
 # Clone the repository
-git clone https://github.com/htt-brands/control-tower.git
-cd control-tower
+# Current repo URL until bd 0dsr completes the GitHub repo rename cutover
+git clone https://github.com/htt-brands/azure-governance-platform.git
+cd azure-governance-platform
 
 # Create virtual environment
 uv venv
@@ -444,7 +445,7 @@ For comprehensive Riverside compliance documentation, see:
 - [x] **JWT Algorithm Confusion Fix** — Issuer-based routing prevents forgery
 - [x] **Refresh Token Blacklisting** — Secure token rotation with Redis
 - [x] **Operations Playbook** — 24.5 KB complete operations guide
-- [~] **Automated Database Backups** — Workflow exists; 2026-04-30 scheduled run exposed missing production/staging backup secret names, which are now configured. Validation remains open as bd `jzpa`.
+- [x] **Automated Database Backups** — Schema-only staging (`25169438794`) and production (`25171354807`) backup validation passed end-to-end; bd `jzpa` is closed. Weekly BACPAC long-term export remains separate and blocked as bd `cz89` because staging Azure SQL Free does not support ImportExport.
 - [x] **Makefile** — 15+ common development commands
 - [x] **Enhanced Application Insights** — Custom telemetry, distributed tracing
 - [x] **43 Security Audit Findings Resolved** — Complete security hardening

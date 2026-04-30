@@ -316,9 +316,9 @@ These are bd issues that, once closed, complete the runbook:
 - [ ] `213e` — Name a second rollback human and complete
       `docs/dr/second-rollback-human-checklist.md` tabletop evidence (waiver
       expires 2026-06-22)
-- [ ] `jzpa` — Validate scheduled/manual production and staging database backups
-      after 2026-04-30 environment secret configuration, SQLAlchemy fallback,
-      and workflow ODBC Driver 18 install
+- [x] `jzpa` — Scheduled/manual production and staging schema backups validated:
+      staging `25169438794`, production `25171354807`. Weekly long-term BACPAC
+      export remains separate as blocked bd `cz89`.
 - [ ] All 🔴 TYLER-ONLY markers above filled in
 
 When all are checked, this runbook is complete and bus-factor metric

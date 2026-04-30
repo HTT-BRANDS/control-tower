@@ -15,14 +15,14 @@ unrelated to AWS Control Tower._
 
 ## Live links
 
-- **Project board** — <https://github.com/orgs/htt-brands/projects> (pinned board: Azure Governance)
-- **Repository** — <https://github.com/htt-brands/control-tower> _(target after repo rename cutover)_
+- **Project board** — <https://github.com/orgs/htt-brands/projects> (pinned board: Control Tower / Azure Governance during cutover)
+- **Repository** — <https://github.com/htt-brands/azure-governance-platform> _(current; target slug `control-tower` is tracked by bd `0dsr`)_
 - **Staging app** — <https://app-governance-staging-xnczpwyv.azurewebsites.net>
 - **Continuity status** — [operations/continuity-status.html](operations/continuity-status.html)
 
 ## What's on this page
 
-- [Platform status](status.md) — current CI/backup/continuity notes plus audit output when available.
+- [Control Tower status](status.md) — current CI/backup/rebrand/continuity notes plus audit output when available.
 - [Continuity status](operations/continuity-status.html) — DR, backup, bus-factor, and blocked validation state.
 - [Riverside timeline](riverside-timeline.md) — countdown to **July 8, 2026** and per-domain maturity.
 - Architecture diagram — embedded below (regenerated from Azure Resource Graph on every push).

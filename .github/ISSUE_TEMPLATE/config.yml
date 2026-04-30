@@ -1,25 +1,25 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📖 Documentation
-    url: https://github.com/htt-brands/control-tower/tree/main/docs
+    url: https://github.com/htt-brands/azure-governance-platform/tree/main/docs
     about: Check the documentation for answers to common questions
   
   - name: 🚀 Getting Started Guide
-    url: https://github.com/htt-brands/control-tower/blob/main/docs/QUICK_START_CHECKLIST.md
+    url: https://github.com/htt-brands/azure-governance-platform/blob/main/docs/QUICK_START_CHECKLIST.md
     about: New to the project? Start here for setup instructions
   
   - name: 🔐 Security Policy
-    url: https://github.com/htt-brands/control-tower/blob/main/SECURITY.md
+    url: https://github.com/htt-brands/azure-governance-platform/blob/main/SECURITY.md
     about: Report security vulnerabilities here (do not use public issues)
   
   - name: 💬 Discussions
-    url: https://github.com/htt-brands/control-tower/discussions
+    url: https://github.com/htt-brands/azure-governance-platform/discussions
     about: Ask questions, share ideas, or get help from the community
   
   - name: 📊 Roadmap & Status
-    url: https://github.com/htt-brands/control-tower/blob/main/README.md#roadmap
+    url: https://github.com/htt-brands/azure-governance-platform/blob/main/README.md#roadmap
     about: Check the project roadmap for planned features and current status
 
   - name: ⚡ Release Notes
-    url: https://github.com/htt-brands/control-tower/blob/main/docs/RELEASE_NOTES_v1.9.0.md
+    url: https://github.com/htt-brands/azure-governance-platform/blob/main/docs/RELEASE_NOTES_v1.9.0.md
     about: View the latest release notes and migration guides

@@ -4,18 +4,21 @@ title: Control Tower Status
 
 # Control Tower Status
 
-Updated: `2026-04-30T17:12:19.016645+00:00`
+Updated: `2026-04-30T17:29:44.322088+00:00`
 Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` was available.
 
-## Current mainline health
+## Current mainline / rebrand health
 
 | Signal | Status | Evidence |
 |---|---|---|
-| CI | ✅ Green | Run `25171482414` passed for `f9f7c60`. |
-| Security Scan | ✅ Green | Run `25171482365` passed for `f9f7c60`; `UV_VERSION` is pinned to `0.9.27` across setup-uv workflows. |
-| Deploy to Staging | ✅ Green | Run `25171482459` passed for `f9f7c60`. |
-| Deploy GitHub Pages | ✅ Green | Run `25171483184` published Pages for `f9f7c60`. |
-| GitHub Pages Cross-Browser Tests | ✅ Green | Run `25171483199` passed for `f9f7c60`. |
+| Main CI | ✅ Green | Run `25171482414` passed for `f9f7c60`. |
+| Main Security Scan | ✅ Green | Run `25171482365` passed for `f9f7c60`; `UV_VERSION` is pinned to `0.9.27` across setup-uv workflows. |
+| Main Deploy to Staging | ✅ Green | Run `25171482459` passed for `f9f7c60`. |
+| Main Deploy GitHub Pages | ✅ Green | Run `25171483184` published Pages for `f9f7c60`. |
+| Main Pages Cross-Browser Tests | ✅ Green | Run `25171483199` passed for `f9f7c60`. |
+| PR #8 CI | ✅ Green | Run `25179222805` passed for `b577fde` on `control-tower-internal-rebrand`. |
+| PR #8 Security Scan | ✅ Green | Run `25179222861` passed for `b577fde`. |
+| PR #8 Pages Cross-Browser Tests | ✅ Green | Run `25179222831` passed for `b577fde`. |
 | Topology Diagram | ⚠️ Follow-up | Run `25168188576` generated a timestamp-only topology diff but could not push to protected `main`; local commit includes the refreshed diagram. |
 
 ## Ready work
@@ -23,6 +26,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 | bd | Status | Owner | Notes |
 |---|---|---|---|
 | `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |
+| `0dsr` | Ready | Tyler/Richard | Execute GitHub repo/GHCR/Pages Control Tower cutover after PR #8 merge decision. |
 | `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |
 | `jzpa` | Closed | code-puppy-661ed0 | Backup workflow validated: staging schema backup `25169438794`, production schema backup `25171354807`; no temporary SQL firewall rules left behind. |
 

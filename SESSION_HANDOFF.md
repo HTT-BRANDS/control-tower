@@ -62,7 +62,7 @@ System for HTT Brands." Three documents were produced and pushed:
   - CI `25140538109` ✅
   - Security Scan `25140538326` ✅
   - Deploy to Staging `25140538104` ✅
-- Backlog hygiene: `cz89` was marked `blocked` with label `blocked-by-azure-sql-free` because acceptance still requires a successful staging BACPAC export, and staging Azure SQL Free edition does not support ImportExport. `bd ready` now correctly shows only Tyler-owned work (`9lfn`, `213e`).
+- Backlog hygiene: `cz89` was marked `blocked` with label `blocked-by-azure-sql-free` because acceptance still requires a successful staging BACPAC export, and staging Azure SQL Free edition does not support ImportExport. After the Control Tower rebrand branch, `bd ready` correctly shows `9lfn`, `0dsr`, and `213e`.
 
 ### Continuation — 2026-04-29 pack-leader parallel batch (commits `ba3260e` → `a062345`)
 - Richard/Pack Leader (`pack-leader-e1ab1d`) coordinated safe parallel work from base branch `main`; Tyler-only issues `9lfn` and `213e` were not claimed.
@@ -188,7 +188,7 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 ---
 
-## 📋 Current bd state (refreshed 2026-04-29)
+## 📋 Current bd state (refreshed 2026-04-30)
 
 ### Closed 2026-04-28
 - `fkul` cleanup stale worktrees
@@ -197,6 +197,13 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 - `0dhj` RTO/RPO docs
 - `fifh` broken `mda590/teams-notify` action in backup workflow
 - (V1 plan, redteam doc, V2 plan are docs-only commits, not bd issues)
+
+### Ready / blocked as of 2026-04-30
+- `9lfn` — ready, Tyler-owned. `SECRETS_OF_RECORD.md` skeleton exists but Tyler must fill non-secret inventory rows.
+- `0dsr` — ready, Control Tower repo/GHCR/Pages cutover. Filed from the rebrand branch; should run after PR #8 merge decision.
+- `213e` — ready, Tyler-owned. Second rollback human and tabletop evidence needed before 2026-06-22 waiver expiry.
+- `cz89` — blocked by staging Azure SQL Free ImportExport limitation; see `docs/dr/bacpac-validation-decision.md`.
+- `0nup` and `uchp` — blocked by `213e`.
 
 ### Closed 2026-04-29
 - `q8lt` Bicep Drift Detection scope mismatch — fixed workflow to use
