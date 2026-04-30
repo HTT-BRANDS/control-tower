@@ -1,7 +1,7 @@
 schema_version: 1
-reviewed_on: "2026-04-24"
+reviewed_on: "2026-04-30"
 source_of_truth: current-production-rollback-and-waiver-state
-repository: htt-brands/azure-governance-platform
+repository: htt-brands/control-tower
 production:
   workflow:
     path: .github/workflows/deploy-production.yml
@@ -13,7 +13,7 @@ production:
     url: https://app-governance-prod.azurewebsites.net
   image:
     registry: ghcr.io
-    repository: htt-brands/azure-governance-platform
+    repository: htt-brands/control-tower
     deploy_reference: digest
     rollback_reference: digest
   health_checks:
@@ -31,6 +31,11 @@ production:
     required_reviewers_expected: true
 rollback:
   mechanic: repin_previous_known_good_digest_and_restart
+  automation:
+    workflow_step: "Health gate with auto-rollback"
+    behavior: workflow auto-captures previous-good digest pre-deploy and auto-rolls back on failed /health probes within 5-minute window
+    implemented_in_commit: d9d9d88
+    bd_issue: azure-governance-platform-39yp
   authoritative_steps:
     - verify_attestations_for_target_digest_before_mutating_azure
     - set_container_image_by_digest
@@ -43,18 +48,31 @@ rollback:
     - release_evidence_bundle
     - current_app_service_container_config_snapshot
 waiver:
-  status: active
+  status: resolved
+  resolved_on: "2026-04-30"
   type: single_human_rollback_coverage
   owner: Tyler Granlund
   current_authorized_humans:
     - Tyler Granlund
+    - Dustin Boyd
   second_human_issue: azure-governance-platform-213e
-  expires_on: "2026-06-22"
-  evidence_note: Until 213e is closed, rollback ownership remains single-human and must be disclosed as an active waiver in release evidence.
+  original_expires_on: "2026-06-22"
+  evidence_note: |
+    Two-human rollback coverage achieved 2026-04-30 with the addition of
+    Dustin Boyd (UPN dustin.boyd-admin@httbrands.com, GitHub htt-db).
+    Dustin holds Azure Owner+Contributor on the platform subscription,
+    Key Vault kv-gov-prod full data-plane access, HTT-BRANDS GitHub org
+    admin, control-tower repo admin, and is now a required reviewer on
+    the production GitHub environment alongside Tyler. Auto-rollback
+    (commit d9d9d88) materially narrowed the manual-rollback role's
+    surface area; Tyler attested Dustin's operational competency in lieu
+    of formal tabletop (see docs/dr/second-rollback-human-checklist.md
+    §4 for the recommended formal exercise at uchp Q3 2026 DR test).
   machine_verification:
     requires_second_human_issue_link: true
-    requires_expiry_date: true
+    requires_expiry_date: false
     requires_current_authorized_humans: true
+    requires_min_authorized_humans: 2
 references:
   current_runbook: docs/runbooks/disaster-recovery.md
   historical_release_plan: docs/release-gate/rollback-v2.5.0.md
