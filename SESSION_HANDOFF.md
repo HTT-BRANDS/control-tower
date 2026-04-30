@@ -1,8 +1,8 @@
-# Session Handoff — 2026-04-29
+# Session Handoff — 2026-04-30
 
-**Branch:** `main` (clean working tree, up to date with origin)
+**Branch:** `main` (clean working tree, up to date with origin after final push)
 **Latest pushed HEAD at start of 2026-04-29 session:** `1a7e929`
-**Latest pushed work commit before final handoff metadata:** `de52073` (run `git log -1` for the handoff commit itself)
+**Latest pushed work commit before 2026-04-30 handoff metadata:** `4b30db7` (run `git log -1` for the handoff commit itself)
 **Former P1 chain:** `g1cc` → `918b` → `0gz3` is now closed; `0nup` remains the next release-evidence gate.
 
 > **Read this first if you are inheriting the platform mid-flight.**
@@ -30,6 +30,21 @@ System for HTT Brands." Three documents were produced and pushed:
 ---
 
 ## ✅ What got done this session (chronological)
+
+### Continuation — 2026-04-30 morning resume (commit `4b30db7`)
+- Checked live CI after the 2026-04-29 pack/scheduler split handoff and found latest `main` red:
+  - CI run `25136461925` failed with `ImportError: cannot import name 'schedule_deadline_checks' from app.core.riverside_scheduler`.
+  - Deploy-to-staging run `25136461924` failed at the same QA gate.
+- Restored the historical `app.core.riverside_scheduler.schedule_deadline_checks` import surface as a tiny compatibility wrapper around `app.core.riverside_scheduler_deadlines.schedule_deadline_checks`.
+- Local validation passed:
+  - `.venv/bin/pytest tests/unit/test_deadline_alerts.py::TestSchedulerIntegration tests/unit/test_scheduler.py tests/unit/test_riverside_scheduler.py -q` → `59 passed`.
+  - `.venv/bin/pre-commit run --files app/core/riverside_scheduler.py` → passed.
+- Pushed fix commit `4b30db7`.
+- GitHub Actions for `4b30db7` recovered:
+  - CI `25140538109` ✅
+  - Security Scan `25140538326` ✅
+  - Deploy to Staging `25140538104` ✅
+- Backlog hygiene: `cz89` was marked `blocked` with label `blocked-by-azure-sql-free` because acceptance still requires a successful staging BACPAC export, and staging Azure SQL Free edition does not support ImportExport. `bd ready` now correctly shows only Tyler-owned work (`9lfn`, `213e`).
 
 ### Continuation — 2026-04-29 pack-leader parallel batch (commits `ba3260e` → `a062345`)
 - Richard/Pack Leader (`pack-leader-e1ab1d`) coordinated safe parallel work from base branch `main`; Tyler-only issues `9lfn` and `213e` were not claimed.
@@ -192,11 +207,13 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 - `uchp` Q3 DR test, depends on `213e` + `fifh`
 - `3flq` backup OIDC token permission regression (filed and closed same session)
 
-### Still in `bd ready` after late-session refactors (Tyler-blocking or autonomous)
+### Still in `bd ready` after 2026-04-30 resume
 - `9lfn` — **Tyler-authored** SECRETS_OF_RECORD.md (P1, ~30 min). Bus-factor blocker.
 - `213e` — name second rollback human (P2, waiver expires 2026-06-22). Tyler-only.
-- `cz89` — automate weekly BACPAC export (P4) remains open on the staging Free-tier ImportExport validation blocker.
 - Phase 1.5 autonomous ready refactor queue was drained in the Pack Leader batch plus `fbx8`; run `bd ready` for any newly unblocked work before inventing tasks.
+
+### Open but intentionally NOT ready
+- `cz89` — automate weekly BACPAC export (P4) remains open but is now `blocked` on the staging Free-tier ImportExport validation blocker. Next action requires Tyler/platform decision: temporarily upgrade staging DB to Basic/S0 for validation, provision a separate non-Free validation DB, or revise acceptance to validate directly against production with explicit risk acceptance.
 
 ### Deferred out of `bd ready` 2026-04-29
 - `rtwi` — deferred to 2026-05-17 trigger date; zero-traffic shutdown script is already scaffolded.
