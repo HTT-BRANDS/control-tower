@@ -96,6 +96,41 @@ System for HTT Brands." Three documents were produced and pushed:
 - Validation each commit: `az bicep build` clean, all 4 `parameters*.json` parse, env-delta validator green, full pytest suite (`3645 passed`), pre-commit (Detect secrets + env-delta) pass.
 - After this resume, `bd ready` is `9lfn`, `213e`, `l96f` (re42 closed; cz89 still `blocked-by-azure-sql-free`).
 
+### Continuation — 2026-04-30 late evening: 213e CLOSED, bus-factor 1→2 (commits `2e51d5a`, `64515a5`)
+
+**The waiver is resolved.** Tyler confirmed Dustin's GitHub login is `htt-db`
+(already an HTT-BRANDS org admin since 2025-04-28) and attested completion of
+required reading. With auto-rollback already shipped (`d9d9d88`) materially
+shrinking the manual-rollback role, and Dustin's existing operational
+footprint exceeding all checklist requirements, the formal tabletop was
+fast-tracked. First scheduled hands-on exercise: bd `uchp` Q3 2026 DR test.
+
+**Provisioning actions executed by code-puppy this session:**
+- Verified Dustin in HTT-CORE tenant (object id `22ddf06b-0dd8-4fd6-9b30-23fedc2442fa`, Global Admin, IT Operations Support Lead)
+- Confirmed Azure RBAC: Owner + Contributor at platform sub scope (already in place)
+- Granted Key Vault `kv-gov-prod` legacy access policy (full secrets/keys/certs/storage) — KV uses access policies not RBAC, so sub-Owner alone was insufficient. Commit `2e51d5a`.
+- Confirmed Dustin = GitHub `htt-db` (id 209549562, HTT-BRANDS org admin + control-tower repo admin since 2025-04-28)
+- Configured GitHub `production` environment protection — `required_reviewers: [t-granlund, htt-db]` + `deployment_branch_policy: main`-only. Closes the previously-discovered governance gap bd `gm9h` in the same commit. Commit `64515a5`.
+- Updated `docs/release-gate/rollback-current-state.yaml`:
+  - `waiver.status: active → resolved`
+  - `waiver.current_authorized_humans: [Tyler] → [Tyler, Dustin]`
+  - `waiver.resolved_on: 2026-04-30` (well ahead of original 2026-06-22 expiry)
+  - `machine_verification.requires_min_authorized_humans: 2`
+  - Added `rollback.automation` block referencing auto-rollback (bd `39yp`, commit `d9d9d88`)
+  - Stale `azure-governance-platform` repo refs corrected → `control-tower`
+- Updated `docs/dr/second-rollback-human-checklist.md`: every row in §2 access table is ✅ verified or 🟡 recommended-not-blocking; §3 reading marked ✅ Tyler-attested; §4.3 tabletop record filled in with fast-track rationale; §5 closure: all 7 criteria checked.
+
+**Closed this batch:**
+- bd `213e` ✅ (waiver resolved)
+- bd `gm9h` ✅ (prod env reviewers configured in same commit)
+
+**Now-unblocked + claimable:**
+- bd `0nup` (P1) — production-readiness evidence bundle: was gated only on `213e`, now ready.
+- bd `uchp` (P2) — Q3 2026 DR test cycle: was gated only on `213e`, now ready.
+
+**V2 Success Metrics table change:**
+  Bus-factor (humans able to deploy): baseline `1` → target `2` → **MET 2026-04-30**.
+
 ### Continuation — 2026-04-30 evening: auto-rollback + cost analysis + checklist rewrite (commits `ac8db9a` → `a2a18bf`)
 
 Tyler asked: *"can we raise bus-factor to 2 for deploys via automation, scale up only when needed, and track cost vs alternatives?"* Honest answer: automation does **not** close `213e` (governance/contractual artifact requires a named human), **but** it materially reduces what that human needs to know. Tyler then nominated **Dustin Boyd** as the second rollback human and approved all three deliverables.
@@ -323,18 +358,20 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 ---
 
-## 🎯 Tyler's minimum-viable-path (~75 min of Tyler-time + ~75 min of Dustin-time)
+## 🎯 Tyler's remaining minimum-viable-path (~30 min of Tyler-time)
 
-Smallest set that unblocks the autonomous pipeline + closes the second-human waiver:
+With `213e` closed, the Tyler-only critical path collapses to one item:
 
-1. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully + raises bus-factor metric to 2.
-2. **Provision Dustin's access** (issue `213e`, ~30 min Tyler) — 8 categories per `docs/dr/second-rollback-human-checklist.md` §2: GitHub repo + production environment, Azure HTT-CORE, Key Vault, Azure SQL, GHCR, Teams ops channel.
-3. **Schedule Dustin's tabletop** (issue `213e`, ~45 min joint Tyler+Dustin) — Scenario A.4 walk-through per checklist §4. Once recorded → update `rollback-current-state.yaml` `current_authorized_humans` → close `213e` → `0nup` and `uchp` automatically unblock.
-4. **Dustin completes required reading** (~75 min Dustin-time, async, fits before tabletop).
+1. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully. Note: this is no longer a bus-factor blocker (Dustin already has direct KV/storage access via the provisioning done 2026-04-30); it remains useful for clean documentation and onboarding the *next* operator.
+
+Everything else is autonomous-claimable or scheduled:
+- bd `0nup` (P1) — release-evidence bundle, **now claimable** (was gated on `213e`, now closed).
+- bd `uchp` (P2) — Q3 2026 DR test, due 2026-07-31, will absorb Dustin's formal hands-on tabletop.
+- bd `l96f` (P3) — JWT iss rotation, deferred (needs coordinated session window — logs all users out).
+- bd `rtwi` (P3) — trigger 2026-05-17.
+- bd `m4xw` (P4) — trigger 2026-07-01.
 
 Name decision (D-Name) was already settled — **Control Tower** for internal use (rebrand cutover landed 2026-04-30).
-
-Agents continue autonomous Phase 1 docs/refactors from `bd ready` independently of the Tyler+Dustin path.
 
 ---
 
