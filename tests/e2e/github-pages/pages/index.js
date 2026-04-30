@@ -11,7 +11,7 @@ const BASE_URL = process.env.GH_PAGES_URL || 'https://htt-brands.github.io/contr
 const hubPages = {
   index: {
     url: './',
-    expectedTitle: /Azure Governance Platform/,
+    expectedTitle: /HTT Control Tower|Control Tower/,
     keySelectors: {
       heading: 'h1',
       nav: 'nav, header nav',
