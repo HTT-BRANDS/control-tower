@@ -37,7 +37,7 @@
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd azure-governance-platform
+cd control-tower
 
 # Create virtual environment
 uv venv

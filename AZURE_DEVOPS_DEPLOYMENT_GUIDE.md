@@ -202,7 +202,7 @@ az deployment sub create \
 az container create \
   --resource-group rg-governance-production \
   --name db-migration-20260101 \
-  --image ghcr.io/azure-governance-platform/migrations:latest \
+  --image ghcr.io/htt-brands/control-tower-migrations:latest \
   --command-line "python -m alembic upgrade head" \
   --environment-variables DATABASE_URL="$DB_URL" \
   --cpu 2 --memory 4
@@ -211,7 +211,7 @@ az container create \
 az container create \
   --resource-group rg-governance-production \
   --name data-processor \
-  --image ghcr.io/azure-governance-platform/processor:latest \
+  --image ghcr.io/htt-brands/control-tower-processor:latest \
   --command-line "python process_tenants.py --date 2026-01-01" \
   --cpu 4 --memory 8
 ```
@@ -226,7 +226,7 @@ curl -X POST "{logicAppEndpoint}" \
     "alertName": "Cost Threshold Exceeded",
     "severity": "Warning",
     "description": "Monthly cost at 85% of budget",
-    "resourceName": "governance-platform",
+    "resourceName": "control-tower",
     "timestamp": "2026-01-15T10:30:00Z"
   }'
 ```

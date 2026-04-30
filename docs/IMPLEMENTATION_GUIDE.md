@@ -312,13 +312,13 @@ Before moving on, verify you've completed these for **ALL 4 TENANTS**:
 
 If you received this as a folder:
 ```bash
-cd /path/to/azure-governance-platform
+cd /path/to/control-tower
 ```
 
 If cloning from a repository:
 ```bash
-git clone <repository-url>
-cd azure-governance-platform
+git clone https://github.com/HTT-BRANDS/control-tower.git
+cd control-tower
 ```
 
 ### 5.2 Create Python Virtual Environment
@@ -790,7 +790,7 @@ cp data/governance-backup-YYYYMMDD.db data/governance.db
 
 ```bash
 # Navigate to the project
-cd azure-governance-platform
+cd control-tower
 
 # Pull latest changes
 git pull

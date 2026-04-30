@@ -155,7 +155,7 @@ gh auth status
 ```bash
 # Clone and setup repository
 git clone <your-repo-url>
-cd azure-governance-platform
+cd control-tower
 
 # Run master setup
 ./scripts/gh-setup.sh

@@ -34,7 +34,7 @@ Or deploy via CLI:
 ```bash
 # Clone the repository
 git clone https://github.com/htt-brands/control-tower.git
-cd azure-governance-platform
+cd control-tower
 
 # Run the deployment script
 ./infrastructure/deploy.sh production eastus

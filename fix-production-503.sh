@@ -94,7 +94,7 @@ echo "⚠️  WARNING: Health check did not return 200 after $MAX_RETRIES attemp
 echo ""
 echo "Troubleshooting steps:"
 echo "  1. Check if GitHub PAT has 'read:packages' scope"
-echo "  2. Verify PAT can access 'htt-brands/azure-governance-platform' package"
+echo "  2. Verify PAT can access 'htt-brands/control-tower' package"
 echo "  3. Check App Service logs:"
 echo "     az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP"
 echo ""

@@ -34,7 +34,7 @@ gh auth refresh --hostname github.com --scopes read:packages,write:packages
 
 ```bash
 # Test that you can access the package
-gh api /user/packages/container/azure-governance-platform
+gh api /user/packages/container/control-tower
 ```
 
 If you see package metadata (not a 403 error), the auth is working.
@@ -68,7 +68,7 @@ https://github.com/HTT-BRANDS/control-tower/pkgs/container/control-tower
 2. Find **"Change package visibility"**
 3. Click **"Change visibility"** button
 4. Select **"Public"**
-5. Type the package name to confirm: `azure-governance-platform`
+5. Type the package name to confirm: `control-tower`
 6. Click **"I understand, change visibility"**
 
 ### Step 4: Wait for Propagation
@@ -152,7 +152,7 @@ gh auth login --scopes read:packages,write:packages
 
 1. Double-check the package is actually public:
    ```bash
-   curl -I https://ghcr.io/v2/htt-brands/azure-governance-platform/manifests/latest
+   curl -I https://ghcr.io/v2/htt-brands/control-tower/manifests/latest
    ```
    Should return `200 OK` (not `401 Unauthorized`)
 

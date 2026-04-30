@@ -1,5 +1,5 @@
 {
-  "name": "azure-governance-platform-gh-pages-tests",
+  "name": "control-tower-gh-pages-tests",
   "version": "1.0.0",
   "description": "Cross-browser Playwright tests for GitHub Pages site",
   "scripts": {

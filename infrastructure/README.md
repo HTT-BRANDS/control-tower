@@ -38,7 +38,7 @@ az deployment sub create \
   --name github-oidc-setup \
   --location eastus \
   --template-file github-oidc.bicep \
-  --parameters environment=dev githubRepo=yourorg/azure-governance-platform resourceGroupName=rg-governance-dev
+  --parameters environment=dev githubRepo=htt-brands/control-tower resourceGroupName=rg-governance-dev
 ```
 
 This enables **passwordless authentication** between GitHub Actions and Azure AD.
@@ -64,7 +64,7 @@ This enables **passwordless authentication** between GitHub Actions and Azure AD
 ### Deploying a New Container Image
 ```bash
 # Build image in ACR (from project root)
-az acr build --registry acrgovernancedev --image governance-platform:dev .
+az acr build --registry acrgovernancedev --image control-tower:dev .
 
 # Restart to pick up new image
 az webapp restart --name app-governance-dev-001 -g rg-governance-dev
@@ -218,7 +218,7 @@ HTTPS is enforced by default. HTTP requests are automatically redirected.
 
 # Or use Azure CLI directly
 az deployment sub create \
-  --name "governance-platform-prod" \
+  --name "control-tower-prod" \
   --location eastus \
   --template-file main.bicep \
   --parameters parameters.json

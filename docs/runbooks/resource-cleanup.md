@@ -53,7 +53,7 @@ az webapp config container show \
     --resource-group rg-governance-staging \
     --query "linuxFxVersion"
 
-# Should contain: ghcr.io/htt-brands/azure-governance-platform
+# Should contain: ghcr.io/htt-brands/control-tower
 
 # Test health endpoint
 curl -s https://app-governance-staging-xnczpwyv.azurewebsites.net/health
@@ -144,7 +144,7 @@ Manual verification:
 # Check GHCR tags via GitHub API
 curl -s \
     -H "Accept: application/vnd.github.v3+json" \
-    https://api.github.com/users/tygranlund/packages/container/azure-governance-platform/versions \
+    https://api.github.com/users/tygranlund/packages/container/control-tower/versions \
     | jq '.[].metadata.container.tags'
 
 # Or check in browser
@@ -258,7 +258,7 @@ az acr create \
 
 # Rebuild images from GitHub Actions
 # Or push local images:
-az acr build --registry acrgovstaging19859 --image azure-governance-platform:staging .
+az acr build --registry acrgovstaging19859 --image control-tower:staging .
 ```
 
 **Note:** You will need to update App Service to point back to ACR:
@@ -267,7 +267,7 @@ az acr build --registry acrgovstaging19859 --image azure-governance-platform:sta
 az webapp config container set \
     --name app-governance-staging-xnczpwyv \
     --resource-group rg-governance-staging \
-    --docker-custom-image-name "acrgovstaging19859.azurecr.io/azure-governance-platform:staging"
+    --docker-custom-image-name "acrgovstaging19859.azurecr.io/control-tower:staging"
 ```
 
 ### App Registration Rollback
@@ -417,7 +417,7 @@ az webapp config container show \
 az webapp config container set \
     --name app-governance-staging-xnczpwyv \
     --resource-group rg-governance-staging \
-    --docker-custom-image-name "ghcr.io/htt-brands/azure-governance-platform:staging" \
+    --docker-custom-image-name "ghcr.io/htt-brands/control-tower:staging" \
     --docker-registry-server-url "https://ghcr.io"
 ```
 

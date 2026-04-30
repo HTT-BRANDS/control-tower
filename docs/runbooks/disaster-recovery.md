@@ -136,7 +136,7 @@ PREV_DIGEST="sha256:<known-good-digest>"
 az webapp config container set \
   -g rg-governance-production \
   -n app-governance-prod \
-  --container-image-name "ghcr.io/htt-brands/azure-governance-platform@${PREV_DIGEST}" \
+  --container-image-name "ghcr.io/htt-brands/control-tower@${PREV_DIGEST}" \
   --container-registry-url https://ghcr.io \
   --container-registry-user "${GITHUB_REPOSITORY_OWNER:-htt-brands}" \
   --container-registry-password "$GHCR_PAT"

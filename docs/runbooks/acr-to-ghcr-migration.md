@@ -44,12 +44,12 @@ This runbook documents the migration from **Azure Container Registry (ACR)** to 
    ```json
    // infrastructure/parameters.staging.json
    "containerImage": {
-     "value": "ghcr.io/htt-brands/azure-governance-platform:staging"
+     "value": "ghcr.io/htt-brands/control-tower:staging"
    }
    
    // infrastructure/parameters.production.json
    "containerImage": {
-     "value": "ghcr.io/htt-brands/azure-governance-platform:latest"
+     "value": "ghcr.io/htt-brands/control-tower:latest"
    }
    ```
 
@@ -83,7 +83,7 @@ This runbook documents the migration from **Azure Container Registry (ACR)** to 
        with:
          push: true
          tags: |
-           ghcr.io/htt-brands/azure-governance-platform:${{ env.IMAGE_TAG }}
+           ghcr.io/htt-brands/control-tower:${{ env.IMAGE_TAG }}
    ```
 
 ### Phase 3: Image Migration (Optional — 15 min)

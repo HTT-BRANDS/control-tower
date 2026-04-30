@@ -1,5 +1,5 @@
 # =============================================================================
-# Azure Governance Platform - Local Development Docker Compose
+# HTT Control Tower - Local Development Docker Compose
 # =============================================================================
 # This file is used for local development with Docker.
 # It mounts the source code for live reload and includes all services.
@@ -16,14 +16,14 @@ version: '3.8'
 services:
   # ---------------------------------------------------------------------------
   # Main Application Service
-  # For production image, use: ghcr.io/htt-brands/azure-governance-platform:latest
+  # For production image, use: ghcr.io/htt-brands/control-tower:latest
   # ---------------------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: governance-platform
+    container_name: control-tower
     restart: unless-stopped
     ports:
       - "8000:8000"

@@ -40,7 +40,7 @@ Expected broken output:
 Expected fixed output:
 ```json
 {
-  "linuxFxVersion": "DOCKER|ghcr.io/htt-brands/azure-governance-platform:dev",
+  "linuxFxVersion": "DOCKER|ghcr.io/htt-brands/control-tower:dev",
   "kind": "app,linux,container"
 }
 ```
@@ -163,12 +163,12 @@ Look for:
 # Check if the image exists in GitHub Container Registry
 gh api \
   -H "Accept: application/vnd.github+json" \
-  /user/packages/container/azure-governance-platform/versions
+  /user/packages/container/control-tower/versions
 
 # Verify the specific tag exists
 gh api \
   -H "Accept: application/vnd.github+json" \
-  /user/packages/container/azure-governance-platform/versions \
+  /user/packages/container/control-tower/versions \
   --jq '.[] | select(.metadata.container.tags[] == "dev")'
 ```
 

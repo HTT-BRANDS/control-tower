@@ -255,11 +255,11 @@ logs: ## Show recent logs (if using docker-compose)
 
 docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
-	docker build -t azure-governance-platform:latest .
+	docker build -t control-tower:latest .
 
 docker-run: ## Run Docker container locally
 	@echo "$(BLUE)Running Docker container...$(NC)"
-	docker run -p 8000:8000 --env-file .env azure-governance-platform:latest
+	docker run -p 8000:8000 --env-file .env control-tower:latest
 
 docker-push: ## Push Docker image to registry (requires ACR login)
 	@echo "$(BLUE)Pushing to container registry...$(NC)"
@@ -267,8 +267,8 @@ docker-push: ## Push Docker image to registry (requires ACR login)
 		echo "$(RED)Error: Please set ACR_NAME$(NC)"; \
 		exit 1; \
 	fi
-	docker tag azure-governance-platform:latest $(ACR_NAME).azurecr.io/azure-governance-platform:latest
-	docker push $(ACR_NAME).azurecr.io/azure-governance-platform:latest
+	docker tag control-tower:latest $(ACR_NAME).azurecr.io/control-tower:latest
+	docker push $(ACR_NAME).azurecr.io/control-tower:latest
 
 # =============================================================================
 # Deployment

@@ -7,7 +7,7 @@
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| App Service | ✅ Running | v1.8.0 on `acrgovstaging19859.azurecr.io` — **OIDC auth active** |
+| App Service | ✅ Running | v1.8.0 from `ghcr.io/htt-brands/control-tower:staging` — **OIDC auth active** |
 | Health Endpoint | ✅ Healthy | DB, scheduler, cache, Azure all green |
 | Azure AD SSO | ✅ Configured | "Sign in with Microsoft" button live |
 | Scheduler | ✅ Running | 13 sync jobs registered |
@@ -16,7 +16,7 @@
 | JWT Auth | ✅ Set | Production-safe random key |
 | All env vars | ✅ Configured | Including AZURE_AD_* OAuth2 settings |
 | **OIDC Auth** | ✅ **ACTIVE** | USE_OIDC_FEDERATION=true; client secrets removed |
-| **Federated Creds** | ✅ **5/5** | governance-platform-staging on all 5 tenant app registrations |
+| **Federated Creds** | ✅ **5/5** | github-actions-control-tower-staging on all 5 tenant app registrations |
 
 ---
 
@@ -72,10 +72,19 @@ curl -X POST https://app-governance-staging-xnczpwyv.azurewebsites.net/api/v1/ri
 ```
 
 ### 4. Rebuild & Deploy Container
+
 ```bash
-az acr build --registry acrgovstaging19859 --image azure-governance-platform:staging .
+# Trigger the GHCR-based staging pipeline (preferred since 2026-04-30 GHCR cutover):
+#   1. Push to main — deploy-staging.yml builds + pushes ghcr.io/htt-brands/control-tower:staging
+#      and runs `az webapp config container set` against the staging App Service.
+#   2. Or run the workflow manually:
+gh workflow run deploy-staging.yml --repo HTT-BRANDS/control-tower
+
+# Force a restart without rebuilding (rare):
 az webapp restart --name app-governance-staging-xnczpwyv --resource-group rg-governance-staging
 ```
+
+> The legacy `az acr build --registry acrgovstaging19859 ...` flow is retired. The staging ACR was decommissioned 2026-04-16; staging now pulls from GHCR via OIDC.
 
 ---
 

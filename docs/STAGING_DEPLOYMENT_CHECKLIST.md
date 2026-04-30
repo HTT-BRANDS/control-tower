@@ -44,7 +44,7 @@ az acr create \
 # Build and push container image
 az acr build \
   --registry acrgovernancestaging \
-  --image governance-platform:latest \
+  --image control-tower:latest \
   --file Dockerfile .
 ```
 
@@ -63,7 +63,7 @@ az webapp create \
   --name governance-staging \
   --resource-group rg-governance-staging \
   --plan asp-governance-staging \
-  --deployment-container-image-name acrgovernancestaging.azurecr.io/governance-platform:latest
+  --deployment-container-image-name acrgovernancestaging.azurecr.io/control-tower:latest
 ```
 
 ## Step 4: Configure Environment Variables
