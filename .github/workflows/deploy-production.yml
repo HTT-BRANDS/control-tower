@@ -507,7 +507,12 @@ jobs:
           fi
           # GitHub Actions does not allow '|' or other special chars in outputs
           # in some legacy paths; base64-encode to be safe across renderers.
-          ENC=$(printf '%s' "$PREV" | base64)
+          # IMPORTANT: base64 default-wraps at 76 chars; the resulting newline
+          # would be parsed by Actions as a separate (malformed) output command
+          # and fail the step. Use -w0 (GNU) to disable wrapping. The decode
+          # side at line ~603 uses 'base64 -d' which accepts un-wrapped input.
+          # See run 25192183149 (2026-04-30) for the historical regression.
+          ENC=$(printf '%s' "$PREV" | base64 -w0)
           echo "previous_image_b64=${ENC}" >> "$GITHUB_OUTPUT"
           {
             echo "## Pre-deploy state"
