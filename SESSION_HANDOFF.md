@@ -96,6 +96,42 @@ System for HTT Brands." Three documents were produced and pushed:
 - Validation each commit: `az bicep build` clean, all 4 `parameters*.json` parse, env-delta validator green, full pytest suite (`3645 passed`), pre-commit (Detect secrets + env-delta) pass.
 - After this resume, `bd ready` is `9lfn`, `213e`, `l96f` (re42 closed; cz89 still `blocked-by-azure-sql-free`).
 
+### Continuation — 2026-05-01 morning: 0nup CLOSED, evidence bundle + rehearsal verdict shipped (commits `8ad0ed4`, `910cec0`)
+
+**Workstream E of the 2026-04-24 production-readiness roadmap is complete.**
+
+With `213e` closed in the previous batch unblocking `0nup`, this session
+assembled the release evidence bundle and ran an internal release-gate
+rehearsal. All three `0nup` acceptance criteria met.
+
+**New artifacts:**
+- `docs/release-gate/evidence-bundle-2026-04-30.md` (283 lines) — single index of release-gate evidence linking supply-chain receipts (g1cc + run 25131829042), browser/UI gate proof (aiob + 5 sub-issues), prod sync verification (918b/0gz3), rollback readiness (auto-rollback + 2 humans + machine-verifiable waiver), and waivers/exceptions (none active; 6 carve-outs explicitly non-blocking).
+- `docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md` (270 lines) — internal rehearsal in arbiter format. Verdict: `CONDITIONAL_PASS` for v2.5.1 prod-gate. Pillar verdicts walk through 8 pillars vs the 2026-04-22 external `CONDITIONAL_PASS-staging-only` verdict; 5 of 8 pillars improved; 2 soft conditions remain (Tyler-dispatched fresh prod deploy + bd `9lfn`).
+- `rtm-v2.5.1-DRAFT.md` expanded from 5 rows / 2 themes to **56 tickets / 8 themes** (commit `8ad0ed4`).
+
+**Pillar movement vs prior external verdict:**
+```
+1. Requirements Closure:        CONDITIONAL_PASS → PASS
+2. Code Review:                 PASS              → PASS
+3. Security:                    DEGRADED          → PASS
+4. Infrastructure:              CONDITIONAL_PASS  → CONDITIONAL_PASS (prod-stale-image)
+5. Stack Coherence:             PASS              → PASS
+6. Cost:                        PASS w/observation→ PASS
+7. Maintenance & Operability:   CONDITIONAL_PASS  → PASS (bus-factor 1→2)
+8. Rollback:                    PASS              → PASS (++)
+```
+
+**Honest disclosures captured in bundle §6:**
+- Production is running 2026-04-29 image (`htt-brands/azure-governance-platform@sha256:a76f3eeb...`). All un-deployed delta is docs/governance/CI-only — no runtime drift.
+- SQL Entra admin not set on `sql-gov-prod-mylxq53d` (not blocking; PITR works via subscription Owner).
+- Auto-rollback merged but not field-tested under real failed-deploy; first formal exercise is bd `uchp` Q3 2026.
+
+**Two soft conditions for full v2.5.1 prod-gate (per rehearsal verdict):**
+1. Tyler dispatches fresh successful prod deploy off current `main` (~10 min wall-clock).
+2. Tyler authors `SECRETS_OF_RECORD.md` (bd `9lfn`, ~30 min).
+
+Neither is structural. Both feasible in <45 min Tyler-time total.
+
 ### Continuation — 2026-04-30 late evening: 213e CLOSED, bus-factor 1→2 (commits `2e51d5a`, `64515a5`)
 
 **The waiver is resolved.** Tyler confirmed Dustin's GitHub login is `htt-db`
@@ -358,18 +394,31 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 
 ---
 
-## 🎯 Tyler's remaining minimum-viable-path (~30 min of Tyler-time)
+## 🎯 Tyler's remaining minimum-viable-path (~40 min Tyler-time, 2 actions)
 
-With `213e` closed, the Tyler-only critical path collapses to one item:
+With `213e` closed (2026-04-30) and `0nup` closed (2026-05-01), the entire
+autonomous-claimable Phase 0.5 / Workstream A–E surface is **done**. The
+Tyler-only critical path to full v2.5.1 prod-gate authorization is:
 
-1. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min) — only Tyler knows where every credential lives. Unblocks RUNBOOK fully. Note: this is no longer a bus-factor blocker (Dustin already has direct KV/storage access via the provisioning done 2026-04-30); it remains useful for clean documentation and onboarding the *next* operator.
+1. **Dispatch fresh prod deploy off current `main`** (~10 min wall-clock).
+   - `gh workflow run deploy-production.yml --ref main` then approve.
+   - Will refresh prod from the 2026-04-29 image to current `main`, switching the GHCR path from pre-rebrand alias to `htt-brands/control-tower`.
+   - Closes Condition 1 of `docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md`.
+2. **Author `SECRETS_OF_RECORD.md`** (issue `9lfn`, P1, ~30 min).
+   - Soft condition only — Dustin already has direct KV/storage access. Useful for next-operator onboarding.
+   - Closes Condition 2 of the rehearsal verdict.
 
-Everything else is autonomous-claimable or scheduled:
-- bd `0nup` (P1) — release-evidence bundle, **now claimable** (was gated on `213e`, now closed).
-- bd `uchp` (P2) — Q3 2026 DR test, due 2026-07-31, will absorb Dustin's formal hands-on tabletop.
-- bd `l96f` (P3) — JWT iss rotation, deferred (needs coordinated session window — logs all users out).
+Everything else is post-release / scheduled / deferred:
+- bd `uchp` (P2) — Q3 2026 DR test, due 2026-07-31.
+- bd `l96f` (P3) — JWT iss rotation, needs coordinated user-logout window.
 - bd `rtwi` (P3) — trigger 2026-05-17.
 - bd `m4xw` (P4) — trigger 2026-07-01.
+
+**There are no autonomous-claimable issues left in `bd ready`.** All
+work that does not require a Tyler decision is complete. The next
+autonomous batch happens when Tyler makes a Phase 2 D-decision (per
+`PORTFOLIO_PLATFORM_PLAN_V2.md` §9), or when one of the date-gated
+items triggers (rtwi 2026-05-17, m4xw 2026-07-01).
 
 Name decision (D-Name) was already settled — **Control Tower** for internal use (rebrand cutover landed 2026-04-30).
 
