@@ -4,7 +4,7 @@ title: Platform Status
 
 # Platform Status
 
-Updated: `2026-04-30T13:38:20.564868+00:00`
+Updated: `2026-04-30T13:55:08.044325+00:00`
 Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` was available.
 
 ## Current mainline health
@@ -24,7 +24,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 |---|---|---|---|
 | `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |
 | `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |
-| `jzpa` | In progress | code-puppy-661ed0 | Backup workflow now reaches SQL/storage. Staging needs RBAC re-test after Blob Data Contributor grant; production still has SQL login/server blocker. |
+| `jzpa` | In progress | code-puppy-661ed0 | Staging DB backup works; upload auth now uses an ephemeral storage key because RBAC data-plane writes still failed. Production still has SQL login/server blocker. |
 
 ## Blocked work
 
@@ -36,7 +36,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 
 ## Backup / RPO watch
 
-Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. Validation runs `25168192604` / `25168194585` moved past ODBC; staging created and verified a backup but failed upload RBAC, so Blob Data Contributor was granted to the GitHub OIDC SP on both backup storage accounts. Production still fails opening the SQL server/login. This remains tracked as bd `jzpa`.
+Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. Validation runs `25168192604` / `25168194585` moved past ODBC; staging created and verified a backup but still failed Blob upload with `AuthorizationPermissionMismatch` after the RBAC grant. The workflow now derives an ephemeral `AZURE_STORAGE_KEY` after OIDC login and passes it only via runner environment. Production still fails opening the SQL server/login. This remains tracked as bd `jzpa`.
 
 ## Audit output
 

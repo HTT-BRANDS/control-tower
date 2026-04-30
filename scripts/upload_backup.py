@@ -8,6 +8,7 @@ Environment Variables:
     AZURE_STORAGE_ACCOUNT: Storage account name
     AZURE_STORAGE_CONTAINER: Container name (default: database-backups)
     AZURE_STORAGE_SAS_TOKEN: SAS token for authentication
+    AZURE_STORAGE_KEY: Storage account key for ephemeral CI authentication
     AZURE_CLIENT_ID: Managed Identity client ID (alternative auth)
 """
 
@@ -99,14 +100,21 @@ def upload_to_azure(
     # Build blob service client
     account_url = f"https://{account_name}.blob.core.windows.net"
 
-    # Try SAS token first, then DefaultAzureCredential
+    # Try SAS token first, then an ephemeral storage key, then Azure identity.
     sas_token = os.getenv("AZURE_STORAGE_SAS_TOKEN")
+    storage_key = os.getenv("AZURE_STORAGE_KEY")
     if sas_token:
         blob_service = BlobServiceClient(
             account_url=account_url,
             credential=sas_token,
         )
         logger.info("Using SAS token for authentication")
+    elif storage_key:
+        blob_service = BlobServiceClient(
+            account_url=account_url,
+            credential=storage_key,
+        )
+        logger.info("Using storage account key for authentication")
     else:
         credential = DefaultAzureCredential()
         blob_service = BlobServiceClient(

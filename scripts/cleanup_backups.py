@@ -10,6 +10,7 @@ Environment Variables:
     AZURE_STORAGE_ACCOUNT: Storage account name
     AZURE_STORAGE_CONTAINER: Container name
     AZURE_STORAGE_SAS_TOKEN: SAS token for authentication
+    AZURE_STORAGE_KEY: Storage account key for ephemeral CI authentication
 """
 
 import argparse
@@ -71,12 +72,18 @@ def get_azure_client(account_name: str, container_name: str):
 
     account_url = f"https://{account_name}.blob.core.windows.net"
 
-    # Try SAS token first, then DefaultAzureCredential
+    # Try SAS token first, then an ephemeral storage key, then Azure identity.
     sas_token = os.getenv("AZURE_STORAGE_SAS_TOKEN")
+    storage_key = os.getenv("AZURE_STORAGE_KEY")
     if sas_token:
         blob_service = BlobServiceClient(
             account_url=account_url,
             credential=sas_token,
+        )
+    elif storage_key:
+        blob_service = BlobServiceClient(
+            account_url=account_url,
+            credential=storage_key,
         )
     else:
         credential = DefaultAzureCredential()

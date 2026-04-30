@@ -69,6 +69,17 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Prepare storage authentication
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+        run: |
+          storage_key=$(az storage account keys list \
+            --account-name "$AZURE_STORAGE_ACCOUNT" \
+            --query '[0].value' \
+            -o tsv)
+          echo "::add-mask::$storage_key"
+          echo "AZURE_STORAGE_KEY=$storage_key" >> "$GITHUB_ENV"
+
       - name: Create database backup
         id: backup
         env:
@@ -195,6 +206,17 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare storage authentication
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+        run: |
+          storage_key=$(az storage account keys list \
+            --account-name "$AZURE_STORAGE_ACCOUNT" \
+            --query '[0].value' \
+            -o tsv)
+          echo "::add-mask::$storage_key"
+          echo "AZURE_STORAGE_KEY=$storage_key" >> "$GITHUB_ENV"
 
       - name: Create staging backup
         env:
