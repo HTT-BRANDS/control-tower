@@ -1,5 +1,5 @@
 # =============================================================================
-# Arbiter Verification Policy — azure-governance-platform production releases
+# Arbiter Verification Policy — Control Tower production releases
 # =============================================================================
 # Single source of truth for the supply-chain verification claims enforced in
 # .github/workflows/deploy-production.yml before any production deploy.
@@ -14,8 +14,8 @@
 apiVersion: arbiter.htt.dev/v1
 kind: VerificationPolicy
 metadata:
-  name: azgov-production-attestations
-  repository: htt-brands/azure-governance-platform
+  name: control-tower-production-attestations
+  repository: htt-brands/control-tower
   bd_ticket: "7mk8"
   created: "2026-04-22"
   updated: "2026-04-24"
@@ -55,7 +55,7 @@ spec:
       # --signer-workflow, which is easier to reason about than a SAN regexp.
       description: "Exact workflow path that signed the attestation."
       mode: "exact-workflow"
-      value: "htt-brands/azure-governance-platform/.github/workflows/deploy-production.yml"
+      value: "htt-brands/control-tower/.github/workflows/deploy-production.yml"
 
     source_ref:
       # Claim 4 — WHICH ref the workflow ran from.

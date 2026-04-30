@@ -95,7 +95,7 @@ module migrationContainer './modules/container-instances.bicep' = if (enableCont
   params: {
     name: 'aci-migration-${environment}-${take(resourceSuffix, 8)}'
     location: location
-    containerImage: 'ghcr.io/azure-governance-platform/migrations:latest'
+    containerImage: 'ghcr.io/htt-brands/control-tower-migrations:latest'
     jobType: 'migration'
     cpuCores: 2
     memoryGB: 4
@@ -115,7 +115,7 @@ module processingContainer './modules/container-instances.bicep' = if (enableCon
   params: {
     name: 'aci-processing-${environment}-${take(resourceSuffix, 8)}'
     location: location
-    containerImage: 'ghcr.io/azure-governance-platform/processor:latest'
+    containerImage: 'ghcr.io/htt-brands/control-tower-processor:latest'
     jobType: 'processing'
     cpuCores: 4
     memoryGB: 8

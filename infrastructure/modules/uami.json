@@ -5,13 +5,13 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "3300186856665406632"
+      "templateHash": "10194860976893446029"
     }
   },
   "parameters": {
     "uamiName": {
       "type": "string",
-      "defaultValue": "mi-governance-platform",
+      "defaultValue": "mi-control-tower",
       "metadata": {
         "description": "Name of the User-Assigned Managed Identity"
       }
@@ -72,7 +72,7 @@
       "type": "object",
       "defaultValue": {
         "Environment": "production",
-        "Project": "azure-governance-platform",
+        "Project": "control-tower",
         "Phase": "C",
         "ManagedBy": "bicep"
       },

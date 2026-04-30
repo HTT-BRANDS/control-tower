@@ -10,7 +10,7 @@
 #   3. Deployment configuration
 #
 # Usage: ./scripts/check-github-secrets.sh [owner/repo]
-# Example: ./scripts/check-github-secrets.sh htt-brands/azure-governance-platform
+# Example: ./scripts/check-github-secrets.sh htt-brands/control-tower
 # =============================================================================
 
 set -euo pipefail
@@ -202,7 +202,7 @@ check_workflows() {
     echo ""
     
     # Check if dev image exists in workflow
-    local expected_image="ghcr.io/${REPO%%/*}/azure-governance-platform"
+    local expected_image="ghcr.io/${REPO%%/*}/control-tower"
     
     log_info "Expected container image pattern: ${expected_image}"
     
@@ -221,7 +221,7 @@ check_workflows() {
     echo "   gh run list --repo $REPO --workflow 'Deploy to Azure (OIDC)'"
     echo ""
     echo "2. Check GHCR packages:"
-    echo "   gh api /user/packages/container/azure-governance-platform/versions --jq '.[].metadata.container.tags[]' 2>/dev/null || echo 'Package not found or not accessible'"
+    echo "   gh api /user/packages/container/control-tower/versions --jq '.[].metadata.container.tags[]' 2>/dev/null || echo 'Package not found or not accessible'"
     echo ""
     echo "3. Verify image in GHCR:"
     echo "   https://github.com/${REPO%%/*}?tab=packages"

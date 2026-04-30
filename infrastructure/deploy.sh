@@ -31,7 +31,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 ENVIRONMENT="${1:-production}"
 LOCATION="${2:-eastus}"
 SECONDARY_LOCATION="${3:-westus2}"
-DEPLOYMENT_NAME="governance-platform-${ENVIRONMENT}"
+DEPLOYMENT_NAME="control-tower-${ENVIRONMENT}"
 
 # Validate environment
 if [[ ! "$ENVIRONMENT" =~ ^(development|staging|production)$ ]]; then

@@ -33,7 +33,7 @@
       "value": 90
     },
     "containerImage": {
-      "value": "ghcr.io/htt-brands/azure-governance-platform:latest"
+      "value": "ghcr.io/htt-brands/control-tower:latest"
     },
     "useContainerDeployment": {
       "value": true
@@ -43,7 +43,7 @@
     },
     "tags": {
       "value": {
-        "Application": "Azure Governance Platform",
+        "Application": "HTT Control Tower",
         "Environment": "production",
         "ManagedBy": "Bicep",
         "CostCenter": "IT-Operations",

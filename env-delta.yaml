@@ -25,7 +25,7 @@ environments:
       secondary_location: eastus
       resource_group_pattern: rg-governance-dev-*
       app_service_name: app-governance-dev-001
-      container_image: ghcr.io/htt-brands/azure-governance-platform:main
+      container_image: ghcr.io/htt-brands/control-tower:main
     data:
       sql_sku: Basic
       sql_deployed: true
@@ -50,7 +50,7 @@ environments:
       resource_group_pattern: rg-governance-staging-*
       app_service_name: app-governance-staging-xnczpwyv
       app_service_url: https://app-governance-staging-xnczpwyv.azurewebsites.net
-      container_image: ghcr.io/htt-brands/azure-governance-platform:staging
+      container_image: ghcr.io/htt-brands/control-tower:staging
       container_registry: acrgovprod             # ACR reference (shared with prod)
     data:
       sql_sku: Standard_S0
@@ -80,7 +80,7 @@ environments:
       resource_group_pattern: rg-governance-prod-*
       app_service_name: app-governance-prod
       app_service_url: https://app-governance-prod.azurewebsites.net
-      container_image: ghcr.io/htt-brands/azure-governance-platform:latest
+      container_image: ghcr.io/htt-brands/control-tower:latest
       container_registry: acrgovprod
     data:
       sql_sku: Standard_S0

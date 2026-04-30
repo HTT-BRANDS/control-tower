@@ -24,7 +24,7 @@ targetScope = 'resourceGroup'
 //     --name github-oidc-setup \
 //     --location eastus \
 //     --template-file github-oidc.bicep \
-//     --parameters environment=dev githubRepo=myorg/azure-governance-platform
+//     --parameters environment=dev githubRepo=htt-brands/control-tower
 // =============================================================================
 
 // -----------------------------------------------------------------------------
@@ -64,6 +64,12 @@ param tags object = {
 // -----------------------------------------------------------------------------
 var normalizedEnvironment = environment == 'development' ? 'dev' : environment == 'production' ? 'prod' : environment
 
+// NOTE: appRegistrationName is intentionally preserved as 'azure-governance-platform-oidc-*'
+// after the 2026-04-30 Control Tower repo rename. Renaming would orphan the
+// already-deployed Entra app registration 'azure-governance-platform-oidc-dev' along
+// with its 14 federated identity credentials (10 legacy 'azure-governance-platform'
+// subjects + 4 new 'control-tower' subjects added during the cutover). Leave as-is
+// until a separate, planned migration with explicit FIC re-creation.
 var appRegistrationName = 'azure-governance-platform-oidc-${normalizedEnvironment}'
 // GitHub OIDC issuer
 var githubOidcIssuer = 'https://token.actions.githubusercontent.com'

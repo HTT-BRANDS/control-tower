@@ -217,7 +217,7 @@ The Azure Governance Platform is a **production-ready, enterprise-grade SaaS app
 ```bash
 # Clone repository
 git clone https://github.com/HTT-BRANDS/control-tower.git
-cd azure-governance-platform
+cd control-tower
 
 # Setup environment
 python3 -m venv .venv

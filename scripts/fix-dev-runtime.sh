@@ -30,7 +30,7 @@ NC='\033[0m' # No Color
 # Configuration
 APP_NAME="app-governance-dev-001"
 RESOURCE_GROUP="rg-governance-dev"
-CONTAINER_IMAGE="ghcr.io/htt-brands/azure-governance-platform:dev"
+CONTAINER_IMAGE="ghcr.io/htt-brands/control-tower:dev"
 REGISTRY_URL="https://ghcr.io"
 
 # Functions

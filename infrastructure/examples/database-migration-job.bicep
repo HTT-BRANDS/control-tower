@@ -10,7 +10,7 @@ param jobName string = 'db-migration-${utcNow('yyyyMMdd')}'
 param location string = resourceGroup().location
 
 @description('Container image with migration tools')
-param containerImage string = 'ghcr.io/azure-governance-platform/migrations:latest'
+param containerImage string = 'ghcr.io/htt-brands/control-tower-migrations:latest'
 
 @description('Storage account for migration artifacts')
 param storageAccountName string

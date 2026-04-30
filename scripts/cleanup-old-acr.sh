@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Azure Governance Platform - Old ACR Cleanup Script
+# HTT Control Tower - Old ACR Cleanup Script
 #
 # Safely deletes the old Azure Container Registry (acrgovstaging19859) after
 # verifying GHCR is working and images are available.
@@ -27,7 +27,7 @@ BOLD='\033[1m'
 # Configuration
 OLD_ACR_NAME="acrgovstaging19859"
 OLD_ACR_RESOURCE_GROUP="rg-governance-staging"
-GHCR_REPO="ghcr.io/htt-brands/azure-governance-platform"
+GHCR_REPO="ghcr.io/htt-brands/control-tower"
 
 # Script flags
 CONFIRM=false
@@ -125,7 +125,7 @@ verify_ghcr_available() {
 
     # Check if GHCR repo is accessible via API
     local http_status
-    http_status=$(curl -s -o /dev/null -w "%{http_code}" "https://ghcr.io/v2/htt-brands/azure-governance-platform/tags/list" 2>/dev/null || echo "000")
+    http_status=$(curl -s -o /dev/null -w "%{http_code}" "https://ghcr.io/v2/htt-brands/control-tower/tags/list" 2>/dev/null || echo "000")
 
     if [[ "$http_status" == "200" ]] || [[ "$http_status" == "401" ]]; then
         # 401 is expected without auth, but means repo exists
@@ -139,7 +139,7 @@ verify_ghcr_available() {
     print_step "Checking available GHCR image tags..."
 
     local tags
-    tags=$(curl -s "https://api.github.com/users/tygranlund/packages/container/azure-governance-platform/versions" 2>/dev/null | jq -r '.[].metadata.container.tags[]?' 2>/dev/null | head -10 || echo "")
+    tags=$(curl -s "https://api.github.com/users/tygranlund/packages/container/control-tower/versions" 2>/dev/null | jq -r '.[].metadata.container.tags[]?' 2>/dev/null | head -10 || echo "")
 
     if [[ -n "$tags" ]]; then
         print_success "Found GHCR image tags:"

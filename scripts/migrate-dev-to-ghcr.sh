@@ -30,7 +30,7 @@ RESOURCE_GROUP="rg-governance-dev"
 APP_NAME="app-governance-dev-001"
 GHCR_URL="https://ghcr.io"
 GHCR_USER="HTT-BRANDS"
-GHCR_IMAGE="ghcr.io/htt-brands/azure-governance-platform:staging"
+GHCR_IMAGE="ghcr.io/htt-brands/control-tower:staging"
 OLD_ACR_NAME="acrgovernancedev"
 HEALTH_TIMEOUT_SEC=120
 

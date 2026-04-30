@@ -40,14 +40,14 @@
       "value": 14
     },
     "containerImage": {
-      "value": "ghcr.io/htt-brands/azure-governance-platform:staging"
+      "value": "ghcr.io/htt-brands/control-tower:staging"
     },
     "useContainerDeployment": {
       "value": true
     },
     "tags": {
       "value": {
-        "Application": "Azure Governance Platform",
+        "Application": "HTT Control Tower",
         "Environment": "staging",
         "ManagedBy": "Bicep",
         "CostCenter": "IT-Operations",

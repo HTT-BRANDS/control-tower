@@ -10,7 +10,7 @@ param jobName string = 'data-processor-${utcNow('yyyyMMdd-HHmm')}'
 param location string = resourceGroup().location
 
 @description('Container image with data processing tools')
-param containerImage string = 'ghcr.io/azure-governance-platform/data-processor:latest'
+param containerImage string = 'ghcr.io/htt-brands/control-tower-data-processor:latest'
 
 @description('Storage account for input/output data')
 param storageAccountName string

@@ -1,6 +1,6 @@
 /*
   User-Assigned Managed Identity (UAMI) Module
-  Phase C: Zero-secrets authentication for Azure Governance Platform
+  Phase C: Zero-secrets authentication for HTT Control Tower
 
   Creates:
   - User-Assigned Managed Identity for zero-secrets auth
@@ -20,19 +20,19 @@
     module uami './modules/uami.bicep' = {
       name: 'uamiDeployment'
       params: {
-        uamiName: 'mi-governance-platform'
+        uamiName: 'mi-control-tower'
         location: resourceGroup().location
         multiTenantAppObjectId: '<app-object-id>'
         federatedIdentityCredentialName: 'github-actions-federation'
-        githubOrganization: 'riverside'
-        githubRepository: 'governance-platform'
+        githubOrganization: 'htt-brands'
+        githubRepository: 'control-tower'
         keyVaultName: 'kv-gov-prod-001'
       }
     }
 */
 
 @description('Name of the User-Assigned Managed Identity')
-param uamiName string = 'mi-governance-platform'
+param uamiName string = 'mi-control-tower'
 
 @description('Azure region for resources')
 param location string = resourceGroup().location
@@ -59,7 +59,7 @@ param additionalRoleAssignments array = []
 @description('Tags to apply to resources')
 param tags object = {
   Environment: 'production'
-  Project: 'azure-governance-platform'
+  Project: 'control-tower'
   Phase: 'C'
   ManagedBy: 'bicep'
 }

@@ -48,7 +48,7 @@ get_status()  { eval "echo \"\${VSTATUS_${1}:-UNKNOWN}\""; }
 MANAGING_TENANT_ID=""
 MI_OBJECT_ID=""
 FILTER_TENANT=""
-CRED_NAME="governance-platform-app-service"
+CRED_NAME="control-tower-app-service"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
