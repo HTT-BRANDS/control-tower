@@ -164,7 +164,7 @@ dashboards are in Tyler's account. Document in `SECRETS_OF_RECORD.md`.
 | Prod `/api/v1/health` returns 500 | App startup failure (bd `a1sb`) | Check App Insights for boot errors |
 | `costs: null` for BCC/FN/TLL | Cost Mgmt Reader role not granted (bd `5xd5`) | Grant role in target subscription |
 | Bicep drift detected | Manual portal change OR template drift | Review the rolling drift issue, reconcile |
-| Database Backup workflow red before backup starts | Missing OIDC permission (bd `3flq`, closed), missing environment backup secrets, missing `mssqlscripter`, or backup upload RBAC (bd `jzpa`) | Check failed step; if env shows empty `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT`, configure GitHub environment secrets. If `mssqlscripter` is missing, SQLAlchemy fallback should run. If upload fails, grant Storage Blob Data Contributor to the workflow identity. |
+| Database Backup workflow red before backup starts | Missing OIDC permission (bd `3flq`, closed), missing environment backup secrets, missing `mssqlscripter`, missing ODBC Driver 18, or backup upload RBAC (bd `jzpa`) | Check failed step; if env shows empty `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT`, configure GitHub environment secrets. If `mssqlscripter` is missing, SQLAlchemy fallback should run. If ODBC driver is missing, verify `backup.yml` installed `msodbcsql18`. If upload fails, grant Storage Blob Data Contributor to the workflow identity. |
 | Database Backup workflow red at notify step | Broken notify action (bd `fifh`, closed) | Current workflow uses curl MessageCard pattern; re-check webhook config |
 
 ### Escalation
@@ -315,7 +315,8 @@ These are bd issues that, once closed, complete the runbook:
       `docs/dr/second-rollback-human-checklist.md` tabletop evidence (waiver
       expires 2026-06-22)
 - [ ] `jzpa` — Validate scheduled/manual production and staging database backups
-      after 2026-04-30 environment secret configuration and SQLAlchemy fallback
+      after 2026-04-30 environment secret configuration, SQLAlchemy fallback,
+      and workflow ODBC Driver 18 install
 - [ ] All 🔴 TYLER-ONLY markers above filled in
 
 When all are checked, this runbook is complete and bus-factor metric

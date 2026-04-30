@@ -210,7 +210,7 @@ After Tyler said "continue on next steps based on your recommendations outlined"
 ### Still in `bd ready` after 2026-04-30 resume
 - `9lfn` — **Tyler-authored** SECRETS_OF_RECORD.md (P1, ~30 min). Skeleton exists; Tyler must fill non-secret pointers/access/rotation metadata. Bus-factor blocker.
 - `213e` — name second rollback human (P2, waiver expires 2026-06-22). Tyler-only.
-- `jzpa` — scheduled Database Backup run `25145371945` failed because production and staging `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT` were empty. On 2026-04-30 those GitHub environment secret names were configured from App Service/storage without printing values; production storage `stgovprodbkup001` was created. First manual prod validation (`25167474294`) then exposed missing optional `mssqlscripter`; `backup_database.py` now falls back to SQLAlchemy and needs a pushed validation run.
+- `jzpa` — scheduled Database Backup run `25145371945` failed because production and staging `DATABASE_URL` / `AZURE_STORAGE_ACCOUNT` were empty. On 2026-04-30 those GitHub environment secret names were configured from App Service/storage without printing values; production storage `stgovprodbkup001` was created. Manual validation (`25167474294`, `25167657417`, `25167659155`) then exposed missing runner SQL tooling: optional `mssqlscripter` and ODBC Driver 18. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev`; needs a pushed validation run.
 - Phase 1.5 autonomous ready refactor queue was drained in the Pack Leader batch plus `fbx8`; run `bd ready` for any newly unblocked work before inventing tasks.
 
 ### Open but intentionally NOT ready

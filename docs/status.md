@@ -4,18 +4,18 @@ title: Platform Status
 
 # Platform Status
 
-Updated: `2026-04-30T13:18:19.239061+00:00`
+Updated: `2026-04-30T13:29:17.533078+00:00`
 Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` was available.
 
 ## Current mainline health
 
 | Signal | Status | Evidence |
 |---|---|---|
-| CI | ✅ Green | Latest pushed mainline docs/DR scaffold passed CI before this page rebuild. |
-| Security Scan | ✅ Green | Latest pushed mainline docs/DR scaffold passed security scan. |
-| Deploy to Staging | ✅ Green | Latest pushed mainline docs/DR scaffold deployed to staging. |
-| Deploy GitHub Pages | ✅ Green | This page was produced by the Pages workflow. |
-| GitHub Pages Cross-Browser Tests | ✅ Green | Last mainline Pages test run succeeded. |
+| CI | ✅ Green | Run `25167652385` passed for `00c3745`; rerun pending after docs/workflow refresh. |
+| Security Scan | ✅ Green | Run `25167652318` passed for `00c3745`; `UV_VERSION` is now pinned to `0.9.27` across setup-uv workflows. |
+| Deploy to Staging | ⚠️ Needs rerun | Run `25167652308` failed because `astral-sh/setup-uv` could not resolve wildcard `0.5.x`; workflows now pin `0.9.27`. |
+| Deploy GitHub Pages | ✅ Green | Run `25167652314` published Pages for `00c3745`. |
+| GitHub Pages Cross-Browser Tests | ⚠️ Needs rerun | Run `25167652311` failed because homepage title changed; title now includes `Azure Governance Platform` again. |
 
 ## Ready work
 
@@ -23,7 +23,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 |---|---|---|---|
 | `9lfn` | Ready | Tyler | `SECRETS_OF_RECORD.md` skeleton exists; Tyler must fill non-secret inventory rows. |
 | `213e` | Ready | Tyler | Second rollback human must be named and tabletop exercise recorded. |
-| `jzpa` | In progress | code-puppy-661ed0 | Environment secret names configured; validating production/staging backup workflow and SQLAlchemy fallback. |
+| `jzpa` | In progress | code-puppy-661ed0 | Environment secret names configured; backup workflow now installs ODBC Driver 18; production/staging validation pending. |
 
 ## Blocked work
 
@@ -35,7 +35,7 @@ Source: GitHub Pages build fallback; no committed `scripts/audit_output.json` wa
 
 ## Backup / RPO watch
 
-Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed the next code gap: optional `mssqlscripter` was absent in CI, so `backup_database.py` now falls back to SQLAlchemy. This remains tracked as bd `jzpa` until evidence runs pass.
+Scheduled Database Backup run `25145371945` failed on 2026-04-30 in both production and staging after Azure OIDC login succeeded. Logs showed `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` empty. Those GitHub environment secret names were configured on 2026-04-30. Manual validation then exposed two runner gaps: optional `mssqlscripter` was absent, and the GitHub runner did not have ODBC Driver 18 for SQL Server. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev` before running `pyodbc`. This remains tracked as bd `jzpa` until production and staging evidence runs pass.
 
 ## Audit output
 

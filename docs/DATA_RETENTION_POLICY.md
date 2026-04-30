@@ -238,9 +238,11 @@ edition does not support ImportExport. See `docs/dr/bacpac-validation-decision.m
 The older scheduled logical backup workflow (`.github/workflows/backup.yml`) is
 also under watch: run `25145371945` on 2026-04-30 showed production and staging
 jobs were missing `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT`. Those environment
-secret names were configured on 2026-04-30, and `backup_database.py` now falls
-back to SQLAlchemy when optional `mssqlscripter` is absent. This remains tracked
-as bd `jzpa` until production and staging evidence runs pass.
+secret names were configured on 2026-04-30. Manual validation then exposed
+missing runner SQL tooling: optional `mssqlscripter` was absent and the runner
+lacked ODBC Driver 18. `backup_database.py` now falls back to SQLAlchemy, and
+`backup.yml` installs `msodbcsql18` / `unixodbc-dev`. This remains tracked as bd
+`jzpa` until production and staging evidence runs pass.
 
 Retention is operationally defined as 12 months. Once validated, the BACPAC
 workflow deletes expired BACPAC blobs after each successful export using a
