@@ -95,6 +95,7 @@ jobs:
             --location "$DEPLOY_LOCATION" \
             --template-file infrastructure/main.bicep \
             --parameters @"$PARAMS" \
+            --validation-level Template \
             --result-format FullResourcePayloads \
             > what-if-human.txt || true
           cat what-if-human.txt
@@ -105,6 +106,7 @@ jobs:
             --location "$DEPLOY_LOCATION" \
             --template-file infrastructure/main.bicep \
             --parameters @"$PARAMS" \
+            --validation-level Template \
             --no-pretty-print \
             --result-format FullResourcePayloads \
             > what-if.json
