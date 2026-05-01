@@ -50,7 +50,7 @@ jobs:
       matrix:
         include:
           - env: dev
-            resource_group: rg-governance-dev-001
+            resource_group: rg-governance-dev
             parameters_file: infrastructure/parameters.dev.json
           - env: staging
             resource_group: rg-governance-staging
