@@ -36,3 +36,14 @@ def test_drift_remediation_text_uses_subscription_scope():
 
     assert "az deployment sub create" in workflow
     assert "az deployment group create" not in workflow
+
+
+def test_bicep_drift_reader_role_documents_what_if_permission():
+    """Custom drift role includes subscription what-if without write actions."""
+    role = Path("infrastructure/azure/rbac/bicep-drift-reader.role.json").read_text()
+
+    assert "Bicep Drift Reader" in role
+    assert "Microsoft.Resources/deployments/whatIf/action" in role
+    assert "*/read" in role
+    assert "*/write" not in role
+    assert "<subscription-id>" in role

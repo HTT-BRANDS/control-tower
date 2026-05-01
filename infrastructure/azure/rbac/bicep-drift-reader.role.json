@@ -1,0 +1,16 @@
+{
+  "Name": "Bicep Drift Reader",
+  "IsCustom": true,
+  "Description": "Least-privilege read-only role for subscription-scoped Bicep what-if drift detection from GitHub Actions OIDC.",
+  "Actions": [
+    "*/read",
+    "Microsoft.Resources/deployments/read",
+    "Microsoft.Resources/deployments/whatIf/action"
+  ],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/<subscription-id>"
+  ]
+}
