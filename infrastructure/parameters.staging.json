@@ -8,18 +8,12 @@
     "location": {
       "value": "westus2"
     },
-    "secondaryLocation": {
-      "value": "westus2"
-    },
     "appServiceSku": {
       "value": "B1"
     },
     "sqlDatabaseSku": {
       "value": "Standard_S0",
       "allowedValues": ["Free", "Basic", "Standard_S0", "Standard_S1"]
-    },
-    "acrName": {
-      "value": "acrgovprod"
     },
     "enableAzureSql": {
       "value": false,

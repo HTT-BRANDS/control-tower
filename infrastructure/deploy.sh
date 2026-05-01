@@ -30,7 +30,6 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Default values
 ENVIRONMENT="${1:-production}"
 LOCATION="${2:-eastus}"
-SECONDARY_LOCATION="${3:-westus2}"
 DEPLOYMENT_NAME="control-tower-${ENVIRONMENT}"
 
 # Validate environment
@@ -125,7 +124,6 @@ az deployment sub create \
     --template-file main.bicep \
     --parameters "${PARAMS_FILE}" \
     --parameters location="$LOCATION" \
-    --parameters secondaryLocation="$SECONDARY_LOCATION" \
     --parameters sqlAdminPassword="$SQL_ADMIN_PASSWORD" \
     --output none \
     || {

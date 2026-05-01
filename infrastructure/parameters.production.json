@@ -8,9 +8,6 @@
     "location": {
       "value": "eastus"
     },
-    "secondaryLocation": {
-      "value": "westus2"
-    },
     "appServiceSku": {
       "value": "B1"
     },
@@ -37,9 +34,6 @@
     },
     "useContainerDeployment": {
       "value": true
-    },
-    "acrName": {
-      "value": "acrgovprod"
     },
     "tags": {
       "value": {

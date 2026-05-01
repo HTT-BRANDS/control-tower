@@ -8,9 +8,6 @@
     "location": {
       "value": "westus2"
     },
-    "secondaryLocation": {
-      "value": "eastus"
-    },
     "resourceSuffix": {
       "value": "001"
     },
