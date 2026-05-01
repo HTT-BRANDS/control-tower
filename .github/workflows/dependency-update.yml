@@ -4,10 +4,13 @@
 # Weekly dependency maintenance:
 #   1. Run pip-audit for security vulnerabilities
 #   2. Check for outdated dependencies
-#   3. Auto-merge minor updates if tests pass
+#   3. Run `uv lock --upgrade` and open a real lockfile PR when updates exist
 #   4. Create issues for major updates requiring manual review
 #
-# Schedule: Weekly on Sundays at 10:00 PM UTC (before Monday Dependabot run)
+# Schedule: Weekly on Sundays at 10:00 PM UTC (before Monday Dependabot run).
+#
+# NOTE: Dependabot's `pip` ecosystem does not update `uv.lock`, so its PRs can
+# be no-ops for runtime. This workflow treats `uv.lock` as the source of truth.
 # =============================================================================
 
 name: Dependency Update Automation
@@ -220,10 +223,10 @@ jobs:
             });
 
   # ===========================================================================
-  # Job 3: Auto-merge Minor Updates (if tests pass)
+  # Job 3: Real uv.lock Upgrade PR
   # ===========================================================================
-  auto-merge:
-    name: Auto-merge Minor Updates
+  uv-lock-upgrade:
+    name: Open uv.lock Upgrade PR
     runs-on: ubuntu-latest
     needs: [security-audit]
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * 0'
@@ -234,58 +237,92 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Find and merge minor update PRs
-        uses: actions/github-script@v7
+      - uses: actions/setup-python@v5
         with:
-          script: |
-            const { data: pulls } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: 'dependabot'
-            });
-            
-            for (const pr of pulls) {
-              // Check if it's a minor/patch update by Dependabot
-              const isDependabot = pr.user.login === 'dependabot[bot]';
-              const isMinorPatch = pr.labels.some(l => l.name === 'dependencies') && 
-                                   !pr.labels.some(l => l.name === 'major-update');
-              
-              if (!isDependabot || !isMinorPatch) continue;
-              
-              // Check if CI passed
-              const { data: checks } = await github.rest.checks.listForRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: pr.head.sha
-              });
-              
-              const allPassed = checks.check_runs.every(c => c.conclusion === 'success');
-              const noFailures = !checks.check_runs.some(c => c.conclusion === 'failure');
-              
-              if (allPassed && noFailures && checks.check_runs.length > 0) {
-                // Auto-approve
-                await github.rest.pulls.createReview({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: pr.number,
-                  event: 'APPROVE',
-                  body: '✅ Auto-approved: Minor dependency update with passing tests'
-                });
-                
-                // Enable auto-merge (squash)
-                await github.rest.pulls.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: pr.number,
-                  body: pr.body + '\n\n---\n🤖 Auto-merge enabled for minor dependency update'
-                });
-                
-                console.log(`Auto-approved PR #${pr.number}: ${pr.title}`);
-              } else {
-                console.log(`Skipping PR #${pr.number}: Tests not passing`);
-              }
-            }
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Upgrade uv.lock
+        run: uv lock --upgrade
+
+      - name: Regenerate exported requirements files
+        run: |
+          set -euo pipefail
+
+          # Do NOT redirect stderr into these files. `uv export` writes status
+          # messages like "Resolved 144 packages in 3ms" to stderr; capturing
+          # that output makes requirements.txt unparsable by pip/dependabot.
+          uv export --no-hashes --no-dev > requirements.txt
+
+          sed -n '1,15p' requirements-dev.txt > /tmp/requirements-dev-header.txt
+          uv export --no-hashes --only-dev | sed -n '3,$p' > /tmp/requirements-dev-body.txt
+          cat /tmp/requirements-dev-header.txt /tmp/requirements-dev-body.txt > requirements-dev.txt
+
+          if grep -Eq '^Resolved [0-9]+ packages' requirements.txt requirements-dev.txt; then
+            echo "uv status output leaked into requirements export" >&2
+            exit 1
+          fi
+
+      - name: Check whether dependencies changed
+        id: diff
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- uv.lock requirements.txt requirements-dev.txt; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No dependency updates available."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- uv.lock requirements.txt requirements-dev.txt
+          fi
+
+      - name: Smoke-test upgraded lockfile
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          uv sync --frozen
+          uv run python - <<'PY'
+          from app.main import app
+          print(f"Loaded app with {len(app.routes)} routes")
+          PY
+          uv run pytest tests/unit/ -q --tb=short
+
+      - name: Create dependency update PR
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/uv-lock-upgrade
+          delete-branch: true
+          commit-message: "deps: weekly uv lock upgrade"
+          title: "deps: weekly uv lock upgrade"
+          labels: dependencies,python,uv-lock
+          body: |
+            ## Summary
+
+            Weekly dependency maintenance generated by `dependency-update.yml`.
+
+            This PR is the real Python dependency update path for this repo:
+            - `uv.lock` is upgraded via `uv lock --upgrade`
+            - `requirements.txt` is regenerated from `uv.lock`
+            - `requirements-dev.txt` is regenerated from `uv.lock`
+
+            Dependabot's `pip` ecosystem does not update `uv.lock`, so its PRs
+            can be no-ops for runtime. Review this lockfile diff instead.
+
+            ## Validation run by workflow
+
+            - `uv sync --frozen`
+            - app import smoke (`from app.main import app`)
+            - `uv run pytest tests/unit/ -q --tb=short`
+
+            ## Reviewer notes
+
+            Watch for major bumps in runtime-sensitive packages (Azure SDK,
+            `cryptography`, FastAPI/Pydantic/Uvicorn). If CI is green, merge via
+            the normal direct-main discipline or close with rationale.
 
   # ===========================================================================
   # Job 4: Dependency Summary Report
