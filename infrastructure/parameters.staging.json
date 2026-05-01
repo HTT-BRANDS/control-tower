@@ -60,6 +60,27 @@
     "adminEmails": {
       "value": ""
     },
+    "resourceGroupNameOverride": {
+      "value": "rg-governance-staging"
+    },
+    "appServicePlanNameOverride": {
+      "value": "asp-governance-staging-xnczpwyvwsaba"
+    },
+    "appServiceNameOverride": {
+      "value": "app-governance-staging-xnczpwyv"
+    },
+    "appInsightsNameOverride": {
+      "value": "ai-governance-staging-xnczpwyvwsaba"
+    },
+    "logAnalyticsNameOverride": {
+      "value": "log-governance-staging-xnczpwyvwsaba"
+    },
+    "keyVaultNameOverride": {
+      "value": "kv-gov-staging-xnczpwyv"
+    },
+    "storageAccountNameOverride": {
+      "value": "stgovstagingxnczpwyv"
+    },
     "enableRedis": {
       "value": false
     }
