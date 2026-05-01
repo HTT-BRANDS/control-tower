@@ -74,13 +74,7 @@ jobs:
           BACKUP_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          sql_server=$(python - <<'PY'
-          import os
-          from urllib.parse import urlparse
-
-          print(urlparse(os.environ["DATABASE_URL"]).hostname.split(".", 1)[0])
-          PY
-          )
+          sql_server=$(python scripts/resolve_sql_server_name.py)
           case "$BACKUP_ENVIRONMENT" in
             production) sql_rg="rg-governance-production" ;;
             staging) sql_rg="rg-governance-staging" ;;
@@ -249,13 +243,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          sql_server=$(python - <<'PY'
-          import os
-          from urllib.parse import urlparse
-
-          print(urlparse(os.environ["DATABASE_URL"]).hostname.split(".", 1)[0])
-          PY
-          )
+          sql_server=$(python scripts/resolve_sql_server_name.py)
           sql_rg="rg-governance-staging"
           runner_ip=$(curl -fsS https://api.ipify.org)
           rule_name="GitHubActions-${GITHUB_RUN_ID}-staging"
