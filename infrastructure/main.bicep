@@ -102,24 +102,61 @@ param corsOrigins string = ''
 @description('Comma-separated admin email addresses for elevated access')
 param adminEmails string = ''
 
+@description('Optional explicit resource group name. Leave empty to use the generated default.')
+param resourceGroupNameOverride string = ''
+
+@description('Optional explicit App Service Plan name. Leave empty to use the generated default.')
+param appServicePlanNameOverride string = ''
+
+@description('Optional explicit App Service name. Leave empty to use the generated default.')
+param appServiceNameOverride string = ''
+
+@description('Optional explicit Application Insights name. Leave empty to use the generated default.')
+param appInsightsNameOverride string = ''
+
+@description('Optional explicit Log Analytics workspace name. Leave empty to use the generated default.')
+param logAnalyticsNameOverride string = ''
+
+@description('Optional explicit Key Vault name. Leave empty to use the generated normalized default. Explicit overrides are not truncated.')
+param keyVaultNameOverride string = ''
+
+@description('Optional explicit Storage Account name. Leave empty to use the generated normalized default. Explicit overrides are not truncated or otherwise normalized.')
+param storageAccountNameOverride string = ''
+
+@description('Optional explicit SQL Server name. Leave empty to use the generated default.')
+param sqlServerNameOverride string = ''
+
+@description('Optional explicit SQL Database name. Leave empty to use the generated default.')
+param sqlDatabaseNameOverride string = ''
+
 // -----------------------------------------------------------------------------
 // Variables
 // -----------------------------------------------------------------------------
-var resourceGroupName = 'rg-governance-${environment}'
-var appServicePlanName = 'asp-governance-${environment}-${resourceSuffix}'
-var appServiceName = 'app-governance-${environment}-${take(resourceSuffix, 8)}'
-var appInsightsName = 'ai-governance-${environment}-${resourceSuffix}'
-var logAnalyticsName = 'log-governance-${environment}-${resourceSuffix}'
-var keyVaultName = 'kv-gov-${environment}-${take(resourceSuffix, 8)}'
-var storageAccountName = 'stgov${environment}${take(resourceSuffix, 8)}'
-var sqlServerName = 'sql-governance-${environment}-${take(resourceSuffix, 8)}'
-var sqlDatabaseName = 'governance-db'
+var generatedResourceGroupName = 'rg-governance-${environment}'
+var generatedAppServicePlanName = 'asp-governance-${environment}-${resourceSuffix}'
+var generatedAppServiceName = 'app-governance-${environment}-${take(resourceSuffix, 8)}'
+var generatedAppInsightsName = 'ai-governance-${environment}-${resourceSuffix}'
+var generatedLogAnalyticsName = 'log-governance-${environment}-${resourceSuffix}'
+var generatedKeyVaultName = 'kv-gov-${environment}-${take(resourceSuffix, 8)}'
+var generatedStorageAccountName = 'stgov${environment}${take(resourceSuffix, 8)}'
+var generatedSqlServerName = 'sql-governance-${environment}-${take(resourceSuffix, 8)}'
+var generatedSqlDatabaseName = 'governance-db'
+
+// Only generated names are normalized/truncated. Explicit overrides are preserved exactly.
+var normalizedGeneratedKeyVaultName = length(generatedKeyVaultName) > 24 ? take(generatedKeyVaultName, 24) : generatedKeyVaultName
+var normalizedGeneratedStorageAccountName = length(replace(generatedStorageAccountName, '-', '')) > 24 ? take(replace(generatedStorageAccountName, '-', ''), 24) : replace(generatedStorageAccountName, '-', '')
+
+var resourceGroupName = empty(resourceGroupNameOverride) ? generatedResourceGroupName : resourceGroupNameOverride
+var appServicePlanName = empty(appServicePlanNameOverride) ? generatedAppServicePlanName : appServicePlanNameOverride
+var appServiceName = empty(appServiceNameOverride) ? generatedAppServiceName : appServiceNameOverride
+var appInsightsName = empty(appInsightsNameOverride) ? generatedAppInsightsName : appInsightsNameOverride
+var logAnalyticsName = empty(logAnalyticsNameOverride) ? generatedLogAnalyticsName : logAnalyticsNameOverride
+var keyVaultName = empty(keyVaultNameOverride) ? normalizedGeneratedKeyVaultName : keyVaultNameOverride
+var storageAccountName = empty(storageAccountNameOverride) ? normalizedGeneratedStorageAccountName : storageAccountNameOverride
+var sqlServerName = empty(sqlServerNameOverride) ? generatedSqlServerName : sqlServerNameOverride
+var sqlDatabaseName = empty(sqlDatabaseNameOverride) ? generatedSqlDatabaseName : sqlDatabaseNameOverride
 var vnetName = 'vnet-governance-${environment}'
 var redisName = 'redis-gov-${environment}-${take(resourceSuffix, 8)}'
-
-// Validate resource names
-var validatedKeyVaultName = length(keyVaultName) > 24 ? take(keyVaultName, 24) : keyVaultName
-var validatedStorageName = length(replace(storageAccountName, '-', '')) > 24 ? take(replace(storageAccountName, '-', ''), 24) : replace(storageAccountName, '-', '')
 
 // -----------------------------------------------------------------------------
 // Resource Group
@@ -165,7 +202,7 @@ module storage 'modules/storage.bicep' = {
   name: 'storageDeploy'
   scope: resourceGroup
   params: {
-    name: validatedStorageName
+    name: storageAccountName
     location: location
     tags: tags
   }
@@ -195,7 +232,7 @@ module keyVault 'modules/key-vault.bicep' = if (enableKeyVault) {
   name: 'keyVaultDeploy'
   scope: resourceGroup
   params: {
-    name: validatedKeyVaultName
+    name: keyVaultName
     location: location
     tags: tags
   }
@@ -208,8 +245,8 @@ module storageKeySecret 'modules/storage-key-secret.bicep' = if (enableKeyVault)
   name: 'storageKeySecretDeploy'
   scope: resourceGroup
   params: {
-    keyVaultName: validatedKeyVaultName
-    storageAccountName: validatedStorageName
+    keyVaultName: keyVaultName
+    storageAccountName: storageAccountName
   }
   dependsOn: [
     storage
@@ -220,7 +257,7 @@ module storageKeySecret 'modules/storage-key-secret.bicep' = if (enableKeyVault)
 // Reference Key Vault for secure parameter passing (getSecret)
 resource existingKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   scope: resourceGroup
-  name: validatedKeyVaultName
+  name: keyVaultName
 }
 
 // -----------------------------------------------------------------------------
@@ -274,8 +311,8 @@ module appService 'modules/app-service.bicep' = {
     location: location
     appServicePlanId: appServicePlan.outputs.planId
     appInsightsConnectionString: enableAppInsights ? appInsights!.outputs.connectionString : ''
-    storageAccountName: validatedStorageName
-    keyVaultName: enableKeyVault ? validatedKeyVaultName : ''
+    storageAccountName: storageAccountName
+    keyVaultName: enableKeyVault ? keyVaultName : ''
     sqlServerName: enableAzureSql ? sqlServerName : ''
     sqlDatabaseName: sqlDatabaseName
     enableAzureSql: enableAzureSql
@@ -311,7 +348,7 @@ output resourceGroupName string = resourceGroup.name
 output appServiceName string = appServiceName
 output appServiceUrl string = appService.outputs.appUrl
 output appInsightsName string = enableAppInsights ? appInsightsName : ''
-output keyVaultName string = enableKeyVault ? validatedKeyVaultName : ''
-output storageAccountName string = validatedStorageName
+output keyVaultName string = enableKeyVault ? keyVaultName : ''
+output storageAccountName string = storageAccountName
 output sqlServerName string = enableAzureSql ? sqlServerName : ''
 output sqlDatabaseName string = enableAzureSql ? sqlDatabaseName : ''
