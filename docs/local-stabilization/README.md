@@ -116,13 +116,18 @@ Each surface needs unit, integration, local data smoke, and browser coverage whe
 - [ ] design-system P0s from `DESIGN_SYSTEM_AUDIT.md` are fixed or tracked as staging blockers.
 - [ ] every P0/P1 gap has a bd issue with repro command and close evidence.
 
+## Supporting docs
+
+- [Local data contract](./local-data-contract.md)
+- [Surface health matrix](./surface-health-matrix.md)
+
 ## Current known gaps filed from this level-set
 
 See bd parent `ct-9bh`.
 
 1. `ct-98s` — local doctor/local gate ✅ complete
 2. `ct-dag` — seeded local data and fetch contracts ✅ complete
-3. `ct-80e` — local surface inventory and health matrix
+3. `ct-80e` — local surface inventory and health matrix ✅ complete
 4. `ct-ba1` — design-system P0 remediation
 5. `ct-1aq` — Playwright flows for Tyler's real data-fetching UX
 6. `ct-cf2` — test coverage map by product surface
@@ -147,3 +152,10 @@ See bd parent `ct-9bh`.
 - Validated `make local-reset-seed-smoke`: 27 pass, 0 fail.
 - Validated `make local-gate`: full gate passed in ~201s, including seeded data smoke.
 - Next true task: `ct-80e` — product surface inventory and health matrix.
+
+### 2026-05-17 — Surface health matrix
+
+- Added `docs/local-stabilization/surface-health-matrix.md` from live route/template inventory.
+- Mapped critical surfaces to routes, templates/partials, API/data dependencies, seed status, test coverage, local status, and gap beads.
+- Current risk shifted from P0 local boot/data to P1 design-system visual quality and seeded browser assertions.
+- Next true tasks: `ct-ba1` design-system P0 remediation, then `ct-1aq` Playwright seeded data-fetching flows.
