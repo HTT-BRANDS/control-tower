@@ -42,7 +42,8 @@ echo "🔧 Azure Governance Platform - Production 503 Fix"
 echo "===================================================="
 echo ""
 
-# Step 1: Update container registry credentialsecho "Step 1/3: Updating container registry credentials..."
+# Step 1: Update container registry credentials
+echo "Step 1/3: Updating container registry credentials..."
 az webapp config appsettings set \
     --name "$APP_NAME" \
     --resource-group "$RESOURCE_GROUP" \
@@ -53,7 +54,8 @@ az webapp config appsettings set \
 echo "   ✅ Registry credentials updated"
 echo ""
 
-# Step 2: Restart App Service to pull containerecho "Step 2/3: Restarting App Service to pull container..."
+# Step 2: Restart App Service to pull container
+echo "Step 2/3: Restarting App Service to pull container..."
 az webapp restart \
     --name "$APP_NAME" \
     --resource-group "$RESOURCE_GROUP"

@@ -865,8 +865,6 @@ def get_all_checks() -> dict[str, BasePreflightCheck]:
         # Admin risk checks not available
         pass
 
-        pass
-
     return {check.check_id: check for check in checks}
 
 

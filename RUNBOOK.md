@@ -71,7 +71,7 @@ gh workflow run deploy-production.yml --ref main
 #   Actions → Deploy Production → Run workflow → Branch: main
 ```
 
-Detailed walkthrough: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+Detailed walkthrough: [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md).
 
 ### What "deploy" does mechanically
 1. GitHub Actions OIDC-federates into HTT-CORE Azure tenant (no stored secrets).
@@ -98,7 +98,7 @@ gh run rerun <run-id>
 # Option B: Set the App Service container directly to a previous digest
 az webapp config container set \
   --name app-governance-prod \
-  --resource-group rg-governance-prod \
+  --resource-group rg-governance-production \
   --container-image-name ghcr.io/htt-brands/control-tower@sha256:<digest>
 ```
 
@@ -290,7 +290,7 @@ the platform running.
 - [ ] You can reach `curl https://app-governance-prod.azurewebsites.net/health`.
 - [ ] You have read access to `kv-gov-prod` Key Vault in Azure Portal.
 - [ ] You have `Cost Management Reader` role on the HTT-CORE subscription.
-- [ ] You have `Contributor` role on `rg-governance-prod` (for emergency
+- [ ] You have `Contributor` role on `rg-governance-production` (for emergency
       Azure CLI work).
 - [ ] You can dispatch `deploy-production.yml` (or a designated alternate
       can).

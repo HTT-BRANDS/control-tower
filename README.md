@@ -152,7 +152,7 @@ open http://localhost:8000/docs
 #### Option B: Per-Tenant App Registrations
 
 1. Create an app registration in each tenant
-2. Grant required permissions (see docs/PERMISSIONS.md)
+2. Grant required permissions (see docs/PERMISSIONS_REFERENCE.md)
 3. Store credentials in Azure Key Vault
 4. Configure `KEY_VAULT_URL` in `.env`
 

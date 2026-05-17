@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models.brand import BrandConfig
+    from app.models.brand_config import BrandConfig
 
 
 class Tenant(Base):
