@@ -102,3 +102,7 @@ research/*/raw-findings/
 /bin/tailwindcss
 # Visual parity testing (py7u.4) — diff artifacts only, NOT baselines
 tests/e2e/visual_diffs/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
