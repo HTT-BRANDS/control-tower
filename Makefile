@@ -1,7 +1,7 @@
 # Azure Governance Platform - Makefile
 # Common development and deployment tasks
 
-.PHONY: help install install-dev test test-cov test-e2e lint format type-check security-check clean migrate migrate-up migrate-down run run-dev docker-build docker-push deploy-staging deploy-production backup db-backup db-shell shell logs docs visual-test accessibility-test mutation-test phase3-tests
+.PHONY: help install install-dev doctor local-fast-gate local-gate local-db-reset local-seed local-data-smoke local-reset-seed-smoke test test-cov test-e2e lint format type-check security-check clean migrate migrate-up migrate-down run run-dev docker-build docker-push deploy-staging deploy-production backup db-backup db-shell shell logs docs visual-test accessibility-test mutation-test phase3-tests
 
 # Default target
 .DEFAULT_GOAL := help
@@ -12,6 +12,10 @@ GREEN := \033[32m
 YELLOW := \033[33m
 RED := \033[31m
 NC := \033[0m # No Color
+
+LOCAL_DB_PATH ?= data/local-dev.db
+LOCAL_DB_URL ?= sqlite:///./$(LOCAL_DB_PATH)
+LOCAL_ENV := ENVIRONMENT=development DATABASE_URL=$(LOCAL_DB_URL)
 
 help: ## Show this help message
 	@echo "$(BLUE)Azure Governance Platform$(NC) - Available targets:"
@@ -40,6 +44,62 @@ install-dev: ## Install development dependencies
 install-uv: ## Install dependencies using uv (faster)
 	@echo "$(BLUE)Installing with uv...$(NC)"
 	uv pip install -e ".[dev]"
+
+# =============================================================================
+# Local-first validation gates
+# =============================================================================
+
+doctor: ## Validate local prerequisites without Azure credentials
+	@echo "$(BLUE)Running local doctor...$(NC)"
+	uv run python scripts/doctor.py
+
+local-fast-gate: doctor ## Run fast local preflight gate
+	@echo "$(BLUE)Running fast local gate...$(NC)"
+	uv run ruff check app tests scripts
+	uv run ruff format --check app tests scripts
+	uv run pytest tests/e2e/test_browser_smoke.py -q --tb=short
+	uv run pytest tests/e2e/test_accessibility_e2e.py tests/e2e/test_axe_accessibility.py -q --tb=short
+	@echo "$(GREEN)✓ Fast local gate passed$(NC)"
+
+local-gate: doctor ## Run full local gate before staging/product validation
+	@echo "$(BLUE)Running full local gate...$(NC)"
+	uv run ruff check app tests scripts
+	uv run ruff format --check app tests scripts
+	@echo "$(BLUE)Running unit and integration suites in parallel...$(NC)"
+	@rm -f /tmp/control-tower-unit.log /tmp/control-tower-integration.log
+	@(uv run pytest tests/unit -q --tb=short > /tmp/control-tower-unit.log 2>&1 & \
+		unit_pid=$$!; \
+		uv run pytest tests/integration -q --tb=short > /tmp/control-tower-integration.log 2>&1 & \
+		integration_pid=$$!; \
+		wait $$unit_pid; unit_status=$$?; \
+		wait $$integration_pid; integration_status=$$?; \
+		tail -n 30 /tmp/control-tower-unit.log; \
+		tail -n 30 /tmp/control-tower-integration.log; \
+		if [ $$unit_status -ne 0 ] || [ $$integration_status -ne 0 ]; then \
+			echo "$(RED)Unit or integration suite failed$(NC)"; \
+			exit 1; \
+		fi)
+	uv run pytest tests/e2e/test_browser_smoke.py tests/e2e/test_accessibility_e2e.py -q --tb=short
+	uv run pytest tests/e2e/test_axe_accessibility.py -q --tb=short
+	$(MAKE) local-reset-seed-smoke
+	@echo "$(GREEN)✓ Full local gate passed$(NC)"
+
+local-db-reset: ## Reset dedicated local SQLite demo database only
+	@echo "$(YELLOW)Resetting dedicated local DB: $(LOCAL_DB_PATH)$(NC)"
+	@mkdir -p $(dir $(LOCAL_DB_PATH))
+	@rm -f $(LOCAL_DB_PATH) $(LOCAL_DB_PATH)-shm $(LOCAL_DB_PATH)-wal
+	@echo "$(GREEN)✓ Local DB reset$(NC)"
+
+local-seed: ## Seed dedicated local SQLite demo database
+	@echo "$(BLUE)Seeding local demo data into $(LOCAL_DB_PATH)...$(NC)"
+	$(LOCAL_ENV) uv run python scripts/seed_data.py --force
+
+local-data-smoke: ## Validate local seeded data contract
+	@echo "$(BLUE)Running local data smoke...$(NC)"
+	$(LOCAL_ENV) uv run python scripts/local_data_smoke.py
+
+local-reset-seed-smoke: local-db-reset local-seed local-data-smoke ## Reset, seed, and validate local demo data
+	@echo "$(GREEN)✓ Local reset/seed/smoke passed$(NC)"
 
 # =============================================================================
 # Testing
@@ -209,15 +269,7 @@ db-shell: ## Open database shell (SQLite) or connect string
 
 db-stats: ## Show database statistics
 	@echo "$(BLUE)Database statistics...$(NC)"
-	python -c "
-from app.core.database import SessionLocal, get_db_stats
-from sqlalchemy import text
-db = SessionLocal()
-stats = get_db_stats(db)
-for table, count in stats.items():
-    print(f'  {table}: {count} rows')
-db.close()
-"
+	python -c "from app.core.database import SessionLocal, get_db_stats; db = SessionLocal(); stats = get_db_stats(db); [print(f'  {table}: {count} rows') for table, count in stats.items()]; db.close()"
 
 # =============================================================================
 # Application Operations
@@ -237,13 +289,7 @@ run-worker: ## Run background worker (if using separate worker process)
 
 shell: ## Open Python shell with app context
 	@echo "$(BLUE)Opening Python shell...$(NC)"
-	python -c "
-from app.core.database import SessionLocal
-from app.core.config import get_settings
-from app.models import *
-import sys
-print('Available: SessionLocal, get_settings, models')
-" -i
+	python -i -c "from app.core.database import SessionLocal; from app.core.config import get_settings; from app.models import *; print('Available: SessionLocal, get_settings, models')"
 
 logs: ## Show recent logs (if using docker-compose)
 	@echo "$(BLUE)Showing logs...$(NC)"
@@ -312,13 +358,7 @@ clean: ## Clean temporary files and caches
 
 docs: ## Generate API documentation
 	@echo "$(BLUE)Generating documentation...$(NC)"
-	python -c "
-from app.main import app
-import json
-with open('docs/openapi.json', 'w') as f:
-    json.dump(app.openapi(), f, indent=2)
-print('Documentation saved to docs/openapi.json')
-"
+	python -c "from app.main import app; import json; json.dump(app.openapi(), open('docs/openapi.json', 'w'), indent=2); print('Documentation saved to docs/openapi.json')"
 
 health-check: ## Check application health
 	@echo "$(BLUE)Checking application health...$(NC)"
@@ -326,18 +366,7 @@ health-check: ## Check application health
 
 env-check: ## Validate environment variables
 	@echo "$(BLUE)Checking environment configuration...$(NC)"
-	python -c "
-from app.core.config import get_settings
-try:
-    settings = get_settings()
-    print('$(GREEN)✓ Environment configuration valid$(NC)')
-    print(f'  App Name: {settings.app_name}')
-    print(f'  Environment: {settings.environment}')
-    print(f'  Database: {settings.database_url.split(\"@\")[-1] if \"@\" in settings.database_url else \"local\"}')
-except Exception as e:
-    print(f'$(RED)✗ Configuration error: {e}$(NC)')
-    exit(1)
-"
+	python -c "from app.core.config import get_settings; settings = get_settings(); db = settings.database_url.split('@')[-1] if '@' in settings.database_url else 'local'; print('$(GREEN)✓ Environment configuration valid$(NC)'); print(f'  App Name: {settings.app_name}'); print(f'  Environment: {settings.environment}'); print(f'  Database: {db}')"
 
 # =============================================================================
 # CI/CD Utilities
