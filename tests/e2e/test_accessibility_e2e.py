@@ -23,22 +23,45 @@ class TestNavigation:
 class TestStaticAssetAccessibility:
     """CSS files that support accessibility and theming."""
 
-    def test_accessibility_css_exists(self, unauth_api_context: APIRequestContext):
-        resp = unauth_api_context.get("/static/css/accessibility.css")
+    def test_current_css_assets_exist(self, unauth_api_context: APIRequestContext):
+        """Current CSS architecture serves all required layers.
+
+        The old theme.css/accessibility.css files were consolidated into the
+        token/compiled-utility stack. Assert the real runtime contract instead
+        of stale filenames, because tests lying about architecture is rude.
+        """
+        expected_assets = (
+            "/static/css/design-tokens.css",
+            "/static/css/tailwind-output.css",
+            "/static/css/design-utilities.css",
+        )
+
+        for path in expected_assets:
+            resp = unauth_api_context.get(path)
+            assert resp.status == 200, f"{path} returned {resp.status}"
+            assert len(resp.text()) > 0, f"{path} is empty"
+
+    def test_design_tokens_define_theme_and_dark_mode(self, unauth_api_context: APIRequestContext):
+        resp = unauth_api_context.get("/static/css/design-tokens.css")
         assert resp.status == 200
         body = resp.text()
-        assert len(body) > 0
 
-    def test_theme_css_has_dark_mode_support(self, unauth_api_context: APIRequestContext):
-        # dark-mode.css was consolidated into theme.css in Phase 16
-        resp = unauth_api_context.get("/static/css/theme.css")
+        assert ":root" in body
+        assert ".dark" in body
+        assert "--brand-primary" in body
+        assert "--text-primary" in body
+        assert "--bg-primary" in body
+
+    def test_design_utilities_include_accessibility_layer(
+        self, unauth_api_context: APIRequestContext
+    ):
+        resp = unauth_api_context.get("/static/css/design-utilities.css")
         assert resp.status == 200
         body = resp.text()
-        assert len(body) > 0
 
-    def test_theme_css_exists(self, unauth_api_context: APIRequestContext):
-        resp = unauth_api_context.get("/static/css/theme.css")
-        assert resp.status == 200
+        assert "WCAG 2.2 AA Accessibility Layer" in body
+        assert ".skip-link" in body
+        assert "focus" in body
 
 
 class TestOnboardingAccessibility:
