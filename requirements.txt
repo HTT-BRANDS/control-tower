@@ -28,7 +28,7 @@ azure-common==1.1.28
     #   azure-mgmt-resource
     #   azure-mgmt-security
     #   azure-mgmt-subscription
-azure-core==1.40.0
+azure-core==1.41.0
     # via
     #   azure-identity
     #   azure-keyvault-secrets
@@ -73,7 +73,7 @@ cffi==2.0.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.3.3
+click==8.4.0
     # via uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
@@ -87,7 +87,7 @@ cryptography==47.0.0
     #   pyjwt
 fastapi==0.136.1
     # via control-tower
-googleapis-common-protos==1.74.0
+googleapis-common-protos==1.75.0
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
@@ -105,12 +105,12 @@ httptools==0.7.1
     # via uvicorn
 httpx==0.28.1
     # via control-tower
-idna==3.13
+idna==3.15
     # via
     #   anyio
     #   httpx
     #   requests
-importlib-metadata==8.7.1
+importlib-metadata==8.9.0
     # via opentelemetry-api
 isodate==0.7.2
     # via
@@ -207,14 +207,14 @@ protobuf==6.33.6
     #   opentelemetry-proto
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
-pydantic==2.13.3
+pydantic==2.13.4
     # via
     #   control-tower
     #   fastapi
     #   pydantic-settings
-pydantic-core==2.46.3
+pydantic-core==2.46.4
     # via pydantic
-pydantic-settings==2.14.0
+pydantic-settings==2.14.1
     # via control-tower
 pyjwt==2.12.1
     # via
@@ -226,7 +226,7 @@ python-dotenv==1.2.2
     # via
     #   pydantic-settings
     #   uvicorn
-python-multipart==0.0.27
+python-multipart==0.0.29
     # via control-tower
 pyyaml==6.0.3
     # via
@@ -238,7 +238,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.1
+requests==2.34.2
     # via
     #   azure-core
     #   control-tower
@@ -293,13 +293,13 @@ tzdata==2026.2 ; sys_platform == 'win32'
     # via tzlocal
 tzlocal==5.3.1
     # via apscheduler
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
-uvicorn==0.46.0
+uvicorn==0.47.0
     # via control-tower
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
-watchfiles==1.1.1
+watchfiles==1.2.0
     # via uvicorn
 websockets==16.0
     # via uvicorn
