@@ -74,11 +74,10 @@ A credential class is complete when every row has:
 
 | Scope | Secret / variable | Purpose | Primary owner | Secondary reader/operator | Last rotated | Next due | Recovery notes |
 |---|---|---|---|---|---|---|---|
-| Repository / environments | `AZURE_CLIENT_ID` | GitHub Actions OIDC login | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Used by `backup.yml`, `bacpac-export.yml`, deploy/drift workflows; recreate federated credential if lost |
-| Repository / environments | `AZURE_TENANT_ID` | GitHub Actions OIDC login | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Used by `azure/login@v2`; non-secret-ish but keep with environment config |
-| Repository / environments | `AZURE_SUBSCRIPTION_ID` | GitHub Actions OIDC login | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Required by `azure/login@v2`; non-secret-ish but operationally important |
-| Repository / environments | `GHCR_PAT` | App Service GHCR pull fallback | Tyler | 🔴 TODO / none risk accepted | 2026-04-10 per RUNBOOK | 🔴 TODO | Confirm actual expiration in GitHub |
+| Repository scope | `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` | Legacy/non-environment GitHub Actions OIDC login | Tyler | 🔴 TODO / none risk accepted | 2026-05-18 | 🔴 TODO | Retained by `ct-90r.11` because `deploy-dev.yml`, drift/topology, and registry-migration workflows still consume repo-level Azure OIDC; remove after those workflows get explicit environment/dedicated identity model |
+| Repository scope | `GHCR_PAT` | App Service GHCR pull fallback | Tyler | 🔴 TODO / none risk accepted | 2026-04-10 per RUNBOOK | 🔴 TODO | Retained by `ct-90r.11`; deploy workflows still use it for App Service GHCR pull credentials |
 | Repository / environments | `PRODUCTION_TEAMS_WEBHOOK` | Production/deploy/BACPAC alerting | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Rotate in Teams connector if exposed |
+| Repository scope | `AZURE_APP_SERVICE_NAME` / `AZURE_RESOURCE_GROUP` secrets and `AZURE_WEBAPP_NAME` / `RESOURCE_GROUP` variables | Removed unused deployment config | Tyler | n/a | 2026-05-18 | n/a | Removed by `ct-90r.11`; active workflows no longer reference these repo-scope names |
 | Staging environment | `SQL_ADMIN_PASSWORD` | Staging BACPAC export | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Current stopgap was set from staging app `DATABASE_URL`; document final source |
 | Staging environment | `DATABASE_URL` | Scheduled staging database backup (`backup.yml`) | Tyler | GitHub environment secret | 🔴 TODO | 2026-04-30 | Set from staging App Service setting without printing value; validation pending bd `jzpa`. |
 | Staging environment | `AZURE_STORAGE_ACCOUNT` | Scheduled staging database backup upload target | Tyler | GitHub environment secret | 🔴 TODO | 2026-04-30 | Set to `stgovstagingxnczpwyv`; validation pending bd `jzpa`. |
