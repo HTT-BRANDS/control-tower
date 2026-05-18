@@ -11,7 +11,7 @@
 #
 # Pipeline stages:
 #   1. QA Gate       — lint + unit/integration unless explicitly disabled
-#   2. Build Image   — Azure ACR build, production Docker target
+#   2. Build Image   — runner Docker build, push to dev ACR
 #   3. Deploy        — update dev App Service container image
 #   4. Health Gate   — bounded readiness loop with automatic rollback
 #   5. Validation    — hardened dev smoke script
@@ -220,13 +220,24 @@ jobs:
           echo "previous_image=$previous" >> "$GITHUB_OUTPUT"
           echo "Previous image: $previous"
 
-      - name: Build image in dev ACR
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker login to dev ACR via OIDC token
+        shell: bash
         run: |
-          az acr build \
-            --registry "$ACR_NAME" \
-            --image "${IMAGE_REPOSITORY}:${{ steps.image-meta.outputs.tag }}" \
-            --file Dockerfile \
+          token=$(az acr login --name "$ACR_NAME" --expose-token --output tsv --query accessToken)
+          echo "$token" | docker login "$ACR_LOGIN_SERVER" \
+            --username 00000000-0000-0000-0000-000000000000 \
+            --password-stdin
+
+      - name: Build and push image to dev ACR
+        run: |
+          docker buildx build \
             --target production \
+            --platform linux/amd64 \
+            --tag "${{ steps.image-meta.outputs.image }}" \
+            --push \
             .
 
       - name: Update dev App Service container and restart
