@@ -121,6 +121,7 @@ Each surface needs unit, integration, local data smoke, and browser coverage whe
 
 - [Local data contract](./local-data-contract.md)
 - [Surface health matrix](./surface-health-matrix.md)
+- [Test coverage map](./test-coverage-map.md)
 
 ## Current known gaps filed from this level-set
 
@@ -131,7 +132,7 @@ See bd parent `ct-9bh`.
 3. `ct-80e` — local surface inventory and health matrix ✅ complete
 4. `ct-ba1` — design-system P0 remediation ✅ complete
 5. `ct-1aq` — Playwright flows for Tyler's real data-fetching UX ✅ complete
-6. `ct-cf2` — test coverage map by product surface
+6. `ct-cf2` — test coverage map by product surface ✅ complete
 
 ## Progress log
 
