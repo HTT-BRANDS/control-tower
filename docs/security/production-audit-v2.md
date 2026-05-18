@@ -382,7 +382,7 @@ Sprint 16.4 focused on frontend consistency (brand tokens, CSS consolidation, de
 
 | Original ID | Severity | Finding | Phase 16 Resolution | Status |
 |-------------|----------|---------|---------------------|--------|
-| M-1 | Medium | `.env.production` tracked in git | Superseded — template contains only placeholders; `.gitignore` rule active | ✅ RESOLVED |
+| M-1 | Medium | `.env.production` tracked in git | Closed in `ct-dp9`; removed from git index while `.gitignore` keeps `.env.*` ignored | ✅ CLOSED |
 | M-2 | Medium | No password hashing for dev login | Accepted — dev login blocked in production (`config.py:42` defaults to production); path unreachable | ✅ ACCEPTED RISK |
 | M-3 | Medium | No SBOM generation | Closed 2026-04-23 (bd 7mk8) — Syft SBOM + Sigstore attestation in `deploy-production.yml`; verified at deploy time by cosign | ✅ RESOLVED |
 | L-1 | Low | Rate limiter fails open on error | Fixed — `app/main.py:203-211` fails closed on `/auth/` endpoints | ✅ RESOLVED |

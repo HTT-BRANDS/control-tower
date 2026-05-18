@@ -128,7 +128,12 @@ not prove the secret exists in GitHub/Azure and do not include secret values.
 
 | Date | Credential class | Action | Actor | Evidence pointer |
 |---|---|---|---|---|
-| 🔴 TODO | 🔴 TODO | 🔴 TODO | Tyler | 🔴 TODO |
+| 2026-05-18 | Obsidian local audit exposure | Repo-side containment started; exact secret rotations tracked as Tyler-only child beads | Richard (`code-puppy-1c7422`) | `ct-dp9`, `docs/security/obsidian-secret-triage-2026-05.md` |
+| 🔴 TODO | Azure platform client secret | Rotate/delete or prove obsolete | Tyler | `ct-dp9.1` |
+| 🔴 TODO | Managed tenant app secrets | Rotate/delete affected tenant credentials | Tyler | `ct-dp9.2` |
+| 🔴 TODO | JWT signing secrets | Rotate affected app signing keys and restart consumers | Tyler | `ct-dp9.3` |
+| 🔴 TODO | Dev SQL/admin credential | Rotate/delete affected dev SQL credential | Tyler | `ct-dp9.4` |
+| 🔴 TODO | Teams/GitHub environment secrets | Rotate/prove unaffected | Tyler | `ct-dp9.6` |
 
 ---
 

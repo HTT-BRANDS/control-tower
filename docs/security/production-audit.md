@@ -79,7 +79,7 @@ The Azure Governance Platform demonstrates a **mature security posture** for a v
 | Check | Status | Evidence |
 |-------|--------|----------|
 | `.env` excluded from git | ✅ Pass | `.gitignore:13` — `.env` not tracked; confirmed via `git ls-files` |
-| `.env.*` excluded from git | ⚠️ Issue | `.gitignore:14` — rule exists but `.env.production` was added before the rule; **still tracked in git** (see Finding M-1) |
+| `.env.*` excluded from git | ✅ Pass | `.gitignore:14` excludes `.env.*`; `.env.production` was removed from the git index during `ct-dp9` triage |
 | `.env.example` has no real secrets | ✅ Pass | Template values only; `JWT_SECRET_KEY` commented out |
 | `.env.production` has no real secrets | ✅ Pass | Contains placeholder values (`your-tenant-id-here`, `your-service-principal-secret`) — not actual credentials |
 | Key Vault integration configured | ✅ Pass | `app/core/config.py:113` — `key_vault_url` field; `app/core/tenants_config.py` — all tenant secrets use `key_vault_secret_name` references |
@@ -154,7 +154,7 @@ The Azure Governance Platform demonstrates a **mature security posture** for a v
 
 | ID | Severity | Finding | Status | CVSS | Mitigation |
 |----|----------|---------|--------|------|------------|
-| M-1 | **Medium** | `.env.production` template tracked in git history | Open | 4.3 | Template only (no real secrets), but git history risk remains. Run `git rm --cached .env.production` |
+| M-1 | **Medium** | `.env.production` template tracked in git history | ✅ Closed | 4.3 | Template only; removed from git index during `ct-dp9` triage |
 | M-2 | **Medium** | No password hashing library enforced for dev login | Open | 4.0 | Dev-only (`admin/admin`), blocked in production. Add `passlib[bcrypt]` for dev credential store |
 | M-3 | **Medium** | No SBOM generation in CI/CD pipeline | ✅ Closed | 3.5 | Syft SBOM + Sigstore attestation landed 2026-04-23 (bd 7mk8, commit `7d816f6`). |
 | L-1 | **Low** | Rate limiter fails open on error | Open | 2.5 | Acceptable for availability but should log and alert. Add monitoring for rate limit failures |
@@ -174,22 +174,19 @@ The Azure Governance Platform demonstrates a **mature security posture** for a v
 
 ## Detailed Finding Analysis
 
-### M-1: `.env.production` Template Tracked in Git (Medium)
+### M-1: `.env.production` Template Tracked in Git (Medium) — ✅ CLOSED 2026-05-18
 
-**Risk:** While `.env.production` contains only placeholder values (`your-tenant-id-here`), the file is tracked in git's index (`git ls-files --cached .env.production` returns the file). If a developer accidentally fills in real values and commits, those secrets enter git history permanently.
+**Risk:** While `.env.production` contained only template values, it was tracked in git's index. If a developer accidentally filled in real values and committed, those secrets would enter git history permanently.
 
 **Business Impact:** Potential credential exposure via git history (likelihood: Low, impact: High → net Medium).
 
-**Evidence:**
+**Resolution:** `ct-dp9` removed `.env.production` from the git index. `.gitignore` already blocks `.env.*`, with `.env.example` explicitly allowed as the safe committed template.
+
+**Verification:**
 ```
 $ git ls-files --cached .env.production
-.env.production
+# no output
 ```
-
-**Remediation:**
-- **Immediate (1 day):** `git rm --cached .env.production && git commit -m "chore: untrack .env.production template"`
-- **Medium-term:** Rename to `.env.production.template` and add explicit `.gitignore` entry
-- **Owner:** DevOps / Platform team
 
 ### M-2: No Password Hashing for Dev Login (Medium)
 
