@@ -30,7 +30,7 @@ cffi==2.0.0 ; (implementation_name == 'pypy' and platform_python_implementation 
     #   pyzmq
 charset-normalizer==3.4.7
     # via requests
-click==8.3.3
+click==8.4.0
     # via flask
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
@@ -38,7 +38,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
 configargparse==1.7.5
     # via locust
-coverage==7.13.5
+coverage==7.14.0
     # via pytest-cov
 flask==3.1.3
     # via
@@ -61,7 +61,7 @@ greenlet==3.5.0
     #   playwright
 h11==0.16.0
     # via wsproto
-idna==3.13
+idna==3.15
     # via requests
 iniconfig==2.3.0
     # via pytest
@@ -69,9 +69,9 @@ itsdangerous==2.2.0
     # via flask
 jinja2==3.1.6
     # via flask
-librt==0.9.0 ; platform_python_implementation != 'PyPy'
+librt==0.11.0 ; platform_python_implementation != 'PyPy'
     # via mypy
-locust==2.43.4
+locust==2.44.0
 markupsafe==3.0.3
     # via
     #   flask
@@ -87,7 +87,7 @@ packaging==26.2
 pathspec==1.1.1
     # via mypy
 pillow==12.2.0
-playwright==1.59.0
+playwright==1.60.0
     # via pytest-playwright
 pluggy==1.6.0
     # via
@@ -112,7 +112,7 @@ pytest-asyncio==1.3.0
 pytest-base-url==2.1.0
     # via pytest-playwright
 pytest-cov==7.1.0
-pytest-playwright==0.7.2
+pytest-playwright==0.8.0
 python-engineio==4.13.1
     # via
     #   locust
@@ -125,12 +125,12 @@ pywin32==311 ; sys_platform == 'win32'
     # via locust
 pyzmq==27.1.0
     # via locust
-requests==2.33.1
+requests==2.34.2
     # via
     #   locust
     #   pytest-base-url
     #   python-socketio
-ruff==0.15.12
+ruff==0.15.13
 simple-websocket==1.1.0
     # via python-engineio
 text-unidecode==1.3
@@ -140,7 +140,7 @@ typing-extensions==4.15.0
     #   mypy
     #   pyee
     #   pytest-asyncio
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   geventhttpclient
     #   requests
