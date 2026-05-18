@@ -31,11 +31,6 @@ on:
         description: 'Deployment reason (shown in Teams notification)'
         required: true
         type: string
-      skip_tests:
-        description: 'Skip unit tests (emergency hotfix only — requires justification)'
-        required: false
-        default: false
-        type: boolean
   # NOTE: Tag push trigger removed — no OIDC federated credential covers
   # tag refs. Use workflow_dispatch for production deploys.
 
@@ -160,11 +155,9 @@ jobs:
           echo "Created config/tenants.yaml with OIDC enabled for all tenants"
 
       - name: Install Playwright browser dependencies
-        if: ${{ !inputs.skip_tests }}
         run: uv run playwright install chromium --with-deps
 
       - name: Full test suite
-        if: ${{ !inputs.skip_tests }}
         # ``-m 'not visual'`` deselects browser-required visual-parity
         # tests (see tests/integration/test_sync_status_dark_mode.py).
         # The dedicated ``browser-smoke`` job in ci.yml owns that surface;
@@ -295,16 +288,16 @@ jobs:
           docker buildx build \
             --platform linux/amd64 \
             --target production \
-            --tag ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
-            --tag ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${SHA_TAG} \
+            --tag "${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${{ env.IMAGE_TAG }}" \
+            --tag "${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${SHA_TAG}" \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
             --metadata-file /tmp/buildx-meta.json \
             --push \
             .
           
-          echo "sha_tag=${SHA_TAG}" >> $GITHUB_ENV
-          echo "sha_tag=${SHA_TAG}" >> $GITHUB_OUTPUT
+          echo "sha_tag=${SHA_TAG}" >> "$GITHUB_ENV"
+          echo "sha_tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
 
       # Extract the content-addressed digest from buildx's metadata file.
       # Using the digest (immutable) instead of a tag (mutable) means the
@@ -375,8 +368,8 @@ jobs:
         run: |
           IMAGE_FULL="${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           SHA_TAG="sha-${{ github.sha }}"
-          echo "image_full=${IMAGE_FULL}" >> $GITHUB_OUTPUT
-          echo "sha_tag=${SHA_TAG}" >> $GITHUB_OUTPUT
+          echo "image_full=${IMAGE_FULL}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=${SHA_TAG}" >> "$GITHUB_OUTPUT"
           echo "Built: ${IMAGE_FULL}"
 
   # ===========================================================================
@@ -722,11 +715,11 @@ jobs:
         id: status
         run: |
           if [ "${{ needs.deploy.result }}" = "success" ] && [ "${{ needs.smoke-test.result }}" = "success" ]; then
-            echo "color=00a86b" >> $GITHUB_OUTPUT
-            echo "title=✅ Production Deployment Succeeded" >> $GITHUB_OUTPUT
+            echo "color=00a86b" >> "$GITHUB_OUTPUT"
+            echo "title=✅ Production Deployment Succeeded" >> "$GITHUB_OUTPUT"
           else
-            echo "color=d32f2f" >> $GITHUB_OUTPUT
-            echo "title=❌ Production Deployment Failed" >> $GITHUB_OUTPUT
+            echo "color=d32f2f" >> "$GITHUB_OUTPUT"
+            echo "title=❌ Production Deployment Failed" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Send Teams notification
