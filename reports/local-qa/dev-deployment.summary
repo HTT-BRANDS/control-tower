@@ -1,0 +1,7 @@
+commit=d666268
+new_image=acrgovernancedev.azurecr.io/governance-platform:qa-d666268-20260518
+previous_image=acrgovernancedev.azurecr.io/governance-platform:20260331124605
+started=2026-05-18T04:12:11Z
+completed=2026-05-18T04:19:12Z
+health=PASS
+rolled_back=false

@@ -56,6 +56,20 @@ az webapp restart --resource-group rg-governance-dev --name app-governance-dev-0
 ./scripts/verify-dev-deployment.sh
 ```
 
+## Development deployment result
+
+Manual dev-only container promotion completed.
+
+- Commit/image source: `d666268`.
+- New dev image: `acrgovernancedev.azurecr.io/governance-platform:qa-d666268-20260518`.
+- Previous rollback image: `acrgovernancedev.azurecr.io/governance-platform:20260331124605`.
+- Dev App Service container setting confirms the new image.
+- Dev `/health` returned healthy, environment `development`, version `2.5.0`.
+- Post-deploy dev smoke passed for public endpoints and protected-route no-500 checks.
+- Rollback was not required.
+
+See `reports/local-qa/dev-deployment.summary` and `reports/local-qa/dev-deployment-smoke.md`.
+
 ## Known process gap
 
 The repo references `deploy-dev.yml`, but GitHub has no active dev deployment workflow. This promotion uses manual dev-only ACR/App Service container update after local QA. A follow-up bead tracks restoring/documenting deterministic dev deployment.
