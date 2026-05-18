@@ -87,7 +87,7 @@ jobs:
         run: uv run ruff format --check app tests scripts
 
       - name: Detect secrets
-        run: uv run pre-commit run detect-secrets --all-files
+        run: uvx pre-commit run detect-secrets --all-files
 
       - name: Create CI tenant config
         run: |
