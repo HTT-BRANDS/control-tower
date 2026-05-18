@@ -130,7 +130,7 @@ not prove the secret exists in GitHub/Azure and do not include secret values.
 |---|---|---|---|---|
 | 2026-05-18 | Obsidian local audit exposure | Repo-side containment started; exact secret rotations tracked as Tyler-only child beads | Richard (`code-puppy-1c7422`) | `ct-dp9`, `docs/security/obsidian-secret-triage-2026-05.md` |
 | 2026-05-18 | Azure platform client secret | Rotated visible platform app password credential; updated prod App Service, dev Key Vault, and ignored local env; deleted previous app password | Richard (`code-puppy-1c7422`) | `ct-dp9.1`, `docs/security/obsidian-secret-triage-2026-05.md` |
-| 2026-05-18 | Managed tenant app secrets | HTT aligned to rotated platform credential; BCC/FN/TLL/DCE still require cross-tenant access | Richard + Tyler | `ct-dp9.2` |
+| 2026-05-18 | Managed tenant app secrets | HTT aligned to rotated platform credential; DCE app credential rotated and previous password removed; BCC/FN/TLL still require fresh/privileged tenant auth | Richard + Tyler | `ct-dp9.2` |
 | 2026-05-18 | JWT signing secrets | Rotated staging + production App Service signing keys and restarted consumers | Richard (`code-puppy-1c7422`) | `ct-dp9.3`, health checks in `docs/security/obsidian-secret-triage-2026-05.md` |
 | 2026-05-18 | Dev SQL/admin credential | Rotated dev SQL admin password; updated ignored local SQL env and dev Key Vault connection pointer | Richard (`code-puppy-1c7422`) | `ct-dp9.4` |
 | 🔴 TODO | Teams/GitHub environment secrets | Rotate/prove unaffected | Tyler | `ct-dp9.6` |

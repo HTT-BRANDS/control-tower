@@ -29,7 +29,7 @@ These are derived from the `ct-dp9` description and local env key names only. Th
 | Class | Examples / scope | Required action | Owner | Status |
 |---|---|---|---|---|
 | Azure platform client secret | `AZURE_CLIENT_SECRET` | Rotate app credential or confirm OIDC/UAMI fully replaced it and delete old secret | Richard + Tyler | ✅ DONE for visible platform app; old app password deleted |
-| Managed tenant app secrets | Riverside/HTT/BCC/FN/TLL/DCE client secrets | Rotate each tenant app credential or invalidate unused app registrations | Tyler | 🟡 HTT aligned to rotated platform credential; BCC/FN/TLL/DCE require cross-tenant access |
+| Managed tenant app secrets | Riverside/HTT/BCC/FN/TLL/DCE client secrets | Rotate each tenant app credential or invalidate unused app registrations | Richard + Tyler | 🟡 HTT + DCE rotated/aligned; BCC/FN/TLL still require fresh/privileged tenant auth |
 | JWT signing key | `JWT_SECRET_KEY` / app runtime signing secret | Generate new production/staging values; update app settings/Key Vault; restart services | Richard | ✅ DONE for staging + production App Services |
 | Dev SQL/admin password | Local Azure SQL dev URL / SQL admin password exposed to Obsidian | Rotate password or delete dev DB/user if no longer needed | Richard | ✅ DONE; ignored local SQL env + dev KV connection updated |
 | Teams webhooks | Teams alert webhook URL if present in local env/report | Rotate connector URL if value was exposed | Tyler | 🔴 TODO / confirm exposure |
@@ -76,7 +76,7 @@ These are derived from the `ct-dp9` description and local env key names only. Th
 | Platform Azure app secret exposed locally | ✅ Rotated; old password credential deleted | `ct-dp9.1` |
 | JWT signing secrets exposed locally | ✅ Rotated for staging/prod and apps restarted | `ct-dp9.3` |
 | Dev SQL/admin credential exposed locally | ✅ Rotated; local ignored env + dev KV pointer updated | `ct-dp9.4` |
-| Managed BCC/FN/TLL/DCE tenant app secrets | Open; current Azure context cannot see those app registrations | `ct-dp9.2` |
+| Managed BCC/FN/TLL tenant app secrets | Open; BCC Graph 401, TLL Graph 403, FN no active tenant token | `ct-dp9.2` |
 | Teams/GitHub environment exposure confirmation | Open | `ct-dp9.6` |
 | Shell history review | Open | `ct-dp9.5` |
 | Tyler-only secret inventory incomplete | Open | `azure-governance-platform-9lfn` |
@@ -102,7 +102,7 @@ git rm --cached .env.production
 | HTT managed tenant secret aligned | Ignored local `RIVERSIDE_HTT_CLIENT_SECRET` and dev KV `htt-client-secret` aligned to rotated platform credential |
 | Production health after rotations | `https://app-governance-prod.azurewebsites.net/health` returned HTTP 200 |
 | Dev health after rotations | `https://app-governance-dev-001.azurewebsites.net/health` returned HTTP 200 |
-| BCC/FN/TLL/DCE app visibility | Not visible from available Azure CLI context; cross-tenant owner access required |
+| BCC/FN/TLL/DCE managed app rotation | DCE rotated and old credential removed; BCC returned Graph 401; TLL returned Graph 403; FN needs active tenant login |
 | Shell history key-name scan | `.zsh_history` and `.bash_history` had zero occurrences for tracked secret key names; Tyler should still review for raw values without key names |
 | GitHub/Teams local exposure inventory | Ignored local env files contained no webhook/GitHub/GHCR keys by key-name scan; GitHub environment/repo secret names inventoried without values |
 
