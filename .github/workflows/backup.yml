@@ -5,7 +5,9 @@ name: Database Backup
 
 on:
   schedule:
-    # Run daily at 2 AM UTC (off-peak hours)
+    # Run daily production backup at 2 AM UTC (off-peak hours).
+    # Staging scheduled SQL backups are intentionally disabled while staging
+    # runs SQLite; see reports/github-security/ct-oib-staging-backup-remediation.md.
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
@@ -210,99 +212,3 @@ jobs:
           name: failed-backup-debug
           path: backup.sql.gz
           retention-days: 1
-
-  backup-staging:
-    name: Staging Database Backup
-    if: github.event.schedule == '0 2 * * *'
-    runs-on: ubuntu-latest
-    environment: staging
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install ODBC Driver 18
-        run: |
-          curl -sSL -O https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
-          sudo dpkg -i packages-microsoft-prod.deb
-          rm packages-microsoft-prod.deb
-          sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
-
-      - name: Install dependencies
-        run: |
-          pip install sqlalchemy alembic psycopg2-binary pyodbc azure-storage-blob azure-identity
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Prepare SQL firewall
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          sql_server=$(python scripts/resolve_sql_server_name.py)
-          sql_rg="rg-governance-staging"
-          runner_ip=$(curl -fsS https://api.ipify.org)
-          rule_name="GitHubActions-${GITHUB_RUN_ID}-staging"
-          az sql server firewall-rule create \
-            --resource-group "$sql_rg" \
-            --server "$sql_server" \
-            --name "$rule_name" \
-            --start-ip-address "$runner_ip" \
-            --end-ip-address "$runner_ip" \
-            -o none
-          {
-            echo "SQL_SERVER_NAME=$sql_server"
-            echo "SQL_RESOURCE_GROUP=$sql_rg"
-            echo "SQL_FIREWALL_RULE_NAME=$rule_name"
-          } >> "$GITHUB_ENV"
-
-      - name: Prepare storage authentication
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-        run: |
-          storage_key=$(az storage account keys list \
-            --account-name "$AZURE_STORAGE_ACCOUNT" \
-            --query '[0].value' \
-            -o tsv)
-          echo "::add-mask::$storage_key"
-          echo "AZURE_STORAGE_KEY=$storage_key" >> "$GITHUB_ENV"
-
-      - name: Create staging backup
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_CONTAINER: staging-backups
-        run: |
-          python scripts/backup_database.py --type full --output staging-backup.sql.gz
-          python scripts/upload_backup.py \
-            --file staging-backup.sql.gz \
-            --account "$AZURE_STORAGE_ACCOUNT" \
-            --container "$AZURE_STORAGE_CONTAINER"
-
-      - name: Cleanup old staging backups
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_CONTAINER: staging-backups
-        run: |
-          python scripts/cleanup_backups.py \
-            --account "$AZURE_STORAGE_ACCOUNT" \
-            --container "$AZURE_STORAGE_CONTAINER" \
-            --retention-days 7
-
-      - name: Remove SQL firewall rule
-        if: always() && env.SQL_FIREWALL_RULE_NAME != ''
-        run: |
-          az sql server firewall-rule delete \
-            --resource-group "$SQL_RESOURCE_GROUP" \
-            --server "$SQL_SERVER_NAME" \
-            --name "$SQL_FIREWALL_RULE_NAME"
