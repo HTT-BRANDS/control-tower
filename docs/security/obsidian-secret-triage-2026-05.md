@@ -32,10 +32,10 @@ These are derived from the `ct-dp9` description and local env key names only. Th
 | Managed tenant app secrets | Riverside/HTT/BCC/FN/TLL/DCE client secrets | Rotate each tenant app credential or invalidate unused app registrations | Richard + Tyler | ✅ DONE: HTT aligned; BCC/FN/TLL/DCE rotated and previous password credentials removed |
 | JWT signing key | `JWT_SECRET_KEY` / app runtime signing secret | Generate new production/staging values; update app settings/Key Vault; restart services | Richard | ✅ DONE for staging + production App Services |
 | Dev SQL/admin password | Local Azure SQL dev URL / SQL admin password exposed to Obsidian | Rotate password or delete dev DB/user if no longer needed | Richard | ✅ DONE; ignored local SQL env + dev KV connection updated |
-| Teams webhooks | Teams alert webhook URL if present in local env/report | Rotate connector URL if value was exposed | Tyler | 🔴 TODO / confirm exposure |
-| Shell/history exposure | Local terminal history may include copied secret values | Review and purge local shell history; rotate any values found | Tyler | 🔴 TODO |
-| GitHub environment secrets | Staging/production `DATABASE_URL`, SQL backup secrets, webhook secrets | Confirm current values differ from exposed local values or rotate | Tyler | 🔴 TODO / confirm exposure |
-| Azure Key Vault secrets | `sql-admin-password`, runtime app secrets | Rotate affected secrets and verify consuming services read latest version | Richard + Tyler | 🟡 dev KV updated; staging/prod KV metadata blocked by RBAC |
+| Teams webhooks | Teams alert webhook URL if present in local env/report | Rotate connector URL if value was exposed | Richard | ✅ No Teams/webhook GitHub secret names found; ignored local env files had no webhook/GitHub/GHCR key names |
+| Shell/history exposure | Local terminal history may include copied secret values | Review and purge affected entries; rotate any values found | Richard | ✅ DONE: risky `.zsh_history` lines removed; post-clean scan zero tracked terms/patterns |
+| GitHub environment secrets | Staging/production `DATABASE_URL`, SQL backup secrets, webhook secrets | Confirm current values differ from exposed local values or rotate | Richard | ✅ DONE: DB secrets overwritten/synced from current App Service settings; staging SQL admin password rotated |
+| Azure Key Vault secrets | `sql-admin-password`, runtime app secrets | Rotate affected secrets and verify consuming services read latest version | Richard + Tyler | ✅ DONE for reachable dev/runtime secret refs; staging/prod app health validated |
 
 ## Rotation order
 
@@ -77,8 +77,8 @@ These are derived from the `ct-dp9` description and local env key names only. Th
 | JWT signing secrets exposed locally | ✅ Rotated for staging/prod and apps restarted | `ct-dp9.3` |
 | Dev SQL/admin credential exposed locally | ✅ Rotated; local ignored env + dev KV pointer updated | `ct-dp9.4` |
 | Managed BCC/FN/TLL/DCE tenant app secrets | ✅ Fixed; BCC/FN/TLL/DCE rotated after tenant-specific admin auth | `ct-dp9.2` |
-| Teams/GitHub environment exposure confirmation | Open | `ct-dp9.6` |
-| Shell history review | Open | `ct-dp9.5` |
+| Teams/GitHub environment exposure confirmation | ✅ Fixed/confirmed: no Teams/webhook secret names found; DB env secrets overwritten; staging SQL admin rotated | `ct-dp9.6` |
+| Shell history review | ✅ Fixed: 3 risky `.zsh_history` lines removed; post-clean scan clean | `ct-dp9.5` |
 | Tyler-only secret inventory incomplete | Open | `azure-governance-platform-9lfn` |
 
 ## Commands used safely
@@ -103,8 +103,11 @@ git rm --cached .env.production
 | Production health after rotations | `https://app-governance-prod.azurewebsites.net/health` returned HTTP 200 |
 | Dev health after rotations | `https://app-governance-dev-001.azurewebsites.net/health` returned HTTP 200 |
 | BCC/FN/TLL/DCE managed app rotation | DCE rotated first; BCC/FN/TLL rotated after tenant-specific admin re-auth; previous password credentials removed; remaining password credential count=1 each |
-| Shell history key-name scan | `.zsh_history` and `.bash_history` had zero occurrences for tracked secret key names; Tyler should still review for raw values without key names |
-| GitHub/Teams local exposure inventory | Ignored local env files contained no webhook/GitHub/GHCR keys by key-name scan; GitHub environment/repo secret names inventoried without values |
+| Shell history key-name scan | Initial scan found no tracked key names; deeper pattern scan found 3 risky `.zsh_history` lines, removed them, and post-clean scan returned zero tracked terms/patterns |
+| GitHub/Teams local exposure inventory | Ignored local env files contained no webhook/GitHub/GHCR keys; no GitHub secret names matched Teams/webhook; GitHub DB secrets were overwritten as defense-in-depth |
+| GitHub staging SQL admin secret | Rotated `sql-governance-staging-77zfjyem` admin password and updated GitHub `staging/SQL_ADMIN_PASSWORD` |
+| GitHub DB URL secrets | Synced `staging/DATABASE_URL`, `production/DATABASE_URL`, and `production-backup/DATABASE_URL` from current App Service settings |
+| Final app health | Dev, staging, and production `/health` returned HTTP 200 after rotations |
 
 
 ## Closure rule for `ct-dp9`
