@@ -336,9 +336,9 @@ jobs:
           RESOURCE_GROUP: ${{ env.AZURE_RESOURCE_GROUP }}
           APP_SERVICE: ${{ env.AZURE_APP_NAME }}
           EXPECTED_ENVIRONMENT: development
-          MAX_RETRIES: '12'
-          RETRY_SLEEP: '10'
-          TIMEOUT: '45'
+          MAX_RETRIES: '30'
+          RETRY_SLEEP: '15'
+          TIMEOUT: '30'
         run: ./scripts/verify-dev-deployment.sh
 
       - name: Summarize deployment
