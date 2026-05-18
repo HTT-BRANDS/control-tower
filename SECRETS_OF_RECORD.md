@@ -85,7 +85,7 @@ A credential class is complete when every row has:
 | Production environment | `SQL_ADMIN_PASSWORD` | Production BACPAC export | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Prefer Key Vault fallback if possible |
 | Production environment | `DATABASE_URL` | Scheduled production database backup (`backup.yml`) | Tyler | GitHub environment secret | 🔴 TODO | 2026-04-30 | Set from production App Service setting without printing value; validation pending bd `jzpa`. |
 | Production environment | `AZURE_STORAGE_ACCOUNT` | Scheduled production database backup upload target | Tyler | GitHub environment secret | 🔴 TODO | 2026-04-30 | Set to `stgovprodbkup001`; validation pending bd `jzpa`. |
-| Production-backup environment | `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` | Approval-free scheduled production backup OIDC login | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Future environment for bd `wnyx`; Azure OIDC subject must be `repo:HTT-BRANDS/control-tower:environment:production-backup`. |
+| Production-backup environment | `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` | Approval-free scheduled production backup OIDC login | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Live environment confirmed by `ct-90r.14`; Azure OIDC subject is `repo:HTT-BRANDS/control-tower:environment:production-backup`. |
 | Production-backup environment | `DATABASE_URL` | Scheduled production database backup target | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Must point to production database while environment is `production-backup`; copy pointer only, never value. |
 | Production-backup environment | `AZURE_STORAGE_ACCOUNT` / `AZURE_BACKUP_CONTAINER` | Scheduled production backup upload target | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Should mirror production backup storage configuration; do not promote to repo-level secrets. |
 
@@ -118,9 +118,9 @@ not prove the secret exists in GitHub/Azure and do not include secret values.
 
 | Pointer | Evidence | Owner action still needed |
 |---|---|---|
-| `production-backup` GitHub environment | `.github/workflows/backup.yml`, `RUNBOOK.md` | Tyler/admin creates environment, secrets, and OIDC federation; bd `wnyx` remains open until live proof |
+| `production-backup` GitHub environment | `.github/workflows/backup.yml`, `RUNBOOK.md`, `ct-90r.14` | Live environment exists and is intentionally retained for approval-free scheduled production backups; Tyler still owns rotation/secondary-reader fields |
 | `Bicep Drift Reader` custom role definition | `infrastructure/azure/rbac/bicep-drift-reader.role.json` | Tyler/admin creates/assigns role; bd `rxki` remains open until workflow proof |
-| Backup OIDC subject | `RUNBOOK.md` | Configure `repo:HTT-BRANDS/control-tower:environment:production-backup` in Entra federated credential |
+| Backup OIDC subject | `RUNBOOK.md`, `ct-90r.14` | Confirmed Entra FIC `github-actions-control-tower-production-backup` with subject `repo:HTT-BRANDS/control-tower:environment:production-backup` |
 
 ---
 
