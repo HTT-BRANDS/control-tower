@@ -16,7 +16,7 @@ The current repo has strong automated coverage in some layers, but local confide
 | App import/OpenAPI | `ENVIRONMENT=test E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true uv run python ...` imported app and generated OpenAPI; 207 routes | ✅ Healthy |
 | Design-token unit checks | 119 targeted design/theme tests passed on 2026-05-17 | ✅ Token logic covered |
 | Accessibility E2E | Initially failed 3 stale static asset checks; updated to current CSS stack and `uv run pytest tests/e2e/test_accessibility_e2e.py tests/e2e/test_axe_accessibility.py -q --tb=short` now passes 9, skips 17 axe/browser-optional checks | ✅ Basic accessibility asset contract healthy |
-| Design-system visual quality | `DESIGN_SYSTEM_AUDIT.md` reports invisible text, focus conflicts, raw Tailwind palette drift, and contrast failures | 🔴 Not trusted |
+| Design-system visual quality | P0 audit items remediated/guarded on 2026-05-17: invisible text, dead text class, focus-visible token conflicts, ghost focus token, focus:outline-none, btn-brand outline, text-muted contrast, and JS hardcoded blue fallback. Broader browser-level visual assertions remain. | ⚠️ P0 healthy; UX depth pending |
 | Local seeded data/fetching | `make local-reset-seed-smoke` uses dedicated SQLite `data/local-dev.db`; data smoke passed 27/27 checks across tenants, costs, compliance, resources, identity, sync, recommendations, DMARC, Riverside, and authz. Integrated into `make local-gate`. | ✅ Seed contract healthy |
 | Local one-command gate | `make doctor`, `make local-fast-gate`, and `make local-gate` added on 2026-05-17. `make local-gate` passed in ~195s with doctor, ruff, format-check, unit, integration, browser smoke, accessibility E2E, and axe skip accounting. | ✅ Foundation healthy |
 
@@ -36,8 +36,8 @@ These claims are backed by current local commands:
 
 ## What is *not* healthy enough to trust today
 
-1. The design system has documented violations that are not currently blocked by tests.
-3. Existing UAT reports are historical and conflict with current design audit reality.
+1. Browser-level design/UX assertions are still shallow even though P0 static design-system failures are now guarded.
+2. Existing UAT reports are historical and conflict with current design audit reality.
 4. Data fetching is not mapped end-to-end from page → route → service → local fixture/seed → test.
 
 ## Local gate target
@@ -83,7 +83,7 @@ uv run pytest tests/e2e/test_axe_accessibility.py -q --tb=short
 | Local data smoke | Seeded data exists for API/UI fetch surfaces | Healthy | `make local-reset-seed-smoke` passes 27/27 DB contract checks |
 | Browser smoke | Critical human flows render | Basic exists | Expand around Tyler pain points |
 | Accessibility | Keyboard/focus/a11y static assets | Basic healthy | Stale CSS asset checks fixed; axe file currently records 17 expected skips |
-| Design system | Tokenized UI, contrast, focus, visual consistency | Audit exists, gate missing | Add static checker + Playwright fixture/gallery |
+| Design system | Tokenized UI, contrast, focus, visual consistency | P0 static guardrails healthy | Add Playwright visual/UX fixture coverage for remaining depth |
 | Staging smoke | Validate deployment environment | Exists | Only after local gate |
 
 ## Critical product surfaces to inventory
@@ -113,7 +113,7 @@ Each surface needs unit, integration, local data smoke, and browser coverage whe
 - [ ] no critical page shows raw traceback, `None`, `undefined`, template error, or broken partial.
 - [ ] browser smoke covers Tyler's real click path.
 - [ ] accessibility E2E passes or failures have explicit waiver beads.
-- [ ] design-system P0s from `DESIGN_SYSTEM_AUDIT.md` are fixed or tracked as staging blockers.
+- [x] design-system P0s from `DESIGN_SYSTEM_AUDIT.md` are fixed or tracked as staging blockers.
 - [ ] every P0/P1 gap has a bd issue with repro command and close evidence.
 
 ## Supporting docs
@@ -128,7 +128,7 @@ See bd parent `ct-9bh`.
 1. `ct-98s` — local doctor/local gate ✅ complete
 2. `ct-dag` — seeded local data and fetch contracts ✅ complete
 3. `ct-80e` — local surface inventory and health matrix ✅ complete
-4. `ct-ba1` — design-system P0 remediation
+4. `ct-ba1` — design-system P0 remediation ✅ complete
 5. `ct-1aq` — Playwright flows for Tyler's real data-fetching UX
 6. `ct-cf2` — test coverage map by product surface
 
@@ -159,3 +159,13 @@ See bd parent `ct-9bh`.
 - Mapped critical surfaces to routes, templates/partials, API/data dependencies, seed status, test coverage, local status, and gap beads.
 - Current risk shifted from P0 local boot/data to P1 design-system visual quality and seeded browser assertions.
 - Next true tasks: `ct-ba1` design-system P0 remediation, then `ct-1aq` Playwright seeded data-fetching flows.
+
+### 2026-05-17 — Design-system P0 remediation
+
+- Updated current focus-visible CSS to use `var(--brand-primary, #500711)` directly instead of ghost `--border-focus` indirection.
+- Removed hardcoded Walmart-blue behavior fallback from navigation progress bar source and bundle.
+- Added JS guardrails for `focus:outline-none` and hardcoded `#0053e2` source regressions.
+- Added CSS guardrail against ghost focus token usage.
+- Updated `DESIGN_SYSTEM_AUDIT.md` with current P0 remediation status.
+- Validated targeted design/accessibility suite: 133 passed.
+- Next true task: `ct-1aq` — Playwright seeded data-fetching and UX flows.

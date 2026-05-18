@@ -85,6 +85,11 @@ BANNED_GRAY_PATTERN = re.compile(
 # focus:outline-none without a ring replacement — kills native focus indicators
 BANNED_FOCUS_OUTLINE_NONE = re.compile(r"focus:outline-none")
 
+# Hardcoded Walmart/Riverside blue must not leak into app behavior. It may exist
+# as a named wm token in design-tokens.css, but source JS/CSS behavior should
+# resolve tenant-aware brand tokens instead of baking this color directly.
+BANNED_HARDCODED_WM_BLUE = re.compile(r"#0053e2", re.IGNORECASE)
+
 # border-theme is a ghost class — not defined in design-utilities.css, not a
 # Tailwind color key (no "theme" in tailwind.config.cjs). It gets silently
 # dropped by Tailwind, causing elements to fall back to the default border
@@ -260,6 +265,34 @@ class TestJavaScriptColorCompliance:
             + "\n".join(all_violations[:20])
         )
 
+    def test_no_focus_outline_none_in_js(self, js_files):
+        """No JS-injected markup may suppress native focus indicators."""
+        all_violations = []
+        for f in js_files:
+            violations = _find_violations(f, BANNED_FOCUS_OUTLINE_NONE)
+            for line_num, _matched, _line_text in violations:
+                all_violations.append(f"  {f.relative_to(ROOT)}:{line_num}")
+
+        assert not all_violations, (
+            f"Found {len(all_violations)} focus:outline-none in JS files.\n"
+            "JS-injected dialogs/buttons must keep visible focus indicators.\n"
+            + "\n".join(all_violations[:20])
+        )
+
+    def test_no_hardcoded_walmart_blue_in_js(self, js_files):
+        """JS behavior must resolve tenant-aware brand tokens, not #0053e2."""
+        all_violations = []
+        for f in js_files:
+            violations = _find_violations(f, BANNED_HARDCODED_WM_BLUE)
+            for line_num, _matched, _line_text in violations:
+                all_violations.append(f"  {f.relative_to(ROOT)}:{line_num}")
+
+        assert not all_violations, (
+            "Found hardcoded #0053e2 in JS source. Use CSS custom properties "
+            "such as --brand-primary-100 with a tenant-neutral fallback.\n"
+            + "\n".join(all_violations[:20])
+        )
+
 
 # ── CSS Tests ───────────────────────────────────────────────────
 class TestCSSDesignSystem:
@@ -282,6 +315,19 @@ class TestCSSDesignSystem:
             "accessibility.css still has hardcoded #0053e2 (Walmart blue). "
             "Use var(--brand-primary, #500711) instead."
         )
+
+    def test_focus_visible_rules_do_not_use_ghost_border_focus_token(self):
+        """Focus rules must use real brand tokens, not undefined --border-focus."""
+        content = ACCESSIBILITY_CSS.read_text()
+        assert "--border-focus" not in content, (
+            "Focus-visible rules should use var(--brand-primary, #500711) directly. "
+            "Do not route critical focus indicators through undefined ghost tokens."
+        )
+
+        global_focus_match = re.search(r":focus-visible\s*\{([^}]+)\}", content)
+        assert global_focus_match, "Global :focus-visible rule not found"
+        global_focus_block = global_focus_match.group(1)
+        assert "outline: 3px solid var(--brand-primary, #500711)" in global_focus_block
 
     def test_accessibility_css_has_forced_colors(self):
         """accessibility.css must support forced-colors (Windows High Contrast)."""

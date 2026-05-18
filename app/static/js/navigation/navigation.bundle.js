@@ -11,8 +11,8 @@
 
     const CONFIG = {
         height: '3px',
-        color: '#0053e2',       // fallback, resolved in init()
-        colorError: '#ea1100',  // fallback, resolved in init()
+        color: '#500711',       // fallback, resolved in init()
+        colorError: '#C2410C',  // fallback, resolved in init()
         animationDuration: 200
     };
 

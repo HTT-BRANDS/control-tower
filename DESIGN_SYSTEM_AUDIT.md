@@ -7,6 +7,39 @@
 
 ---
 
+## Current Remediation Status — 2026-05-17
+
+This audit predates the current CSS architecture. The app now serves:
+
+- `app/static/css/design-tokens.css`
+- `app/static/css/tailwind-output.css`
+- `app/static/css/design-utilities.css`
+
+The historical `theme.css`, `theme.src.css`, `accessibility.css`, and `dark-mode.css` references below should be interpreted through that current token/utility stack.
+
+### P0 status
+
+| P0 audit item | Current status | Guardrail |
+|---|---|---|
+| `text-gray-100` invisible text | ✅ Remediated; no template uses remain | `tests/architecture/test_security_constraints.py::TestWCAGContrast::test_no_invisible_text_classes` |
+| `text-gray-160` dead class | ✅ Remediated; no template uses remain | `tests/architecture/test_security_constraints.py::TestWCAGContrast::test_no_invisible_text_classes` |
+| Hardcoded blue global `:focus-visible` | ✅ Remediated; current focus rules use `var(--brand-primary, #500711)` | `tests/unit/test_design_system_compliance.py::TestCSSDesignSystem::test_accessibility_css_uses_brand_token_for_focus` |
+| Ghost `--border-focus` focus indirection | ✅ Remediated; critical focus rules use real brand tokens directly | `tests/unit/test_design_system_compliance.py::TestCSSDesignSystem::test_focus_visible_rules_do_not_use_ghost_border_focus_token` |
+| `focus:outline-none` in templates | ✅ Remediated; no template uses remain | `tests/unit/test_design_system_compliance.py::TestTemplateColorCompliance::test_no_focus_outline_none_in_templates` |
+| `focus:outline-none` in JS-injected markup | ✅ Guarded; no JS source uses remain | `tests/unit/test_design_system_compliance.py::TestJavaScriptColorCompliance::test_no_focus_outline_none_in_js` |
+| `.btn-brand` focus using only box-shadow / no outline | ✅ Remediated; `.btn-brand:focus-visible` uses outline | `tests/unit/test_design_system_compliance.py::TestCSSDesignSystem::test_btn_brand_focus_uses_outline` |
+| `--text-muted` low contrast in light mode | ✅ Remediated; light token is `#57606A` | `tests/unit/test_design_system_compliance.py::TestCSSDesignSystem::test_text_muted_meets_wcag_aa` |
+| JS hardcoded Walmart blue behavior fallback | ✅ Remediated in progress bar source and bundle | `tests/unit/test_design_system_compliance.py::TestJavaScriptColorCompliance::test_no_hardcoded_walmart_blue_in_js` |
+
+### Remaining non-P0 work
+
+The broad raw-palette cleanup and browser-level visual assertions remain tracked separately:
+
+- `ct-1aq` — Playwright local seeded data/UX flows
+- `ct-cf2` — final coverage map by product surface
+
+---
+
 ## Executive Summary
 
 **52 distinct violations** found across **18 files**, spanning 5 categories. The two most problematic files are `dmarc_dashboard.html` (~35 violations) and `riverside_dashboard.html` (~30 violations) — both bypass the design system entirely and use raw Tailwind default palette colors. The core app shell (`base.html`, `macros/ui.html`) is largely compliant, but has token-naming bugs that cause invisible text and a critical focus-indicator conflict between CSS files.
