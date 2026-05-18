@@ -383,6 +383,7 @@ jobs:
     name: Staging Validation Tests
     runs-on: ubuntu-latest
     needs: deploy
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
