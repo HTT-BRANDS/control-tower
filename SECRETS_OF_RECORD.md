@@ -53,9 +53,9 @@ A credential class is complete when every row has:
 |---|---|---|---|---|---|---|---|---|
 | HTT-CORE subscription | 🔴 TODO | Host platform resources and emergency rollback | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include role names needed for rollback |
 | HTT tenant | 🔴 TODO | Read governance data | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include Lighthouse/app-registration path |
-| BCC tenant | 🔴 TODO | Read governance data | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include Lighthouse/app-registration path |
-| FN tenant | 🔴 TODO | Read governance data | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include Lighthouse/app-registration path |
-| TLL tenant | 🔴 TODO | Read governance data | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include Lighthouse/app-registration path |
+| BCC tenant | tenant DB/config + Key Vault secret refs; repo secrets `BCC_CLIENT_ID` / `BCC_TENANT_ID` classified orphaned by `ct-90r.12` | Read governance data | App registration / Key Vault, not active GitHub Actions consumer | Tyler | 🔴 TODO / none risk accepted | 2026-05-18 | 🔴 TODO | Remove repo-level BCC ID secrets after Tyler confirms no out-of-repo workflow depends on them |
+| FN tenant | tenant DB/config + Key Vault secret refs; repo secrets `FN_CLIENT_ID` / `FN_TENANT_ID` classified orphaned by `ct-90r.12` | Read governance data | App registration / Key Vault, not active GitHub Actions consumer | Tyler | 🔴 TODO / none risk accepted | 2026-05-18 | 🔴 TODO | Remove repo-level FN ID secrets after Tyler confirms no out-of-repo workflow depends on them |
+| TLL tenant | tenant DB/config + Key Vault secret refs; repo secrets `TLL_CLIENT_ID` / `TLL_TENANT_ID` classified orphaned by `ct-90r.12` | Read governance data | App registration / Key Vault, not active GitHub Actions consumer | Tyler | 🔴 TODO / none risk accepted | 2026-05-18 | 🔴 TODO | Remove repo-level TLL ID secrets after Tyler confirms no out-of-repo workflow depends on them |
 | DCE tenant | 🔴 TODO | Read governance data | 🔴 TODO | Tyler | 🔴 TODO / none risk accepted | 🔴 TODO | 🔴 TODO | Include Lighthouse/app-registration path |
 
 ---
