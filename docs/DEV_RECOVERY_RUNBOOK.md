@@ -193,8 +193,8 @@ gh secret list
 git commit --allow-empty -m "Trigger deployment after runtime fix"
 git push
 
-# Or trigger workflow manually
-gh workflow run deploy-dev.yml
+# Or trigger deterministic dev deployment manually from main
+gh workflow run deploy-dev.yml --ref main -f run_tests=true -f image_tag_suffix=recovery
 ```
 
 #### 4.5 Check Resource Quotas

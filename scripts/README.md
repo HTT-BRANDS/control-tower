@@ -34,7 +34,7 @@ Get up and running with GitHub CLI automation in 4 steps:
 ### Deployment & Status
 | Script | Purpose | Key Features |
 |--------|---------|--------------|
-| `gh-deploy-dev.sh` | Deploy to dev branch | Triggers workflow, monitors run, dev-first pipeline |
+| `gh-deploy-dev.sh` | Dispatch development deployment | Runs `.github/workflows/deploy-dev.yml`, monitors run, no dev-branch merge magic |
 | `gh-status.sh` | View repository status | Shows secrets, variables, environments, clean overview |
 
 ### Tenant Management (Riverside)
@@ -73,7 +73,7 @@ Get up and running with GitHub CLI automation in 4 steps:
 |--------|---------|--------------|
 | `verify-and-test-deployment.sh` | **Comprehensive deployment verification** | Azure resource checks, health endpoints, DB migrations, test data seeding, API tests, detailed reports |
 | `verify-deployment.sh` | Production deployment verification | 13 test categories, Azure CLI integration, JSON output |
-| `verify-dev-deployment.sh` | Dev deployment health checks | Basic health, dashboard, API accessibility |
+| `verify-dev-deployment.sh` | Dev deployment health checks | Warmup-tolerant health/docs/static/protected-route/Azure resource smoke |
 | `smoke_test.py` | API smoke testing | Python-based endpoint testing, auth verification |
 | `diagnose-production.sh` | Production auth diagnostics | Settings validation, automated fixes, troubleshooting |
 | `verify-sync-recovery.sh` | Post-deploy sync verification helper | Copy-paste API, KQL, SQL, and log commands for issue 0gz3 |

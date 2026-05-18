@@ -1,0 +1,340 @@
+# =============================================================================
+# HTT Control Tower - Development Deployment Pipeline (ACR)
+# =============================================================================
+# Trigger: manual workflow_dispatch from the branch/commit to deploy.
+#
+# Why manual only?
+#   The repo currently has repo-scoped OIDC credentials for main/pull_request,
+#   but no explicit GitHub environment:development federated credential. This
+#   workflow intentionally does NOT set `environment: development` until that
+#   identity model is added, or azure/login would request the wrong OIDC subject.
+#
+# Pipeline stages:
+#   1. QA Gate       — lint + unit/integration unless explicitly disabled
+#   2. Build Image   — Azure ACR build, production Docker target
+#   3. Deploy        — update dev App Service container image
+#   4. Health Gate   — bounded readiness loop with automatic rollback
+#   5. Validation    — hardened dev smoke script
+#
+# Required repo secrets:
+#   AZURE_CLIENT_ID        — OIDC federated credential
+#   AZURE_TENANT_ID        — HTT-CORE tenant
+#   AZURE_SUBSCRIPTION_ID  — 32a28177-6fb2-4668-a528-6d6cafb9665e
+# =============================================================================
+
+name: Deploy to Development
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run QA gate before deploying'
+        required: true
+        default: true
+        type: boolean
+      image_tag_suffix:
+        description: 'Optional suffix for the dev image tag'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-development
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.12'
+  UV_VERSION: '0.9.27'
+  ACR_NAME: acrgovernancedev
+  ACR_LOGIN_SERVER: acrgovernancedev.azurecr.io
+  IMAGE_REPOSITORY: governance-platform
+  AZURE_APP_NAME: app-governance-dev-001
+  AZURE_RESOURCE_GROUP: rg-governance-dev
+  DEV_URL: https://app-governance-dev-001.azurewebsites.net
+
+jobs:
+  qa-gate:
+    name: QA Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}-dev-v1
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Lint
+        run: uv run ruff check app tests scripts
+
+      - name: Format check
+        run: uv run ruff format --check app tests scripts
+
+      - name: Detect secrets
+        run: uv run pre-commit run detect-secrets --all-files
+
+      - name: Create CI tenant config
+        run: |
+          cat > config/tenants.yaml << 'EOF'
+          tenants:
+            HTT:
+              name: "Head-To-Toe (HTT)"
+              code: "HTT"
+              tenant_id: "00000000-0000-0000-a000-000000000001"
+              app_id: "00000000-0000-0000-b000-000000000001"
+              admin_email: "admin@example.com"
+              domains: ["example.com"]
+              is_active: true
+              is_riverside: true
+              priority: 1
+              oidc_enabled: true
+            BCC:
+              name: "Bishops (BCC)"
+              code: "BCC"
+              tenant_id: "00000000-0000-0000-a000-000000000002"
+              app_id: "00000000-0000-0000-b000-000000000002"
+              admin_email: "admin@example.com"
+              domains: ["example.com"]
+              is_active: true
+              is_riverside: true
+              priority: 2
+              oidc_enabled: true
+            FN:
+              name: "Frenchies (FN)"
+              code: "FN"
+              tenant_id: "00000000-0000-0000-a000-000000000003"
+              app_id: "00000000-0000-0000-b000-000000000003"
+              admin_email: "admin@example.com"
+              domains: ["example.com"]
+              is_active: true
+              is_riverside: true
+              priority: 3
+              oidc_enabled: true
+            TLL:
+              name: "Lash Lounge (TLL)"
+              code: "TLL"
+              tenant_id: "00000000-0000-0000-a000-000000000004"
+              app_id: "00000000-0000-0000-b000-000000000004"
+              admin_email: "admin@example.com"
+              domains: ["example.com"]
+              is_active: true
+              is_riverside: true
+              priority: 4
+              oidc_enabled: true
+            DCE:
+              name: "Delta Crown Extensions (DCE)"
+              code: "DCE"
+              tenant_id: "00000000-0000-0000-a000-000000000005"
+              app_id: "00000000-0000-0000-b000-000000000005"
+              admin_email: "admin@example.com"
+              domains: ["example.com"]
+              is_active: true
+              is_riverside: true
+              priority: 5
+              oidc_enabled: true
+          EOF
+
+      - name: Unit + integration tests
+        if: ${{ inputs.run_tests }}
+        run: uv run pytest tests/unit/ tests/integration/ -q --tb=short -m "not visual"
+        env:
+          ENVIRONMENT: development
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+
+      - name: Bandit high-severity gate
+        if: ${{ inputs.run_tests }}
+        run: |
+          uvx bandit -r app -f json -o /tmp/bandit.json || true
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('/tmp/bandit.json').read_text())
+          high = sum(1 for r in data.get('results', []) if r.get('issue_severity') == 'HIGH')
+          print(f'Bandit high severity findings: {high}')
+          raise SystemExit(1 if high else 0)
+          PY
+
+  build-and-deploy:
+    name: Build and Deploy Dev Image
+    runs-on: ubuntu-latest
+    needs: qa-gate
+
+    outputs:
+      image: ${{ steps.image-meta.outputs.image }}
+      previous_image: ${{ steps.capture-previous.outputs.previous_image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set subscription context
+        run: az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Compute image tag
+        id: image-meta
+        shell: bash
+        run: |
+          suffix="${{ inputs.image_tag_suffix }}"
+          suffix="${suffix//[^A-Za-z0-9_.-]/-}"
+          if [ -n "$suffix" ]; then
+            tag="dev-${GITHUB_SHA::7}-${suffix}"
+          else
+            tag="dev-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
+          fi
+          image="${ACR_LOGIN_SERVER}/${IMAGE_REPOSITORY}:${tag}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "Image: $image"
+
+      - name: Capture previous image for rollback
+        id: capture-previous
+        run: |
+          previous=$(az webapp show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
+            --query siteConfig.linuxFxVersion \
+            -o tsv | sed 's#^DOCKER|##')
+          echo "previous_image=$previous" >> "$GITHUB_OUTPUT"
+          echo "Previous image: $previous"
+
+      - name: Build image in dev ACR
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "${IMAGE_REPOSITORY}:${{ steps.image-meta.outputs.tag }}" \
+            --file Dockerfile \
+            --target production \
+            .
+
+      - name: Update dev App Service container and restart
+        run: |
+          az webapp config container set \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
+            --container-image-name "${{ steps.image-meta.outputs.image }}" \
+            --container-registry-url "https://${ACR_LOGIN_SERVER}" \
+            --output none
+          az webapp config appsettings set \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
+            --settings WEBSITE_HEALTHCHECK_MAXPINGFAILURES=3 \
+            --output none
+          az webapp config set \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
+            --always-on true \
+            --generic-configurations '{"healthCheckPath":"/health"}' \
+            --output none
+          az webapp restart \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
+            --output none
+
+      - name: Health gate with rollback
+        shell: bash
+        run: |
+          set -uo pipefail
+          health_url="${DEV_URL}/health"
+          max_attempts=18
+          sleep_seconds=20
+          ok=false
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Health attempt ${attempt}/${max_attempts}: ${health_url}"
+            set +e
+            code=$(curl --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 45 \
+              --output /tmp/dev-health.json \
+              --write-out "%{http_code}" \
+              "$health_url")
+            curl_exit=$?
+            set -e
+
+            if [ "$curl_exit" -eq 0 ] && [ "$code" = "200" ]; then
+              python -c "import json; from pathlib import Path; data=json.loads(Path('/tmp/dev-health.json').read_text()); assert data.get('status') == 'healthy', data; assert data.get('environment') == 'development', data; print('Health:', {k: data.get(k) for k in ('status', 'environment', 'version')})"
+              ok=true
+              break
+            fi
+
+            echo "Not ready: curl_exit=${curl_exit}, http_code=${code}"
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              sleep "$sleep_seconds"
+            fi
+          done
+
+          if [ "$ok" != true ]; then
+            echo "❌ Dev health gate failed; rolling back to ${{ steps.capture-previous.outputs.previous_image }}"
+            az webapp config container set \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_APP_NAME" \
+              --container-image-name "${{ steps.capture-previous.outputs.previous_image }}" \
+              --container-registry-url "https://${ACR_LOGIN_SERVER}" \
+              --output none
+            az webapp restart \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$AZURE_APP_NAME" \
+              --output none
+            exit 1
+          fi
+
+  validate:
+    name: Dev Validation
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set subscription context
+        run: az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run hardened dev verification
+        env:
+          BASE_URL: ${{ env.DEV_URL }}
+          RESOURCE_GROUP: ${{ env.AZURE_RESOURCE_GROUP }}
+          APP_SERVICE: ${{ env.AZURE_APP_NAME }}
+          EXPECTED_ENVIRONMENT: development
+          MAX_RETRIES: '12'
+          RETRY_SLEEP: '10'
+          TIMEOUT: '45'
+        run: ./scripts/verify-dev-deployment.sh
+
+      - name: Summarize deployment
+        run: |
+          {
+            echo "## Development deployment"
+            echo "- Image: ${{ needs.build-and-deploy.outputs.image }}"
+            echo "- Previous image: ${{ needs.build-and-deploy.outputs.previous_image }}"
+            echo "- URL: $DEV_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

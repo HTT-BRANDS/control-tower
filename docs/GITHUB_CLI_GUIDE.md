@@ -196,33 +196,32 @@ Complete GitHub repository configuration.
 
 ### 2. `gh-deploy-dev.sh` - Deploy to Dev
 
-Deploy current branch to development environment.
+Dispatch `.github/workflows/deploy-dev.yml` for the selected ref. The script no longer merges/pushes a `dev` branch; the deterministic workflow builds a production-stage image in dev ACR, updates only `app-governance-dev-001`, health-gates it, rolls back on failure, and runs hardened dev verification.
 
 ```bash
-# Deploy with monitoring
+# Deploy current branch with monitoring
 ./scripts/gh-deploy-dev.sh
 
-# Quick deploy (no monitoring)
+# Quick dispatch (no monitoring)
 ./scripts/gh-deploy-dev.sh --no-watch
 
-# Sync with main first, then deploy
-./scripts/gh-deploy-dev.sh --sync
+# Deploy a specific ref
+./scripts/gh-deploy-dev.sh --ref main
 
-# Force push (use with caution)
-./scripts/gh-deploy-dev.sh --force
+# Dispatch without the workflow QA gate; dev emergencies only
+./scripts/gh-deploy-dev.sh --skip-tests
 ```
 
 **What it does:**
 1. ✅ Checks for uncommitted changes
-2. ✅ Optionally syncs with main
-3. ✅ Merges current branch into `dev`
-4. ✅ Pushes to trigger GitHub Actions
-5. ✅ Monitors deployment progress
-6. ✅ Runs verification tests
+2. ✅ Confirms `deploy-dev.yml` exists
+3. ✅ Dispatches the workflow for the selected ref
+4. ✅ Optionally watches the run
+5. ✅ Relies on workflow rollback/verification
 
 **Workflow:**
 ```
-your-branch → dev → GitHub Actions → Azure Dev Environment
+selected ref → deploy-dev.yml → ACR build → app-governance-dev-001 → health/verification gate
 ```
 
 ---
@@ -402,8 +401,8 @@ gh workflow list
 # View workflow
 gh workflow view deploy-dev.yml
 
-# Trigger workflow manually
-gh workflow run deploy-dev.yml --ref dev
+# Trigger workflow manually from main
+gh workflow run deploy-dev.yml --ref main -f run_tests=true -f image_tag_suffix=manual
 
 # Enable/disable workflow
 gh workflow enable deploy-dev.yml
@@ -416,7 +415,7 @@ gh workflow disable deploy-dev.yml
 # List recent runs
 gh run list
 gh run list --workflow=deploy-dev.yml
-gh run list --branch=dev --limit 10
+gh run list --workflow=deploy-dev.yml --limit 10
 
 # View run details
 gh run view <run-id>
