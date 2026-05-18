@@ -12,6 +12,8 @@ import pytest
 from fastapi import HTTPException
 
 from app.core.auth import (
+    INTERNAL_JWT_ISSUER,
+    LEGACY_INTERNAL_JWT_ISSUER,
     AzureADTokenValidator,
     JWTTokenManager,
     TokenData,
@@ -220,6 +222,22 @@ class TestJWTTokenManager:
         assert payload["type"] == "access"
 
     @patch("app.core.auth.get_settings")
+    def test_create_access_token_emits_current_issuer(self, mock_get_settings, mock_settings):
+        """New access tokens emit the control-tower issuer."""
+        mock_get_settings.return_value = mock_settings
+        manager = JWTTokenManager()
+
+        token = manager.create_access_token(user_id="user-current-issuer")
+        payload = jwt.decode(
+            token,
+            mock_settings.jwt_secret_key,
+            algorithms=[mock_settings.jwt_algorithm],
+            options={"verify_aud": False, "verify_iss": False},
+        )
+
+        assert payload["iss"] == INTERNAL_JWT_ISSUER
+
+    @patch("app.core.auth.get_settings")
     def test_create_access_token_includes_roles_and_tenant_ids(
         self, mock_get_settings, mock_settings
     ):
@@ -294,6 +312,22 @@ class TestJWTTokenManager:
         assert payload["type"] == "refresh"
 
     @patch("app.core.auth.get_settings")
+    def test_create_refresh_token_emits_current_issuer(self, mock_get_settings, mock_settings):
+        """New refresh tokens emit the control-tower issuer."""
+        mock_get_settings.return_value = mock_settings
+        manager = JWTTokenManager()
+
+        token = manager.create_refresh_token(user_id="refresh-current-issuer")
+        payload = jwt.decode(
+            token,
+            mock_settings.jwt_secret_key,
+            algorithms=[mock_settings.jwt_algorithm],
+            options={"verify_aud": False, "verify_iss": False},
+        )
+
+        assert payload["iss"] == INTERNAL_JWT_ISSUER
+
+    @patch("app.core.auth.get_settings")
     def test_decode_token_valid_token_succeeds(self, mock_get_settings, mock_settings):
         """JWTTokenManager.decode_token succeeds with valid token."""
         mock_get_settings.return_value = mock_settings
@@ -307,28 +341,40 @@ class TestJWTTokenManager:
 
     @patch("app.core.auth.get_settings")
     def test_decode_token_accepts_legacy_internal_issuer(self, mock_get_settings, mock_settings):
-        """Phase 1 rotation keeps old azure-governance-platform tokens valid."""
+        """Rotation keeps old azure-governance-platform tokens valid."""
         mock_get_settings.return_value = mock_settings
         manager = JWTTokenManager()
+        payload = {
+            "sub": "legacy-user",
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+            "iat": datetime.now(UTC),
+            "iss": LEGACY_INTERNAL_JWT_ISSUER,
+            "aud": "azure-governance-api",
+            "type": "access",
+        }
+        token = jwt.encode(
+            payload,
+            mock_settings.jwt_secret_key,
+            algorithm=mock_settings.jwt_algorithm,
+        )
 
-        token = manager.create_access_token(user_id="legacy-user")
-        payload = manager.decode_token(token)
+        decoded = manager.decode_token(token)
 
-        assert payload["sub"] == "legacy-user"
-        assert payload["iss"] == "azure-governance-platform"
+        assert decoded["sub"] == "legacy-user"
+        assert decoded["iss"] == LEGACY_INTERNAL_JWT_ISSUER
 
     @patch("app.core.auth.get_settings")
     def test_decode_token_accepts_control_tower_internal_issuer(
         self, mock_get_settings, mock_settings
     ):
-        """Phase 1 rotation accepts future control-tower issuer before emission flips."""
+        """Rotation accepts current control-tower issuer."""
         mock_get_settings.return_value = mock_settings
         manager = JWTTokenManager()
         payload = {
             "sub": "new-user",
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
-            "iss": "control-tower",
+            "iss": INTERNAL_JWT_ISSUER,
             "aud": "azure-governance-api",
             "type": "access",
         }
@@ -341,7 +387,7 @@ class TestJWTTokenManager:
         decoded = manager.decode_token(token)
 
         assert decoded["sub"] == "new-user"
-        assert decoded["iss"] == "control-tower"
+        assert decoded["iss"] == INTERNAL_JWT_ISSUER
 
     @patch("app.core.auth.get_settings")
     def test_decode_token_rejects_unknown_internal_issuer(self, mock_get_settings, mock_settings):
@@ -412,7 +458,7 @@ class TestJWTTokenManager:
             "sub": "user-808",
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
-            "iss": "azure-governance-platform",
+            "iss": LEGACY_INTERNAL_JWT_ISSUER,
             "aud": "wrong-audience",  # Wrong audience
             "type": "access",
         }
