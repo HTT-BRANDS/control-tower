@@ -24,12 +24,12 @@ from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-INTERNAL_JWT_ISSUER = "azure-governance-platform"
-CONTROL_TOWER_JWT_ISSUER = "control-tower"
+LEGACY_INTERNAL_JWT_ISSUER = "azure-governance-platform"
+INTERNAL_JWT_ISSUER = "control-tower"
 ACCEPTED_INTERNAL_JWT_ISSUERS = frozenset(
     {
+        LEGACY_INTERNAL_JWT_ISSUER,
         INTERNAL_JWT_ISSUER,
-        CONTROL_TOWER_JWT_ISSUER,
     }
 )
 

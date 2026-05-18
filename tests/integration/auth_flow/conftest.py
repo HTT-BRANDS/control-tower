@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 import pytest
 
-from app.core.auth import jwt_manager
+from app.core.auth import LEGACY_INTERNAL_JWT_ISSUER, jwt_manager
 from app.core.token_blacklist import _token_blacklist
 
 
@@ -46,7 +46,7 @@ def create_test_token(
         "tenant_ids": tenant_ids or [],
         "exp": expire,
         "iat": datetime.now(UTC),
-        "iss": "azure-governance-platform",
+        "iss": LEGACY_INTERNAL_JWT_ISSUER,
         "aud": "azure-governance-api",
         "type": "access",
     }
@@ -82,7 +82,7 @@ def create_test_refresh_token(
         "sub": user_id,
         "exp": expire,
         "iat": datetime.now(UTC),
-        "iss": "azure-governance-platform",
+        "iss": LEGACY_INTERNAL_JWT_ISSUER,
         "aud": "azure-governance-api",
         "type": "refresh",
     }
