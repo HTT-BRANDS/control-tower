@@ -1,0 +1,106 @@
+# =============================================================================
+# Validate environment-scoped Azure OIDC
+# =============================================================================
+# Purpose: prove GitHub environment secrets + Entra FIC subjects + Azure RBAC
+# without deploying, exporting a database, or otherwise touching runtime state.
+#
+# This intentionally validates only staging and production. Development still
+# uses the legacy/non-environment model until a development FIC is explicitly
+# created. Do not sneak dev into this workflow unless that model changes.
+# =============================================================================
+
+name: Validate Environment OIDC
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'GitHub environment / Azure resource group to validate'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-oidc:
+    name: Validate OIDC (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Resolve validation target
+        id: target
+        env:
+          TARGET_ENV: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+
+          case "$TARGET_ENV" in
+            staging)
+              echo "expected_rg=rg-governance-staging" >> "$GITHUB_OUTPUT"
+              echo "forbidden_rg=rg-governance-production" >> "$GITHUB_OUTPUT"
+              ;;
+            production)
+              echo "expected_rg=rg-governance-production" >> "$GITHUB_OUTPUT"
+              echo "forbidden_rg=rg-governance-staging" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported environment: $TARGET_ENV" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Azure Login (environment-scoped OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Confirm expected environment scope works
+        env:
+          EXPECTED_RG: ${{ steps.target.outputs.expected_rg }}
+          TARGET_ENV: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          ACCOUNT_JSON=$(az account show --query '{tenantId:tenantId,subscriptionId:id,user:user.name}' -o json)
+          echo "Authenticated Azure account context:"
+          echo "$ACCOUNT_JSON" | jq .
+
+          echo "Validating read access to expected $TARGET_ENV resource group: $EXPECTED_RG"
+          az group show --name "$EXPECTED_RG" --query '{name:name,location:location}' -o json | jq .
+
+      - name: Confirm opposite environment is not reachable
+        env:
+          FORBIDDEN_RG: ${{ steps.target.outputs.forbidden_rg }}
+        run: |
+          set -euo pipefail
+
+          echo "Expecting no access to opposite environment resource group: $FORBIDDEN_RG"
+          if az group show --name "$FORBIDDEN_RG" -o none 2>/tmp/forbidden-rg.err; then
+            echo "::error::OIDC identity can read forbidden resource group $FORBIDDEN_RG. RBAC separation is broken."
+            exit 1
+          fi
+
+          echo "Opposite environment access was denied as expected."
+          sed -E 's/[0-9a-fA-F-]{36}/<guid>/g' /tmp/forbidden-rg.err | tail -n 5
+
+      - name: Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Environment OIDC validation passed
+
+          - GitHub environment selected: `${{ inputs.environment }}`
+          - Expected resource group: `${{ steps.target.outputs.expected_rg }}`
+          - Opposite resource group denied: `${{ steps.target.outputs.forbidden_rg }}`
+          - No deploy/export/runtime mutation was performed.
+          EOF
