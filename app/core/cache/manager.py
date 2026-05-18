@@ -109,7 +109,7 @@ class CacheManager:
         # Hash additional args for uniqueness
         if args or kwargs:
             arg_str = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
-            arg_hash = hashlib.md5(arg_str.encode()).hexdigest()[:8]
+            arg_hash = hashlib.md5(arg_str.encode(), usedforsecurity=False).hexdigest()[:8]
             parts.append(arg_hash)
 
         return ":".join(parts)
