@@ -161,7 +161,10 @@ class ResourceService:
             """Calculate days since resource was last synced."""
             if resource.synced_at is None:
                 return 30  # Default fallback
-            delta: timedelta = now - resource.synced_at
+            synced_at = resource.synced_at
+            if synced_at.tzinfo is None:
+                synced_at = synced_at.replace(tzinfo=UTC)
+            delta: timedelta = now - synced_at
             return max(0, delta.days)
 
         def _get_orphan_reason(resource: Resource) -> str:
@@ -177,6 +180,7 @@ class ResourceService:
                 resource_id=r.id,
                 resource_name=r.name,
                 resource_type=r.resource_type,
+                tenant_id=str(r.tenant_id),
                 tenant_name=get_tenant_name(str(r.tenant_id)) or "Unknown",
                 subscription_name=subscriptions.get(r.subscription_id, r.subscription_id),
                 estimated_monthly_cost=r.estimated_monthly_cost,

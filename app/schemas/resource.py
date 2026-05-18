@@ -33,7 +33,7 @@ class ResourceItem(BaseModel):
     }
 
     id: str
-    tenant_id: str
+    tenant_id: str = ""
     tenant_name: str
     subscription_id: str
     subscription_name: str
@@ -88,6 +88,7 @@ class OrphanedResource(BaseModel):
     resource_id: str
     resource_name: str
     resource_type: str
+    tenant_id: str = ""
     tenant_name: str
     subscription_name: str
     estimated_monthly_cost: float | None

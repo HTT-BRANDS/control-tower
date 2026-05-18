@@ -290,6 +290,7 @@ class TenantAuthorization:
         self.user = user
         self.db = db
         self._accessible_tenants: list[str] | None = None
+        self._accessible_tenant_primary_keys: list[str] | None = None
 
     @property
     def accessible_tenant_ids(self) -> list[str]:
@@ -297,6 +298,25 @@ class TenantAuthorization:
         if self._accessible_tenants is None:
             self._accessible_tenants = get_user_tenant_ids(self.user, self.db)
         return self._accessible_tenants
+
+    @property
+    def accessible_tenant_primary_keys(self) -> list[str]:
+        """Get cached internal tenant primary keys for FK-based app tables."""
+        if self._accessible_tenant_primary_keys is None:
+            tenants = get_user_tenants(self.user, self.db)
+            self._accessible_tenant_primary_keys = [tenant.id for tenant in tenants]
+        return self._accessible_tenant_primary_keys
+
+    def filter_tenant_primary_keys(self, requested_tenants: list[str] | None) -> list[str]:
+        """Filter requested internal tenant IDs to only include accessible ones."""
+        if "admin" in self.user.roles:
+            return requested_tenants or []
+
+        if not requested_tenants:
+            return self.accessible_tenant_primary_keys
+
+        accessible = set(self.accessible_tenant_primary_keys)
+        return [tenant_id for tenant_id in requested_tenants if tenant_id in accessible]
 
     def can_access(self, tenant_id: str) -> bool:
         """Check if user can access a specific tenant."""
@@ -336,6 +356,40 @@ class TenantAuthorization:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User has no access to any tenants",
             )
+
+
+def get_internal_tenant_scope(authz: TenantAuthorization) -> list[str]:
+    """Return internal tenant IDs for FK-backed tables.
+
+    Older tests and a few route overrides mock only ``accessible_tenant_ids``.
+    Fall back to that list when the newer primary-key property is not a real
+    list so route code stays compatible while production uses real DB PKs.
+    """
+    scope = getattr(authz, "accessible_tenant_primary_keys", None)
+    if isinstance(scope, list):
+        return scope
+    fallback = getattr(authz, "accessible_tenant_ids", [])
+    return fallback if isinstance(fallback, list) else []
+
+
+def filter_internal_tenant_scope(
+    authz: TenantAuthorization,
+    requested_tenants: list[str] | None,
+) -> list[str]:
+    """Filter requested internal tenant IDs with mock-friendly fallback."""
+    filter_primary = getattr(authz, "filter_tenant_primary_keys", None)
+    if callable(filter_primary):
+        filtered = filter_primary(requested_tenants)
+        if isinstance(filtered, list):
+            return filtered
+
+    filter_legacy = getattr(authz, "filter_tenant_ids", None)
+    if callable(filter_legacy):
+        filtered = filter_legacy(requested_tenants)
+        if isinstance(filtered, list):
+            return filtered
+
+    return []
 
 
 async def get_tenant_authorization(

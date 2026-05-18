@@ -22,9 +22,9 @@ make local-gate
   ✅ ruff format --check app tests scripts
   ✅ unit: 3656 passed
   ✅ integration: 403 passed
-  ✅ browser/accessibility E2E: 19 passed
-  ✅ axe file: 17 skipped
   ✅ local data smoke: 27 passed, 0 failed
+  ✅ browser/accessibility/seeded E2E: 26 passed
+  ✅ axe file: 17 skipped
 ```
 
 ## Matrix
@@ -32,14 +32,14 @@ make local-gate
 | Surface | Routes/pages | Templates/partials | API/data dependencies | Seed contract | Test coverage | Local status | Gap / bead |
 |---|---|---|---|---|---|---|---|
 | Auth/login/dev harness | `/login`, `/api/v1/auth/*` | `login.html` | Auth routes, JWT/session/dev harness | UserTenant demo mappings | Unit auth/routes, integration auth flow, browser smoke login | ✅ Healthy basic auth shell | Add real click-path depth in `ct-1aq` |
-| Dashboard | `/dashboard`, dashboard partials | `pages/dashboard.html`, KPI/summary components | Dashboard route, costs/compliance/resources/identity/sync summaries | Costs, compliance, resources, identity, sync seeded | Unit dashboard routes, browser smoke shell, local data smoke | ⚠️ Partial | Need browser assertions that seeded values/empty states render: `ct-1aq` |
-| Sync dashboard | `/sync-dashboard`, `/partials/sync-*`, `/api/v1/sync/*` | `pages/sync_dashboard.html`, `components/sync/*` | SyncJob, SyncJobLog, SyncJobMetrics, Alert | Seed-backed | Integration sync, unit sync/routes, browser smoke shell/partials, local data smoke | ⚠️ Partial | Need seeded UI assertions and loading/error checks: `ct-1aq` |
-| Costs | `/costs`, `/api/v1/costs/*`, `/api/v1/budgets/*` | `pages/costs.html`, `components/cost_summary_card.html` | CostSnapshot, CostAnomaly, recommendations, budgets | Seed-backed for cost snapshots/anomalies | Unit cost service/routes, integration cost API, local data smoke | ⚠️ Partial | Browser smoke does not yet cover `/costs`: `ct-1aq` |
-| Compliance | `/compliance`, `/api/v1/compliance/*` | `pages/compliance.html`, `components/compliance_gauge.html` | ComplianceSnapshot, PolicyState, frameworks/rules | Seed-backed snapshots/policies | Unit compliance/routes, integration compliance API, local data smoke | ⚠️ Partial | Browser smoke does not yet cover `/compliance`: `ct-1aq` |
-| Resources | `/resources`, `/api/v1/resources/*`, recommendations/quotas/provisioning | `pages/resources.html`, `components/resource_stats.html` | Resource, ResourceTag, IdleResource, Recommendation | Seed-backed | Unit resource/routes, integration resource API, local data smoke | ⚠️ Partial | Browser smoke does not yet cover `/resources`: `ct-1aq` |
-| Identity | `/identity`, `/api/v1/identity/*` | `pages/identity.html`, `components/identity_stats.html` | IdentitySnapshot, PrivilegedUser, license/admin-role services | Seed-backed snapshots/privileged users | Unit identity/routes, integration identity API, local data smoke | ⚠️ Partial | Browser smoke does not yet cover `/identity`; seeded license/admin-role UI needs explicit status: `ct-1aq` |
-| Riverside | `/riverside`, `/api/v1/riverside/*` | `pages/riverside.html`, `partials/riverside_*` | RiversideCompliance, MFA, devices, threats, requirements | Seed-backed | Unit Riverside, integration Riverside API, browser smoke shell, local data smoke | ⚠️ Partial | Shell covered; seeded per-widget assertions needed: `ct-1aq` |
-| DMARC | `/dmarc`, `/api/v1/dmarc/*` | `pages/dmarc_dashboard.html`, `partials/dmarc_policy_legend.html` | DMARCRecord, DKIMRecord, DMARCReport, DMARCAlert | Seed-backed | Unit DMARC service/routes, browser smoke shell, local data smoke | ⚠️ Partial | Shell covered; seeded score/table assertions needed: `ct-1aq` |
+| Dashboard | `/dashboard`, dashboard partials | `pages/dashboard.html`, KPI/summary components | Dashboard route, costs/compliance/resources/identity/sync summaries | Costs, compliance, resources, identity, sync seeded | Unit dashboard routes, browser smoke shell, local data smoke | ✅ Healthy basic | Dashboard shell covered; deeper click journeys remain `ct-cf2` |
+| Sync dashboard | `/sync-dashboard`, `/partials/sync-*`, `/api/v1/sync/*` | `pages/sync_dashboard.html`, `components/sync/*` | SyncJob, SyncJobLog, SyncJobMetrics, Alert | Seed-backed | Integration sync, unit sync/routes, browser smoke shell/partials, seeded browser smoke, local data smoke | ✅ Healthy basic | Deeper loading/error click checks remain `ct-cf2` |
+| Costs | `/costs`, `/api/v1/costs/*`, `/api/v1/budgets/*` | `pages/costs.html`, `components/cost_summary_card.html` | CostSnapshot, CostAnomaly, recommendations, budgets | Seed-backed for cost snapshots/anomalies | Unit cost service/routes, integration cost API, seeded browser smoke, local data smoke | ✅ Healthy basic | Budgets/recommendation journeys remain `ct-cf2` |
+| Compliance | `/compliance`, `/api/v1/compliance/*` | `pages/compliance.html`, `components/compliance_gauge.html` | ComplianceSnapshot, PolicyState, frameworks/rules | Seed-backed snapshots/policies | Unit compliance/routes, integration compliance API, seeded browser smoke, local data smoke | ✅ Healthy basic | Framework/rule journeys remain `ct-cf2` |
+| Resources | `/resources`, `/api/v1/resources/*`, recommendations/quotas/provisioning | `pages/resources.html`, `components/resource_stats.html` | Resource, ResourceTag, IdleResource, Recommendation | Seed-backed | Unit resource/routes, integration resource API, seeded browser smoke, local data smoke | ✅ Healthy basic | Recommendation/provisioning journeys remain `ct-cf2` |
+| Identity | `/identity`, `/api/v1/identity/*` | `pages/identity.html`, `components/identity_stats.html` | IdentitySnapshot, PrivilegedUser, license/admin-role services | Seed-backed snapshots/privileged users | Unit identity/routes, integration identity API, seeded browser smoke, local data smoke | ✅ Healthy basic | License/admin-role UI needs explicit status in `ct-cf2` |
+| Riverside | `/riverside`, `/api/v1/riverside/*` | `pages/riverside.html`, `partials/riverside_*` | RiversideCompliance, MFA, devices, threats, requirements | Seed-backed | Unit Riverside, integration Riverside API, browser smoke shell, seeded browser smoke, local data smoke | ✅ Healthy basic | Full per-widget interaction depth remains `ct-cf2` |
+| DMARC | `/dmarc`, `/api/v1/dmarc/*` | `pages/dmarc_dashboard.html`, `partials/dmarc_policy_legend.html` | DMARCRecord, DKIMRecord, DMARCReport, DMARCAlert | Seed-backed | Unit DMARC service/routes, browser smoke shell, seeded browser smoke, local data smoke | ✅ Healthy basic | Alert/sync interactions remain `ct-cf2` |
 | Preflight | `/api/v1/preflight/*`; template exists | `pages/preflight.html` | Preflight runner/reports/cache; often cloud/config dependent | Controlled empty/cloud-dependent state | Unit preflight suite | ⚠️ Partial | Need page route/status matrix and local empty-state decision: `ct-1aq` or follow-up |
 | Health/OpenAPI/docs | `/health`, `/health/detailed`, `/api/v1/health/*`, `/openapi.json`, `/docs` | Docs generated by FastAPI | App import, health routes, DB/cache status | Not seed-dependent | Doctor app import/OpenAPI, unit health routes, integration health API | ✅ Healthy | Keep in `make doctor` and local gate |
 | Search | `/api/v1/search/*` | `components/search.html` | Search service across resources/tenants/data | Indirectly seed-backed | Unit search service/routes | ⚠️ Partial | Browser search UX not covered: `ct-1aq`/`ct-cf2` |
@@ -49,12 +49,11 @@ make local-gate
 
 ## Open risk summary
 
-1. **Browser-level seeded UX proof is now the highest local blocker.** Data exists locally, but browser tests do not yet prove seeded values render on every critical page. Track in `ct-1aq`.
+1. **Browser-level seeded UX proof now exists for critical first-wave surfaces.** Remaining risk is deeper product-specific click journeys and coverage mapping.
 2. **Design-system P0 static failures are remediated, but visual depth remains partial.** Token/focus/contrast guardrails pass; Playwright-level visual assertions still need expansion.
 3. **Axe accessibility file currently records 17 skips.** Basic accessibility E2E passes, but full axe behavior needs a decision: enable, replace, or explicitly waive in `ct-ba1`/`ct-cf2`.
 4. **Preflight and cloud-dependent surfaces need controlled local empty-state rules.** Track in `ct-1aq` or a child bead if it grows.
 
 ## True next steps
 
-1. `ct-1aq` — expand Playwright local smoke to assert seeded data/empty states across dashboard, costs, compliance, resources, identity, Riverside, DMARC, and sync.
-2. `ct-cf2` — turn this matrix into the final coverage map with unit/integration/contract/browser/accessibility/design layers.
+1. `ct-cf2` — turn this matrix into the final coverage map with unit/integration/contract/browser/accessibility/design layers.

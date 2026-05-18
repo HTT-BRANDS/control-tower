@@ -10,6 +10,8 @@ from app.api.services.compliance_service import ComplianceService
 from app.core.auth import User, get_current_user
 from app.core.authorization import (
     TenantAuthorization,
+    filter_internal_tenant_scope,
+    get_internal_tenant_scope,
     get_tenant_authorization,
 )
 from app.core.database import get_db
@@ -37,11 +39,10 @@ async def get_compliance_summary(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    authz.filter_tenant_ids(tenant_ids)
+    # Compliance tables store tenants.id (internal primary key), not Azure tenant_id.
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ComplianceService(db)
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
     return await service.get_compliance_summary(tenant_ids=filtered_tenant_ids)
 
 
@@ -68,13 +69,13 @@ async def get_compliance_scores(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ComplianceService(db)
     scores = await service.get_scores_by_tenant(tenant_id=tenant_id)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     # Empty accessible_tenants means admin can see all
     if accessible_tenants:
         scores = [
@@ -119,13 +120,13 @@ async def get_non_compliant_policies(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ComplianceService(db)
     policies = service.get_non_compliant_policies(tenant_id=tenant_id)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     # Empty accessible_tenants means admin can see all
     if accessible_tenants:
         policies = [
@@ -159,8 +160,7 @@ async def get_compliance_trends(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ComplianceService(db)
     return await service.get_compliance_trends(tenant_ids=filtered_tenant_ids, days=days)
@@ -179,7 +179,7 @@ async def compliance_status(
     """
     try:
         authz.ensure_at_least_one_tenant()
-        accessible_tenant_ids = authz.accessible_tenant_ids
+        accessible_tenant_ids = get_internal_tenant_scope(authz)
 
         # Get total policy states for accessible tenants
         total_states = (

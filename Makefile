@@ -79,9 +79,9 @@ local-gate: doctor ## Run full local gate before staging/product validation
 			echo "$(RED)Unit or integration suite failed$(NC)"; \
 			exit 1; \
 		fi)
-	uv run pytest tests/e2e/test_browser_smoke.py tests/e2e/test_accessibility_e2e.py -q --tb=short
-	uv run pytest tests/e2e/test_axe_accessibility.py -q --tb=short
 	$(MAKE) local-reset-seed-smoke
+	$(LOCAL_ENV) uv run pytest tests/e2e/test_browser_smoke.py tests/e2e/test_accessibility_e2e.py tests/e2e/test_seeded_data_flows.py -q --tb=short
+	$(LOCAL_ENV) uv run pytest tests/e2e/test_axe_accessibility.py -q --tb=short
 	@echo "$(GREEN)✓ Full local gate passed$(NC)"
 
 local-db-reset: ## Reset dedicated local SQLite demo database only

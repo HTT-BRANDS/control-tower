@@ -18,6 +18,8 @@ from app.api.services.reservation_service import (
 from app.core.auth import User, get_current_user
 from app.core.authorization import (
     TenantAuthorization,
+    filter_internal_tenant_scope,
+    get_internal_tenant_scope,
     get_tenant_authorization,
 )
 from app.core.database import get_db
@@ -57,13 +59,12 @@ async def get_cost_summary(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    # CostSnapshot.tenant_id stores tenants.id (internal primary key), not Azure tenant_id.
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = CostService(db)
-    # Use filtered tenant IDs if specified, otherwise use all accessible tenants
     effective_tenant_ids = (
-        filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
+        filtered_tenant_ids if filtered_tenant_ids else get_internal_tenant_scope(authz)
     )
     return await service.get_cost_summary(period_days=period_days, tenant_ids=effective_tenant_ids)
 
@@ -83,13 +84,13 @@ async def get_costs_by_tenant(
     """
     authz.ensure_at_least_one_tenant()
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = CostService(db)
     costs = await service.get_costs_by_tenant(period_days=period_days)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     costs = [
         c
         for c in costs
@@ -119,13 +120,11 @@ async def get_cost_trends(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = CostService(db)
-    # Use filtered tenant IDs if specified, otherwise use all accessible tenants
     effective_tenant_ids = (
-        filtered_tenant_ids if filtered_tenant_ids else authz.accessible_tenant_ids
+        filtered_tenant_ids if filtered_tenant_ids else get_internal_tenant_scope(authz)
     )
     return await service.get_cost_trends(days=days, tenant_ids=effective_tenant_ids)
 
@@ -144,7 +143,7 @@ async def get_cost_forecast(
     authz.ensure_at_least_one_tenant()
     service = CostService(db)
     # Filter forecast to only accessible tenants
-    return await service.get_cost_forecast(days=days, tenant_ids=authz.accessible_tenant_ids)
+    return await service.get_cost_forecast(days=days, tenant_ids=get_internal_tenant_scope(authz))
 
 
 @router.get("/anomalies")
@@ -170,13 +169,13 @@ async def get_cost_anomalies(
     """
     authz.ensure_at_least_one_tenant()
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = CostService(db)
     anomalies = service.get_anomalies(acknowledged=acknowledged)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     anomalies = [
         a
         for a in anomalies

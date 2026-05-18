@@ -18,6 +18,8 @@ from app.api.services.resource_service import ResourceService
 from app.core.auth import User, get_current_user
 from app.core.authorization import (
     TenantAuthorization,
+    filter_internal_tenant_scope,
+    get_internal_tenant_scope,
     get_tenant_authorization,
 )
 from app.core.database import get_db
@@ -129,7 +131,7 @@ async def get_resources(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
     if tenant_ids and not filtered_tenant_ids:
         # User requested specific tenants but has access to none
         return ResourceInventory(resources=[], total_resources=0, total_cost=0.0)
@@ -141,8 +143,8 @@ async def get_resources(
         limit=limit,
     )
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     inventory.resources = [
         r
         for r in inventory.resources
@@ -175,18 +177,18 @@ async def get_orphaned_resources(
     """
     authz.ensure_at_least_one_tenant()
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ResourceService(db)
     orphaned = await service.get_orphaned_resources()
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     orphaned = [
         o
         for o in orphaned
-        if o.tenant_name in accessible_tenants
-        and (not filtered_tenant_ids or o.tenant_name in filtered_tenant_ids)
+        if o.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or o.tenant_id in filtered_tenant_ids)
     ]
 
     return orphaned[offset : offset + limit]
@@ -221,8 +223,7 @@ async def get_idle_resources(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ResourceService(db)
     return service.get_idle_resources(
@@ -248,7 +249,7 @@ async def get_idle_resources_summary(
     """Get summary of idle resources."""
     authz.ensure_at_least_one_tenant()
     service = ResourceService(db)
-    accessible_tenants = authz.accessible_tenant_ids
+    accessible_tenants = get_internal_tenant_scope(authz)
     return await service.get_idle_resources_summary(tenant_ids=accessible_tenants)
 
 
@@ -305,8 +306,7 @@ async def get_tagging_compliance(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    authz.filter_tenant_ids(tenant_ids)
+    filter_internal_tenant_scope(authz, tenant_ids)
 
     service = ResourceService(db)
     return await service.get_tagging_compliance(required_tags=required_tags)

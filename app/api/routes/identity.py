@@ -13,6 +13,8 @@ from app.api.services.license_service import LicenseServiceError, license_servic
 from app.core.auth import get_current_user
 from app.core.authorization import (
     TenantAuthorization,
+    filter_internal_tenant_scope,
+    get_internal_tenant_scope,
     get_tenant_authorization,
 )
 from app.core.database import get_db
@@ -46,11 +48,10 @@ async def get_identity_summary(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    authz.filter_tenant_ids(tenant_ids)
+    # Identity tables store tenants.id (internal primary key), not Azure tenant_id.
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = IdentityService(db)
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
     return await service.get_identity_summary(tenant_ids=filtered_tenant_ids)
 
 
@@ -94,8 +95,7 @@ async def get_users(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     # Get users from service
     service = IdentityService(db)
@@ -147,13 +147,13 @@ async def get_privileged_accounts(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = IdentityService(db)
     accounts = await service.get_privileged_accounts(tenant_id=tenant_id)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     accounts = [
         a
         for a in accounts
@@ -193,10 +193,17 @@ async def get_guest_accounts(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = IdentityService(db)
     guests = service.get_guest_accounts(tenant_id=tenant_id, stale_only=stale_only)
+    accessible_tenants = get_internal_tenant_scope(authz)
+    guests = [
+        guest
+        for guest in guests
+        if guest.tenant_id in accessible_tenants
+        and (not filtered_tenant_ids or guest.tenant_id in filtered_tenant_ids)
+    ]
 
     return guests[offset : offset + limit]
 
@@ -226,13 +233,13 @@ async def get_stale_accounts(
     if tenant_id:
         authz.validate_access(tenant_id)
 
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = IdentityService(db)
     stale = service.get_stale_accounts(days_inactive=days_inactive, tenant_id=tenant_id)
 
-    # Apply tenant isolation
-    accessible_tenants = authz.accessible_tenant_ids
+    # Apply tenant isolation using internal tenant primary keys.
+    accessible_tenants = get_internal_tenant_scope(authz)
     stale = [
         s
         for s in stale
@@ -264,8 +271,7 @@ async def get_identity_trends(
     """
     authz.ensure_at_least_one_tenant()
 
-    # Filter tenant_ids to only accessible ones
-    filtered_tenant_ids = authz.filter_tenant_ids(tenant_ids)
+    filtered_tenant_ids = filter_internal_tenant_scope(authz, tenant_ids)
 
     service = IdentityService(db)
     return await service.get_identity_trends(tenant_ids=filtered_tenant_ids, days=days)
