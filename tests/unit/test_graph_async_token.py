@@ -32,6 +32,8 @@ class TestGraphClientAsyncToken:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
+        self.mock_settings.use_uami_auth = False
+        self.mock_settings.use_oidc_federation = False
 
         with patch("app.api.services.graph_client._base.settings", self.mock_settings):
             from app.api.services.graph_client import GraphClient
@@ -154,6 +156,7 @@ class TestGraphClientCredentialConfig:
         self.mock_settings.azure_client_id = "test-client-id"
         self.mock_settings.azure_client_secret = "test-client-secret"
         self.mock_settings.azure_tenant_id = "test-tenant-id"
+        self.mock_settings.use_uami_auth = False
         self.mock_settings.use_oidc_federation = False  # secret mode under test
 
         with patch("app.api.services.graph_client._base.settings", self.mock_settings):

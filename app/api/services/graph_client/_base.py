@@ -38,17 +38,17 @@ class _GraphClientCore:
     def _get_credential(self) -> TokenCredential:
         """Get or create credential for this tenant.
 
-        Supports two modes controlled by ``settings.use_oidc_federation``:
+        Delegates zero-secret modes to ``AzureClientManager``:
 
-        * **OIDC mode**: uses ``OIDCCredentialProvider`` backed by the App Service
-          Managed Identity — no client secret required.
+        * **UAMI mode**: User-Assigned Managed Identity with federated assertion.
+        * **OIDC mode**: App Service Managed Identity with federated assertion.
         * **Secret mode**: resolves ``client_id`` / ``client_secret`` via env vars,
           Key Vault, or settings fallback through ``AzureClientManager``.
         """
         if not self._credential:
-            if settings.use_oidc_federation:
-                # Delegate to the global singleton so clear_cache() remains effective
-                # and TTL caching is shared across all callers.
+            if settings.use_uami_auth or settings.use_oidc_federation:
+                # Delegate zero-secret modes to the global singleton so clear_cache()
+                # remains effective and TTL caching is shared across all callers.
                 from app.api.services.azure_client import azure_client_manager
 
                 self._credential = azure_client_manager.get_credential(self.tenant_id)

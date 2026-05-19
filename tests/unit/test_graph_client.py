@@ -281,6 +281,23 @@ class TestGraphClientCredential:
             mock_csc.assert_called_once()
             assert cred1 is cred2
 
+    def test_get_credential_delegates_uami_to_azure_client_manager(self, monkeypatch):
+        """UAMI Graph auth must not fall back to legacy client-secret resolution."""
+        from app.api.services.graph_client import _base
+
+        monkeypatch.setattr(_base.settings, "use_uami_auth", True)
+        monkeypatch.setattr(_base.settings, "use_oidc_federation", False)
+
+        mock_credential = MagicMock()
+        with patch("app.api.services.azure_client.azure_client_manager") as mock_manager:
+            mock_manager.get_credential.return_value = mock_credential
+
+            client = GraphClient(tenant_id="t-001")
+            assert client._get_credential() is mock_credential
+            assert client._get_credential() is mock_credential
+
+        mock_manager.get_credential.assert_called_once_with("t-001")
+
 
 # ---------------------------------------------------------------------------
 # GraphClient._get_token
