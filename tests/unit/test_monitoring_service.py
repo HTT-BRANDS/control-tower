@@ -543,9 +543,24 @@ class TestMonitoringServiceAlertDetection:
         """Create MonitoringService instance."""
         return MonitoringService(db=mock_db)
 
+    @patch(
+        "app.api.services.monitoring_service.MonitoringService._existing_unresolved_alert",
+        return_value=None,
+    )
     @patch("app.api.services.monitoring_service.MonitoringService.create_alert")
-    def test_check_for_alerts_on_failure(self, mock_create_alert, monitoring_service, mock_db):
-        """Test _check_for_alerts_after_completion creates alert on job failure."""
+    def test_check_for_alerts_on_failure(
+        self,
+        mock_create_alert,
+        _mock_existing,
+        monitoring_service,
+        mock_db,
+    ):
+        """Test _check_for_alerts_after_completion creates alert on job failure.
+
+        ``_existing_unresolved_alert`` is patched to None so the new dedup
+        guard (ct-l2j) lets the alert through. A separate dedup-specific
+        test covers the "alert already exists" branch.
+        """
         # Setup
         mock_log = MagicMock(spec=SyncJobLog)
         mock_log.id = 1
@@ -569,8 +584,18 @@ class TestMonitoringServiceAlertDetection:
         assert call_kwargs["severity"] == "error"
         assert "failed" in call_kwargs["title"].lower()
 
+    @patch(
+        "app.api.services.monitoring_service.MonitoringService._existing_unresolved_alert",
+        return_value=None,
+    )
     @patch("app.api.services.monitoring_service.MonitoringService.create_alert")
-    def test_check_for_alerts_on_zero_records(self, mock_create_alert, monitoring_service, mock_db):
+    def test_check_for_alerts_on_zero_records(
+        self,
+        mock_create_alert,
+        _mock_existing,
+        monitoring_service,
+        mock_db,
+    ):
         """Test _check_for_alerts_after_completion detects consecutive zero-record runs."""
         # Setup
         mock_log = MagicMock(spec=SyncJobLog)

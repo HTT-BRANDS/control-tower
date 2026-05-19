@@ -6,9 +6,10 @@ Split off from the former monolithic `tests/integration/test_sync_api.py`
 
 from datetime import UTC, datetime, timedelta
 
+from app.api.services.monitoring_service import MonitoringService
 from app.core.database import get_db
 from app.main import app
-from app.models.monitoring import Alert
+from app.models.monitoring import Alert, SyncJobLog
 
 # ============================================================================
 
@@ -335,3 +336,312 @@ class TestResolveAlertEndpoint:
 
 # ============================================================================
 # Tenant Isolation Tests
+
+
+# ============================================================================
+# Alert Dedup + Auto-Resolve (ct-l2j)
+# ============================================================================
+#
+# Production hit 1,489 active `no_records` alerts because the alert-creation
+# path inside MonitoringService._check_for_alerts_after_completion was creating
+# a fresh alert on every sync run that produced zero records. There was no
+# dedup against existing unresolved alerts of the same (type, job, tenant),
+# and no auto-resolution when a sync subsequently recovered with real data.
+#
+# These tests use a real in-memory SQLite via the integration `db_session`
+# fixture — query-shape assertions on MagicMock chains would prove nothing.
+
+
+class TestAlertDeduplication:
+    """An unresolved alert of the same (type, job, tenant) must short-circuit."""
+
+    def _make_log(
+        self,
+        db_session,
+        *,
+        job_type: str,
+        tenant_id: str | None,
+        status: str,
+        records: int,
+        errors: int = 0,
+    ) -> SyncJobLog:
+        """Persist and return a SyncJobLog row to drive the alert path."""
+        log = SyncJobLog(
+            job_type=job_type,
+            tenant_id=tenant_id,
+            status=status,
+            started_at=datetime.now(UTC) - timedelta(seconds=30),
+            ended_at=datetime.now(UTC),
+            duration_ms=30000,
+            records_processed=records,
+            errors_count=errors,
+        )
+        db_session.add(log)
+        db_session.commit()
+        db_session.refresh(log)
+        return log
+
+    def test_no_records_alert_does_not_duplicate_on_repeat_runs(self, db_session):
+        """ct-l2j: same (job, tenant) zero-record run must not stack alerts."""
+        svc = MonitoringService(db=db_session)
+        # Seed three prior zero-record completed runs so the threshold gate trips.
+        for _ in range(3):
+            self._make_log(
+                db_session,
+                job_type="costs",
+                tenant_id="tenant-bcc",
+                status="completed",
+                records=0,
+            )
+
+        # First completion → creates one alert.
+        log1 = self._make_log(
+            db_session, job_type="costs", tenant_id="tenant-bcc", status="completed", records=0
+        )
+        created_first = svc._check_for_alerts_after_completion(log1)
+        assert len(created_first) == 1
+        assert created_first[0].alert_type == "no_records"
+
+        # Second identical completion → must NOT create a second alert.
+        log2 = self._make_log(
+            db_session, job_type="costs", tenant_id="tenant-bcc", status="completed", records=0
+        )
+        created_second = svc._check_for_alerts_after_completion(log2)
+        assert created_second == [], (
+            "Dedup failed: second zero-record run created a duplicate `no_records` alert. "
+            "This is the exact bug behind ct-l2j (1,489 active alerts in prod)."
+        )
+
+        # Exactly one unresolved no_records alert exists for this (job, tenant).
+        active = (
+            db_session.query(Alert)
+            .filter(
+                Alert.alert_type == "no_records",
+                Alert.job_type == "costs",
+                Alert.tenant_id == "tenant-bcc",
+                Alert.is_resolved == 0,
+            )
+            .count()
+        )
+        assert active == 1
+
+    def test_sync_failure_alert_dedups_across_repeat_failures(self, db_session):
+        """ct-l2j: repeated failures of the same (job, tenant) → one alert."""
+        svc = MonitoringService(db=db_session)
+        log1 = self._make_log(
+            db_session,
+            job_type="identity",
+            tenant_id="tenant-fn",
+            status="failed",
+            records=0,
+        )
+        svc._check_for_alerts_after_completion(log1)
+        log2 = self._make_log(
+            db_session,
+            job_type="identity",
+            tenant_id="tenant-fn",
+            status="failed",
+            records=0,
+        )
+        created = svc._check_for_alerts_after_completion(log2)
+        assert created == [], "Repeated failures must dedup into one sync_failure alert"
+
+        unresolved = (
+            db_session.query(Alert)
+            .filter(
+                Alert.alert_type == "sync_failure",
+                Alert.job_type == "identity",
+                Alert.tenant_id == "tenant-fn",
+                Alert.is_resolved == 0,
+            )
+            .count()
+        )
+        assert unresolved == 1
+
+    def test_different_tenants_get_independent_alerts(self, db_session):
+        """Dedup is scoped to (alert_type, job_type, tenant_id) — independent tenants stay independent."""
+        svc = MonitoringService(db=db_session)
+        # Seed enough zero-record runs to trip the threshold for both tenants.
+        for tenant in ("tenant-bcc", "tenant-fn"):
+            for _ in range(4):
+                self._make_log(
+                    db_session,
+                    job_type="costs",
+                    tenant_id=tenant,
+                    status="completed",
+                    records=0,
+                )
+                svc._check_for_alerts_after_completion(
+                    db_session.query(SyncJobLog)
+                    .filter(SyncJobLog.tenant_id == tenant)
+                    .order_by(SyncJobLog.id.desc())
+                    .first()
+                )
+
+        per_tenant = (
+            db_session.query(Alert.tenant_id)
+            .filter(Alert.alert_type == "no_records", Alert.is_resolved == 0)
+            .all()
+        )
+        tenant_ids = sorted(t[0] for t in per_tenant)
+        assert tenant_ids == ["tenant-bcc", "tenant-fn"], (
+            f"Expected one alert per tenant after dedup; got {tenant_ids}"
+        )
+
+
+class TestAlertAutoResolution:
+    """A successful sync must clear stale alerts for the same (job, tenant)."""
+
+    def _make_log(
+        self,
+        db_session,
+        *,
+        job_type: str,
+        tenant_id: str | None,
+        status: str,
+        records: int,
+    ) -> SyncJobLog:
+        log = SyncJobLog(
+            job_type=job_type,
+            tenant_id=tenant_id,
+            status=status,
+            started_at=datetime.now(UTC) - timedelta(seconds=30),
+            ended_at=datetime.now(UTC),
+            duration_ms=30000,
+            records_processed=records,
+            errors_count=0,
+        )
+        db_session.add(log)
+        db_session.commit()
+        db_session.refresh(log)
+        return log
+
+    def _seed_alert(
+        self,
+        db_session,
+        *,
+        alert_type: str,
+        job_type: str,
+        tenant_id: str | None,
+    ) -> Alert:
+        alert = Alert(
+            alert_type=alert_type,
+            severity="warning",
+            job_type=job_type,
+            tenant_id=tenant_id,
+            title=f"seed {alert_type}",
+            message="seeded by test",
+            is_resolved=False,
+            created_at=datetime.now(UTC),
+        )
+        db_session.add(alert)
+        db_session.commit()
+        db_session.refresh(alert)
+        return alert
+
+    def test_no_records_alert_auto_resolves_when_records_flow_again(self, db_session):
+        """ct-l2j AC #4: once a sync produces records, the prior no_records alert clears."""
+        svc = MonitoringService(db=db_session)
+        seeded = self._seed_alert(
+            db_session,
+            alert_type="no_records",
+            job_type="costs",
+            tenant_id="tenant-bcc",
+        )
+        # Sync recovers and processes 42 records.
+        log = self._make_log(
+            db_session,
+            job_type="costs",
+            tenant_id="tenant-bcc",
+            status="completed",
+            records=42,
+        )
+
+        svc._check_for_alerts_after_completion(log)
+
+        db_session.refresh(seeded)
+        assert seeded.is_resolved, (
+            "Recovered sync must auto-resolve the prior no_records alert (ct-l2j AC #4)"
+        )
+        assert seeded.resolved_by == "auto:sync_recovered"
+        assert seeded.resolved_at is not None
+
+    def test_sync_failure_alert_auto_resolves_on_next_success(self, db_session):
+        """A subsequent successful run resolves a prior sync_failure alert."""
+        svc = MonitoringService(db=db_session)
+        seeded = self._seed_alert(
+            db_session,
+            alert_type="sync_failure",
+            job_type="resources",
+            tenant_id="tenant-htt",
+        )
+        log = self._make_log(
+            db_session,
+            job_type="resources",
+            tenant_id="tenant-htt",
+            status="completed",
+            records=100,
+        )
+
+        svc._check_for_alerts_after_completion(log)
+
+        db_session.refresh(seeded)
+        assert seeded.is_resolved
+        assert seeded.resolved_by == "auto:sync_recovered"
+
+    def test_no_records_alert_does_not_resolve_on_another_zero_record_run(self, db_session):
+        """Auto-resolve must require *real* recovery — zero records means still broken."""
+        svc = MonitoringService(db=db_session)
+        seeded = self._seed_alert(
+            db_session,
+            alert_type="no_records",
+            job_type="costs",
+            tenant_id="tenant-bcc",
+        )
+        log = self._make_log(
+            db_session,
+            job_type="costs",
+            tenant_id="tenant-bcc",
+            status="completed",
+            records=0,
+        )
+
+        svc._check_for_alerts_after_completion(log)
+
+        db_session.refresh(seeded)
+        assert not seeded.is_resolved, (
+            "no_records alert must NOT auto-resolve when the new run also produced zero records"
+        )
+
+    def test_auto_resolve_is_scoped_to_job_and_tenant(self, db_session):
+        """A successful run for tenant A must not touch tenant B's alerts."""
+        svc = MonitoringService(db=db_session)
+        alert_bcc = self._seed_alert(
+            db_session,
+            alert_type="no_records",
+            job_type="costs",
+            tenant_id="tenant-bcc",
+        )
+        alert_fn = self._seed_alert(
+            db_session,
+            alert_type="no_records",
+            job_type="costs",
+            tenant_id="tenant-fn",
+        )
+
+        # Only tenant-bcc's sync recovers.
+        log = self._make_log(
+            db_session,
+            job_type="costs",
+            tenant_id="tenant-bcc",
+            status="completed",
+            records=10,
+        )
+        svc._check_for_alerts_after_completion(log)
+
+        db_session.refresh(alert_bcc)
+        db_session.refresh(alert_fn)
+        assert alert_bcc.is_resolved
+        assert not alert_fn.is_resolved, (
+            "Auto-resolve must NOT cross tenant boundaries (cross-contamination bug)"
+        )
