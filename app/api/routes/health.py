@@ -67,38 +67,41 @@ def _build_scheduler_check(
     return {"status": "degraded", "error": "Scheduler not running"}, "degraded"
 
 
-def _summarize_azure_configuration(settings: Any) -> dict[str, Any]:
-    """Report Azure AD configuration as an explicit tri-state.
+async def _summarize_azure_configuration(settings: Any) -> dict[str, Any]:
+    """Report Azure AD configuration with a LIVE liveness probe.
 
-    Returns one of:
-        * ``{"status": "configured", ...}``        — all three creds present
-        * ``{"status": "not_required", ...}``     — missing creds in a non-prod env
-        * ``{"status": "missing", ...}``          — missing creds in production
+    Five possible statuses (ct-czv tri-state + ct-jxe additions):
 
-    Health rollups should only promote ``missing`` to overall ``degraded``;
-    ``not_required`` is an honest "this env intentionally has no Azure config"
-    signal and must not poison liveness probes (see ct-czv).
+        * ``"configured"``      — creds present AND token grant succeeded.
+        * ``"unauthenticated"`` — creds present but Azure rejected them
+                                  (e.g. expired secret, missing admin
+                                  consent). PROMOTES to overall degraded.
+        * ``"unreachable"``     — couldn't reach the token endpoint. Does
+                                  NOT promote — likely transient.
+        * ``"not_required"``    — creds absent, non-prod (acceptable).
+        * ``"missing"``         — creds absent, prod (real problem).
+
+    Why this is async now: the probe makes a real HTTPS call to
+    ``login.microsoftonline.com``. Results are cached for 5 minutes
+    (60s for failures, so rotations recover fast). See
+    ``app/core/azure_credential_probe.py`` for the full design.
     """
-    configured = all(
-        [
-            settings.azure_ad_tenant_id,
-            settings.azure_ad_client_id,
-            settings.azure_ad_client_secret,
-        ]
+    from app.core.azure_credential_probe import probe_client_credential
+
+    result = await probe_client_credential(
+        tenant_id=settings.azure_ad_tenant_id,
+        client_id=settings.azure_ad_client_id,
+        client_secret=settings.azure_ad_client_secret,
+        token_endpoint=settings.azure_ad_token_endpoint,
+        is_production=settings.is_production,
     )
-    if configured:
-        return {"status": "configured"}
-    if settings.is_production:
-        return {
-            "status": "missing",
-            "environment": settings.environment,
-            "reason": "AZURE_AD_TENANT_ID / CLIENT_ID / CLIENT_SECRET not all set in production",
-        }
-    return {
-        "status": "not_required",
-        "environment": settings.environment,
-        "reason": "Azure AD credentials not configured (acceptable outside production)",
-    }
+
+    payload = result.to_dict()
+    # Stamp environment for parity with the pre-ct-jxe payload shape, so
+    # consumers (UI dot indicator, alert routing) don't need a migration.
+    if result.status in {"missing", "not_required", "unauthenticated"}:
+        payload["environment"] = settings.environment
+    return payload
 
 
 @router.get("")
@@ -282,12 +285,30 @@ async def api_health_check_detailed(
         if overall_status == "healthy":
             overall_status = "degraded"
 
-    # Azure configuration — tri-state, not a raw bool, so that a deliberately
-    # un-configured non-production environment (e.g. local dev or unseeded
-    # staging) does NOT report overall ``degraded``. Only a missing config
-    # in production is a real problem (see ct-czv AC #2).
-    checks["azure_configured"] = _summarize_azure_configuration(settings)
-    if checks["azure_configured"]["status"] == "missing" and overall_status == "healthy":
+    # Azure configuration — tri-state plus a LIVE probe (post-ct-jxe).
+    #
+    # ct-czv AC #2 originally introduced tri-state so a deliberately un-
+    # configured non-prod env doesn't poison the rollup. ct-jxe then
+    # showed that even tri-state wasn't enough: production sat on an
+    # expired client secret for 20 days while every health check
+    # cheerfully reported "configured" (because the env vars were
+    # SHAPE-correct, even though Azure rejected them on every actual
+    # token request).
+    #
+    # `_summarize_azure_configuration` now does a real client-credentials
+    # grant against the token endpoint (5-minute cache, 5s timeout,
+    # never raises). New states:
+    #   - "unauthenticated" -> Azure rejected creds (rotate the secret!).
+    #                          Promotes overall to "degraded".
+    #   - "unreachable"     -> we couldn't reach login.microsoftonline.com.
+    #                          Does NOT promote — could be a transient
+    #                          Azure-side network blip, not our bug.
+    checks["azure_configured"] = await _summarize_azure_configuration(settings)
+    azure_status = checks["azure_configured"]["status"]
+    if (
+        azure_status in {"missing", "unauthenticated"}
+        and overall_status == "healthy"
+    ):
         overall_status = "degraded"
 
     # JWT configuration

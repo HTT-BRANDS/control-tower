@@ -721,11 +721,22 @@ class TestAzureConfigTriState:
         mock_settings,
         client,
     ):
-        """With all three creds present, azure_configured=configured regardless of env."""
+        """With all three creds present AND Azure returning 200 on the
+        client-credentials probe, azure_configured=configured.
+
+        ct-jxe note: pre-fix, this test asserted on shape-only behaviour
+        (any time creds were set, status was 'configured'). That's exactly
+        what let the 2026-04-29 secret expiry sit undetected for 20 days.
+        The probe is now part of the contract — so tests that want to
+        assert 'configured' must also stub the probe to return a 200.
+        """
         settings = MagicMock()
         settings.azure_ad_tenant_id = "tid"
         settings.azure_ad_client_id = "cid"
         settings.azure_ad_client_secret = "csec"  # pragma: allowlist secret
+        settings.azure_ad_token_endpoint = (
+            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+        )
         settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
         settings.app_version = "2.0.0"
         settings.environment = "production"
@@ -735,7 +746,119 @@ class TestAzureConfigTriState:
         _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
-        resp = client.get(DETAILED_URL)
+        # Stub the probe to return "configured" (the green path). We patch
+        # at the source module so any future caller picks up the stub too.
+        from app.core import azure_credential_probe as probe_mod
+
+        with patch.object(
+            probe_mod,
+            "probe_client_credential",
+            AsyncMock(return_value=probe_mod.ProbeResult(status="configured", http_status=200)),
+        ):
+            resp = client.get(DETAILED_URL)
         data = resp.json()
 
         assert data["checks"]["azure_configured"]["status"] == "configured"
+
+    @patch("app.api.routes.health.get_settings")
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_expired_secret_reports_unauthenticated_and_degraded(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_settings,
+        client,
+    ):
+        """ct-jxe regression: an expired client secret (AADSTS7000215) must
+        flip azure_configured -> 'unauthenticated' AND promote overall
+        status to 'degraded' so monitoring dashboards see the outage
+        within ~5 min (the probe cache TTL), not 20 days."""
+        settings = MagicMock()
+        settings.azure_ad_tenant_id = "tid"
+        settings.azure_ad_client_id = "cid"
+        settings.azure_ad_client_secret = "expired-secret"  # pragma: allowlist secret
+        settings.azure_ad_token_endpoint = (
+            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+        )
+        settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
+        settings.app_version = "2.0.0"
+        settings.environment = "production"
+        settings.is_production = True
+        mock_settings.return_value = settings
+
+        _stub_cache(mock_cache)
+        mock_get_sched.return_value = _mock_scheduler_running()
+
+        from app.core import azure_credential_probe as probe_mod
+
+        unauth = probe_mod.ProbeResult(
+            status="unauthenticated",
+            detail="AADSTS7000215: Invalid client secret",
+            azure_error_code="AADSTS7000215",
+            http_status=401,
+        )
+        with patch.object(
+            probe_mod, "probe_client_credential", AsyncMock(return_value=unauth)
+        ):
+            resp = client.get(DETAILED_URL)
+        data = resp.json()
+
+        assert data["checks"]["azure_configured"]["status"] == "unauthenticated"
+        assert data["checks"]["azure_configured"]["azure_error_code"] == "AADSTS7000215"
+        assert data["status"] == "degraded", (
+            "ct-jxe: an unauthenticated probe result MUST promote overall "
+            "status to 'degraded' so the dashboard alerts within the probe "
+            "cache TTL — that's the whole point of the post-mortem fix."
+        )
+
+    @patch("app.api.routes.health.get_settings")
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_unreachable_probe_does_NOT_promote_to_degraded(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_settings,
+        client,
+    ):
+        """ct-jxe: when the probe can't even reach login.microsoftonline.com
+        (network blip, Azure outage, DNS hiccup), we can't tell whether the
+        secret works or not. Don't poison overall health on this — flapping
+        the dashboard red on every Azure network hiccup defeats the
+        purpose of a probe that's supposed to surface OUR config bugs."""
+        settings = MagicMock()
+        settings.azure_ad_tenant_id = "tid"
+        settings.azure_ad_client_id = "cid"
+        settings.azure_ad_client_secret = "csec"  # pragma: allowlist secret
+        settings.azure_ad_token_endpoint = (
+            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+        )
+        settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
+        settings.app_version = "2.0.0"
+        settings.environment = "production"
+        settings.is_production = True
+        mock_settings.return_value = settings
+
+        _stub_cache(mock_cache)
+        mock_get_sched.return_value = _mock_scheduler_running()
+
+        from app.core import azure_credential_probe as probe_mod
+
+        unreachable = probe_mod.ProbeResult(
+            status="unreachable",
+            detail="Token endpoint timed out after 5.0s",
+        )
+        with patch.object(
+            probe_mod, "probe_client_credential", AsyncMock(return_value=unreachable)
+        ):
+            resp = client.get(DETAILED_URL)
+        data = resp.json()
+
+        assert data["checks"]["azure_configured"]["status"] == "unreachable"
+        assert data["status"] == "healthy", (
+            "ct-jxe: an 'unreachable' probe is ambiguous (could be Azure-side"
+            " hiccup or our config). Do NOT promote to degraded — only"
+            " 'missing' and 'unauthenticated' (which are definitively OUR"
+            " problem) should poison the rollup."
+        )
