@@ -104,25 +104,39 @@ class TestCostServiceSummaries:
 
     @pytest.mark.asyncio
     async def test_get_cost_summary_empty_data(self):
-        """Test get_cost_summary with no data."""
-        # Create fresh mocks
+        """Test get_cost_summary with no data.
+
+        ct-d11: when there are no cost snapshots in the window, the summary
+        must still report the active-tenant count from the Tenant table —
+        not 0. Previously the field was derived from snapshots-in-window,
+        which silently misled the UI any time sync was stale.
+        """
         mock_db = MagicMock()
         service = CostService(db=mock_db)
 
-        # Setup mock query to return empty
-        mock_query = MagicMock()
-        mock_query.filter.return_value = mock_query
-        mock_query.all.return_value = []
-        mock_db.query.return_value = mock_query
+        # Empty cost-snapshot query (used twice: current period, prev period)
+        empty_cost_query = MagicMock()
+        empty_cost_query.filter.return_value = empty_cost_query
+        empty_cost_query.all.return_value = []
 
-        # Execute
+        # Tenant-count fallback query (returns 5 active tenants)
+        tenant_count_query = MagicMock()
+        tenant_count_query.filter.return_value = tenant_count_query
+        tenant_count_query.count.return_value = 5
+
+        mock_db.query.side_effect = [
+            empty_cost_query,  # CostSnapshot — current period
+            empty_cost_query,  # CostSnapshot — previous period
+            tenant_count_query,  # Tenant — active-count fallback (ct-d11)
+        ]
+
         result = await service.get_cost_summary(period_days=30)
 
-        # Verify
         assert isinstance(result, CostSummary)
         assert result.total_cost == 0
-        assert result.tenant_count == 0
+        assert result.tenant_count == 5, "ct-d11: must report active tenants, not 0"
         assert result.subscription_count == 0
+        # ct-d11: with current=0 and prev=0, we do NOT report a change.
         assert result.cost_change_percent is None
         assert len(result.top_services) == 0
 
@@ -156,7 +170,7 @@ class TestCostServiceSummaries:
             snap.service_name = "Compute"
             previous_period.append(snap)
 
-        # Create two separate mock query chains
+        # Create separate mock query chains
         current_query = MagicMock()
         current_query.filter.return_value = current_query
         current_query.all.return_value = current_period
@@ -165,8 +179,13 @@ class TestCostServiceSummaries:
         previous_query.filter.return_value = previous_query
         previous_query.all.return_value = previous_period
 
-        # Service makes 2 queries: current period, then previous period
-        mock_db.query.side_effect = [current_query, previous_query]
+        # ct-d11: third query is the Tenant table for the count fallback.
+        tenant_count_query = MagicMock()
+        tenant_count_query.filter.return_value = tenant_count_query
+        tenant_count_query.count.return_value = 1
+
+        # Service makes 3 queries: current period, previous period, tenant count
+        mock_db.query.side_effect = [current_query, previous_query, tenant_count_query]
 
         # Execute
         result = await service.get_cost_summary(period_days=30)
@@ -174,6 +193,7 @@ class TestCostServiceSummaries:
         # Verify - costs doubled (200 vs 100), so change should be 100%
         assert result.cost_change_percent is not None
         assert result.cost_change_percent == 100.0
+        assert result.tenant_count == 1
 
     @pytest.mark.asyncio
     async def test_get_cost_trends_with_data(self, cost_service, mock_db, sample_cost_snapshots):

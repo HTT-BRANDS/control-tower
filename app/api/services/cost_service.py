@@ -65,13 +65,31 @@ class CostService:
         current_total = sum(c.total_cost for c in current_costs)
         prev_total = sum(c.total_cost for c in prev_costs)
 
-        # Calculate change percentage
+        # Calculate change percentage.
+        # ct-d11: when current_total is 0 AND we know we had prior spend,
+        # this is almost certainly stale sync data — not a real -100%
+        # spend collapse. Reporting -100% on a stale-data page is actively
+        # alarming and wrong. Treat current=0 as 'unknown' for the change
+        # signal; the UI binds None to 'No prior period data'.
         change_percent = None
-        if prev_total > 0:
+        if prev_total > 0 and current_total > 0:
             change_percent = ((current_total - prev_total) / prev_total) * 100
 
-        # Get unique counts
-        unique_tenant_ids = {c.tenant_id for c in current_costs}
+        # ct-d11: ``tenant_count`` is the number of tenants this summary is
+        # SCOPED to, not the number that happened to have CostSnapshot rows
+        # in the window. Previously this was derived from current_costs,
+        # which made the field return 0 whenever sync was stale (e.g. data
+        # >30 days old) — even though /by-tenant returned a full 5 tenant
+        # rows for the same call. The UI binds this number to a "how many
+        # tenants are we tracking?" tile, so reporting 0 on stale data was
+        # actively misleading. Use the explicit scope when caller passes it,
+        # otherwise fall back to the active-tenant table count.
+        if tenant_ids:
+            scoped_tenant_count = len(set(tenant_ids))
+        else:
+            scoped_tenant_count = (
+                self.db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
+            )
         sub_ids = {c.subscription_id for c in current_costs}
 
         # Top services by cost
@@ -96,7 +114,7 @@ class CostService:
             currency="USD",
             period_start=start_date,
             period_end=end_date,
-            tenant_count=len(unique_tenant_ids),
+            tenant_count=scoped_tenant_count,
             subscription_count=len(sub_ids),
             cost_change_percent=change_percent,
             top_services=top_services,
