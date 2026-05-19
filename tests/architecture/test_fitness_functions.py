@@ -241,14 +241,19 @@ def test_security_headers_configured():
     if not security_headers_py.exists():
         pytest.skip("app/core/security_headers.py not found")
 
-    with open(main_py) as f:
-        main_content = f.read()
     with open(security_headers_py) as f:
         security_content = f.read()
 
-    # Check for security headers middleware (class-based pattern)
-    assert "SecurityHeadersMiddleware" in main_content, (
-        "Security headers middleware not found in app/main.py"
+    middleware_py = Path("app/main_middleware.py")
+    if not middleware_py.exists():
+        pytest.fail("app/main_middleware.py not found")
+
+    with open(middleware_py) as f:
+        middleware_content = f.read()
+
+    # Check for security headers middleware in the actual app wiring path.
+    assert "SecurityHeadersMiddleware" in middleware_content, (
+        "Security headers middleware not found in app/main_middleware.py"
     )
 
     # Check for required security headers in the security_headers module
@@ -270,12 +275,12 @@ def test_security_headers_configured():
         + "\n".join(f"  - {h}" for h in missing_headers)
     )
 
-    # Check CORS configuration
-    assert "CORSMiddleware" in main_content, "CORS middleware not configured"
+    # Check CORS configuration in the actual middleware wiring module.
+    assert "CORSMiddleware" in middleware_content, "CORS middleware not configured"
 
-    # Verify CORS is not using wildcard ("*") for allow_origins
-    # This is a critical security issue
-    if 'allow_origins=["*"]' in main_content:
+    # Verify CORS is not using wildcard ("*") for allow_origins.
+    # This is a critical security issue.
+    if 'allow_origins=["*"]' in middleware_content:
         pytest.fail(
             "CORS is configured with wildcard (*) - this allows any origin "
             "and is a security vulnerability"
@@ -478,8 +483,6 @@ def test_file_size_limit():
     # removed from this list — the test below enforces that. This stops the
     # allowlist from silently growing stale and masking re-introduced bloat.
     known_large_files = {
-        "app/core/riverside_scheduler.py",
-        "app/services/riverside_sync.py",
         "app/preflight/checks.py",
         "app/preflight/mfa_checks.py",
         "app/api/routes/onboarding.py",
@@ -490,7 +493,6 @@ def test_file_size_limit():
         "app/services/email_service.py",
         "app/core/notifications.py",
         "app/api/services/dmarc_service.py",
-        "app/core/cache.py",
         "app/api/routes/identity.py",  # IG-010: access review routes added
         "app/core/azure_service_health.py",  # Comprehensive health check logic
         "app/core/metrics.py",  # Prometheus + App Insights metrics
