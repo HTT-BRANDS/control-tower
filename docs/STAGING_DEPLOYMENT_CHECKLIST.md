@@ -68,6 +68,13 @@ az webapp create \
 
 ## Step 4: Configure Environment Variables
 
+> **See [`STAGING_ENV_VARS.md`](./STAGING_ENV_VARS.md)** for the authoritative
+> matrix of which variables are required, optional, or intentionally omitted
+> in staging. In particular, the `AZURE_AD_*` triplet is intentionally
+> omitted from staging — the detailed-health endpoint reports this as
+> `azure_configured: "not_required"` and does **not** mark the deployment
+> as degraded (ct-czv).
+
 ```bash
 az webapp config appsettings set \
   --name governance-staging \
