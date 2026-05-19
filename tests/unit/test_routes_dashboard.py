@@ -267,6 +267,88 @@ class TestDashboardAliasPage:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
+    @patch("app.api.routes.dashboard.templates")
+    @patch("app.api.routes.dashboard.CostService")
+    @patch("app.api.routes.dashboard.ComplianceService")
+    @patch("app.api.routes.dashboard.ResourceService")
+    @patch("app.api.routes.dashboard.IdentityService")
+    def test_dashboard_passes_no_tenants_configured_flag_when_db_is_empty(
+        self,
+        mock_identity,
+        mock_resource,
+        mock_compliance,
+        mock_cost,
+        mock_templates,
+        authed_client,
+        db_session,
+        mock_services,
+    ):
+        """Admin viewing /dashboard when no tenants exist must get the
+        no-tenants empty-state flag in template context.
+
+        Regression guard for ct-373: previously rendered "Welcome — your
+        tenants are connected" copy + a wall of zero-value KPI cards on
+        environments with an unseeded tenant table (e.g. staging).
+        """
+        # Purge any pre-seeded tenants so the route's tenants query returns [].
+        db_session.query(Tenant).delete()
+        db_session.commit()
+
+        mock_templates.TemplateResponse.return_value = _html()
+        mock_cost.return_value = mock_services["cost"]
+        mock_compliance.return_value = mock_services["compliance"]
+        mock_resource.return_value = mock_services["resource"]
+        mock_identity.return_value = mock_services["identity"]
+
+        response = authed_client.get("/dashboard")
+
+        assert response.status_code == 200
+        # Inspect the context dict the route passed to the template renderer.
+        # TemplateResponse signature: (request, template_name, context)
+        call_args = mock_templates.TemplateResponse.call_args
+        context = call_args.args[2] if len(call_args.args) >= 3 else call_args.kwargs["context"]
+        assert context.get("no_tenants_configured") is True, (
+            "Route must signal no-tenants state to the template when the "
+            "tenants table is empty (admins bypass the 403 path)."
+        )
+        assert context.get("tenants") == [], (
+            "Tenants list should be empty when the DB has no tenants."
+        )
+
+    @patch("app.api.routes.dashboard.templates")
+    @patch("app.api.routes.dashboard.CostService")
+    @patch("app.api.routes.dashboard.ComplianceService")
+    @patch("app.api.routes.dashboard.ResourceService")
+    @patch("app.api.routes.dashboard.IdentityService")
+    def test_dashboard_no_tenants_flag_is_false_when_tenants_exist(
+        self,
+        mock_identity,
+        mock_resource,
+        mock_compliance,
+        mock_cost,
+        mock_templates,
+        authed_client,
+        mock_services,
+    ):
+        """The no-tenants flag must be False when at least one tenant exists.
+
+        Complements the empty-DB test: the default authed_client fixture
+        seeds one tenant, so we expect the flag to be False here.
+        """
+        mock_templates.TemplateResponse.return_value = _html()
+        mock_cost.return_value = mock_services["cost"]
+        mock_compliance.return_value = mock_services["compliance"]
+        mock_resource.return_value = mock_services["resource"]
+        mock_identity.return_value = mock_services["identity"]
+
+        response = authed_client.get("/dashboard")
+
+        assert response.status_code == 200
+        call_args = mock_templates.TemplateResponse.call_args
+        context = call_args.args[2] if len(call_args.args) >= 3 else call_args.kwargs["context"]
+        assert context.get("no_tenants_configured") is False
+        assert len(context.get("tenants", [])) >= 1
+
 
 # ============================================================================
 # GET /sync-dashboard Tests

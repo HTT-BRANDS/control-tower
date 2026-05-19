@@ -121,6 +121,12 @@ async def dashboard_page(
     else:
         tenants = get_user_tenants(authz.user, db, include_inactive=False)
 
+    # Surface the "no tenants configured anywhere" case explicitly. Non-admins
+    # already get a 403 from ensure_at_least_one_tenant(); admins on an empty
+    # tenant table (e.g. unseeded staging) would otherwise see a silently-blank
+    # dashboard with zero-value KPI cards. The template branches on this flag.
+    no_tenants_configured = len(tenants) == 0
+
     return templates.TemplateResponse(
         request,
         "pages/dashboard.html",
@@ -129,6 +135,7 @@ async def dashboard_page(
             **brand_context,
             "tenants": tenants,
             "selected_tenant_id": tenant_id or "",
+            "no_tenants_configured": no_tenants_configured,
         },
     )
 
