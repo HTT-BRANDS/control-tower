@@ -1,9 +1,21 @@
 # Authentication Transition Roadmap
 
 **Created:** 2026-03-31
-**Status:** Planning
+**Status:** Decision made — see [docs/decisions/adr-0012-ci-cd-oidc-identity-model.md](decisions/adr-0012-ci-cd-oidc-identity-model.md).
 **Goal:** Move from per-tenant client secrets to a sustainable, low-maintenance
 authentication pattern for cross-tenant Graph API + ARM access.
+
+> **ct-9x9 historical note (2026-05-19):** This document still describes
+> **Option 4 (Azure Lighthouse + Per-Tenant SP for Graph)** as a candidate.
+> That option was retired in `ct-59n` (April 2026) — Azure Lighthouse
+> delegation was never wired up in production (zero delegations across all
+> 5 tenants) and the `LighthouseAzureClient` code path plus the
+> `tenants.use_lighthouse` column were removed in `ct-59n` and migration
+> `011_drop_tenant_use_lighthouse.py`. The selected direction is **OIDC
+> Workload Identity Federation** (`USE_OIDC_FEDERATION=true`) with
+> per-tenant federated SPs. The Lighthouse comparison below is preserved
+> verbatim for decision-record traceability — do **not** treat it as a
+> live recommendation.
 
 ---
 

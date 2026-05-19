@@ -92,7 +92,7 @@ app/
 │   ├── database.py
 │   └── scheduler.py
 ├── services/                 # Service integrations
-│   ├── lighthouse_client.py  # Lighthouse API client
+│   ├── azure_client.py       # Azure ARM client (per-tenant SPs)
 │   ├── backfill_service.py   # Data backfill operations
 │   ├── parallel_processor.py # Parallel task processing
 │   ├── retention_service.py  # Data retention policies

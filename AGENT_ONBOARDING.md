@@ -243,7 +243,9 @@ relocation) are upcoming.
 | Domain | Today's location | Future location |
 |---|---|---|
 | Cost | `app/services/`, `app/api/services/budget_service.py`, `app/services/backfill_service.py` | `app/domains/cost/` |
-| Identity | `app/api/routes/auth.py`, `app/services/lighthouse_client.py`, `app/preflight/admin_risk_checks.py`, `app/core/cache.py` | `app/domains/identity/` |
+| Identity | `app/api/routes/auth.py`, `app/services/azure_client.py`, `app/preflight/admin_risk_checks.py`, `app/core/cache.py` | `app/domains/identity/` |
+<!-- ct-9x9: Azure Lighthouse was removed in ct-59n (April 2026); identity
+     access now flows through `azure_client.py` per-tenant SPs only. -->
 | Compliance | `app/services/riverside_sync.py`, `app/core/riverside_scheduler.py` | `app/domains/compliance/` |
 | Resources | scattered | `app/domains/resources/` |
 | Lifecycle | (mostly DeltaSetup repo) | `app/domains/lifecycle/` |

@@ -99,16 +99,23 @@ Before starting, collect this information for **each of your 4 tenants**:
 
 > 💡 **TIP**: Create a secure document (not plain text!) to store this information. You'll reference it throughout setup.
 
-### 2.4 Decision Point: Authentication Method
+### 2.4 Authentication Method
 
-You have **two options** for how the platform authenticates to your tenants:
+The platform authenticates to your tenants via **per-tenant App
+Registrations** (each tenant has its own client ID + secret stored in
+Key Vault). For organizations migrating off client secrets entirely,
+OIDC Workload Identity Federation is supported as an upgrade path —
+see [docs/AUTH_TRANSITION_ROADMAP.md](AUTH_TRANSITION_ROADMAP.md).
 
-| Option | Best For | Pros | Cons |
-|--------|----------|------|------|
-| **A: Azure Lighthouse** | Organizations with centralized IT | Single app registration, delegated access, no secrets per tenant | More complex initial setup, requires ARM templates |
-| **B: Per-Tenant App Registrations** | Decentralized orgs, simpler setup | Straightforward, each tenant independent | 4 app registrations to manage, 4 secrets to rotate |
+> 📋 **RECOMMENDATION:** Start with per-tenant App Registrations.
+> Once you have a working baseline, evaluate the OIDC federation
+> upgrade — it eliminates the secret-rotation burden entirely.
 
-> 📋 **RECOMMENDATION**: For your first implementation, use **Option B (Per-Tenant App Registrations)**. It's simpler to understand and troubleshoot. You can migrate to Lighthouse later.
+<!-- ct-9x9: This section used to also offer 'Option A: Azure Lighthouse'
+     as an alternative. Azure Lighthouse was never wired up in production
+     and the supporting code was removed in ct-59n (April 2026). The
+     remaining auth choice is per-tenant App Registrations + (optionally)
+     OIDC Workload Identity Federation. -->
 
 ---
 

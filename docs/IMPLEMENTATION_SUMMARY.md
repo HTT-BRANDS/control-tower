@@ -125,7 +125,9 @@ This implementation transforms the Azure Governance Platform from a static mock 
 - Multi-credential resolution order:
   1. Key Vault with tenant-specific secrets
   2. Custom app registration per tenant
-  3. Lighthouse mode fallback
+  <!-- ct-9x9: a Lighthouse-mode fallback step was removed here in
+       ct-59n (April 2026) — Azure Lighthouse was never used in
+       production and the supporting code was deleted. -->
 - New `KeyVaultError` exception class
 - Secret caching to reduce KV calls
 - Graceful fallback when Key Vault unavailable
@@ -377,11 +379,19 @@ python -c "from app.core.scheduler import trigger_manual_sync; import asyncio; a
 
 ## Phases 3–6 Summary
 
-### Phase 3: Azure Lighthouse Integration
-- `app/services/lighthouse_client.py` — LighthouseAzureClient with circuit breaker, rate limiting, and retry logic
-- `app/api/routes/onboarding.py` — Self-service tenant onboarding (6 routes, HTMX + JSON)
-- `infrastructure/lighthouse/delegation.json` — ARM delegation template for cross-tenant access
-- `scripts/setup-lighthouse.sh` — Automated Lighthouse provisioning script
+### Phase 3: Azure Lighthouse Integration (RETIRED in `ct-59n`, April 2026)
+
+> **ct-9x9 historical note:** Phase 3 shipped originally but was never
+> activated in production (zero delegations across all 5 tenants).
+> `LighthouseAzureClient` and friends were deleted in `ct-59n` and the
+> `tenants.use_lighthouse` column was dropped in migration `011`. The
+> bullets below describe code that **no longer exists** — kept here for
+> changelog-style historical record only.
+
+- ~~`app/services/lighthouse_client.py`~~ — LighthouseAzureClient with circuit breaker, rate limiting, and retry logic *(deleted)*
+- `app/api/routes/onboarding.py` — Self-service tenant onboarding (6 routes, HTMX + JSON) *(still live)*
+- ~~`infrastructure/lighthouse/delegation.json`~~ — ARM delegation template for cross-tenant access *(deleted)*
+- ~~`scripts/setup-lighthouse.sh`~~ — Automated Lighthouse provisioning script *(deleted)*
 
 ### Phase 4: Data Backfill Service
 - `app/services/backfill_service.py` — Resumable day-by-day historical backfill with 4 data processors

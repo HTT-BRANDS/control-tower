@@ -356,9 +356,11 @@ curl -X POST "$BASE_URL/api/v1/tenants" \
     "tenant_id": "new-tenant-guid-here",
     "description": "Production environment for new division",
     "client_id": "app-registration-client-id",
-    "client_secret_ref": "key-vault-secret-reference",
-    "use_lighthouse": false
+    "client_secret_ref": "key-vault-secret-reference"
   }'
+# ct-9x9: the `use_lighthouse` field was dropped from the tenants table
+# in migration 011 (May 2026) — including it is harmless (it'll be
+# ignored) but no longer required.
 
 # Verify tenant was added
 curl -s "$BASE_URL/api/v1/tenants"

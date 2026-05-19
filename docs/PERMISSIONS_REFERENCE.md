@@ -275,7 +275,11 @@ my-vnet             Microsoft.Network/virtualNetworks
 
 **Cause:** You're trying to access a different tenant than where the app is registered.
 
-**Solution:** Create an App Registration in each tenant, or use Azure Lighthouse for cross-tenant access.
+**Solution:** Create an App Registration in each tenant.
+
+<!-- ct-9x9: Earlier versions of this doc also suggested Azure Lighthouse
+     cross-tenant delegation; that path was removed in ct-59n (April 2026)
+     and the per-tenant SP model is now the only supported approach. -->
 
 ### Error: "AuthorizationFailed: does not have authorization to perform action"
 

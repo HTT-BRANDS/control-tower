@@ -336,8 +336,10 @@ change. Pure structural moves with import-path preservation.
 - `app/core/riverside_scheduler.py` (1110 LOC) → per-check submodules.
 - `app/api/services/budget_service.py` (1026 LOC) → split CRUD / sync /
   alerting.
-- `app/services/lighthouse_client.py` (901 LOC) → split request/response
-  layers.
+<!-- ct-9x9: `app/services/lighthouse_client.py` was deleted in ct-59n
+     (April 2026 Azure Lighthouse demolition). The file-split task it
+     used to anchor is moot — there's nothing left to split. Kept here
+     only as a historical breadcrumb for anyone reading old plan deltas. -->
 
 **Constraint:** every file split lands its own bd issue + commit + PR
 shape. Tests must be green before AND after each. No mixed-purpose

@@ -312,13 +312,17 @@ GET /api/v1/tenants
     "tenant_id": "12345678-1234-1234-1234-123456789012",
     "description": "Main production environment",
     "is_active": true,
-    "use_lighthouse": false,
     "subscription_count": 3,
     "created_at": "2025-01-15T08:00:00Z",
     "updated_at": "2025-02-20T14:30:00Z"
   }
 ]
 ```
+
+<!-- ct-9x9: the `use_lighthouse` field was dropped from the tenants table
+     and API responses in migration 011 (May 2026) after Azure Lighthouse
+     was removed in ct-59n. Earlier examples in this doc included it; all
+     remaining occurrences have been removed below. -->
 
 ### 6.2 Create Tenant
 
@@ -331,8 +335,7 @@ Content-Type: application/json
   "tenant_id": "12345678-1234-1234-1234-123456789012",
   "description": "Main production environment",
   "client_id": "optional-client-id",
-  "client_secret_ref": "optional-secret-ref",
-  "use_lighthouse": false
+  "client_secret_ref": "optional-secret-ref"
 }
 ```
 
@@ -345,7 +348,6 @@ Content-Type: application/json
   "tenant_id": "12345678-1234-1234-1234-123456789012",
   "description": "Main production environment",
   "is_active": true,
-  "use_lighthouse": false,
   "subscription_count": 0,
   "created_at": "2025-02-25T10:30:00Z",
   "updated_at": "2025-02-25T10:30:00Z"
@@ -367,7 +369,6 @@ GET /api/v1/tenants/{id}
   "tenant_id": "12345678-1234-1234-1234-123456789012",
   "description": "Main production environment",
   "is_active": true,
-  "use_lighthouse": false,
   "subscription_count": 3,
   "created_at": "2025-01-15T08:00:00Z",
   "updated_at": "2025-02-20T14:30:00Z"

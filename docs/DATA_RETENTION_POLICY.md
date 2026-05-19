@@ -187,8 +187,14 @@ When a tenant is offboarded (e.g., brand divestiture, contract termination):
 2. Also purge `audit_logs WHERE tenant_id = :t` **except** records required
    for cross-tenant compliance investigation (e.g., privileged access grants
    that touched multiple tenants).
-3. Close the open Lighthouse delegation in Azure (separate manual step).
+3. Remove the per-tenant App Registration / SP credential from the
+   offboarded tenant (separate manual step in Azure portal — there's no
+   automated revocation API for this).
 4. Issue a deletion certificate via email to the offboarded tenant admin.
+
+<!-- ct-9x9: step 3 originally read 'Close the open Lighthouse delegation';
+     Azure Lighthouse was removed in ct-59n (April 2026) so the manual step
+     is now per-tenant SP cleanup. -->
 
 **SLA:** 30 days from offboarding request to certificate issuance. This
 aligns with GDPR Art. 17 "right to erasure" response window.
