@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -192,6 +193,73 @@ class CacheManager:
         if isinstance(self._cache, InMemoryCache):
             return await self._cache.cleanup_expired()
         return 0
+
+    async def check_health(
+        self,
+        *,
+        probe_key: str = "__cache_health_probe__",
+        timeout_seconds: float = 2.0,
+    ) -> dict[str, Any]:
+        """Run a bounded round-trip probe against the cache backend.
+
+        This is the single source of truth for "is the cache responsive?"
+        checks used by /health/detailed, /api/v1/health, /api/v1/health/detailed,
+        and the monitoring endpoint. Previously each of those endpoints ran its
+        own inline ``await set(...); await get(...)`` pair with no timeout,
+        which meant a single slow/wedged Redis connection could hang every
+        liveness probe simultaneously (see ct-czv).
+
+        Returns a dict with at minimum a ``status`` key (one of
+        ``healthy`` | ``disabled`` | ``degraded`` | ``unhealthy``) plus
+        diagnostic context. Always returns; never raises.
+        """
+        settings = get_settings()
+        backend_name = self._cache_type or "unknown"
+
+        if not settings.cache_enabled:
+            return {
+                "status": "disabled",
+                "backend": backend_name,
+                "reason": "cache_enabled=False in settings",
+            }
+
+        async def _probe() -> tuple[bool, Any]:
+            await self.set(probe_key, "ok", ttl_seconds=10)
+            return True, await self.get(probe_key)
+
+        try:
+            _, value = await asyncio.wait_for(_probe(), timeout=timeout_seconds)
+        except TimeoutError:
+            return {
+                "status": "degraded",
+                "backend": backend_name,
+                "error": f"cache probe exceeded {timeout_seconds:.1f}s — backend unresponsive",
+            }
+        except Exception as exc:
+            return {
+                "status": "unhealthy",
+                "backend": backend_name,
+                "error": str(exc),
+            }
+
+        if value != "ok":
+            return {
+                "status": "degraded",
+                "backend": backend_name,
+                "error": "cache read/write mismatch",
+            }
+
+        metrics = self.get_metrics()
+        return {
+            "status": "healthy",
+            "backend": metrics.get("backend", backend_name),
+            "hit_rate_percent": metrics.get("hit_rate_percent", 0),
+            "hits": metrics.get("hits", 0),
+            "misses": metrics.get("misses", 0),
+            "sets": metrics.get("sets", 0),
+            "deletes": metrics.get("deletes", 0),
+            "avg_get_time_ms": metrics.get("avg_get_time_ms", 0),
+        }
 
 
 # Global cache manager instance

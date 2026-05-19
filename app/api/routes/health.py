@@ -67,6 +67,40 @@ def _build_scheduler_check(
     return {"status": "degraded", "error": "Scheduler not running"}, "degraded"
 
 
+def _summarize_azure_configuration(settings: Any) -> dict[str, Any]:
+    """Report Azure AD configuration as an explicit tri-state.
+
+    Returns one of:
+        * ``{"status": "configured", ...}``        — all three creds present
+        * ``{"status": "not_required", ...}``     — missing creds in a non-prod env
+        * ``{"status": "missing", ...}``          — missing creds in production
+
+    Health rollups should only promote ``missing`` to overall ``degraded``;
+    ``not_required`` is an honest "this env intentionally has no Azure config"
+    signal and must not poison liveness probes (see ct-czv).
+    """
+    configured = all(
+        [
+            settings.azure_ad_tenant_id,
+            settings.azure_ad_client_id,
+            settings.azure_ad_client_secret,
+        ]
+    )
+    if configured:
+        return {"status": "configured"}
+    if settings.is_production:
+        return {
+            "status": "missing",
+            "environment": settings.environment,
+            "reason": "AZURE_AD_TENANT_ID / CLIENT_ID / CLIENT_SECRET not all set in production",
+        }
+    return {
+        "status": "not_required",
+        "environment": settings.environment,
+        "reason": "Azure AD credentials not configured (acceptable outside production)",
+    }
+
+
 @router.get("")
 async def api_health_check(
     request: Request,
@@ -117,25 +151,20 @@ async def api_health_check(
         checks["database"] = {"status": "unhealthy", "error": str(e)}
         overall_status = "degraded"
 
-    # Check cache
-    try:
-        await cache_manager.set("health_check", "ok", ttl_seconds=10)
-        cache_value = await cache_manager.get("health_check")
-        cache_metrics = cache_manager.get_metrics()
-
-        if cache_value == "ok":
-            checks["cache"] = {
-                "status": "healthy",
-                "backend": cache_metrics.get("backend", "unknown"),
-                "hit_rate_percent": cache_metrics.get("hit_rate_percent", 0),
-            }
-        else:
-            checks["cache"] = {"status": "degraded", "error": "Cache read/write mismatch"}
-            if overall_status == "healthy":
-                overall_status = "degraded"
-    except Exception as e:
-        checks["cache"] = {"status": "unhealthy", "error": str(e)}
-        overall_status = "degraded"
+    # Check cache via the shared, timeout-bounded probe.
+    # The basic /api/v1/health endpoint keeps the payload tight: only status
+    # + backend + hit_rate. The /detailed sibling below uses the full payload.
+    cache_probe = await cache_manager.check_health()
+    if cache_probe["status"] == "healthy":
+        checks["cache"] = {
+            "status": "healthy",
+            "backend": cache_probe.get("backend", "unknown"),
+            "hit_rate_percent": cache_probe.get("hit_rate_percent", 0),
+        }
+    else:
+        checks["cache"] = cache_probe
+        if cache_probe["status"] != "disabled" and overall_status == "healthy":
+            overall_status = "degraded"
 
     # Check scheduler
     try:
@@ -230,29 +259,13 @@ async def api_health_check_detailed(
         checks["database"] = {"status": "unhealthy", "error": str(e)}
         overall_status = "degraded"
 
-    # Detailed cache check
-    try:
-        await cache_manager.set("health_check_detailed", "ok", ttl_seconds=10)
-        cache_value = await cache_manager.get("health_check_detailed")
-        cache_metrics = cache_manager.get_metrics()
-
-        if cache_value == "ok":
-            checks["cache"] = {
-                "status": "healthy",
-                "backend": cache_metrics.get("backend", "unknown"),
-                "hit_rate_percent": cache_metrics.get("hit_rate_percent", 0),
-                "hits": cache_metrics.get("hits", 0),
-                "misses": cache_metrics.get("misses", 0),
-                "sets": cache_metrics.get("sets", 0),
-                "deletes": cache_metrics.get("deletes", 0),
-                "avg_get_time_ms": cache_metrics.get("avg_get_time_ms", 0),
-            }
-        else:
-            checks["cache"] = {"status": "degraded", "error": "Cache read/write mismatch"}
-            if overall_status == "healthy":
-                overall_status = "degraded"
-    except Exception as e:
-        checks["cache"] = {"status": "unhealthy", "error": str(e)}
+    # Detailed cache check via the shared, timeout-bounded probe.
+    # /detailed surfaces the full metrics payload (hits/misses/avg latency).
+    cache_probe = await cache_manager.check_health(
+        probe_key="health_check_detailed",
+    )
+    checks["cache"] = cache_probe
+    if cache_probe["status"] not in {"healthy", "disabled"} and overall_status == "healthy":
         overall_status = "degraded"
 
     # Scheduler details
@@ -269,15 +282,13 @@ async def api_health_check_detailed(
         if overall_status == "healthy":
             overall_status = "degraded"
 
-    # Azure configuration
-    azure_configured = all(
-        [
-            settings.azure_ad_tenant_id,
-            settings.azure_ad_client_id,
-            settings.azure_ad_client_secret,
-        ]
-    )
-    checks["azure_configured"] = azure_configured
+    # Azure configuration — tri-state, not a raw bool, so that a deliberately
+    # un-configured non-production environment (e.g. local dev or unseeded
+    # staging) does NOT report overall ``degraded``. Only a missing config
+    # in production is a real problem (see ct-czv AC #2).
+    checks["azure_configured"] = _summarize_azure_configuration(settings)
+    if checks["azure_configured"]["status"] == "missing" and overall_status == "healthy":
+        overall_status = "degraded"
 
     # JWT configuration
     checks["jwt_configured"] = bool(settings.jwt_secret_key)

@@ -21,23 +21,57 @@ HEALTH_URL = "/api/v1/health"
 DETAILED_URL = "/api/v1/health/detailed"
 
 
-def _mock_cache_healthy():
-    """Return patchers for a healthy cache_manager."""
-    mock = MagicMock()
-    mock.set = AsyncMock()
-    mock.get = AsyncMock(return_value="ok")
-    mock.get_metrics = MagicMock(
+# Default healthy payload returned by cache_manager.check_health() — matches
+# what the real CacheManager produces for an in-memory backend in tests.
+_HEALTHY_CACHE_PROBE: dict = {
+    "status": "healthy",
+    "backend": "memory",
+    "hit_rate_percent": 85.0,
+    "hits": 100,
+    "misses": 18,
+    "sets": 50,
+    "deletes": 5,
+    "avg_get_time_ms": 0.12,
+}
+
+
+def _stub_cache(mock_cache, *, check_health_return=None, check_health_side_effect=None):
+    """Wire up the minimum cache_manager surface area each health endpoint uses.
+
+    The route code consolidates cache liveness into a single bounded probe
+    (``cache_manager.check_health``) — see app/core/cache/manager.py and ct-czv.
+    Tests can pass a custom ``check_health_return`` payload (e.g. degraded /
+    unhealthy) or a ``check_health_side_effect`` (e.g. raise) to drive the
+    desired branch. The legacy set/get/get_metrics mocks are still set so any
+    older test that asserts on them keeps working without churn.
+    """
+    mock_cache.set = AsyncMock()
+    mock_cache.get = AsyncMock(return_value="ok")
+    mock_cache.get_metrics = MagicMock(
         return_value={
-            "backend": "memory",
-            "hit_rate_percent": 85.0,
-            "hits": 100,
-            "misses": 18,
-            "sets": 50,
-            "deletes": 5,
-            "avg_get_time_ms": 0.12,
+            "backend": _HEALTHY_CACHE_PROBE["backend"],
+            "hit_rate_percent": _HEALTHY_CACHE_PROBE["hit_rate_percent"],
+            "hits": _HEALTHY_CACHE_PROBE["hits"],
+            "misses": _HEALTHY_CACHE_PROBE["misses"],
+            "sets": _HEALTHY_CACHE_PROBE["sets"],
+            "deletes": _HEALTHY_CACHE_PROBE["deletes"],
+            "avg_get_time_ms": _HEALTHY_CACHE_PROBE["avg_get_time_ms"],
         }
     )
-    return mock
+    if check_health_side_effect is not None:
+        mock_cache.check_health = AsyncMock(side_effect=check_health_side_effect)
+    else:
+        mock_cache.check_health = AsyncMock(
+            return_value=check_health_return
+            if check_health_return is not None
+            else dict(_HEALTHY_CACHE_PROBE)
+        )
+    return mock_cache
+
+
+def _mock_cache_healthy():
+    """Return patchers for a healthy cache_manager (kept for backwards-compat)."""
+    return _stub_cache(MagicMock())
 
 
 def _mock_scheduler_running(num_jobs: int = 3):
@@ -79,11 +113,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Response must include status, version, and checks."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -100,10 +130,12 @@ class TestHealthEndpoint:
     @patch("app.api.routes.health.get_scheduler")
     def test_health_all_healthy(self, mock_get_sched, mock_cache, client):
         """When all components are healthy, overall status is 'healthy'."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 90}
+        _stub_cache(
+            mock_cache,
+            check_health_return={
+                **_HEALTHY_CACHE_PROBE,
+                "hit_rate_percent": 90,
+            },
         )
         mock_get_sched.return_value = _mock_scheduler_running()
         client.app.state.scheduler_status = None
@@ -125,11 +157,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Database check must report response_time_ms."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -149,11 +177,7 @@ class TestHealthEndpoint:
         db_session,
     ):
         """Overall status degrades when the database check throws."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         # Make the db.execute raise to simulate DB failure
@@ -174,10 +198,13 @@ class TestHealthEndpoint:
         client,
     ):
         """If cache read-back doesn't match, status should be degraded."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="NOT_OK")  # mismatch
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
+        _stub_cache(
+            mock_cache,
+            check_health_return={
+                "status": "degraded",
+                "backend": "memory",
+                "error": "cache read/write mismatch",
+            },
         )
         mock_get_sched.return_value = _mock_scheduler_running()
 
@@ -196,7 +223,14 @@ class TestHealthEndpoint:
         client,
     ):
         """If cache throws, status should degrade gracefully."""
-        mock_cache.set = AsyncMock(side_effect=Exception("Redis down"))
+        _stub_cache(
+            mock_cache,
+            check_health_return={
+                "status": "unhealthy",
+                "backend": "memory",
+                "error": "Redis down",
+            },
+        )
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -215,11 +249,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Scheduler not running should report degraded."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_stopped()
         client.app.state.scheduler_status = None
 
@@ -238,11 +268,7 @@ class TestHealthEndpoint:
         client,
     ):
         """When get_scheduler() returns None, should be degraded."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = None
         client.app.state.scheduler_status = None
 
@@ -260,11 +286,7 @@ class TestHealthEndpoint:
         client,
     ):
         """If get_scheduler raises, scheduler check degrades gracefully."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.side_effect = RuntimeError("scheduler init failed")
         client.app.state.scheduler_status = None
 
@@ -283,11 +305,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Browser-test disabled scheduler state should not be reported as degraded."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = None
         client.app.state.scheduler_status = "disabled_for_test"
 
@@ -320,11 +338,7 @@ class TestHealthEndpoint:
         settings.environment = "development"
         mock_settings.return_value = settings
 
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -349,11 +363,7 @@ class TestHealthEndpoint:
         settings.environment = "development"
         mock_settings.return_value = settings
 
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -368,11 +378,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Unauthenticated requests should NOT get 'authenticated' key."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL)
@@ -387,11 +393,7 @@ class TestHealthEndpoint:
         client,
     ):
         """Authenticated requests (Bearer token) should get 'authenticated': True."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={"backend": "memory", "hit_rate_percent": 0}
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(HEALTH_URL, headers={"Authorization": "Bearer fake-token"})
@@ -418,19 +420,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Detailed endpoint must include all check categories."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 80,
-                "hits": 50,
-                "misses": 10,
-                "sets": 30,
-                "deletes": 2,
-                "avg_get_time_ms": 0.1,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(DETAILED_URL)
@@ -455,18 +445,18 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Detailed cache check should include hits, misses, sets, deletes."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
+        _stub_cache(
+            mock_cache,
+            check_health_return={
+                "status": "healthy",
                 "backend": "redis",
-                "hit_rate_percent": 92.5,
+                "hit_rate_percent": 92.0,
                 "hits": 200,
                 "misses": 17,
                 "sets": 100,
                 "deletes": 8,
                 "avg_get_time_ms": 0.45,
-            }
+            },
         )
         mock_get_sched.return_value = _mock_scheduler_running()
 
@@ -492,19 +482,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Without auth, db stats should be redacted."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(DETAILED_URL)  # no Authorization header
@@ -523,19 +501,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """With Bearer auth, db stats should be visible."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(DETAILED_URL, headers={"Authorization": "Bearer tok123"})
@@ -554,19 +520,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Authed request should see scheduler job details."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running(num_jobs=2)
         client.app.state.scheduler_status = None
 
@@ -591,19 +545,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Unauthed request should see scheduler jobs redacted."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running(num_jobs=2)
         client.app.state.scheduler_status = None
 
@@ -626,19 +568,7 @@ class TestHealthDetailedEndpoint:
         db_session,
     ):
         """Detailed endpoint should degrade when DB check fails."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         with patch.object(db_session, "execute", side_effect=Exception("db timeout")):
@@ -659,19 +589,7 @@ class TestHealthDetailedEndpoint:
         client,
     ):
         """Detailed endpoint should surface disabled_for_test instead of degraded."""
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = None
         client.app.state.scheduler_status = "disabled_for_test"
 
@@ -707,19 +625,7 @@ class TestHealthDetailedEndpoint:
         settings.environment = "staging"
         mock_settings.return_value = settings
 
-        mock_cache.set = AsyncMock()
-        mock_cache.get = AsyncMock(return_value="ok")
-        mock_cache.get_metrics = MagicMock(
-            return_value={
-                "backend": "memory",
-                "hit_rate_percent": 0,
-                "hits": 0,
-                "misses": 0,
-                "sets": 0,
-                "deletes": 0,
-                "avg_get_time_ms": 0,
-            }
-        )
+        _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
         resp = client.get(DETAILED_URL)
@@ -728,3 +634,108 @@ class TestHealthDetailedEndpoint:
         assert data["checks"]["jwt_configured"] is True
         assert data["version"] == "2.0.0"
         assert data["environment"] == "staging"
+
+
+# ===========================================================================
+# Azure configuration tri-state — ct-czv AC #2
+# ===========================================================================
+#
+# The detailed health endpoint must NOT report overall ``degraded`` just
+# because a non-production environment intentionally lacks Azure AD creds.
+# Only a *production* environment missing creds is a real fault.
+
+
+class TestAzureConfigTriState:
+    """Tests for the staging-friendly Azure configuration rollup."""
+
+    @patch("app.api.routes.health.get_settings")
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_staging_without_azure_creds_is_not_degraded(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_settings,
+        client,
+    ):
+        """Staging (non-prod) missing Azure creds: azure_configured=not_required, overall=healthy."""
+        settings = MagicMock()
+        settings.azure_ad_tenant_id = None
+        settings.azure_ad_client_id = None
+        settings.azure_ad_client_secret = None
+        settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
+        settings.app_version = "2.0.0"
+        settings.environment = "staging"
+        settings.is_production = False
+        mock_settings.return_value = settings
+
+        _stub_cache(mock_cache)
+        mock_get_sched.return_value = _mock_scheduler_running()
+
+        resp = client.get(DETAILED_URL)
+        data = resp.json()
+
+        assert data["checks"]["azure_configured"]["status"] == "not_required"
+        assert data["checks"]["azure_configured"]["environment"] == "staging"
+        assert data["status"] == "healthy", (
+            "Non-production missing Azure creds must NOT degrade overall status (ct-czv AC #2)"
+        )
+
+    @patch("app.api.routes.health.get_settings")
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_production_without_azure_creds_is_degraded(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_settings,
+        client,
+    ):
+        """Production missing Azure creds: azure_configured=missing, overall=degraded."""
+        settings = MagicMock()
+        settings.azure_ad_tenant_id = None
+        settings.azure_ad_client_id = None
+        settings.azure_ad_client_secret = None
+        settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
+        settings.app_version = "2.0.0"
+        settings.environment = "production"
+        settings.is_production = True
+        mock_settings.return_value = settings
+
+        _stub_cache(mock_cache)
+        mock_get_sched.return_value = _mock_scheduler_running()
+
+        resp = client.get(DETAILED_URL)
+        data = resp.json()
+
+        assert data["checks"]["azure_configured"]["status"] == "missing"
+        assert data["status"] == "degraded"
+
+    @patch("app.api.routes.health.get_settings")
+    @patch("app.api.routes.health.cache_manager")
+    @patch("app.api.routes.health.get_scheduler")
+    def test_fully_configured_azure_reports_configured(
+        self,
+        mock_get_sched,
+        mock_cache,
+        mock_settings,
+        client,
+    ):
+        """With all three creds present, azure_configured=configured regardless of env."""
+        settings = MagicMock()
+        settings.azure_ad_tenant_id = "tid"
+        settings.azure_ad_client_id = "cid"
+        settings.azure_ad_client_secret = "csec"  # pragma: allowlist secret
+        settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
+        settings.app_version = "2.0.0"
+        settings.environment = "production"
+        settings.is_production = True
+        mock_settings.return_value = settings
+
+        _stub_cache(mock_cache)
+        mock_get_sched.return_value = _mock_scheduler_running()
+
+        resp = client.get(DETAILED_URL)
+        data = resp.json()
+
+        assert data["checks"]["azure_configured"]["status"] == "configured"
