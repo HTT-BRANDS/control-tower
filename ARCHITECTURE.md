@@ -15,8 +15,10 @@
 │         └────────────────┴────────────────┴────────────────┘                │
 │                                   │                                          │
 │                    ┌──────────────▼──────────────┐                          │
-│                    │      Azure Lighthouse       │                          │
-│                    │   (Cross-Tenant Delegation) │                          │
+│                    │   Per-Tenant Service        │                          │
+│                    │   Principals (one per       │                          │
+│                    │   managed tenant; creds in  │                          │
+│                    │   Azure Key Vault)          │                          │
 │                    └──────────────┬──────────────┘                          │
 │                                   │                                          │
 │  ┌────────────────────────────────▼────────────────────────────────────┐    │
@@ -112,8 +114,7 @@ app/
 │   │   ├── audit_logs.py         # Audit log aggregation (CM-010)
 │   │   ├── quotas.py             # Quota utilization monitoring (RM-007)
 │   │   ├── preflight.py          # Azure connectivity preflight checks
-│   │   ├── recommendations.py    # Right-sizing recommendations
-│   │   └── onboarding.py         # Self-service Lighthouse onboarding
+│   │   └── recommendations.py    # Right-sizing recommendations
 │   └── services/
 │       ├── azure_client.py       # Azure SDK wrapper
 │       ├── graph_client.py       # MS Graph wrapper
@@ -344,28 +345,9 @@ sync_jobs (
 
 ## Authentication Architecture
 
-### Option A: Azure Lighthouse (Recommended)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Managing Tenant                           │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │           Governance Platform                        │    │
-│  │           (Single App Registration)                  │    │
-│  └───────────────────────┬─────────────────────────────┘    │
-└──────────────────────────┼──────────────────────────────────┘
-                           │
-          Azure Lighthouse Delegation
-                           │
-    ┌──────────────────────┼──────────────────────┐
-    ▼                      ▼                      ▼
-┌────────┐           ┌────────┐            ┌────────┐
-│Tenant B│           │Tenant C│            │Tenant D|
-│(Reader)│           │(Reader)│            │(Reader)│
-└────────┘           └────────┘            └────────┘
-```
-
-### Option B: Per-Tenant App Registrations
+The platform uses **per-tenant service principals**: one app registration
+per managed tenant, with client secrets stored in Azure Key Vault and
+resolved at runtime by `app/core/azure_credentials.py`.
 
 ```
 ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
@@ -376,12 +358,22 @@ sync_jobs (
       │               │               │               │
       └───────────────┴───────────────┴───────────────┘
                               │
+                ┌─────────────▼─────────────┐
+                │   Azure Key Vault         │
+                │   (per-tenant secrets)    │
+                └─────────────┬─────────────┘
+                              │
                     ┌─────────▼─────────┐
                     │   Governance      │
                     │   Platform        │
-                    │   (Stores creds)  │
                     └───────────────────┘
 ```
+
+> **Historical note:** earlier releases supported Azure Lighthouse
+> cross-tenant delegation as an alternative auth model. That path was
+> removed in `ct-59n` (April 2026). See
+> [`docs/ADR-001-architecture-review-competitive-analysis.md`](./docs/ADR-001-architecture-review-competitive-analysis.md)
+> and the `docs/decisions/` folder for the historical decision record.
 
 ---
 

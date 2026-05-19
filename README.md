@@ -79,7 +79,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history.
 - **Bulk Operations**: Apply tags, acknowledge anomalies, review resources in bulk
 - **Data Exports**: CSV exports for costs, resources, and compliance data
 - **Performance Monitoring**: Cache metrics, query performance, sync job analytics
-- **Azure Lighthouse**: Cross-tenant delegation with self-service onboarding
+- **Per-Tenant Service Principals**: One app registration per managed tenant; credentials stored in Azure Key Vault
 - **Data Backfill**: Resumable day-by-day with parallel multi-tenant processing
 - **Multi-Brand Design System**: Token-based theming for 5 brands with WCAG AA compliance, server-side CSS generation, and 47+ CSS custom properties per brand
 - **WCAG 2.2 Accessibility**: Skip nav, focus-visible, 44px touch targets, axe-core automated testing
@@ -100,7 +100,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history.
 
 - Python 3.11+
 - Azure subscriptions with appropriate permissions
-- App registrations in each tenant (or Azure Lighthouse delegation)
+- App registrations in each managed tenant (credentials stored in Azure Key Vault)
 
 ### Installation
 
@@ -143,18 +143,20 @@ open http://localhost:8000/docs
 
 ### Azure Setup
 
-#### Option A: Azure Lighthouse (Recommended)
+The platform uses **per-tenant service principals** (one app registration per
+managed tenant). Credentials are stored in Azure Key Vault and fetched at
+runtime by `app/core/azure_credentials.py`.
 
-1. Deploy Lighthouse delegation template to each managed tenant
-2. Configure a single app registration in the managing tenant
-3. Set `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` in `.env`
-
-#### Option B: Per-Tenant App Registrations
-
-1. Create an app registration in each tenant
-2. Grant required permissions (see docs/PERMISSIONS_REFERENCE.md)
-3. Store credentials in Azure Key Vault
+1. Create an app registration in each managed tenant
+2. Grant required permissions (see `docs/PERMISSIONS_REFERENCE.md`)
+3. Store the client secret in Azure Key Vault under the convention documented in `docs/OIDC_TENANT_AUTH.md`
 4. Configure `KEY_VAULT_URL` in `.env`
+5. Register the tenant via `scripts/setup-tenants.py` or `scripts/seed_riverside_tenants.py`
+
+> **Historical note:** earlier releases supported Azure Lighthouse
+> cross-tenant delegation as Option A. That path was removed in `ct-59n`
+> (April 2026) — see [`docs/ADR-001-architecture-review-competitive-analysis.md`](./docs/ADR-001-architecture-review-competitive-analysis.md)
+> and the `docs/decisions/` folder for the historical decision record.
 
 ## Live Environments
 
@@ -217,7 +219,6 @@ control-tower/
 │   │       └── riverside.py # Riverside dashboard
 │   ├── static/              # CSS, JS assets
 │   ├── services/            # Domain services
-│   │   ├── lighthouse_client.py
 │   │   ├── backfill_service.py
 │   │   ├── parallel_processor.py
 │   │   ├── retention_service.py
@@ -470,7 +471,7 @@ For comprehensive Riverside compliance documentation, see:
 - [x] Bulk operations (tags, anomalies, recommendations)
 - [x] CSV export functionality
 - [x] Performance monitoring and caching
-- [x] Azure Lighthouse integration
+- [x] Per-tenant service principal auth via Key Vault
 - [x] Data backfill service
 - [x] WCAG 2.2 accessibility
 - [x] Dark mode
