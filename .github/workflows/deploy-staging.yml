@@ -327,6 +327,12 @@ jobs:
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
 
       - name: Health gate readiness loop
+        # NOTE (ct-czv AC #3): this gate intentionally hits /health (basic 200
+        # liveness), not /health/detailed. Staging legitimately omits Azure-AD
+        # credentials, which causes /health/detailed to report `degraded` via
+        # the tri-state `azure_configured` rollup added in PR #41. Gating on
+        # /health/detailed would therefore fail every staging deploy on expected
+        # configuration. See docs/HEALTH_GATE_DESIGN.md before changing this.
         run: |
           set -uo pipefail
 

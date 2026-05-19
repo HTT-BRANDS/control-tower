@@ -128,6 +128,12 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
       scmMinTlsVersion: '1.2'
       ftpsState: 'Disabled'
       appCommandLine: useContainerDeployment ? '' : 'python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'
+      // healthCheckPath intentionally points at /health (basic 200 liveness),
+      // NOT /health/detailed. The detailed endpoint legitimately reports
+      // `degraded` in non-prod environments that omit Azure-AD credentials
+      // (tri-state `azure_configured` introduced in PR #41 for ct-czv). Using
+      // /health/detailed here would make the App Service health gate trip on
+      // expected staging configuration. See docs/HEALTH_GATE_DESIGN.md (ct-czv AC #3).
       healthCheckPath: '/health'
       use32BitWorkerProcess: false
       webSocketsEnabled: false
