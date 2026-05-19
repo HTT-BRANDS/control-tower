@@ -76,7 +76,18 @@
                     </div>
                     <button id="theme-toggle-btn" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     {% include 'partials/data_health.html' %}
-                    <span class="hidden sm:inline text-sm text-brand-primary-50">4 Tenants</span>
+                    {# ct-yju: tenant count is a live count of is_active=True
+                       tenants, supplied by the active_tenant_count() Jinja
+                       global registered in app/core/templates.py. The
+                       `is defined` guard lets bare Jinja envs (used by some
+                       isolated template-render unit tests) fall back to 0
+                       instead of crashing the entire page. #}
+                    {%- set _tenant_count = active_tenant_count() if active_tenant_count is defined else 0 -%}
+                    <span class="hidden sm:inline text-sm text-brand-primary-50"
+                          data-testid="nav-tenant-count"
+                          aria-label="{{ _tenant_count }} active tenant{{ '' if _tenant_count == 1 else 's' }}">
+                        {{ _tenant_count }} Tenant{{ '' if _tenant_count == 1 else 's' }}
+                    </span>
 
                     <!-- Mobile hamburger -->
                     <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-md hover:bg-brand-primary-110 transition-colors" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">

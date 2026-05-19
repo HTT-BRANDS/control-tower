@@ -49,3 +49,28 @@ def _timeago(dt) -> str:
 
 
 templates.env.filters["timeago"] = _timeago
+
+
+# ── Global helpers ──────────────────────────────────────────────
+
+
+def _active_tenant_count() -> int:
+    """Jinja global: count of active tenants for the header badge.
+
+    Used by ``app/templates/base.html`` to render the "N Tenants" badge.
+    Previously the badge was a hardcoded string literal ("4 Tenants") —
+    which silently lied as soon as the tenant set changed (bd ct-yju).
+
+    Returns 0 on any error so a transient DB hiccup never blanks the nav.
+    """
+    try:
+        from app.core.database import SessionLocal
+        from app.models.tenant import Tenant
+
+        with SessionLocal() as db:
+            return db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
+    except Exception:  # noqa: BLE001 — nav must never crash a page render
+        return 0
+
+
+templates.env.globals["active_tenant_count"] = _active_tenant_count
