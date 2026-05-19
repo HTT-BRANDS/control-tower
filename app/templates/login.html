@@ -55,11 +55,18 @@
             <!-- Azure AD SSO Button (Primary for staging/production) -->
             <div id="azure-login-section" data-testid="login-azure-entry">
                 <button id="azure-login-btn" type="button"
-                        class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors bg-brand-primary-100 hover:bg-brand-primary-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400"
+                        class="w-full flex justify-center items-center gap-3 py-2.5 px-4 rounded-md text-sm font-semibold text-white transition-colors bg-brand-primary-100 hover:bg-brand-primary-110 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-warning"
                         >
-                    {# ct-tdu: previously the focus ring was the same color as the button background
-                       (#500711 on #500711) and effectively invisible. amber-400 gives WCAG-AA contrast
-                       against both the dark button and the white card behind it. #}
+                    {# ct-tdu / ct-qme: the focus ring used to be brand-primary-100 (same as button bg)
+                       and was effectively invisible (#500711 on #500711). An earlier fix reached for a
+                       raw tailwind amber palette class, but design-system compliance bans raw palette
+                       names because they bypass dark mode and tenant branding. The semantic
+                       ring-warning token (--color-warning, defined in app/static/css/design-tokens.css)
+                       is the canonical replacement: still WCAG-AA against both the dark button and the
+                       white card behind it, themable per-tenant. The inline outline-suppression that
+                       used to sit on the focus pseudo-class was a WCAG 2.4.7 violation on its own;
+                       accessibility.css now handles native-outline suppression at the :focus-visible
+                       layer so we don't need it inline. #}
                     <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
                         <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
