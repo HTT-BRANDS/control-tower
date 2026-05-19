@@ -606,7 +606,18 @@ class TestMonitoringServiceAlertDetection:
         mock_log.records_processed = 0
         mock_log.errors_count = 0  # Explicitly set to avoid comparison issues
 
-        # Mock query to return 3 consecutive zero-record runs
+        # ct-l2j / F-2: post-fix the service calls .all() on the limited
+        # query and checks records_processed == 0 in Python (not .count()),
+        # because .limit().count() was dialect-non-portable on MSSQL. The
+        # mock chain therefore terminates at .all() returning a list of 3
+        # zero-record SyncJobLog mocks.
+        zero_log_a = MagicMock(spec=SyncJobLog)
+        zero_log_a.records_processed = 0
+        zero_log_b = MagicMock(spec=SyncJobLog)
+        zero_log_b.records_processed = 0
+        zero_log_c = MagicMock(spec=SyncJobLog)
+        zero_log_c.records_processed = 0
+
         query_mock = MagicMock()
         filter_mock = MagicMock()
         order_mock = MagicMock()
@@ -616,7 +627,7 @@ class TestMonitoringServiceAlertDetection:
         filter_mock.filter.return_value = filter_mock
         filter_mock.order_by.return_value = order_mock
         order_mock.limit.return_value = limit_mock
-        limit_mock.count.return_value = 3  # Meets threshold
+        limit_mock.all.return_value = [zero_log_a, zero_log_b, zero_log_c]
 
         mock_db.query.return_value = query_mock
         mock_create_alert.return_value = MagicMock()

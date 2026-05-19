@@ -456,21 +456,45 @@ class MonitoringService:
                 alerts.append(alert)
 
         # Alert on zero records (potential auth issue)
+        #
+        # ct-l2j / F-2: the previous query had three bugs in nine lines:
+        #   1. `.limit(N).count()` — SQLAlchemy ORM compiles this to
+        #      ``SELECT count(*) FROM (... LIMIT N)`` on PostgreSQL/SQLite,
+        #      but on MSSQL the LIMIT (TOP) is ignored and the count
+        #      returns the TOTAL row count. Prod (MSSQL) therefore tripped
+        #      the alert as soon as ANY single sync had ever returned 0
+        #      records — historically true for every domain at least once.
+        #   2. Not tenant-scoped — three zero runs across three different
+        #      tenants would trip a single alert tagged with the most-recent
+        #      tenant. Combined with `_existing_unresolved_alert`'s
+        #      tenant-dedup, this produced the alert-flood pattern we saw.
+        #   3. "Consecutive" was a lie — the filter included
+        #      ``records_processed == 0`` so a single zero run scattered
+        #      among 100 successes would still match.
+        #
+        # Fix: filter by job_type + tenant_id + status=completed only,
+        # materialize the most recent N runs, then check whether they're
+        # ALL zero-record in Python. Tenant-scoped, dialect-portable,
+        # actually-consecutive.
         if log_entry.status == "completed" and log_entry.records_processed == 0:
-            # Check if this is consecutive
-            recent_zeros = (
+            zero_threshold = ALERT_THRESHOLDS["zero_records_threshold"]
+            recent_runs = (
                 self.db.query(SyncJobLog)
                 .filter(
                     SyncJobLog.job_type == log_entry.job_type,
+                    SyncJobLog.tenant_id == log_entry.tenant_id,
                     SyncJobLog.status == "completed",
-                    SyncJobLog.records_processed == 0,
                 )
                 .order_by(SyncJobLog.started_at.desc())
-                .limit(ALERT_THRESHOLDS["zero_records_threshold"])
-                .count()
+                .limit(zero_threshold)
+                .all()
+            )
+            is_consecutive_zero_streak = (
+                len(recent_runs) >= zero_threshold
+                and all(r.records_processed == 0 for r in recent_runs)
             )
 
-            if recent_zeros >= ALERT_THRESHOLDS["zero_records_threshold"]:
+            if is_consecutive_zero_streak:
                 if not self._existing_unresolved_alert(
                     alert_type="no_records",
                     job_type=log_entry.job_type,
@@ -482,10 +506,13 @@ class MonitoringService:
                         job_type=log_entry.job_type,
                         tenant_id=log_entry.tenant_id,
                         title=f"{log_entry.job_type.title()} sync processing zero records",
-                        message=f"Last {recent_zeros} runs processed zero records - possible auth issue",
+                        message=(
+                            f"Last {len(recent_runs)} consecutive runs "
+                            "processed zero records — possible auth issue"
+                        ),
                         details={
                             "log_id": log_entry.id,
-                            "consecutive_zero_runs": recent_zeros,
+                            "consecutive_zero_runs": len(recent_runs),
                         },
                     )
                     alerts.append(alert)
