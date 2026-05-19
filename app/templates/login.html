@@ -56,8 +56,12 @@
                 <div class="flex-grow border-t border-default"></div>
             </div>
 
+            {# ct-0b1: dev login form is rendered server-side ONLY in dev.
+               Never ships in HTML to staging or production. The is_dev flag
+               is set in app/api/routes/dashboard.py::_login_context. #}
+            {% if is_dev %}
             <!-- Dev Login Form (only shown in development) -->
-            <form id="login-form" class="space-y-5 hidden" data-testid="login-dev-form">
+            <form id="login-form" class="space-y-5" data-testid="login-dev-form">
                 <div>
                     <label for="username" class="block text-sm font-medium text-secondary-theme">Username</label>
                     <input type="text" id="username" name="username" required
@@ -81,8 +85,9 @@
                     </svg>
                 </button>
             </form>
+            {% endif %}
 
-            <div id="error-message" data-testid="login-error-message" class="text-sm hidden rounded-md px-3 py-2 mt-4 text-brand-error bg-brand-error-5"></div>
+            <div id="error-message" data-testid="login-error-message" role="alert" aria-live="polite" class="text-sm hidden rounded-md px-3 py-2 mt-4 text-brand-error bg-brand-error-5"></div>
 
             <div class="mt-6 text-center">
                 <p class="text-xs text-muted-theme">Access restricted to authorized users</p>

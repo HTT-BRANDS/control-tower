@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -442,13 +443,25 @@ async def dmarc_dashboard(
 public_router = APIRouter(tags=["public"])
 
 
+def _login_context(request: Request) -> dict[str, Any]:
+    """Build login template context, gating the dev form server-side.
+
+    ct-0b1: never ship the dev username/password form HTML to production.
+    The form is only rendered when settings.environment == "development".
+    """
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    return {"is_dev": settings.environment == "development"}
+
+
 @public_router.get("/login", response_class=HTMLResponse)
 async def login_page_public(request: Request):
     """Login page — publicly accessible."""
-    return templates.TemplateResponse(request, "login.html")
+    return templates.TemplateResponse(request, "login.html", _login_context(request))
 
 
 @public_router.get("/auth/login", response_class=HTMLResponse)
 async def auth_login_page(request: Request):
     """Login page at canonical /auth/login path — publicly accessible."""
-    return templates.TemplateResponse(request, "login.html")
+    return templates.TemplateResponse(request, "login.html", _login_context(request))
