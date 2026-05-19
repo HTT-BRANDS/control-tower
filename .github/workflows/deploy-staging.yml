@@ -382,6 +382,72 @@ jobs:
             2>&1 | sed -n '1,120p' || true
           exit 1
 
+      - name: Namespace warmup (pre-validate module imports)
+        # NOTE (ct-aw4): the /health gate above only warms the core FastAPI app.
+        # Routers in separate modules (notably /monitoring/*) are not imported
+        # until their first request arrives. On Azure B1, that first import can
+        # exceed the validation suite's 30s read timeout, causing flaky CI
+        # failures even though deploy itself succeeded. This step hits each
+        # major route prefix once with a generous timeout so module imports
+        # complete BEFORE the validate job starts.
+        #
+        # Accept ANY non-zero HTTP status as success — we only care that the
+        # module loaded, not what it returns. Only true read-timeouts or
+        # connection failures count as warmup failures, and even those don't
+        # block the deploy (validate job will catch real regressions).
+        run: |
+          set -uo pipefail
+
+          warmup_paths=(
+            /api/v1/auth/health
+            /api/v1/costs/summary
+            /api/v1/compliance/summary
+            /api/v1/identity/summary
+            /api/v1/resources
+            /api/v1/sync/status
+            /api/v1/preflight/status
+            /api/v1/recommendations
+            /api/v1/riverside/summary
+            /monitoring/performance
+            /monitoring/cache
+          )
+
+          warmup_failures=0
+          warmup_total=${#warmup_paths[@]}
+
+          echo "Warming up ${warmup_total} route prefixes (60s budget each)..."
+          for path in "${warmup_paths[@]}"; do
+            url="${{ env.STAGING_URL }}${path}"
+            set +e
+            http_code=$(curl --silent --show-error --location \
+              --connect-timeout 10 \
+              --max-time 60 \
+              --output /dev/null \
+              --write-out "%{http_code}" \
+              "$url")
+            curl_exit=$?
+            timing=$(curl --silent --location \
+              --connect-timeout 10 \
+              --max-time 5 \
+              --output /dev/null \
+              --write-out "%{time_total}" \
+              "$url" 2>/dev/null || echo "n/a")
+            set -e
+
+            if [ "$curl_exit" -eq 0 ] && [ "$http_code" != "000" ]; then
+              echo "  ✅ ${path} → ${http_code} (post-warmup: ${timing}s)"
+            else
+              echo "  ⚠️  ${path} → curl_exit=${curl_exit} http_code=${http_code} (still cold?)"
+              warmup_failures=$((warmup_failures + 1))
+            fi
+          done
+
+          if [ "$warmup_failures" -gt 0 ]; then
+            echo "::warning::${warmup_failures}/${warmup_total} routes failed warmup — validation may flake"
+          else
+            echo "🔥 All ${warmup_total} route prefixes warmed up successfully"
+          fi
+
   # ===========================================================================
   # Job 5: Staging Validation — pytest suite against live URL
   # ===========================================================================
