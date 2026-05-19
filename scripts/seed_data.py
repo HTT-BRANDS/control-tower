@@ -466,8 +466,33 @@ def seed_identity(db, tenants: list[dict]):
 
 
 def seed_sync_history(db, tenants: list[dict]):
-    """Sync job logs, metrics, and alerts."""
+    """Sync job logs, metrics, and alerts.
+
+    ct-cjg: this seeder is now idempotent against an existing DB. The
+    ``sync_job_metrics`` table has a UNIQUE constraint on ``job_type``
+    (one row per type), and ``SyncJobLog`` / ``SyncJob`` / ``Alert``
+    accumulate over time from real sync runs. Re-running the seeder
+    against any of those used to crash with::
+
+        sqlite3.IntegrityError: UNIQUE constraint failed:
+            sync_job_metrics.job_type
+
+    Per the bug's recommendation (option b), we clear the four
+    sync-related tables at the start so the seeder produces a
+    deterministic state regardless of prior contents. The deletes
+    are bulk-deletes (no per-row ORM hydration) so they cost basically
+    nothing even on large tables.
+    """
     job_types = ["costs", "compliance", "resources", "identity"]
+
+    # Clear prior sync state — order matters for FKs but these tables are
+    # FK-leaves so any order works. ``synchronize_session=False`` is the
+    # bulk-delete idiom — we discard our Session's identity map anyway.
+    db.query(Alert).delete(synchronize_session=False)
+    db.query(SyncJobMetrics).delete(synchronize_session=False)
+    db.query(SyncJobLog).delete(synchronize_session=False)
+    db.query(SyncJob).delete(synchronize_session=False)
+    db.flush()
 
     for jt in job_types:
         # 30 days of sync runs (1-2x per day)
