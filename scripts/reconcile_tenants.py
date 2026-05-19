@@ -158,7 +158,6 @@ def apply_fixes(drift: Drift) -> dict[str, list[str]]:
                 client_id=cfg.app_id,
                 description=f"Reconciled from tenants.yaml (code={cfg.code})",
                 is_active=cfg.is_active,
-                use_lighthouse=False,
                 use_oidc=cfg.oidc_enabled,
             )
             session.add(row)

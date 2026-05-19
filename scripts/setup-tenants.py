@@ -273,7 +273,6 @@ class TenantSetupManager:
                 client_secret_ref = Column(String(500))
                 description = Column(Text)
                 is_active = Column(Boolean, default=True)
-                use_lighthouse = Column(Boolean, default=False)
                 created_at = Column(DateTime, default=utc_now)
                 updated_at = Column(DateTime, default=utc_now)
 
@@ -306,7 +305,6 @@ class TenantSetupManager:
                             client_secret_ref=config.key_vault_secret_name,
                             description=f"Riverside tenant: {config.name}",
                             is_active=config.is_active,
-                            use_lighthouse=False,
                         )
                         session.add(tenant)
                         self.results["created"].append(code)

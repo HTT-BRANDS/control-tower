@@ -15,7 +15,6 @@ def _tenant(**overrides):
     tenant.tenant_id = "tenant-123"
     tenant.client_id = None
     tenant.client_secret_ref = None
-    tenant.use_lighthouse = False
     for key, value in overrides.items():
         setattr(tenant, key, value)
     return tenant
@@ -58,18 +57,6 @@ class TestTenantIsSyncEligible:
 
             assert tenant_is_sync_eligible(_tenant()) is False
 
-    def test_keyvault_mode_allows_lighthouse_tenant(self):
-        with patch("app.core.sync.utils.settings") as settings:
-            settings.use_uami_auth = False
-            settings.use_oidc_federation = False
-            settings.key_vault_url = "https://vault.example"
-            settings.azure_client_id = "shared-client"
-            settings.azure_client_secret = (
-                "shared-credential-placeholder"  # pragma: allowlist secret
-            )
-
-            assert tenant_is_sync_eligible(_tenant(use_lighthouse=True)) is True
-
     def test_keyvault_mode_allows_explicit_per_tenant_secret_ref(self):
         with patch("app.core.sync.utils.settings") as settings:
             settings.use_uami_auth = False
@@ -110,7 +97,6 @@ class TestBuildSyncEligibilityDecision:
             tenant_id="tenant-123",
             tenant_client_id=None,
             tenant_client_secret_ref=None,
-            tenant_use_lighthouse=False,
             use_uami_auth=False,
             use_oidc_federation=False,
             key_vault_url="https://vault.example",
@@ -129,7 +115,6 @@ class TestBuildSyncEligibilityDecision:
             tenant_id="tenant-123",
             tenant_client_id=None,
             tenant_client_secret_ref=None,
-            tenant_use_lighthouse=False,
             use_uami_auth=False,
             use_oidc_federation=True,
             key_vault_url=None,
@@ -147,7 +132,11 @@ class TestBuildSyncEligibilityDecision:
 class TestGetSyncEligibleTenants:
     def test_filters_ineligible_tenants(self):
         tenants = [
-            _tenant(tenant_id="good-1", use_lighthouse=True),
+            _tenant(
+                tenant_id="good-1",
+                client_id="first-app-id",
+                client_secret_ref="first-secret-ref",  # pragma: allowlist secret
+            ),
             _tenant(
                 tenant_id="good-2",
                 client_id="tenant-app-id",

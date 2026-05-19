@@ -40,7 +40,6 @@ def _build_tenant_record(config) -> dict:
         "client_id": config.app_id,
         "client_secret_ref": None,
         "use_oidc": True,
-        "use_lighthouse": False,
         "is_active": True,
         "description": f"{config.code} - Riverside tenant (OIDC federation)",
     }

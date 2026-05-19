@@ -38,7 +38,6 @@ RIVERSIDE_TENANTS: list[dict[str, Any]] = [
         "tenant_id": "htt-tenant-001",
         "description": "Headquarters - Main corporate tenant",
         "is_active": True,
-        "use_lighthouse": True,
     },
     {
         "id": "22222222-2222-2222-2222-222222222222",
@@ -46,7 +45,6 @@ RIVERSIDE_TENANTS: list[dict[str, Any]] = [
         "tenant_id": "bcc-tenant-002",
         "description": "Beach Cities Cloud - Regional operations",
         "is_active": True,
-        "use_lighthouse": True,
     },
     {
         "id": "33333333-3333-3333-3333-333333333333",
@@ -54,7 +52,6 @@ RIVERSIDE_TENANTS: list[dict[str, Any]] = [
         "tenant_id": "fn-tenant-003",
         "description": "First Nations - Indigenous community services",
         "is_active": True,
-        "use_lighthouse": True,
     },
     {
         "id": "44444444-4444-4444-4444-444444444444",
@@ -62,7 +59,6 @@ RIVERSIDE_TENANTS: list[dict[str, Any]] = [
         "tenant_id": "tll-tenant-004",
         "description": "Tenant Label - Specialized division",
         "is_active": True,
-        "use_lighthouse": True,
     },
     {
         "id": "55555555-5555-5555-5555-555555555555",
@@ -70,7 +66,6 @@ RIVERSIDE_TENANTS: list[dict[str, Any]] = [
         "tenant_id": "dce-tenant-005",
         "description": "DCE Office - Standalone administrative tenant",
         "is_active": True,
-        "use_lighthouse": False,  # Standalone, no Lighthouse
     },
 ]
 

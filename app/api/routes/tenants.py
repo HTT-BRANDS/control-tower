@@ -87,7 +87,6 @@ async def list_tenants(
             tenant_id=t.tenant_id,
             description=t.description,
             is_active=t.is_active,
-            use_lighthouse=t.use_lighthouse,
             subscription_count=len(t.subscriptions),
             created_at=t.created_at,
             updated_at=t.updated_at,
@@ -133,7 +132,6 @@ async def create_tenant(
         client_id=tenant.client_id,
         client_secret_ref=tenant.client_secret_ref,
         description=tenant.description,
-        use_lighthouse=tenant.use_lighthouse,
     )
     db.add(db_tenant)
     db.commit()
@@ -145,7 +143,6 @@ async def create_tenant(
         tenant_id=db_tenant.tenant_id,
         description=db_tenant.description,
         is_active=db_tenant.is_active,
-        use_lighthouse=db_tenant.use_lighthouse,
         subscription_count=0,
         created_at=db_tenant.created_at,
         updated_at=db_tenant.updated_at,
@@ -187,7 +184,6 @@ async def get_tenant(
         tenant_id=tenant.tenant_id,
         description=tenant.description,
         is_active=tenant.is_active,
-        use_lighthouse=tenant.use_lighthouse,
         subscription_count=len(tenant.subscriptions),
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,
@@ -240,7 +236,6 @@ async def update_tenant(
         tenant_id=tenant.tenant_id,
         description=tenant.description,
         is_active=tenant.is_active,
-        use_lighthouse=tenant.use_lighthouse,
         subscription_count=len(tenant.subscriptions),
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,

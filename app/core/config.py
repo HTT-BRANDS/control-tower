@@ -207,12 +207,7 @@ class Settings(RuntimeSettingsMixin, BaseSettings):
     managed_identity_object_id: str | None = Field(
         default=None,
         alias="MANAGED_IDENTITY_OBJECT_ID",
-        description="Object ID of the Managed Identity for Lighthouse delegation",
-    )
-    lighthouse_enabled: bool = Field(
-        default=True,
-        alias="LIGHTHOUSE_ENABLED",
-        description="Enable self-service onboarding via Azure Lighthouse",
+        description="Object ID of the User-Assigned Managed Identity (for UAMI/OIDC modes)",
     )
 
     key_vault_url: str | None = None

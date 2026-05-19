@@ -28,7 +28,6 @@ class Tenant(Base):
     billing_account_id: Mapped[str | None] = Column(String(255), nullable=True)
     description: Mapped[str | None] = Column(Text)
     is_active: Mapped[bool] = Column(Boolean, default=True)
-    use_lighthouse: Mapped[bool] = Column(Boolean, default=False)
     use_oidc: Mapped[bool] = Column(Boolean, default=False, nullable=False, server_default="0")
     created_at: Mapped[datetime] = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = Column(

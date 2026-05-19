@@ -399,7 +399,6 @@ class TestResourceSync:
         tenant2.tenant_id = "test-tenant-id-456"
         tenant2.name = "Test Tenant 2"
         tenant2.is_active = True
-        tenant2.use_lighthouse = True
         tenant2.client_id = "tenant-2-client-id"
         tenant2.client_secret_ref = "tenant-2-client-secret-ref"  # pragma: allowlist secret
 

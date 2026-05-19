@@ -1,18 +1,11 @@
 """Azure SDK client wrapper for multi-tenant access with Key Vault support.
 
-Supports two credential modes:
-1. Single managing tenant (Azure Lighthouse): Uses settings.azure_* values
-2. Multi-tenant with per-tenant credentials: Fetches from Azure Key Vault
-
-Key Vault mode is activated when settings.key_vault_url is configured.
-In this mode, tenant-specific credentials are stored as secrets named:
-- {tenant-id}-client-id
-- {tenant-id}-client-secret
-
-The Tenant model determines credential mode per tenant:
-- use_lighthouse=True: Use managing tenant credentials (settings.azure_*)
-- use_lighthouse=False: Fetch per-tenant credentials from Key Vault
-- client_id + client_secret_ref: Custom app registration for the tenant
+Credential resolution order (per tenant):
+1. Per-tenant DB record with `client_id` + `client_secret_ref` → env-var or
+   Key Vault secret named by the ref
+2. Key Vault standard secrets `{tenant-id}-client-id` + `{tenant-id}-client-secret`
+3. Fallback to `settings.azure_*` (only when no Key Vault is configured —
+   classic local-dev mode)
 
 SECURITY FEATURES:
 - TTL-based credential caching (1 hour default)
@@ -91,11 +84,11 @@ class AzureClientManager:
     """Manages Azure SDK clients for multiple tenants with Key Vault integration.
 
     Credential Resolution Order:
-    1. If Key Vault not configured: Use settings.azure_* (Lighthouse mode)
-    2. If Key Vault configured:
-       a) Check tenant.use_lighthouse - if True, use settings.azure_*
-       b) If tenant has client_id + client_secret_ref, use those
-       c) Otherwise, fetch {tenant-id}-client-id and {tenant-id}-client-secret
+    1. If tenant has `client_id` + `client_secret_ref`, resolve those
+       (env-var or Key Vault secret).
+    2. Otherwise, fetch `{tenant-id}-client-id` and `{tenant-id}-client-secret`
+       from Key Vault.
+    3. Otherwise, fall back to `settings.azure_*` (no-Key-Vault local mode).
 
     SECURITY FEATURES:
     - Credentials cached with TTL (default 1 hour)
@@ -222,11 +215,10 @@ class AzureClientManager:
         """Resolve client_id and client_secret for a tenant.
 
         Resolution order:
-        1. Per-tenant DB record with client_id + client_secret_ref (env-var or Key Vault)
-        2. If tenant.use_lighthouse=True: Use settings.azure_*
-        3. If no Key Vault URL: Use settings.azure_* (Lighthouse mode)
-        4. Fetch {tenant-id}-client-id and {tenant-id}-client-secret from Key Vault
-        5. Fallback to settings.azure_*
+        1. Per-tenant DB record with ``client_id`` + ``client_secret_ref``
+           (env var or Key Vault secret).
+        2. Key Vault secrets ``{tenant-id}-client-id`` + ``{tenant-id}-client-secret``.
+        3. ``settings.azure_*`` fallback (no-Key-Vault local-dev mode).
 
         Args:
             tenant_id: The Azure tenant ID
@@ -241,7 +233,7 @@ class AzureClientManager:
         # per-tenant credentials resolvable via env vars even without Key Vault.
         tenant = self._get_tenant_from_db(tenant_id)
 
-        # Try custom client_id + client_secret_ref (env var → KV → fail)
+        # 1) Custom client_id + client_secret_ref (env var → KV → fail)
         if tenant and tenant.client_id and tenant.client_secret_ref:
             client_secret = self._fetch_key_vault_secret(tenant.client_secret_ref, tenant_id)
             if client_secret:
@@ -250,61 +242,32 @@ class AzureClientManager:
                     f"(client_id: {tenant.client_id[:8]}...)"
                 )
                 return (tenant.client_id, client_secret, tenant)
-            else:
-                logger.warning(
-                    f"Failed to resolve client_secret_ref '{tenant.client_secret_ref}' "
-                    f"for tenant {tenant_id}, trying fallbacks"
-                )
+            logger.warning(
+                f"Failed to resolve client_secret_ref '{tenant.client_secret_ref}' "
+                f"for tenant {tenant_id}, trying fallbacks"
+            )
 
-        if tenant and tenant.use_lighthouse:
-            # Tenant explicitly wants Lighthouse mode
-            if not settings.azure_client_id or not settings.azure_client_secret:
-                raise ValueError(
-                    f"Tenant {tenant_id} configured for Lighthouse but "
-                    f"settings.azure_client_id/azure_client_secret are not set"
-                )
-            logger.debug(f"Using Lighthouse credentials for tenant {tenant_id}")
+        # 2) Standard per-tenant Key Vault secrets
+        client_id = self._fetch_key_vault_secret(f"{tenant_id}-client-id", tenant_id)
+        client_secret = self._fetch_key_vault_secret(f"{tenant_id}-client-secret", tenant_id)
+        if client_id and client_secret:
+            logger.debug(f"Using Key Vault credentials for tenant {tenant_id}")
+            return (client_id, client_secret, tenant)
+
+        # 3) settings.azure_* fallback — only when Key Vault isn't configured
+        #    (classic no-KV mode, useful for local dev)
+        if settings.azure_client_id and settings.azure_client_secret and not settings.key_vault_url:
             return (
                 str(settings.azure_client_id),
                 str(settings.azure_client_secret),
                 tenant,
             )
 
-        # Fetch standard Key Vault secrets
-        client_id = self._fetch_key_vault_secret(f"{tenant_id}-client-id", tenant_id)
-        client_secret = self._fetch_key_vault_secret(f"{tenant_id}-client-secret", tenant_id)
-
-        if client_id and client_secret:
-            logger.debug(f"Using Key Vault credentials for tenant {tenant_id}")
-            return (client_id, client_secret, tenant)
-
-        # Fallback to settings only for classic no-Key-Vault mode, or when the
-        # tenant explicitly opts into Lighthouse credentials.
-        if settings.azure_client_id and settings.azure_client_secret:
-            if not settings.key_vault_url:
-                return (
-                    str(settings.azure_client_id),
-                    str(settings.azure_client_secret),
-                    tenant,
-                )
-            if tenant and tenant.use_lighthouse:
-                logger.debug(f"Using Lighthouse fallback credentials for tenant {tenant_id}")
-                return (
-                    str(settings.azure_client_id),
-                    str(settings.azure_client_secret),
-                    tenant,
-                )
-
         known_config_tenant = get_tenant_by_id(tenant_id)
-        if (
-            settings.key_vault_url
-            and tenant
-            and not tenant.use_lighthouse
-            and not known_config_tenant
-        ):
+        if settings.key_vault_url and tenant and not known_config_tenant:
             raise ValueError(
                 f"Tenant {tenant_id} is not configured for per-tenant Key Vault credentials. "
-                "Add explicit tenant credentials, mark it use_lighthouse, or disable the tenant."
+                "Add explicit tenant credentials or disable the tenant."
             )
 
         raise ValueError(
@@ -466,7 +429,7 @@ class AzureClientManager:
         return new_credential
 
     def get_default_credential(self) -> DefaultAzureCredential:
-        """Get default credential for Lighthouse scenarios."""
+        """Get the shared DefaultAzureCredential (managed identity / az-login)."""
         if not self._default_credential:
             self._default_credential = DefaultAzureCredential()
         return self._default_credential

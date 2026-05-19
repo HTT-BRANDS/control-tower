@@ -1,16 +1,17 @@
 """Unit tests for AzureClientManager.
 
 Tests the AzureClientManager class which manages Azure SDK clients per tenant
-with support for both Azure Lighthouse and Key Vault-based multi-tenant credentials.
+using Key Vault for per-tenant credentials and settings.azure_* as a no-KV
+local-dev fallback.
 
 Coverage:
 - Initialization and default configuration
-- Client creation per tenant (Lighthouse mode)
-- Client creation per tenant (Key Vault mode)
+- Settings fallback (no-Key-Vault mode)
+- Key Vault credential resolution (per-tenant)
+- Custom app registration (client_id + client_secret_ref)
 - Credential caching and TTL management
 - Auto-refresh before expiry
 - Error handling for invalid/missing tenant configs
-- Key Vault integration and secret caching
 - Cache clearing and bulk operations
 """
 
@@ -75,17 +76,19 @@ class TestCredentialResolution:
     def setup_mocks(self):
         """Set up mocks before each test."""
         self.mock_settings = MagicMock()
-        self.mock_settings.azure_client_id = "lighthouse-client-id"
-        self.mock_settings.azure_client_secret = "lighthouse-client-secret"
-        self.mock_settings.azure_tenant_id = "lighthouse-tenant-id"
+        self.mock_settings.azure_client_id = "fallback-client-id"
+        self.mock_settings.azure_client_secret = (
+            "fallback-client-secret"  # pragma: allowlist secret
+        )
+        self.mock_settings.azure_tenant_id = "fallback-tenant-id"
         self.mock_settings.key_vault_url = None
 
         with patch("app.api.services.azure_client.get_settings", return_value=self.mock_settings):
             with patch("app.api.services.azure_client.settings", self.mock_settings):
                 yield
 
-    def test_lighthouse_mode_no_keyvault(self):
-        """Test credential resolution in Lighthouse mode (no Key Vault configured)."""
+    def test_no_keyvault_falls_back_to_settings(self):
+        """With no Key Vault configured, settings.azure_* is the fallback."""
         from app.api.services.azure_client import AzureClientManager
 
         manager = AzureClientManager()
@@ -93,12 +96,12 @@ class TestCredentialResolution:
 
         client_id, client_secret, tenant = manager._resolve_credentials(tenant_id)
 
-        assert client_id == "lighthouse-client-id"
-        assert client_secret == "lighthouse-client-secret"
+        assert client_id == "fallback-client-id"
+        assert client_secret == "fallback-client-secret"  # pragma: allowlist secret
         assert tenant is None
 
-    def test_lighthouse_mode_missing_credentials_raises_error(self):
-        """Test error when Lighthouse mode but credentials not configured."""
+    def test_no_credentials_anywhere_raises_error(self):
+        """With no KV, no settings, and no DB tenant — must raise."""
         from app.api.services.azure_client import AzureClientManager
 
         self.mock_settings.azure_client_id = None
@@ -110,28 +113,6 @@ class TestCredentialResolution:
         with pytest.raises(ValueError, match="Could not resolve credentials"):
             manager._resolve_credentials(tenant_id)
 
-    def test_tenant_with_use_lighthouse_flag(self):
-        """Test credential resolution when tenant has use_lighthouse=True."""
-        from app.api.services.azure_client import AzureClientManager
-
-        self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
-
-        # Mock tenant with use_lighthouse=True
-        mock_tenant = MagicMock()
-        mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = True
-        mock_tenant.client_id = None
-        mock_tenant.client_secret_ref = None
-
-        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
-            manager = AzureClientManager()
-            with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
-                client_id, client_secret, tenant = manager._resolve_credentials("tenant-123")
-
-                assert client_id == "lighthouse-client-id"
-                assert client_secret == "lighthouse-client-secret"
-                assert tenant == mock_tenant
-
     def test_tenant_with_custom_app_registration(self):
         """Test credential resolution with custom client_id and client_secret_ref."""
         from app.api.services.azure_client import AzureClientManager
@@ -141,7 +122,6 @@ class TestCredentialResolution:
         # Mock tenant with custom app registration
         mock_tenant = MagicMock()
         mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = False
         mock_tenant.client_id = "custom-client-id"
         mock_tenant.client_secret_ref = "custom-secret-ref"
 
@@ -167,7 +147,6 @@ class TestCredentialResolution:
         # Mock tenant without custom credentials
         mock_tenant = MagicMock()
         mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = False
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
@@ -199,7 +178,6 @@ class TestCredentialResolution:
 
         mock_tenant = MagicMock()
         mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = False
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
@@ -221,7 +199,6 @@ class TestCredentialResolution:
 
         mock_tenant = MagicMock()
         mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = False
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
@@ -245,7 +222,6 @@ class TestCredentialResolution:
 
         mock_tenant = MagicMock()
         mock_tenant.tenant_id = "tenant-123"
-        mock_tenant.use_lighthouse = False
         mock_tenant.client_id = None
         mock_tenant.client_secret_ref = None
 
@@ -571,7 +547,7 @@ class TestClientCreation:
             assert args[1] == "sub-456"
 
     def test_get_default_credential(self):
-        """Test getting DefaultAzureCredential for Lighthouse scenarios."""
+        """Test getting the shared DefaultAzureCredential."""
         from app.api.services.azure_client import AzureClientManager
 
         with patch("app.api.services.azure_client.DefaultAzureCredential") as mock_default_cred:

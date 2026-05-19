@@ -3,8 +3,8 @@
 
 Read-only helper for issue 918b. Feed it exported tenant rows, optional app
 settings, and optional Key Vault secret metadata, and it will tell you which
-noisy tenants are expected to use Lighthouse, explicit per-tenant refs,
-OIDC/UAMI app IDs, legacy standard Key Vault pairs, or nothing useful at all.
+noisy tenants are expected to use explicit per-tenant refs, OIDC/UAMI app IDs,
+standard Key Vault pairs, or nothing useful at all.
 """
 
 from __future__ import annotations
@@ -139,15 +139,11 @@ def _recommended_action(
     expected_auth_path: str,
     standard_secret_pair_present: bool,
     explicit_secret_present: bool,
-    use_lighthouse: bool,
 ) -> str:
     if not scheduler_eligible:
         if scheduler_reason == "missing_db_declared_secret_path":
             return "disable tenant for scheduled sync or add an explicit auth path"
-        if scheduler_reason in {
-            "missing_shared_settings_credentials",
-            "lighthouse_missing_shared_settings_credentials",
-        }:
+        if scheduler_reason == "missing_shared_settings_credentials":
             return "fix shared secret settings before treating tenant as schedulable"
         if scheduler_reason in {"missing_app_id_for_uami", "missing_app_id_for_oidc"}:
             return "add tenant app ID mapping or disable scheduled sync for this tenant"
@@ -161,8 +157,6 @@ def _recommended_action(
             and not standard_secret_pair_present
         ):
             return "create the standard {tenant-id}-client-id/client-secret pair or move tenant to explicit refs"
-        if expected_auth_path == "lighthouse_shared_credentials":
-            return "confirm Lighthouse is intended and shared settings creds are still valid"
 
     return "configuration appears internally consistent; inspect runtime logs/evidence for remaining mismatch"
 
@@ -196,7 +190,6 @@ def _classify_tenant(
         tenant_id=tenant_id,
         tenant_client_id=row.get("client_id"),
         tenant_client_secret_ref=row.get("client_secret_ref"),
-        tenant_use_lighthouse=_as_bool(row.get("use_lighthouse", False)),
         use_uami_auth=_as_bool(app_settings.get("USE_UAMI_AUTH")),
         use_oidc_federation=_as_bool(app_settings.get("USE_OIDC_FEDERATION")),
         key_vault_url=app_settings.get("KEY_VAULT_URL"),
@@ -214,8 +207,6 @@ def _classify_tenant(
 
     if decision.auth_mode in {"uami", "oidc"}:
         expected_path = decision.auth_mode
-    elif _as_bool(row.get("use_lighthouse", False)):
-        expected_path = "lighthouse_shared_credentials"
     elif row.get("client_id") and row.get("client_secret_ref"):
         expected_path = "explicit_per_tenant_secret_ref"
     elif standard_secret_pair_present:
@@ -236,14 +227,12 @@ def _classify_tenant(
         expected_auth_path=expected_path,
         standard_secret_pair_present=standard_secret_pair_present,
         explicit_secret_present=explicit_secret_present,
-        use_lighthouse=_as_bool(row.get("use_lighthouse", False)),
     )
 
     return {
         "name": row.get("name"),
         "tenant_id": tenant_id,
         "is_active": _as_bool(row.get("is_active", True)),
-        "use_lighthouse": _as_bool(row.get("use_lighthouse", False)),
         "use_oidc": _as_bool(row.get("use_oidc", False)),
         "client_id": row.get("client_id"),
         "client_secret_ref": explicit_secret_ref,

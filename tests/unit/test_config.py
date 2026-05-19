@@ -587,15 +587,6 @@ def test_settings_with_complete_azure_config(monkeypatch):
     assert settings.key_vault_url == "https://keyvault.vault.azure.net/"
 
 
-def test_settings_with_lighthouse_disabled(monkeypatch):
-    """Test Settings with Lighthouse disabled."""
-    monkeypatch.setenv("LIGHTHOUSE_ENABLED", "false")
-
-    settings = Settings(_env_file=None)
-
-    assert settings.lighthouse_enabled is False
-
-
 def test_settings_database_configuration(monkeypatch):
     """Test Settings database configuration options."""
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost/db")

@@ -69,7 +69,6 @@ def build_sync_eligibility_decision(
     tenant_id: str,
     tenant_client_id: str | None,
     tenant_client_secret_ref: str | None,
-    tenant_use_lighthouse: bool,
     use_uami_auth: bool,
     use_oidc_federation: bool,
     key_vault_url: str | None,
@@ -116,17 +115,6 @@ def build_sync_eligibility_decision(
             ),
         )
 
-    if tenant_use_lighthouse:
-        return SyncEligibilityDecision(
-            eligible=has_shared_credentials,
-            auth_mode="key_vault_secret",
-            reason=(
-                "lighthouse_shared_credentials_available"
-                if has_shared_credentials
-                else "lighthouse_missing_shared_settings_credentials"
-            ),
-        )
-
     if tenant_client_id and tenant_client_secret_ref:
         return SyncEligibilityDecision(
             True,
@@ -149,7 +137,6 @@ def explain_tenant_sync_eligibility(tenant: Tenant) -> SyncEligibilityDecision:
         tenant_id=tenant.tenant_id,
         tenant_client_id=tenant.client_id,
         tenant_client_secret_ref=tenant.client_secret_ref,
-        tenant_use_lighthouse=bool(tenant.use_lighthouse),
         use_uami_auth=bool(settings.use_uami_auth),
         use_oidc_federation=bool(settings.use_oidc_federation),
         key_vault_url=str(settings.key_vault_url) if settings.key_vault_url else None,

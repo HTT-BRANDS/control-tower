@@ -438,7 +438,6 @@ class TestAzureClientConnectionTimeout:
 
             # Mock the tenant lookup
             mock_tenant = MagicMock()
-            mock_tenant.use_lighthouse = True
             mock_tenant.client_id = None
             mock_tenant.client_secret_ref = None
             # SessionLocal() is used as context manager: with SessionLocal() as db:
