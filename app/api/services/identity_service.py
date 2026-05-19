@@ -234,7 +234,15 @@ class IdentityService:
         for u in users:
             user_accounts.append(
                 UserAccount(
-                    id=u.id if hasattr(u, "id") else u.user_principal_name,
+                    # The UserAccount.id schema declares ``str`` and the
+                    # field is documented as 'Azure AD user object ID'.
+                    # PrivilegedUser.id is an autoincrement integer PK —
+                    # not an Azure AD object ID — so coercing it to str
+                    # would be doubly wrong: type and meaning. Use the UPN,
+                    # which is the natural identifier for this row and
+                    # already a string. (Previously this raised
+                    # ValidationError → 500 on every call.)
+                    id=u.user_principal_name,
                     tenant_id=u.tenant_id,
                     tenant_name=tenants.get(u.tenant_id, "Unknown"),
                     user_principal_name=u.user_principal_name,
