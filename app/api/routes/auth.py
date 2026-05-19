@@ -14,7 +14,7 @@ from datetime import timedelta
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -529,8 +529,7 @@ async def auth_health_check() -> dict[str, Any]:
 
 @router.post("/staging-token", include_in_schema=False)
 async def staging_test_token(
-    x_staging_admin_key: str | None = None,
-    request: Request = None,
+    x_staging_admin_key: str = Header(default="", alias="X-Staging-Admin-Key"),
 ) -> dict:
     """Issue a short-lived admin JWT for staging E2E test suites.
 
@@ -539,6 +538,17 @@ async def staging_test_token(
     matches the STAGING_ADMIN_KEY environment variable.
 
     Returns a 1-hour admin JWT that can be used as a Bearer token.
+
+    ct-wvn: previously the signature was
+    ``x_staging_admin_key: str | None = None, request: Request = None``
+    which made FastAPI treat ``x_staging_admin_key`` as a query parameter
+    (not a header) and ``request`` as a default-None body argument (not
+    an injected ``Request``). The endpoint then always 404'd because the
+    header value never reached the code. Now we use the proper ``Header``
+    dependency with ``default=""`` so a missing header yields a clean
+    404 (matching the existing defensive 'looks like the endpoint
+    doesn't exist' design) rather than a 422 validation error that would
+    leak the endpoint's presence.
     """
     settings = get_settings()
 
@@ -555,9 +565,7 @@ async def staging_test_token(
             detail="Not found",
         )
 
-    # Check the admin key header (from header OR query param for flexibility)
-    header_key = request.headers.get("x-staging-admin-key") if request else None
-    provided_key = x_staging_admin_key or header_key
+    provided_key = x_staging_admin_key
     expected_key = os.getenv("STAGING_ADMIN_KEY", "")
 
     if not expected_key:
