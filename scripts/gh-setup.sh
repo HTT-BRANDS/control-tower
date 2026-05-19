@@ -288,13 +288,23 @@ if [[ "$SKIP_PROTECTION" == false ]]; then
     echo ""
     echo -e "Attempting to set basic branch protection..."
     
-    # Note: This requires admin permissions and may fail
+    # Note: This requires admin permissions and may fail.
+    #
+    # ct-9f1 / F-4 (2026-05-19): `enforce_admins` MUST stay true below.
+    # It was briefly disabled by hand on 2026-05-19 so Tyler could
+    # self-merge PRs #39-#43 (GitHub forbids approving your own PR),
+    # then immediately re-enabled. Before this fix the script still
+    # POSTed `enforce_admins: false`, which meant anyone running
+    # `./scripts/gh-setup.sh` to refresh repo settings would silently
+    # downgrade protection. weekly-ops.yml has a smoke test that fails
+    # CI if .enforce_admins.enabled is ever false on main; do NOT flip
+    # the value below without coordinating that gate.
     gh api "repos/$GITHUB_REPO/branches/main/protection" \
         --method PUT \
         --input - << PROTECTION_JSON 2>/dev/null || echo -e "  ${YELLOW}⚠${NC} Could not set branch protection (may need admin rights or use UI)"
 {
   "required_status_checks": null,
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": {
     "required_approving_review_count": 1,
     "dismiss_stale_reviews": true,

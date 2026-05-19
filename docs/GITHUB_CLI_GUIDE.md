@@ -609,12 +609,17 @@ gh secret set API_KEY --body "actual-secret-value"  # DON'T DO THIS
 ### Branch Protection via CLI
 
 ```bash
-# Set branch protection rules
-gt api repos/owner/repo/branches/main/protection \
+# Set branch protection rules.
+#
+# ct-9f1 / F-4: `enforce_admins` MUST be true on main (HTT policy: admins
+# are not exempt from PR review). Documenting `false` here once leaked
+# into scripts/gh-setup.sh, where it would have silently downgraded prod
+# protection on every run. Don't paste this with `false` ever again.
+gh api repos/owner/repo/branches/main/protection \
   --method PUT \
   --input - <<< '{
     "required_status_checks": null,
-    "enforce_admins": false,
+    "enforce_admins": true,
     "required_pull_request_reviews": {
       "required_approving_review_count": 1,
       "dismiss_stale_reviews": true

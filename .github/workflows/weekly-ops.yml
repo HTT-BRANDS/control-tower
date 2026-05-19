@@ -16,7 +16,29 @@ jobs:
         run: |
           chmod +x scripts/daily-ops-check.sh
           ./scripts/daily-ops-check.sh
-      
+
+      # ct-9f1 / F-4 fitness function: enforce_admins must stay true on
+      # main. The audit explicitly recommended this as a CI gate so that
+      # any drift (whether from someone running gh-setup.sh, from a
+      # GitHub policy migration, or from a manual UI toggle) trips a red
+      # build the next Monday at 9am UTC instead of silently shipping.
+      - name: Verify enforce_admins is true on main branch protection
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "::group::Branch protection state"
+          response=$(gh api "repos/${{ github.repository }}/branches/main/protection")
+          echo "$response" | jq '.enforce_admins'
+          echo "::endgroup::"
+
+          enforced=$(echo "$response" | jq -r '.enforce_admins.enabled')
+          if [ "$enforced" != "true" ]; then
+            echo "::error::ct-9f1: enforce_admins.enabled is '$enforced' on main — must be 'true'. Restore with: gh api -X POST repos/${{ github.repository }}/branches/main/protection/enforce_admins"
+            exit 1
+          fi
+          echo "✅ enforce_admins.enabled = true on main"
+
       - name: Post results to Slack (optional)
         if: failure()
         run: |
