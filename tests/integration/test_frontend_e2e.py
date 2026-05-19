@@ -154,8 +154,17 @@ class TestTemplateIntegrity:
 class TestPageRoutes:
     """All page routes return valid HTML."""
 
-    PUBLIC_PAGES = ["/login", "/onboarding/"]
-    AUTH_PAGES = ["/dashboard", "/sync-dashboard", "/riverside", "/dmarc"]
+    # /onboarding/ became auth-required as of ct-w6b — it collects Azure
+    # tenant/subscription IDs and writes Tenant rows; no reason to leave it
+    # publicly accessible. Re-classify it under AUTH_PAGES.
+    PUBLIC_PAGES = ["/login"]
+    AUTH_PAGES = [
+        "/dashboard",
+        "/sync-dashboard",
+        "/riverside",
+        "/dmarc",
+        "/onboarding/",
+    ]
 
     @pytest.mark.parametrize("path", PUBLIC_PAGES)
     def test_public_pages_no_auth(self, client, path):
