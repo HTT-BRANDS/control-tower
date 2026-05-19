@@ -1,5 +1,11 @@
 # Migrate Home-Tenant App Reg to OIDC Federation (kill the runtime secret)
 
+> 🎯 **Prefer a clickable, branded walkthrough?**
+> Open [`../migration-cockpit/index.html`](../migration-cockpit/index.html)
+> in your browser. Same content, with portal deep-links templated to
+> your environment values + click-to-copy commands + progress tracking.
+> This Markdown doc is the long-form companion.
+
 ## TL;DR
 
 Eliminate `AZURE_AD_CLIENT_SECRET` from the runtime by trusting the App

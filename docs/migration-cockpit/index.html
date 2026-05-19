@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Control Tower — OIDC Migration Cockpit</title>
+<meta name="description" content="Foolproof step-by-step walkthrough for the home-tenant OIDC federation migration. Deep portal links, copy-paste commands, verification at every step." />
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   HTT Brands palette
+   ─────────────────────────────────────────────────────────────────────
+   Sourced from config/brands.yaml::brands.httbrands.colors. Keeping the
+   real brand tokens in the cockpit so this doesn't feel like some random
+   AI-generated tutorial — it feels like *your* control tower. */
+:root {
+  --htt-burgundy:    #500711;
+  --htt-burgundy-dk: #2a040a;
+  --htt-burgundy-lt: #7a1521;
+  --htt-purple:      #BB86FC;
+  --htt-gold:        #FFC957;
+  --htt-gold-soft:   #4d3d1a;
+
+  --bg-0:        #0a0d12;   /* page background */
+  --bg-1:        #11161e;   /* card background */
+  --bg-2:        #1a212c;   /* nested elements */
+  --bg-3:        #232c38;   /* hover/focus */
+  --border:      #2a3441;
+  --border-lt:   #3a4555;
+
+  --text-0:      #eef1f5;   /* primary text */
+  --text-1:      #b8c2d0;   /* secondary text */
+  --text-2:      #7a8696;   /* muted */
+  --text-3:      #4d586a;   /* disabled */
+
+  --ok:          #4ade80;
+  --ok-bg:       #112c1d;
+  --warn:        var(--htt-gold);
+  --warn-bg:     #2d2410;
+  --err:         #ef5a5a;
+  --err-bg:      #2d1414;
+
+  --radius:      8px;
+  --radius-lg:   14px;
+  --shadow-soft: 0 4px 20px -4px rgba(0,0,0,0.5),
+                 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-lift: 0 8px 32px -8px rgba(80,7,17,0.4),
+                 0 0 0 1px rgba(255,201,87,0.1);
+
+  --font-sans:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:   "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  /* Faint runway-light effect: gold spots at the bottom edge */
+  background-image:
+    radial-gradient(circle at 20% 100%, rgba(255,201,87,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(80,7,17,0.08) 0%, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+a { color: var(--htt-gold); text-decoration: none; }
+a:hover { color: #ffd97a; text-decoration: underline; }
+code, kbd, pre { font-family: var(--font-mono); font-size: 13px; }
+
+/* ─── Layout ────────────────────────────────────────────────────────── */
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 96px; }
+
+/* ─── Hero / mission header ─────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, var(--htt-burgundy) 0%, var(--htt-burgundy-dk) 60%, #1a0408 100%);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.hero::before {
+  /* gold runway-light accent on top-right */
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, var(--htt-gold) 0%, transparent 60%);
+  opacity: 0.18;
+  pointer-events: none;
+}
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero h1 .icon {
+  width: 38px; height: 38px;
+  background: var(--htt-gold);
+  color: var(--htt-burgundy-dk);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.hero p.subtitle {
+  margin: 0;
+  color: rgba(238, 241, 245, 0.75);
+  font-size: 15px;
+  max-width: 700px;
+}
+.hero .meta {
+  display: flex;
+  gap: 22px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: rgba(238, 241, 245, 0.65);
+}
+.hero .meta span strong { color: var(--htt-gold); font-weight: 600; }
+
+/* ─── Progress bar ──────────────────────────────────────────────────── */
+.progress-card {
+  background: var(--bg-1);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.progress-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text-2);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-2);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--htt-burgundy) 0%, var(--htt-gold) 100%);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 0 0 12px rgba(255, 201, 87, 0.3);
+}
+.progress-count {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-0);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.progress-count .total { color: var(--text-2); font-weight: 400; }
+
+/* ─── Pre-flight checklist (config) ─────────────────────────────────── */
+details.config {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+details.config > summary {
+  padding: 16px 22px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  list-style: none;
+}
+details.config > summary::-webkit-details-marker { display: none; }
+details.config > summary:hover { background: var(--bg-2); }
+details.config > summary .chevron {
+  transition: transform 0.2s;
+  color: var(--text-2);
+}
+details.config[open] > summary .chevron { transform: rotate(90deg); }
+.config-body {
+  padding: 6px 22px 22px;
+  border-top: 1px solid var(--border);
+}
+.config-help {
+  color: var(--text-2);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) { .config-grid { grid-template-columns: 1fr; } }
+.config-field label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-2);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.config-field input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  color: var(--text-0);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.config-field input:focus {
+  outline: none;
+  border-color: var(--htt-gold);
+  background: var(--bg-3);
+}
+.config-field input.placeholder-needed {
+  border-color: var(--htt-gold);
+  background: var(--warn-bg);
+}
+.config-field .hint {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+/* ─── Step cards ────────────────────────────────────────────────────── */
+.step {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 18px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.25s;
+}
+.step.is-active {
+  border-color: var(--htt-gold);
+  box-shadow: var(--shadow-lift);
+}
+.step.is-done {
+  border-color: rgba(74, 222, 128, 0.3);
+  opacity: 0.78;
+}
+.step.is-done:hover { opacity: 1; }
+
+.step-head {
+  display: flex;
+  align-items: center;
+  padding: 18px 22px;
+  cursor: pointer;
+  gap: 16px;
+  user-select: none;
+}
+.step-head:hover { background: var(--bg-2); }
+
+.step-num {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.step.is-active .step-num {
+  background: var(--htt-gold);
+  color: var(--htt-burgundy-dk);
+  box-shadow: 0 0 0 4px rgba(255, 201, 87, 0.15);
+}
+.step.is-done .step-num {
+  background: var(--ok);
+  color: var(--bg-0);
+}
+
+.step-title-block { flex: 1; min-width: 0; }
+.step-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+.step-sub {
+  color: var(--text-2);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.step-status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.step-status.todo {
+  background: var(--bg-2);
+  color: var(--text-2);
+  border: 1px solid var(--border-lt);
+}
+.step-status.active {
+  background: var(--warn-bg);
+  color: var(--htt-gold);
+  border: 1px solid rgba(255, 201, 87, 0.3);
+  animation: pulse-warn 2.4s ease-in-out infinite;
+}
+.step-status.done {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+@keyframes pulse-warn {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,201,87,0.18); }
+  50%      { box-shadow: 0 0 0 6px rgba(255,201,87,0); }
+}
+
+.step-chevron { color: var(--text-2); transition: transform 0.2s; flex-shrink: 0; }
+.step.is-open .step-chevron { transform: rotate(90deg); }
+
+.step-body {
+  display: none;
+  padding: 4px 22px 22px;
+  border-top: 1px solid var(--border);
+}
+.step.is-open .step-body { display: block; }
+
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text-2);
+  font-weight: 700;
+  margin: 18px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--htt-gold);
+}
+.section-label.ok .dot     { background: var(--ok); }
+.section-label.danger .dot { background: var(--err); }
+
+.step-body p {
+  margin: 8px 0;
+  color: var(--text-1);
+}
+.step-body p strong { color: var(--text-0); }
+
+/* ─── Action button (portal deep-link) ──────────────────────────────── */
+.portal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--htt-burgundy) 0%, var(--htt-burgundy-lt) 100%);
+  color: var(--text-0);
+  padding: 11px 18px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid rgba(255, 201, 87, 0.2);
+  transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+  margin: 4px 8px 4px 0;
+}
+.portal-btn:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  border-color: var(--htt-gold);
+  box-shadow: 0 6px 16px -6px rgba(80, 7, 17, 0.6);
+  color: var(--text-0);
+}
+.portal-btn.gh {
+  background: linear-gradient(135deg, #1a212c 0%, #2a3441 100%);
+  border-color: var(--border-lt);
+}
+.portal-btn.gh:hover { border-color: var(--htt-gold); }
+.portal-btn .ext { font-size: 12px; opacity: 0.75; }
+
+/* ─── Code blocks with copy-to-clipboard ────────────────────────────── */
+.code {
+  position: relative;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 48px 12px 14px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-0);
+  white-space: pre;
+}
+.code .copy {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-lt);
+  color: var(--text-1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.15s;
+}
+.code .copy:hover {
+  background: var(--htt-gold);
+  color: var(--htt-burgundy-dk);
+  border-color: var(--htt-gold);
+}
+.code .copy.copied {
+  background: var(--ok);
+  color: var(--bg-0);
+  border-color: var(--ok);
+}
+.code .var {
+  color: var(--htt-gold);
+  font-weight: 500;
+}
+
+/* ─── Inline value pills (click-to-copy small values) ───────────────── */
+.pill {
+  display: inline-block;
+  background: var(--bg-2);
+  border: 1px solid var(--border-lt);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-0);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pill:hover {
+  background: var(--htt-gold);
+  color: var(--htt-burgundy-dk);
+  border-color: var(--htt-gold);
+}
+.pill.copied {
+  background: var(--ok);
+  color: var(--bg-0);
+  border-color: var(--ok);
+}
+
+/* ─── Callout boxes ─────────────────────────────────────────────────── */
+.callout {
+  border-left: 3px solid var(--htt-gold);
+  background: rgba(255, 201, 87, 0.06);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  color: var(--text-1);
+  font-size: 14px;
+}
+.callout.ok    { border-color: var(--ok);  background: rgba(74, 222, 128, 0.06); }
+.callout.warn  { border-color: var(--warn);background: rgba(255, 201, 87, 0.06); }
+.callout.err   { border-color: var(--err); background: rgba(239, 90, 90, 0.06); }
+.callout strong { color: var(--text-0); }
+
+/* ─── Step controls (mark complete / reset) ─────────────────────────── */
+.step-controls {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn {
+  background: var(--bg-2);
+  border: 1px solid var(--border-lt);
+  color: var(--text-0);
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: var(--bg-3); border-color: var(--htt-gold); }
+.btn.primary {
+  background: var(--htt-gold);
+  color: var(--htt-burgundy-dk);
+  border-color: var(--htt-gold);
+}
+.btn.primary:hover { background: #ffd97a; }
+.btn.ghost { background: transparent; }
+.btn.danger:hover { border-color: var(--err); color: var(--err); }
+
+/* ─── Toast ─────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--htt-burgundy-dk);
+  color: var(--htt-gold);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--htt-gold);
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: var(--shadow-lift);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  z-index: 999;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer .links { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* ─── Touchdown panel (success state) ───────────────────────────────── */
+.touchdown {
+  display: none;
+  margin-top: 28px;
+  background: linear-gradient(135deg, #112c1d 0%, #0a1a12 100%);
+  border: 1px solid var(--ok);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+}
+.touchdown.show { display: block; animation: slide-up 0.5s ease-out; }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.touchdown h2 {
+  margin: 0 0 12px;
+  color: var(--ok);
+  font-size: 24px;
+}
+.touchdown p { color: var(--text-1); max-width: 540px; margin: 0 auto 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ──────────────────────────────────────────────────────────────
+       Hero
+       ────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <h1>
+      <span class="icon" aria-hidden="true">⬢</span>
+      OIDC Migration Cockpit
+    </h1>
+    <p class="subtitle">
+      Foolproof, click-through walkthrough for migrating the home-tenant
+      management app reg to OIDC federation. Eliminates the runtime
+      <code style="color:var(--htt-gold)">AZURE_AD_CLIENT_SECRET</code>.
+      Every step has a deep-link to the exact portal section, copy-paste
+      commands templated with your values, and a verification check.
+    </p>
+    <div class="meta">
+      <span>📋 Tracking: <strong>ct-6fj</strong></span>
+      <span>📖 Runbook: <strong><a href="../runbooks/migrate-to-oidc-federation.md">migrate-to-oidc-federation.md</a></strong></span>
+      <span>⏱ Estimated: <strong>20-30 min</strong></span>
+      <span>↪ Rollback: <strong>~2 min</strong></span>
+    </div>
+  </section>
+
+  <!-- ──────────────────────────────────────────────────────────────
+       Progress bar
+       ────────────────────────────────────────────────────────────── -->
+  <div class="progress-card">
+    <span class="progress-label">Mission&nbsp;Progress</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+    <span class="progress-count">
+      <span id="progress-done">0</span><span class="total"> / 7 steps</span>
+    </span>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────────
+       Pre-flight checklist: configuration
+       ────────────────────────────────────────────────────────────── -->
+  <details class="config" open>
+    <summary>
+      <span class="chevron">▶</span>
+      Pre-flight: your environment values
+      <span style="margin-left:auto;font-size:12px;color:var(--text-2);font-weight:400">
+        Filled-in once, used everywhere
+      </span>
+    </summary>
+    <div class="config-body">
+      <p class="config-help">
+        These get templated into every command + portal link below.
+        Saved to your browser's localStorage so you fill them in once.
+        Pre-filled defaults come from the staging environment.
+      </p>
+      <div class="config-grid">
+        <div class="config-field">
+          <label>Tenant ID (home tenant)</label>
+          <input id="cfg-tenant" type="text" value="0c0e35dc-188a-4eb3-b8ba-61752154b407" />
+          <div class="hint">Pre-filled: HTT home tenant</div>
+        </div>
+        <div class="config-field">
+          <label>App registration client ID</label>
+          <input id="cfg-app" type="text" placeholder="The client_id of your management app reg" />
+          <div class="hint">Same value as <code>AZURE_AD_CLIENT_ID</code> in App Service settings</div>
+        </div>
+        <div class="config-field">
+          <label>App Service name</label>
+          <input id="cfg-site" type="text" value="app-governance-staging-xnczpwyv" />
+          <div class="hint">Pre-filled: staging webapp</div>
+        </div>
+        <div class="config-field">
+          <label>Resource group</label>
+          <input id="cfg-rg" type="text" value="rg-governance-staging" />
+          <div class="hint">Pre-filled: staging RG</div>
+        </div>
+        <div class="config-field">
+          <label>Subscription ID</label>
+          <input id="cfg-sub" type="text" placeholder="Azure subscription GUID" />
+          <div class="hint">Run <code>az account show --query id -o tsv</code> if unsure</div>
+        </div>
+        <div class="config-field">
+          <label>MI principal ID</label>
+          <input id="cfg-mi" type="text" value="8ff7caa7-566b-428f-b76e-b122ebd43365" />
+          <div class="hint">Auto-fetched in Step 1; pre-filled with last known value</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn ghost danger" onclick="resetAll()">⌫ Reset all values + progress</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 1 — Verify Managed Identity binding
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-1" data-step="1">
+    <div class="step-head" onclick="toggleStep(1)">
+      <span class="step-num">1</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Verify the App Service has a Managed Identity</h3>
+        <div class="step-sub">No MI = no federation. This is the foundation.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        OIDC federation works by trusting tokens minted by a known
+        identity provider. In our case that provider is the App Service's
+        <strong>system-assigned Managed Identity (MI)</strong>. If the
+        App Service doesn't have one bound, none of this can work.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Click-through path</div>
+      <p>
+        Open the App Service → <strong>Settings → Identity → System assigned</strong>.
+        Status should be <strong>On</strong>. Copy the <strong>Object (principal) ID</strong>
+        into the <em>MI principal ID</em> field at the top of this page.
+      </p>
+      <p>
+        <a class="portal-btn" id="link-step1-portal" target="_blank" rel="noopener">
+          🚀 Open Identity blade in Azure Portal <span class="ext">↗</span>
+        </a>
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Or run via CLI</div>
+      <div class="code" data-template="show">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>az webapp identity show \
+  --name <span class="var">{{site}}</span> \
+  --resource-group <span class="var">{{rg}}</span> \
+  --query '{principalId:principalId, tenantId:tenantId}' -o json</span></div>
+
+      <div class="section-label ok"><span class="dot"></span>How you'll know it worked</div>
+      <p>
+        The output shows a non-null <code>principalId</code>. If it's
+        empty / null, click this to assign one:
+      </p>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>az webapp identity assign \
+  --name <span class="var">{{site}}</span> \
+  --resource-group <span class="var">{{rg}}</span></span></div>
+
+      <div class="callout warn">
+        <strong>Tip:</strong> Paste the returned <code>principalId</code>
+        into the <em>MI principal ID</em> field above — Step 2 needs it.
+      </div>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(1)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(1)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 2 — Federated credential on app reg
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-2" data-step="2">
+    <div class="step-head" onclick="toggleStep(2)">
+      <span class="step-num">2</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Add the federated credential to your app registration</h3>
+        <div class="step-sub">Tells Entra ID "trust assertions minted by our App Service MI"</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        This is the actual federation hookup. We tell the management
+        app reg: <em>"a JWT issued by the home tenant, with this MI's
+        principal ID as the subject, audience <code>api://AzureADTokenExchange</code>,
+        is a valid credential."</em> After this, the MI can authenticate
+        AS the app reg — no secret needed.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Click-through path</div>
+      <p>
+        Open the app reg → <strong>Certificates &amp; secrets → Federated
+        credentials → + Add credential</strong>. Pick scenario
+        <strong>"Other issuer"</strong> (NOT the GitHub one — the
+        federation source is the home tenant itself, since the MI lives there).
+      </p>
+      <p>
+        <a class="portal-btn" id="link-step2-portal" target="_blank" rel="noopener">
+          🚀 Open Certificates &amp; Secrets for this app reg <span class="ext">↗</span>
+        </a>
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Exact field values (click any to copy)</div>
+      <table style="width:100%;border-collapse:collapse;margin:8px 0;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;width:32%">Federation credential scenario</td>
+          <td style="padding:8px 4px;"><span class="pill" onclick="copyPill(this)">Other issuer</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;">Issuer URL</td>
+          <td style="padding:8px 4px;"><span class="pill" id="step2-issuer" onclick="copyPill(this)" data-tpl>https://login.microsoftonline.com/<span class="var">{{tenant}}</span>/v2.0</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;">Subject identifier</td>
+          <td style="padding:8px 4px;"><span class="pill" id="step2-subject" onclick="copyPill(this)" data-tpl><span class="var">{{mi}}</span></span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;">Audience</td>
+          <td style="padding:8px 4px;"><span class="pill" onclick="copyPill(this)">api://AzureADTokenExchange</span></td>
+        </tr>
+        <tr>
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;">Name (your choice)</td>
+          <td style="padding:8px 4px;"><span class="pill" onclick="copyPill(this)">app-service-mi-staging</span></td>
+        </tr>
+      </table>
+
+      <div class="section-label"><span class="dot"></span>Or run via CLI (faster)</div>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>APP_OBJECT_ID=$(az ad app show --id <span class="var">{{app}}</span> --query id -o tsv)
+
+az ad app federated-credential create \
+  --id "$APP_OBJECT_ID" \
+  --parameters '{
+    "name": "app-service-mi-staging",
+    "issuer": "https://login.microsoftonline.com/<span class="var">{{tenant}}</span>/v2.0",
+    "subject": "<span class="var">{{mi}}</span>",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'</span></div>
+
+      <div class="section-label ok"><span class="dot"></span>How you'll know it worked</div>
+      <p>
+        The portal toast says "Federated credential added". Or the CLI
+        returns a JSON object with <code>"name": "app-service-mi-staging"</code>.
+        Refresh the Federated credentials list — your new entry shows up.
+      </p>
+
+      <div class="callout">
+        <strong>No async propagation lag:</strong> the credential is
+        usable the moment the create call returns. You can move to Step 3
+        immediately.
+      </div>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(2)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(2)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 3 — GitHub repo variable
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-3" data-step="3">
+    <div class="step-head" onclick="toggleStep(3)">
+      <span class="step-num">3</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Set the deploy flag in GitHub</h3>
+        <div class="step-sub">A repository <em>variable</em>, not a secret. Tells the next deploy to flip to OIDC mode.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        The deploy workflow reads <code>vars.STAGING_USE_OIDC_FEDERATION</code>
+        to decide whether to push <code>AZURE_AD_CLIENT_SECRET</code> to
+        App Service settings or DELETE it. Setting this variable is the
+        <em>single switch</em> that turns the migration on.
+      </p>
+      <p>
+        It's a <strong>variable</strong> (not secret) on purpose —
+        booleans aren't secrets, and we want the flag's value to appear
+        in PR logs for auditability of the migration moment.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Click-through path</div>
+      <p>
+        GitHub → repo → <strong>Settings → Secrets and variables →
+        Actions → Variables tab → New repository variable</strong>.
+      </p>
+      <p>
+        <a class="portal-btn gh"
+           href="https://github.com/HTT-BRANDS/control-tower/settings/variables/actions"
+           target="_blank" rel="noopener">
+          🚀 Open repository variables in GitHub <span class="ext">↗</span>
+        </a>
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Exact values</div>
+      <table style="width:100%;border-collapse:collapse;margin:8px 0;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;width:32%">Name</td>
+          <td style="padding:8px 4px;"><span class="pill" onclick="copyPill(this)">STAGING_USE_OIDC_FEDERATION</span></td>
+        </tr>
+        <tr>
+          <td style="padding:8px 4px;color:var(--text-2);font-size:13px;">Value</td>
+          <td style="padding:8px 4px;"><span class="pill" onclick="copyPill(this)">true</span></td>
+        </tr>
+      </table>
+
+      <div class="callout err">
+        <strong>Don't mix this up with Secrets:</strong> the value
+        <code>true</code> should be a <strong>Variable</strong>, on the
+        <em>Variables</em> tab, NOT the <em>Secrets</em> tab. If you put
+        it under Secrets, the workflow won't see it (different YAML
+        accessor: <code>vars.*</code> vs <code>secrets.*</code>).
+      </div>
+
+      <div class="section-label ok"><span class="dot"></span>How you'll know it worked</div>
+      <p>
+        The Variables tab now shows a row:
+        <code>STAGING_USE_OIDC_FEDERATION = true</code>.
+      </p>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(3)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(3)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 4 — Trigger staging deploy
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-4" data-step="4">
+    <div class="step-head" onclick="toggleStep(4)">
+      <span class="step-num">4</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Trigger a staging deploy</h3>
+        <div class="step-sub">The workflow flips the runtime to OIDC mode + deletes the dormant secret.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        The workflow reads the new repo variable. When it sees
+        <code>STAGING_USE_OIDC_FEDERATION=true</code>, it:
+      </p>
+      <p>
+        • pushes <code>USE_OIDC_FEDERATION=true</code> into App Service settings<br>
+        • <strong>deletes</strong> <code>AZURE_AD_CLIENT_SECRET</code> from App Service settings<br>
+        • restarts the App Service so the new runtime config takes effect
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Click-through path</div>
+      <p>
+        <a class="portal-btn gh"
+           href="https://github.com/HTT-BRANDS/control-tower/actions/workflows/deploy-staging.yml"
+           target="_blank" rel="noopener">
+          🚀 Open deploy-staging.yml in GitHub Actions <span class="ext">↗</span>
+        </a>
+      </p>
+      <p>
+        Click <strong>"Run workflow"</strong> → branch <code>main</code>
+        → <strong>Run workflow</strong>. Or just push any commit to
+        <code>main</code>.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>What to look for in the workflow log</div>
+      <p>
+        Open the run → expand the step <strong>"Configure Azure AD app
+        settings (ct-wph + OIDC migration)"</strong>. You're looking for these lines:
+      </p>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span>Setting Azure AD app settings on staging webapp (oidc_mode=true)...
+OIDC mode: removing AZURE_AD_CLIENT_SECRET from app settings (if present)
+✅ Azure AD settings applied (OIDC mode — no client_secret in app settings)</span></div>
+
+      <div class="callout err">
+        <strong>If you see <code>oidc_mode=false</code></strong> — the
+        workflow didn't see your variable. Re-check Step 3: name must be
+        exactly <code>STAGING_USE_OIDC_FEDERATION</code>, value exactly
+        <code>true</code> (lowercase), on the <em>Variables</em> tab.
+      </div>
+
+      <div class="section-label ok"><span class="dot"></span>How you'll know it worked</div>
+      <p>
+        The "Health check" / smoke-test step at the end of the workflow
+        passes. The webapp is restarted with the new env. We verify in
+        Step 5.
+      </p>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(4)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(4)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 5 — Verify /health/detailed
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-5" data-step="5">
+    <div class="step-head" onclick="toggleStep(5)">
+      <span class="step-num">5</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Verify <code>/health/detailed</code> reports OIDC</h3>
+        <div class="step-sub">The runtime's self-report. This is the truth.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        The post-ct-jxe credential probe runs against whichever auth
+        path the runtime is configured for. It stamps
+        <code>auth_mode: "oidc"</code> or <code>"secret"</code> on the
+        result. If the migration worked, you'll see <code>"oidc"</code>.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Open the endpoint</div>
+      <p>
+        <a class="portal-btn" id="link-step5-health" target="_blank" rel="noopener">
+          🚀 Open /health/detailed in browser <span class="ext">↗</span>
+        </a>
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Or curl from terminal</div>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>curl -s https://<span class="var">{{site}}</span>.azurewebsites.net/api/v1/health/detailed \
+  | jq '.checks.azure_configured'</span></div>
+
+      <div class="section-label ok"><span class="dot"></span>Expected response (migration worked)</div>
+      <div class="code"><span>{
+  "status": "configured",
+  "auth_mode": "oidc"
+}</span></div>
+
+      <div class="section-label danger"><span class="dot"></span>If you see this instead</div>
+      <p>
+        <code style="color:var(--err)">"auth_mode": "secret"</code> → the
+        runtime didn't pick up the flag. Restart the App Service:
+      </p>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>az webapp restart --name <span class="var">{{site}}</span> --resource-group <span class="var">{{rg}}</span></span></div>
+
+      <p style="margin-top:14px;">
+        <code style="color:var(--err)">"status": "unauthenticated"</code>
+        with <code>AADSTS700016</code> → the federated credential subject
+        doesn't match. Re-check Step 2.
+      </p>
+      <p>
+        Any other <code>AADSTS</code> code → consult the rollback section
+        of the runbook while you investigate.
+      </p>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(5)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(5)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 6 — End-to-end login
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-6" data-step="6">
+    <div class="step-head" onclick="toggleStep(6)">
+      <span class="step-num">6</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Sign in end-to-end (incognito)</h3>
+        <div class="step-sub">The /health probe doesn't exercise the OAuth callback. This step does.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="section-label"><span class="dot"></span>What & why</div>
+      <p>
+        The credential probe verifies the <em>client_credentials</em>
+        flow that sync jobs use. The OAuth callback is a separate code
+        path (auth-code grant with client assertion). Exercise it
+        explicitly so you find auth-code-flow bugs <em>before</em>
+        deleting the secret.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>Steps</div>
+      <p>
+        1. Open an <strong>incognito / private window</strong>
+        (no cached session)<br>
+        2. Open the staging site:
+      </p>
+      <p>
+        <a class="portal-btn" id="link-step6-app" target="_blank" rel="noopener">
+          🚀 Open staging app <span class="ext">↗</span>
+        </a>
+      </p>
+      <p>
+        3. Click <strong>"Sign in with Microsoft"</strong><br>
+        4. Complete Microsoft login<br>
+        5. Verify you land on the dashboard with your user info populated
+      </p>
+
+      <div class="section-label danger"><span class="dot"></span>If login fails</div>
+      <p>
+        Check App Service logs:
+      </p>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span data-tpl>az webapp log tail --name <span class="var">{{site}}</span> --resource-group <span class="var">{{rg}}</span></span></div>
+
+      <p style="margin-top:14px;">
+        Look for:
+      </p>
+      <p>
+        • <code style="color:var(--err)">"OIDC federation failed during OAuth callback"</code><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;→ MI can't mint the assertion. Audience or subject is wrong. Re-check Step 2.<br>
+        • <code style="color:var(--err)">"Azure AD token exchange failed (HTTP 401)"</code><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;→ Entra accepted our assertion but rejected the code. Likely user/group permissions — not OIDC.
+      </p>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(6)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(6)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STEP 7 — Delete the dormant secret
+       ══════════════════════════════════════════════════════════════ -->
+  <article class="step" id="step-7" data-step="7">
+    <div class="step-head" onclick="toggleStep(7)">
+      <span class="step-num">7</span>
+      <div class="step-title-block">
+        <h3 class="step-title">Delete the dormant secret (24h waiting room)</h3>
+        <div class="step-sub">After 24h green, kill it from 3 places. Then you're done.</div>
+      </div>
+      <span class="step-status todo">To do</span>
+      <span class="step-chevron">▶</span>
+    </div>
+    <div class="step-body">
+      <div class="callout warn">
+        <strong>Wait 24 hours after Step 5 first went green</strong>
+        before doing this. The probe cache TTL is 5 minutes, so 24h gives
+        ample time for any probe regression to surface. Don't skip the wait.
+      </div>
+
+      <div class="section-label"><span class="dot"></span>1. GitHub secret</div>
+      <p>
+        <a class="portal-btn gh"
+           href="https://github.com/HTT-BRANDS/control-tower/settings/secrets/actions"
+           target="_blank" rel="noopener">
+          🚀 Open repo secrets <span class="ext">↗</span>
+        </a>
+      </p>
+      <p>
+        Find <code>STAGING_AZURE_AD_CLIENT_SECRET</code> → click the
+        trash icon → confirm.
+      </p>
+
+      <div class="section-label"><span class="dot"></span>2. App registration client secret</div>
+      <p>
+        Same place as Step 2 — Certificates &amp; secrets. Find the
+        active "Client secrets" entry → delete.
+      </p>
+      <p>
+        <a class="portal-btn" id="link-step7-portal" target="_blank" rel="noopener">
+          🚀 Open Certificates &amp; Secrets <span class="ext">↗</span>
+        </a>
+      </p>
+
+      <div class="section-label"><span class="dot"></span>3. Key Vault mirror (if any)</div>
+      <div class="code">
+<span class="copy" onclick="copyCode(this)">Copy</span><span>az keyvault secret list --vault-name &lt;your-kv&gt; --query "[?contains(name, 'client-secret')].name" -o tsv
+
+# Then for any matches:
+az keyvault secret delete --vault-name &lt;your-kv&gt; --name &lt;secret-name&gt;</span></div>
+
+      <div class="section-label ok"><span class="dot"></span>How you'll know you're done</div>
+      <p>
+        Re-curl <code>/health/detailed</code> after a webapp restart —
+        you should still see <code>"auth_mode": "oidc"</code>. The
+        runtime never needed the secret, so deleting it changed nothing
+        observable. That's the proof.
+      </p>
+
+      <div class="step-controls">
+        <button class="btn primary" onclick="completeStep(7)">✓ Mark complete</button>
+        <button class="btn ghost" onclick="resetStep(7)">↺ Reset this step</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ──────────────────────────────────────────────────────────────
+       Touchdown panel
+       ────────────────────────────────────────────────────────────── -->
+  <section class="touchdown" id="touchdown">
+    <h2>🎉 Touchdown. Zero runtime secrets.</h2>
+    <p>
+      Staging now runs without <code>AZURE_AD_CLIENT_SECRET</code>.
+      Every Entra interaction — sync jobs, the OAuth callback, the health
+      probe — uses a federated assertion minted on demand by the App
+      Service Managed Identity. Nothing to rotate. Nothing to expire.
+    </p>
+    <p style="margin-top:16px;">
+      <strong>Next:</strong> after a week of staging-on-OIDC, repeat the
+      playbook for production. Same steps, swap <code>STAGING_*</code>
+      for <code>PRODUCTION_*</code>, and patch
+      <code>deploy-production.yml</code> with the same secret-vs-OIDC
+      conditional logic.
+    </p>
+    <p style="margin-top:18px;">
+      <button class="btn primary" onclick="closeIssue()">
+        ✓ Mark ct-6fj closed
+      </button>
+    </p>
+  </section>
+
+  <!-- ──────────────────────────────────────────────────────────────
+       Footer
+       ────────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div>
+      Control Tower • OIDC Migration Cockpit
+      <span style="color:var(--text-3);"> • brand: HTT</span>
+    </div>
+    <div class="links">
+      <a href="../runbooks/migrate-to-oidc-federation.md">📖 Runbook</a>
+      <a href="../runbooks/enable-secret-fallback.md">↪ Rollback</a>
+      <a href="../runbooks/oidc-federation-setup.md">📐 Architecture</a>
+    </div>
+  </footer>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────
+// State management — config + step completion persisted to localStorage
+// so a browser refresh doesn't lose progress.
+// ──────────────────────────────────────────────────────────────────
+const LS_CONFIG_KEY = 'oidc-cockpit-config';
+const LS_STEPS_KEY  = 'oidc-cockpit-steps';
+const TOTAL_STEPS   = 7;
+
+const CONFIG_FIELDS = [
+  ['cfg-tenant', 'tenant'],
+  ['cfg-app',    'app'],
+  ['cfg-site',   'site'],
+  ['cfg-rg',     'rg'],
+  ['cfg-sub',    'sub'],
+  ['cfg-mi',     'mi'],
+];
+
+function loadConfig() {
+  const saved = JSON.parse(localStorage.getItem(LS_CONFIG_KEY) || '{}');
+  for (const [id, key] of CONFIG_FIELDS) {
+    const el = document.getElementById(id);
+    if (saved[key]) el.value = saved[key];
+  }
+  return saved;
+}
+
+function saveConfig() {
+  const config = {};
+  for (const [id, key] of CONFIG_FIELDS) {
+    config[key] = document.getElementById(id).value.trim();
+  }
+  localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(config));
+  return config;
+}
+
+function getConfig() {
+  const o = {};
+  for (const [id, key] of CONFIG_FIELDS) {
+    o[key] = document.getElementById(id).value.trim();
+  }
+  return o;
+}
+
+function loadSteps() {
+  return JSON.parse(localStorage.getItem(LS_STEPS_KEY) || '{}');
+}
+function saveSteps(s) {
+  localStorage.setItem(LS_STEPS_KEY, JSON.stringify(s));
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Template renderer — substitutes {{tenant}}, {{site}}, etc. into
+// any element marked with data-tpl. Re-runs on every config change so
+// the user types once and every command/URL updates everywhere.
+// ──────────────────────────────────────────────────────────────────
+function renderTemplates() {
+  const cfg = getConfig();
+  document.querySelectorAll('[data-tpl]').forEach(el => {
+    if (!el.dataset.tplOriginal) el.dataset.tplOriginal = el.innerHTML;
+    let html = el.dataset.tplOriginal;
+    Object.keys(cfg).forEach(k => {
+      const re = new RegExp('{{' + k + '}}', 'g');
+      const val = cfg[k] || ('<span style="color:var(--err)">&lt;set ' + k + ' above&gt;</span>');
+      html = html.replace(re, val);
+    });
+    el.innerHTML = html;
+  });
+
+  // Update portal deep-links with templated URLs.
+  updatePortalLinks(cfg);
+}
+
+function updatePortalLinks(cfg) {
+  const tenant = cfg.tenant || '';
+  const sub    = cfg.sub    || '';
+  const rg     = cfg.rg     || '';
+  const site   = cfg.site   || '';
+  const app    = cfg.app    || '';
+
+  // Step 1 — App Service Identity blade
+  // Standard portal pattern for a resource sub-blade.
+  if (sub && rg && site) {
+    const url = `https://portal.azure.com/#@${tenant}/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Web/sites/${site}/msi`;
+    setHref('link-step1-portal', url);
+  } else if (site) {
+    // Fallback: just take them to the webapp and let them click "Identity"
+    setHref('link-step1-portal', `https://portal.azure.com/#@${tenant || 'common'}/resource/`);
+  }
+
+  // Step 2 — App reg certs/secrets (federated credentials are part of this blade)
+  if (app) {
+    const url = `https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CertsKeysAndUsers/appId/${app}`;
+    setHref('link-step2-portal', url);
+    setHref('link-step7-portal', url);
+  } else {
+    setHref('link-step2-portal', 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade');
+    setHref('link-step7-portal', 'https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade');
+  }
+
+  // Step 5 — health endpoint
+  if (site) {
+    setHref('link-step5-health', `https://${site}.azurewebsites.net/api/v1/health/detailed`);
+    setHref('link-step6-app',    `https://${site}.azurewebsites.net/`);
+  }
+}
+
+function setHref(id, url) {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('href', url);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Step UI: open/close, mark complete, status pills, progress bar
+// ──────────────────────────────────────────────────────────────────
+function toggleStep(n) {
+  const el = document.getElementById('step-' + n);
+  el.classList.toggle('is-open');
+}
+
+function completeStep(n) {
+  const steps = loadSteps();
+  steps[n] = 'done';
+  saveSteps(steps);
+  refreshStepUI();
+  toast(`✓ Step ${n} marked complete`);
+  // Auto-open the next undone step.
+  const next = findNextOpenStep();
+  if (next) {
+    document.getElementById('step-' + next).classList.add('is-open');
+    document.getElementById('step-' + next).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function resetStep(n) {
+  const steps = loadSteps();
+  delete steps[n];
+  saveSteps(steps);
+  refreshStepUI();
+  toast(`↺ Step ${n} reset`);
+}
+
+function findNextOpenStep() {
+  const steps = loadSteps();
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    if (steps[i] !== 'done') return i;
+  }
+  return null;
+}
+
+function refreshStepUI() {
+  const steps = loadSteps();
+  const next = findNextOpenStep();
+  let doneCount = 0;
+
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const el     = document.getElementById('step-' + i);
+    const status = el.querySelector('.step-status');
+    el.classList.remove('is-active', 'is-done');
+    status.classList.remove('todo', 'active', 'done');
+
+    if (steps[i] === 'done') {
+      el.classList.add('is-done');
+      status.classList.add('done');
+      status.textContent = 'Done';
+      doneCount++;
+    } else if (i === next) {
+      el.classList.add('is-active');
+      status.classList.add('active');
+      status.textContent = 'Active';
+    } else {
+      status.classList.add('todo');
+      status.textContent = 'To do';
+    }
+  }
+
+  // Progress bar + counter
+  const pct = (doneCount / TOTAL_STEPS) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-done').textContent = doneCount;
+
+  // Touchdown panel — show only when ALL steps done
+  document.getElementById('touchdown').classList.toggle('show', doneCount === TOTAL_STEPS);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Clipboard helpers — strip HTML when copying code blocks
+// ──────────────────────────────────────────────────────────────────
+function plainText(el) {
+  // Extract text content from the element AFTER tpl rendering. Strips
+  // any <span> wrappers we used for syntax highlighting.
+  return el.textContent || el.innerText || '';
+}
+
+function copyCode(btn) {
+  // The text we want is in the sibling of the .copy button — the parent
+  // element's textContent minus the button's own text.
+  const parent = btn.parentElement;
+  const text = plainText(parent).replace(plainText(btn), '').trim();
+  copyToClipboard(text, btn);
+}
+
+function copyPill(el) {
+  copyToClipboard(plainText(el), el);
+}
+
+function copyToClipboard(text, indicatorEl) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => flashCopied(indicatorEl));
+  } else {
+    // Fallback for environments without async clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); flashCopied(indicatorEl); }
+    catch (_) { toast('⚠ Copy failed — select manually'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function flashCopied(el) {
+  const original = el.textContent;
+  el.classList.add('copied');
+  el.textContent = '✓ Copied';
+  setTimeout(() => {
+    el.classList.remove('copied');
+    el.textContent = original;
+  }, 1200);
+  toast('Copied to clipboard');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Toast
+// ──────────────────────────────────────────────────────────────────
+let toastTimeout;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Reset everything
+// ──────────────────────────────────────────────────────────────────
+function resetAll() {
+  if (!confirm('Reset all config values AND step progress?')) return;
+  localStorage.removeItem(LS_CONFIG_KEY);
+  localStorage.removeItem(LS_STEPS_KEY);
+  location.reload();
+}
+
+function closeIssue() {
+  toast('Pop open your terminal and run: bd close ct-6fj');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Wire up — load saved state, render templates, attach config listeners
+// ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+  for (const [id] of CONFIG_FIELDS) {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { saveConfig(); renderTemplates(); markPlaceholders(); });
+    el.addEventListener('blur',  () => { saveConfig(); renderTemplates(); markPlaceholders(); });
+  }
+  renderTemplates();
+  refreshStepUI();
+  markPlaceholders();
+
+  // Auto-open the active step on first load
+  const next = findNextOpenStep();
+  if (next) document.getElementById('step-' + next).classList.add('is-open');
+});
+
+function markPlaceholders() {
+  // Highlight any config field still showing its placeholder so the
+  // user can see at-a-glance which values they still need to supply.
+  for (const [id] of CONFIG_FIELDS) {
+    const el = document.getElementById(id);
+    if (!el.value.trim() && el.placeholder) {
+      el.classList.add('placeholder-needed');
+    } else {
+      el.classList.remove('placeholder-needed');
+    }
+  }
+}
+</script>
+</body>
+</html>
