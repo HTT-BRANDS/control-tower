@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 import time
 from datetime import UTC, datetime, timedelta
@@ -19,10 +20,31 @@ import jwt
 # ---------------------------------------------------------------------------
 # Configuration — pulled from App Service settings
 # ---------------------------------------------------------------------------
-PROD_URL = "https://app-governance-prod.azurewebsites.net"
+#
+# This script intentionally does NOT bake any secrets into source. Operators
+# supply credentials via the environment:
+#
+#   * ``MANUAL_SYNC_TOKEN`` (preferred) — a pre-minted operator bearer token.
+#     Useful when secret rotation / issuer transition is in flight and minting
+#     a fresh token from a raw secret is awkward.
+#
+#   * ``JWT_SECRET_KEY`` — the raw HS256 signing secret used by the API
+#     server (same env var the app's ``Settings.jwt_secret_key`` reads). When
+#     present, the script mints a short-lived admin token in process.
+#
+# If neither is set, the script fails closed with a clear error before making
+# any HTTP calls (see ct-51g AC #2).
+#
+# Issuer / audience can also be overridden via ``JWT_ISSUER`` and
+# ``JWT_AUDIENCE`` for the issuer transition path tracked by ct-vgf — defaults
+# match production today.
 
-JWT_SECRET = "gc8A0RjZwv15CCG0h98_4nYc1syUjxG9yav26Km7azw"  # pragma: allowlist secret
+DEFAULT_PROD_URL = "https://app-governance-prod.azurewebsites.net"
+DEFAULT_JWT_ISSUER = "azure-governance-platform"
+DEFAULT_JWT_AUDIENCE = "azure-governance-api"
 JWT_ALGORITHM = "HS256"
+
+PROD_URL = os.environ.get("MANUAL_SYNC_BASE_URL", DEFAULT_PROD_URL)
 
 TENANT_IDS = [
     "0c0e35dc-188a-4eb3-b8ba-61752154b407",  # HTT
@@ -45,30 +67,95 @@ SYNC_TYPES = ["costs", "compliance", "resources", "identity"]
 RIVERSIDE_SYNCS = ["hourly_mfa", "daily_full"]
 
 
-def mint_admin_token() -> str:
-    """Create a short-lived admin JWT for production API calls."""
+class MissingOperatorCredentialError(RuntimeError):
+    """Raised when no operator token / signing secret is available.
+
+    Surfaced to the user as a fail-closed error message. Never leaks the
+    secret values themselves — only the env var *names* that are expected
+    (ct-51g AC #2, AC #4).
+    """
+
+
+def mint_admin_token(
+    secret: str,
+    *,
+    issuer: str = DEFAULT_JWT_ISSUER,
+    audience: str = DEFAULT_JWT_AUDIENCE,
+    tenant_ids: list[str] | None = None,
+    operator_email: str | None = None,
+    ttl_minutes: int = 30,
+) -> str:
+    """Create a short-lived admin JWT for production API calls.
+
+    Pure function — all configuration comes in as parameters, nothing is read
+    from module-level constants. Makes it trivial to unit-test (we can verify
+    the resulting token decodes correctly with the same secret) without
+    leaking real credentials. See tests/unit/test_manual_sync_script.py.
+    """
+    if not secret:
+        # Defensive: callers should validate before reaching this branch, but
+        # a blank secret would silently produce signature-verifiable garbage.
+        raise MissingOperatorCredentialError(
+            "mint_admin_token requires a non-empty JWT signing secret"
+        )
     payload = {
         "sub": "manual-sync-operator",
-        "email": "tyler.granlund-admin@httbrands.com",
+        "email": operator_email or "manual-sync@operator.local",
         "name": "Manual Sync Operator",
         "roles": ["admin", "operator"],
-        "tenant_ids": TENANT_IDS,
-        "exp": datetime.now(UTC) + timedelta(minutes=30),
+        "tenant_ids": list(tenant_ids) if tenant_ids is not None else list(TENANT_IDS),
+        "exp": datetime.now(UTC) + timedelta(minutes=ttl_minutes),
         "iat": datetime.now(UTC),
-        "iss": "azure-governance-platform",
-        "aud": "azure-governance-api",
+        "iss": issuer,
+        "aud": audience,
         "jti": f"manual-sync-{int(time.time())}",
         "type": "access",
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, secret, algorithm=JWT_ALGORITHM)
 
 
-def make_client() -> httpx.Client:
-    """Create an authenticated HTTP client."""
-    token = mint_admin_token()
+def resolve_operator_token(env: dict[str, str] | None = None) -> str:
+    """Pick the operator bearer token from the process environment.
+
+    Preference order (fail-closed if none match):
+        1. ``MANUAL_SYNC_TOKEN`` — pre-minted token, used verbatim.
+        2. ``JWT_SECRET_KEY``    — raw signing secret, used to mint a token here.
+
+    ``env`` is overridable for tests; production code passes ``os.environ``.
+    """
+    e = env if env is not None else os.environ
+
+    pre_minted = e.get("MANUAL_SYNC_TOKEN", "").strip()
+    if pre_minted:
+        return pre_minted
+
+    secret = e.get("JWT_SECRET_KEY", "").strip()
+    if secret:
+        return mint_admin_token(
+            secret,
+            issuer=e.get("JWT_ISSUER", DEFAULT_JWT_ISSUER) or DEFAULT_JWT_ISSUER,
+            audience=e.get("JWT_AUDIENCE", DEFAULT_JWT_AUDIENCE) or DEFAULT_JWT_AUDIENCE,
+            operator_email=e.get("MANUAL_SYNC_OPERATOR_EMAIL") or None,
+        )
+
+    raise MissingOperatorCredentialError(
+        "No operator credential supplied. Set either MANUAL_SYNC_TOKEN to a "
+        "pre-minted admin bearer token, or JWT_SECRET_KEY to the API server's "
+        "HS256 signing secret. The script will NOT proceed with an unsigned "
+        "request. (ct-51g)"
+    )
+
+
+def make_client(token: str | None = None) -> httpx.Client:
+    """Create an authenticated HTTP client.
+
+    ``token`` may be passed explicitly for tests; in normal use it is
+    resolved from the environment via :func:`resolve_operator_token`.
+    """
+    bearer = token if token is not None else resolve_operator_token()
     return httpx.Client(
         base_url=PROD_URL,
-        headers={"Authorization": f"Bearer {token}"},
+        headers={"Authorization": f"Bearer {bearer}"},
         timeout=300,  # Syncs can take a while
     )
 
@@ -312,7 +399,11 @@ def main():
     print(f"   Time:   {datetime.now(UTC).isoformat()}")
     print("=" * 60)
 
-    client = make_client()
+    try:
+        client = make_client()
+    except MissingOperatorCredentialError as exc:
+        print(f"\n❌ {exc}", file=sys.stderr)
+        sys.exit(2)
 
     # Quick health check first
     print("\n🏥 Health Check:")
