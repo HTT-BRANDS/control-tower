@@ -552,6 +552,7 @@ jobs:
           set +e
 
           # ---- Probe helper: /health is gating, deeper endpoints advisory ----
+          # See docs/HEALTH_GATE_DESIGN.md for the rationale (ct-czv AC #3).
           probe() {
             local label="$1"
             local h1 h2 h3

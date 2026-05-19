@@ -101,12 +101,18 @@ alembic upgrade head
 ## Step 6: Verify Deployment
 
 ```bash
-# Check health endpoint
+# Check health endpoint (basic liveness — the canonical deploy gate)
 curl https://governance-staging.yourdomain.com/health
 
 # Run smoke tests
 uv run python scripts/smoke_test.py --url https://governance-staging.yourdomain.com
 ```
+
+> **Why `/health` and not `/health/detailed`?** Staging legitimately omits
+> Azure-AD credentials, which makes the detailed endpoint report
+> `azure_configured: not_required` (intentional, not a fault). See
+> [HEALTH_GATE_DESIGN.md](./HEALTH_GATE_DESIGN.md) for the full design and
+> the tri-state rollup contract (ct-czv AC #3).
 
 ## Step 7: Configure Custom Domain & SSL
 
