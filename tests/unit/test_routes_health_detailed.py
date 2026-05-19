@@ -746,19 +746,27 @@ class TestAzureConfigTriState:
         _stub_cache(mock_cache)
         mock_get_sched.return_value = _mock_scheduler_running()
 
-        # Stub the probe to return "configured" (the green path). We patch
-        # at the source module so any future caller picks up the stub too.
+        # Stub the dispatcher to return "configured" (green path). We patch
+        # ``probe_active_credential`` because that's what /health/detailed
+        # actually calls — it picks oidc vs secret based on settings.
+        # Patching at the source module so any future caller picks up the stub.
         from app.core import azure_credential_probe as probe_mod
 
+        settings.use_oidc_federation = False  # secret-mode probe
         with patch.object(
             probe_mod,
-            "probe_client_credential",
-            AsyncMock(return_value=probe_mod.ProbeResult(status="configured", http_status=200)),
+            "probe_active_credential",
+            AsyncMock(
+                return_value=probe_mod.ProbeResult(
+                    status="configured", http_status=200, auth_mode="secret"
+                )
+            ),
         ):
             resp = client.get(DETAILED_URL)
         data = resp.json()
 
         assert data["checks"]["azure_configured"]["status"] == "configured"
+        assert data["checks"]["azure_configured"]["auth_mode"] == "secret"
 
     @patch("app.api.routes.health.get_settings")
     @patch("app.api.routes.health.cache_manager")
@@ -792,14 +800,16 @@ class TestAzureConfigTriState:
 
         from app.core import azure_credential_probe as probe_mod
 
+        settings.use_oidc_federation = False  # secret-mode probe
         unauth = probe_mod.ProbeResult(
             status="unauthenticated",
             detail="AADSTS7000215: Invalid client secret",
             azure_error_code="AADSTS7000215",
             http_status=401,
+            auth_mode="secret",
         )
         with patch.object(
-            probe_mod, "probe_client_credential", AsyncMock(return_value=unauth)
+            probe_mod, "probe_active_credential", AsyncMock(return_value=unauth)
         ):
             resp = client.get(DETAILED_URL)
         data = resp.json()
@@ -845,12 +855,14 @@ class TestAzureConfigTriState:
 
         from app.core import azure_credential_probe as probe_mod
 
+        settings.use_oidc_federation = False  # secret-mode probe
         unreachable = probe_mod.ProbeResult(
             status="unreachable",
             detail="Token endpoint timed out after 5.0s",
+            auth_mode="secret",
         )
         with patch.object(
-            probe_mod, "probe_client_credential", AsyncMock(return_value=unreachable)
+            probe_mod, "probe_active_credential", AsyncMock(return_value=unreachable)
         ):
             resp = client.get(DETAILED_URL)
         data = resp.json()

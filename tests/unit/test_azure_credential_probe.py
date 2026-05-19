@@ -395,9 +395,22 @@ class TestProbeResultShape:
     JSON. Stability matters for any dashboards / alert routing that parse it."""
 
     def test_minimal_configured_payload(self):
+        # auth_mode is ALWAYS in the payload (defaults to "secret" for
+        # backwards compat with pre-OIDC-migration probes).
         r = ProbeResult(status="configured", http_status=200)
         d = r.to_dict()
-        assert d == {"status": "configured", "http_status": 200}
+        assert d == {"status": "configured", "http_status": 200, "auth_mode": "secret"}
+
+    def test_oidc_configured_payload_stamps_auth_mode(self):
+        """After the OIDC migration, /health/detailed dashboards must show
+        ``auth_mode: oidc`` to verify the flip succeeded. If this regresses
+        to ``auth_mode: secret`` while USE_OIDC_FEDERATION=true, something
+        silently fell back to the legacy path — which is exactly the kind
+        of silent regression the post-ct-jxe probe is meant to catch."""
+        r = ProbeResult(status="configured", auth_mode="oidc")
+        d = r.to_dict()
+        assert d["auth_mode"] == "oidc"
+        assert d["status"] == "configured"
 
     def test_unauthenticated_payload_includes_aadsts_code(self):
         r = ProbeResult(
@@ -417,3 +430,248 @@ class TestProbeResultShape:
         d = r.to_dict()
         assert d["status"] == "missing"
         assert "AZURE_AD_*" in d["detail"]
+
+
+# ── OIDC probe + dispatcher tests ──────────────────────────────────────────
+
+
+class TestOIDCProbe:
+    """probe_oidc_federation tests the FEDERATED path.
+
+    Key contract: it must call into the OIDC credential provider, NOT the
+    token endpoint directly. A regression here would mean the probe is
+    testing a totally different path from what the runtime actually uses.
+    """
+
+    @pytest.mark.asyncio
+    async def test_oidc_configured_when_get_token_succeeds(self, monkeypatch: pytest.MonkeyPatch):
+        from unittest.mock import MagicMock
+
+        from app.core.azure_credential_probe import probe_oidc_federation
+
+        # Build a credential whose get_token returns a fake AccessToken.
+        fake_token = MagicMock()
+        fake_token.token = "fake.jwt"  # noqa: S105 — test fixture, not a real secret
+        fake_credential = MagicMock()
+        fake_credential.get_token.return_value = fake_token
+
+        fake_provider = MagicMock()
+        fake_provider.get_credential_for_tenant.return_value = fake_credential
+
+        # Patch the lazy import target inside oidc_credential.
+        import app.core.oidc_credential as oidc_mod
+
+        monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
+
+        result = await probe_oidc_federation(
+            tenant_id="tid", client_id="cid", is_production=True,
+        )
+        assert result.status == "configured"
+        assert result.auth_mode == "oidc", (
+            "ct-oidc-migration: OIDC probe must stamp auth_mode='oidc' so "
+            "/health/detailed dashboards can verify the migration succeeded"
+        )
+        # Sanity: the probe asked for the right scope (Graph .default).
+        scope_arg = fake_credential.get_token.call_args.args[0]
+        assert scope_arg == "https://graph.microsoft.com/.default"
+
+    @pytest.mark.asyncio
+    async def test_oidc_unauthenticated_on_sdk_authentication_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """When the federated credential is misconfigured (MI not bound,
+        federated credential missing on app reg, audience mismatch), the
+        azure-identity SDK raises ClientAuthenticationError. The probe must
+        translate this to 'unauthenticated' — same status as the secret-
+        path probe — so /health/detailed semantics stay identical across
+        the OIDC migration. NEVER let the SDK exception escape."""
+        from unittest.mock import MagicMock
+
+        from app.core.azure_credential_probe import probe_oidc_federation
+
+        # Simulate the SDK error. We don't import ClientAuthenticationError
+        # here on purpose — a fake exception with a representative AADSTS-
+        # bearing message is sufficient and avoids coupling the test to
+        # azure-identity internals.
+        class _FakeAuthError(Exception):
+            pass
+
+        fake_credential = MagicMock()
+        fake_credential.get_token.side_effect = _FakeAuthError(
+            "AADSTS700016: Application with identifier was not found"
+        )
+
+        fake_provider = MagicMock()
+        fake_provider.get_credential_for_tenant.return_value = fake_credential
+
+        import app.core.oidc_credential as oidc_mod
+
+        monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
+
+        result = await probe_oidc_federation(
+            tenant_id="tid", client_id="cid", is_production=True,
+        )
+        assert result.status == "unauthenticated"
+        assert result.auth_mode == "oidc"
+        assert result.azure_error_code == "AADSTS700016"
+
+    @pytest.mark.asyncio
+    async def test_oidc_unreachable_on_timeout(self, monkeypatch: pytest.MonkeyPatch):
+        """If the MI endpoint hangs, the probe must time out cleanly rather
+        than blocking /health/detailed forever."""
+        import time as time_mod
+        from unittest.mock import MagicMock
+
+        from app.core import azure_credential_probe as probe_mod
+        from app.core.azure_credential_probe import probe_oidc_federation
+
+        # Force the timeout to be near-zero so the test runs fast.
+        monkeypatch.setattr(probe_mod, "PROBE_TIMEOUT_SECONDS", 0.05)
+
+        def _slow_get_token(*args, **kwargs):
+            time_mod.sleep(1.0)  # way longer than 0.05s
+
+        fake_credential = MagicMock()
+        fake_credential.get_token.side_effect = _slow_get_token
+
+        fake_provider = MagicMock()
+        fake_provider.get_credential_for_tenant.return_value = fake_credential
+
+        import app.core.oidc_credential as oidc_mod
+
+        monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
+
+        result = await probe_oidc_federation(
+            tenant_id="tid", client_id="cid", is_production=True,
+        )
+        assert result.status == "unreachable"
+        assert result.auth_mode == "oidc"
+
+    @pytest.mark.asyncio
+    async def test_oidc_missing_when_tenant_or_client_absent_in_prod(self):
+        from app.core.azure_credential_probe import probe_oidc_federation
+
+        # Note: OIDC mode does NOT require client_secret — that's the whole
+        # point. So 'missing' here means tenant_id or client_id absent, not
+        # secret absent.
+        result = await probe_oidc_federation(
+            tenant_id=None, client_id="cid", is_production=True,
+        )
+        assert result.status == "missing"
+        assert result.auth_mode == "oidc"
+        assert "client_secret" not in (result.detail or "").lower(), (
+            "OIDC 'missing' detail must NOT mention client_secret — that "
+            "would be confusing in OIDC mode where secrets are explicitly "
+            "not required"
+        )
+
+    @pytest.mark.asyncio
+    async def test_oidc_not_required_outside_prod(self):
+        from app.core.azure_credential_probe import probe_oidc_federation
+
+        result = await probe_oidc_federation(
+            tenant_id=None, client_id=None, is_production=False,
+        )
+        assert result.status == "not_required"
+        assert result.auth_mode == "oidc"
+
+
+class TestDispatcher:
+    """probe_active_credential reads settings.use_oidc_federation and routes
+    to the right probe. The dispatcher is THE source of truth for which path
+    /health/detailed exercises — getting this wrong silently regresses
+    monitoring."""
+
+    @pytest.mark.asyncio
+    async def test_dispatches_to_oidc_when_flag_true(self, monkeypatch: pytest.MonkeyPatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from app.core import azure_credential_probe as probe_mod
+        from app.core.azure_credential_probe import probe_active_credential
+
+        oidc_stub = AsyncMock(
+            return_value=probe_mod.ProbeResult(status="configured", auth_mode="oidc")
+        )
+        secret_stub = AsyncMock(
+            return_value=probe_mod.ProbeResult(status="configured", auth_mode="secret")
+        )
+        monkeypatch.setattr(probe_mod, "probe_oidc_federation", oidc_stub)
+        monkeypatch.setattr(probe_mod, "probe_client_credential", secret_stub)
+
+        settings = MagicMock()
+        settings.use_oidc_federation = True
+        settings.azure_ad_tenant_id = "tid"
+        settings.azure_ad_client_id = "cid"
+        settings.azure_ad_client_secret = None  # NOT required in OIDC mode
+        settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+        settings.is_production = True
+
+        result = await probe_active_credential(settings=settings)
+        assert result.auth_mode == "oidc"
+        oidc_stub.assert_awaited_once()
+        secret_stub.assert_not_called(), (
+            "ct-oidc-migration: when use_oidc_federation=True, the secret-"
+            "path probe must NOT be called. If it is, the dispatcher is "
+            "OR-ing the two probes instead of dispatching, which would let "
+            "a stale secret-mode 'configured' mask a broken OIDC config."
+        )
+
+    @pytest.mark.asyncio
+    async def test_dispatches_to_secret_when_flag_false(self, monkeypatch: pytest.MonkeyPatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from app.core import azure_credential_probe as probe_mod
+        from app.core.azure_credential_probe import probe_active_credential
+
+        oidc_stub = AsyncMock(
+            return_value=probe_mod.ProbeResult(status="configured", auth_mode="oidc")
+        )
+        secret_stub = AsyncMock(
+            return_value=probe_mod.ProbeResult(status="configured", auth_mode="secret")
+        )
+        monkeypatch.setattr(probe_mod, "probe_oidc_federation", oidc_stub)
+        monkeypatch.setattr(probe_mod, "probe_client_credential", secret_stub)
+
+        settings = MagicMock()
+        settings.use_oidc_federation = False
+        settings.azure_ad_tenant_id = "tid"
+        settings.azure_ad_client_id = "cid"
+        settings.azure_ad_client_secret = "s"  # noqa: S105 — test fixture
+        settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+        settings.is_production = True
+
+        result = await probe_active_credential(settings=settings)
+        assert result.auth_mode == "secret"
+        secret_stub.assert_awaited_once()
+        oidc_stub.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_dispatcher_treats_missing_flag_as_secret_mode(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Backwards-compat: if settings doesn't have ``use_oidc_federation``
+        attribute at all (e.g. an older settings object during a migration),
+        default to secret mode rather than crashing."""
+        from unittest.mock import AsyncMock
+
+        from app.core import azure_credential_probe as probe_mod
+        from app.core.azure_credential_probe import probe_active_credential
+
+        oidc_stub = AsyncMock()
+        secret_stub = AsyncMock(
+            return_value=probe_mod.ProbeResult(status="configured", auth_mode="secret")
+        )
+        monkeypatch.setattr(probe_mod, "probe_oidc_federation", oidc_stub)
+        monkeypatch.setattr(probe_mod, "probe_client_credential", secret_stub)
+
+        # A minimal object that lacks use_oidc_federation entirely.
+        class _BareSettings:
+            azure_ad_tenant_id = "tid"
+            azure_ad_client_id = "cid"
+            azure_ad_client_secret = "s"  # noqa: S105 — test fixture
+            azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
+            is_production = True
+
+        result = await probe_active_credential(settings=_BareSettings())
+        assert result.auth_mode == "secret"
+        oidc_stub.assert_not_called()

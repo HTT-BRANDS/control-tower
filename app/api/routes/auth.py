@@ -257,9 +257,21 @@ async def azure_oauth_callback(
         logger.warning("OAuth callback missing state parameter — client may not be validating CSRF")
 
     # ── Pre-flight: verify Azure AD is configured ───────────────
-    if not settings.azure_ad_client_id or not settings.azure_ad_client_secret:
+    # In OIDC federation mode, ``AZURE_AD_CLIENT_SECRET`` is intentionally
+    # absent — that's the entire point of the migration. So we only require
+    # client_id (always needed) and client_secret (ONLY when not federated).
+    if not settings.azure_ad_client_id:
         logger.error(
-            "Azure AD OAuth2 not configured: missing AZURE_AD_CLIENT_ID or AZURE_AD_CLIENT_SECRET"
+            "Azure AD OAuth2 not configured: missing AZURE_AD_CLIENT_ID"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Azure AD authentication is not configured. Contact your administrator.",
+        )
+    if not settings.use_oidc_federation and not settings.azure_ad_client_secret:
+        logger.error(
+            "Azure AD OAuth2 not configured: missing AZURE_AD_CLIENT_SECRET "
+            "(and USE_OIDC_FEDERATION is false)"
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -267,12 +279,42 @@ async def azure_oauth_callback(
         )
 
     # ── Step 1: Exchange code for tokens with Azure AD ──────────
+    # The credential half of the token-exchange POST is decided by
+    # ``build_token_exchange_credentials``: it returns either {client_id,
+    # client_secret} (legacy) or {client_id, client_assertion_type,
+    # client_assertion} (federated, no secret). Single source of truth for
+    # the auth choice across all server-side token exchanges.
+    from app.core.oidc_client_assertion import (
+        FederatedAssertionError,
+        build_token_exchange_credentials,
+    )
+
+    try:
+        credential_fields = build_token_exchange_credentials(
+            client_id=settings.azure_ad_client_id,
+            client_secret=settings.azure_ad_client_secret,
+            use_oidc_federation=settings.use_oidc_federation,
+        )
+    except FederatedAssertionError as exc:
+        # OIDC is enabled but the MI can't mint an assertion. This is a
+        # DIFFERENT runbook from "Entra rejected our creds" — we 503 with
+        # a distinct message so the operator knows to check the MI binding
+        # and the federated credential on the app reg.
+        logger.error("OIDC federation failed during OAuth callback: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "OIDC federation is enabled but the Managed Identity cannot "
+                "mint a client assertion. Check App Service MI binding and "
+                "the federated credential on the app registration."
+            ),
+        ) from exc
+
     token_request = {
         "grant_type": "authorization_code",
         "code": request.code,
         "redirect_uri": request.redirect_uri,
-        "client_id": settings.azure_ad_client_id,
-        "client_secret": settings.azure_ad_client_secret,
+        **credential_fields,
     }
 
     if request.code_verifier:

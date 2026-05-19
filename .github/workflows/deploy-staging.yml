@@ -312,20 +312,46 @@ jobs:
       # clear log line — that keeps existing branch deploys green while
       # Tyler walks through the one-time secret-setup runbook, instead of
       # red-locking the pipeline until every PR is gated on his keyboard.
-      - name: Configure Azure AD app settings (ct-wph)
+      - name: Configure Azure AD app settings (ct-wph + OIDC migration)
         env:
           STAGING_AZURE_AD_TENANT_ID:     ${{ secrets.STAGING_AZURE_AD_TENANT_ID }}
           STAGING_AZURE_AD_CLIENT_ID:     ${{ secrets.STAGING_AZURE_AD_CLIENT_ID }}
           STAGING_AZURE_AD_CLIENT_SECRET: ${{ secrets.STAGING_AZURE_AD_CLIENT_SECRET }}
           STAGING_ADMIN_EMAILS:           ${{ secrets.STAGING_ADMIN_EMAILS }}
+          # Repo-level VARIABLE (not secret) — flip this from "false" -> "true"
+          # AFTER you've completed the Azure-portal side of the OIDC migration
+          # per docs/runbooks/migrate-to-oidc-federation.md. Until then, the
+          # legacy secret-mode wiring stays in effect. Default unset == false
+          # so an existing deploy can't accidentally drop into OIDC mode
+          # before the federated credential is configured.
+          STAGING_USE_OIDC_FEDERATION:    ${{ vars.STAGING_USE_OIDC_FEDERATION }}
         run: |
           set -euo pipefail
 
+          # ── Mode detection ─────────────────────────────────────────────
+          # Two modes, mutually exclusive:
+          #   1. Secret mode (legacy):  needs AZURE_AD_CLIENT_SECRET
+          #   2. OIDC mode  (target):   needs the app reg's federated
+          #                             credential to be configured AND the
+          #                             App Service to have an MI bound to it
+          # The repo variable STAGING_USE_OIDC_FEDERATION drives the choice.
+          oidc_mode="false"
+          if [ "${STAGING_USE_OIDC_FEDERATION:-false}" = "true" ]; then
+            oidc_mode="true"
+          fi
+
+          # ── Pre-flight: required secrets per mode ──────────────────────
+          # Both modes need tenant_id + client_id (they identify the app reg).
+          # Only secret mode needs the client_secret.
           if [ -z "${STAGING_AZURE_AD_TENANT_ID:-}" ] || \
-             [ -z "${STAGING_AZURE_AD_CLIENT_ID:-}" ] || \
-             [ -z "${STAGING_AZURE_AD_CLIENT_SECRET:-}" ]; then
-            echo "::warning::ct-wph: STAGING_AZURE_AD_* secrets not set; skipping Azure AD wiring."
+             [ -z "${STAGING_AZURE_AD_CLIENT_ID:-}" ]; then
+            echo "::warning::ct-wph: STAGING_AZURE_AD_TENANT_ID or _CLIENT_ID not set; skipping Azure AD wiring."
             echo "::warning::See docs/runbooks/staging-secrets.md for one-time setup."
+            exit 0
+          fi
+          if [ "$oidc_mode" = "false" ] && [ -z "${STAGING_AZURE_AD_CLIENT_SECRET:-}" ]; then
+            echo "::warning::ct-wph: STAGING_AZURE_AD_CLIENT_SECRET not set and OIDC mode disabled; skipping Azure AD wiring."
+            echo "::warning::Either set the secret OR set STAGING_USE_OIDC_FEDERATION=true (repo variable) after configuring the federated credential per docs/runbooks/migrate-to-oidc-federation.md."
             exit 0
           fi
 
@@ -345,22 +371,47 @@ jobs:
           # production admins into a staging deploy by accident.
           admin_emails="${STAGING_ADMIN_EMAILS:-}"
 
-          echo "Setting 9 Azure AD app settings on staging webapp..."
+          # ── Push the shared (mode-independent) settings ────────────────
+          echo "Setting Azure AD app settings on staging webapp (oidc_mode=$oidc_mode)..."
           az webapp config appsettings set \
             --name ${{ env.AZURE_APP_NAME }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
             --settings \
               "AZURE_AD_TENANT_ID=${STAGING_AZURE_AD_TENANT_ID}" \
               "AZURE_AD_CLIENT_ID=${STAGING_AZURE_AD_CLIENT_ID}" \
-              "AZURE_AD_CLIENT_SECRET=${STAGING_AZURE_AD_CLIENT_SECRET}" \
               "AZURE_AD_AUTHORITY=${authority}" \
               "AZURE_AD_ISSUER=${issuer}" \
               "AZURE_AD_TOKEN_ENDPOINT=${token_endpoint}" \
               "AZURE_AD_AUTHORIZATION_ENDPOINT=${authorization_endpoint}" \
               "AZURE_AD_JWKS_URI=${jwks_uri}" \
               "ADMIN_EMAILS=${admin_emails}" \
+              "USE_OIDC_FEDERATION=${oidc_mode}" \
             --output none
-          echo "✅ Azure AD settings applied to staging webapp"
+
+          # ── Mode-specific: push or DELETE the secret ───────────────────
+          # When flipping to OIDC mode we explicitly REMOVE the stale
+          # AZURE_AD_CLIENT_SECRET from app settings — leaving it lying
+          # around would let a partial rollback silently fall back to
+          # secret-mode auth without anyone noticing. Better to make the
+          # OIDC commitment visible: if you want to revert, you have to
+          # re-set the secret AND flip the var back to false.
+          if [ "$oidc_mode" = "true" ]; then
+            echo "OIDC mode: removing AZURE_AD_CLIENT_SECRET from app settings (if present)"
+            az webapp config appsettings delete \
+              --name ${{ env.AZURE_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --setting-names AZURE_AD_CLIENT_SECRET \
+              --output none || true
+            echo "✅ Azure AD settings applied (OIDC mode — no client_secret in app settings)"
+          else
+            echo "Secret mode: pushing AZURE_AD_CLIENT_SECRET to app settings"
+            az webapp config appsettings set \
+              --name ${{ env.AZURE_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --settings "AZURE_AD_CLIENT_SECRET=${STAGING_AZURE_AD_CLIENT_SECRET}" \
+              --output none
+            echo "✅ Azure AD settings applied (legacy secret mode)"
+          fi
 
       - name: Update container image and restart App Service
         env:

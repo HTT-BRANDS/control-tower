@@ -86,15 +86,15 @@ async def _summarize_azure_configuration(settings: Any) -> dict[str, Any]:
     (60s for failures, so rotations recover fast). See
     ``app/core/azure_credential_probe.py`` for the full design.
     """
-    from app.core.azure_credential_probe import probe_client_credential
+    from app.core.azure_credential_probe import probe_active_credential
 
-    result = await probe_client_credential(
-        tenant_id=settings.azure_ad_tenant_id,
-        client_id=settings.azure_ad_client_id,
-        client_secret=settings.azure_ad_client_secret,
-        token_endpoint=settings.azure_ad_token_endpoint,
-        is_production=settings.is_production,
-    )
+    # ``probe_active_credential`` dispatches on settings.use_oidc_federation:
+    #   - True  -> probes the federated path via OIDCCredentialProvider
+    #   - False -> probes the legacy client_secret path via HTTPS POST
+    # The result.auth_mode field tells you which path was exercised, so a
+    # mid-migration regression (e.g. USE_OIDC_FEDERATION silently flipped
+    # back to false in App Service settings) is visible at a glance.
+    result = await probe_active_credential(settings=settings)
 
     payload = result.to_dict()
     # Stamp environment for parity with the pre-ct-jxe payload shape, so

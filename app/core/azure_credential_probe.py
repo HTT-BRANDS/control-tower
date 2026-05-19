@@ -78,17 +78,27 @@ PROBE_SCOPE: str = "https://graph.microsoft.com/.default"
 
 @dataclass(frozen=True)
 class ProbeResult:
-    """The outcome of one probe run, plus diagnostic context."""
+    """The outcome of one probe run, plus diagnostic context.
+
+    ``auth_mode`` is the post-OIDC-migration addition. Pre-migration probes
+    only knew about the client_secret flow; ``auth_mode="secret"`` matches
+    that legacy behaviour. ``auth_mode="oidc"`` means the probe used the
+    federated credential provider (managed identity / workload identity)
+    and **no client secret was involved** end-to-end. Dashboards and
+    /health/detailed surface this so a regression to secret-mode is
+    visible at a glance.
+    """
 
     status: str  # one of the five statuses documented in the module docstring
     detail: str | None = None
     azure_error_code: str | None = None  # e.g. "AADSTS7000215"
     http_status: int | None = None
     cached_at: float = 0.0  # epoch seconds for cache freshness tracking
+    auth_mode: str = "secret"  # "oidc" or "secret" — which path was probed
 
     def to_dict(self) -> dict[str, Any]:
         """Render for inclusion in /health/detailed."""
-        out: dict[str, Any] = {"status": self.status}
+        out: dict[str, Any] = {"status": self.status, "auth_mode": self.auth_mode}
         if self.detail:
             out["detail"] = self.detail
         if self.azure_error_code:
@@ -199,6 +209,7 @@ async def probe_client_credential(
                 if is_production
                 else "Azure AD credentials not configured (acceptable outside production)"
             ),
+            auth_mode="secret",
         )
 
     # ── 2. Cache lookup ─────────────────────────────────────────────
@@ -221,10 +232,11 @@ async def probe_client_credential(
         result = ProbeResult(
             status="unreachable",
             detail=f"Token endpoint timed out after {PROBE_TIMEOUT_SECONDS}s",
+            auth_mode="secret",
         )
         _cache_set(tenant_id, client_id, result)
         return result
-    except Exception as exc:  # noqa: BLE001 — health probes must never raise
+    except Exception as exc:
         logger.warning(
             "Azure credential probe network error",
             extra={"error": str(exc), "endpoint": token_endpoint},
@@ -232,13 +244,14 @@ async def probe_client_credential(
         result = ProbeResult(
             status="unreachable",
             detail=f"Network error contacting token endpoint: {type(exc).__name__}",
+            auth_mode="secret",
         )
         _cache_set(tenant_id, client_id, result)
         return result
 
     # ── 4. Interpret the response ───────────────────────────────────
     if resp.status_code == 200:
-        result = ProbeResult(status="configured", http_status=200)
+        result = ProbeResult(status="configured", http_status=200, auth_mode="secret")
         _cache_set(tenant_id, client_id, result)
         return result
 
@@ -260,7 +273,7 @@ async def probe_client_credential(
         # Trim error_description to first sentence to keep payload small.
         if err_desc:
             detail = err_desc.split(".", 1)[0][:200]
-    except Exception:  # noqa: BLE001
+    except Exception:
         # Non-JSON response or parse error — fall back to plain detail.
         logger.debug(
             "Azure credential probe got non-JSON error response",
@@ -272,6 +285,7 @@ async def probe_client_credential(
         detail=detail,
         azure_error_code=azure_error_code,
         http_status=resp.status_code,
+        auth_mode="secret",
     )
     _cache_set(tenant_id, client_id, result)
     logger.warning(
@@ -284,3 +298,177 @@ async def probe_client_credential(
         },
     )
     return result
+
+
+# ── OIDC federation probe ───────────────────────────────────────────────────
+
+
+async def probe_oidc_federation(
+    *,
+    tenant_id: str | None,
+    client_id: str | None,
+    is_production: bool,
+    use_cache: bool = True,
+) -> ProbeResult:
+    """Verify the OIDC federated credential path actually mints tokens.
+
+    The legacy ``probe_client_credential`` checks the SECRET path. This is
+    its sibling for the federated path: we ask the OIDC credential provider
+    for a credential and call ``get_token()`` on it, which exercises the
+    full federation flow:
+
+        Managed Identity (App Service / UAMI)
+            -> MI mints an OIDC assertion JWT
+            -> ClientAssertionCredential exchanges it for an access token
+            -> we get a real bearer token for graph.microsoft.com
+
+    If any step fails (MI not bound, federated credential not configured
+    on the app reg, wrong audience, missing admin consent), this probe
+    reports ``"unauthenticated"`` — same as the secret probe — so the
+    /health/detailed payload stays shape-stable across the migration.
+
+    Why we wrap ``get_token`` in ``asyncio.to_thread``:
+        The azure-identity SDK exposes a sync ``get_token`` on every
+        TokenCredential. There's an async sibling in ``azure.identity.aio``
+        but the rest of the codebase uses the sync version everywhere
+        (see app/api/services/azure_client.py). To stay consistent — and
+        to avoid mixing two HTTP stacks in one tenant — we keep the sync
+        call and offload it to a worker thread. The 5s timeout still
+        applies via ``asyncio.wait_for``.
+    """
+    # ── 1. Shape check ──────────────────────────────────────────────
+    # OIDC mode still needs tenant_id and client_id (they identify which
+    # app reg in which tenant to mint the token for). It does NOT need a
+    # client_secret — that's the whole point. So the "missing" criteria
+    # are different from the secret path.
+    if not tenant_id or not client_id:
+        return ProbeResult(
+            status="missing" if is_production else "not_required",
+            detail=(
+                "OIDC mode: AZURE_AD_TENANT_ID and AZURE_AD_CLIENT_ID required"
+                if is_production
+                else "OIDC mode: tenant_id/client_id not set (acceptable outside production)"
+            ),
+            auth_mode="oidc",
+        )
+
+    # ── 2. Cache lookup ─────────────────────────────────────────────
+    if use_cache:
+        cached = _cache_get(tenant_id, client_id)
+        if cached is not None:
+            return cached
+
+    # ── 3. Live probe ───────────────────────────────────────────────
+    # Lazy imports: azure.identity is heavy AND we don't want a missing
+    # MI binding in a unit-test environment to import-crash this module.
+    import asyncio
+
+    try:
+        from app.core.oidc_credential import get_oidc_provider
+
+        # Build the per-tenant credential and call get_token() in a thread.
+        # Wrap with wait_for so a stuck MI endpoint can't hang health checks.
+        def _acquire_token() -> Any:
+            provider = get_oidc_provider()
+            credential = provider.get_credential_for_tenant(tenant_id, client_id)
+            return credential.get_token(PROBE_SCOPE)
+
+        token = await asyncio.wait_for(
+            asyncio.to_thread(_acquire_token),
+            timeout=PROBE_TIMEOUT_SECONDS,
+        )
+    except TimeoutError:
+        result = ProbeResult(
+            status="unreachable",
+            detail=f"OIDC token acquisition timed out after {PROBE_TIMEOUT_SECONDS}s",
+            auth_mode="oidc",
+        )
+        _cache_set(tenant_id, client_id, result)
+        return result
+    except Exception as exc:
+        # ClientAuthenticationError from azure.identity surfaces here. We map
+        # everything caught here to "unauthenticated" because at this point we
+        # KNOW our code reached the SDK — it's not a network blip, it's a
+        # config mismatch (MI not bound, federated cred missing, wrong audience).
+        #
+        # The one exception is import-time failures (e.g. azure.identity not
+        # installed in a slim test env). We use the exception class name to
+        # disambiguate: ImportError / ModuleNotFoundError -> unreachable.
+        exc_name = type(exc).__name__
+        status_for_result = (
+            "unreachable" if exc_name in {"ImportError", "ModuleNotFoundError"} else "unauthenticated"
+        )
+        # Try to extract an AADSTS code from the SDK's error message — Azure
+        # threads them through verbatim, e.g. "AADSTS70011: scope is invalid".
+        import re
+
+        msg = str(exc)
+        m = re.search(r"AADSTS\d{4,7}", msg)
+        azure_error_code = m.group(0) if m else None
+        # Keep detail short and free of stack-trace noise.
+        detail = f"{exc_name}: {msg.splitlines()[0][:180]}" if msg else exc_name
+        result = ProbeResult(
+            status=status_for_result,
+            detail=detail,
+            azure_error_code=azure_error_code,
+            auth_mode="oidc",
+        )
+        _cache_set(tenant_id, client_id, result)
+        logger.warning(
+            "OIDC credential probe failed",
+            extra={
+                "exception_class": exc_name,
+                "azure_error_code": azure_error_code,
+                "tenant_id": tenant_id,
+                "client_id_prefix": client_id[:8] if client_id else None,
+            },
+        )
+        return result
+
+    # If we got here without exception, the token request succeeded.
+    # We don't inspect token.token contents — that would imply we're going
+    # to USE this token for something, which we explicitly aren't. The
+    # health probe's contract is "can we mint a token?", nothing more.
+    _ = token  # silence linters: we deliberately ignore the token value
+    result = ProbeResult(status="configured", auth_mode="oidc")
+    _cache_set(tenant_id, client_id, result)
+    return result
+
+
+# ── Top-level dispatcher: pick the right probe based on settings ───────────
+
+
+async def probe_active_credential(
+    *,
+    settings: Any,
+    use_cache: bool = True,
+) -> ProbeResult:
+    """Probe whichever credential path the runtime is configured for.
+
+    This is the function /health/detailed should call. It reads
+    ``settings.use_oidc_federation`` and dispatches to the right probe.
+    The result's ``auth_mode`` field tells you which path actually got
+    exercised — critical for verifying an in-flight OIDC migration.
+
+    Why a dispatcher rather than two endpoints:
+        We want exactly ONE source of truth for "is the active credential
+        path working?" If /health/detailed had to OR-together two probes,
+        a stale secret-mode probe could mask a broken OIDC config. By
+        dispatching, we always probe the path that's actually serving
+        production traffic.
+    """
+    if getattr(settings, "use_oidc_federation", False):
+        return await probe_oidc_federation(
+            tenant_id=settings.azure_ad_tenant_id,
+            client_id=settings.azure_ad_client_id,
+            is_production=settings.is_production,
+            use_cache=use_cache,
+        )
+    return await probe_client_credential(
+        tenant_id=settings.azure_ad_tenant_id,
+        client_id=settings.azure_ad_client_id,
+        client_secret=settings.azure_ad_client_secret,
+        token_endpoint=settings.azure_ad_token_endpoint,
+        is_production=settings.is_production,
+        use_cache=use_cache,
+    )
