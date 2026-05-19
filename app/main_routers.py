@@ -21,7 +21,6 @@ from app.api.routes import (
     identity_router,
     metrics_router,
     monitoring_router,
-    onboarding_router,
     pages_router,
     preflight_router,
     privacy_router,
@@ -43,7 +42,6 @@ AUTH_AND_PUBLIC_ROUTERS = (
     quotas_router,
     auth_router,
     health_router,
-    onboarding_router,
 )
 
 PROTECTED_ROUTERS = (

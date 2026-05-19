@@ -154,16 +154,14 @@ class TestTemplateIntegrity:
 class TestPageRoutes:
     """All page routes return valid HTML."""
 
-    # /onboarding/ became auth-required as of ct-w6b — it collects Azure
-    # tenant/subscription IDs and writes Tenant rows; no reason to leave it
-    # publicly accessible. Re-classify it under AUTH_PAGES.
+    # /onboarding/ was deleted in ct-59n (Lighthouse demolition) — HTT doesn't
+    # offer external customer onboarding via Azure Lighthouse.
     PUBLIC_PAGES = ["/login"]
     AUTH_PAGES = [
         "/dashboard",
         "/sync-dashboard",
         "/riverside",
         "/dmarc",
-        "/onboarding/",
     ]
 
     @pytest.mark.parametrize("path", PUBLIC_PAGES)
