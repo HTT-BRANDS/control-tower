@@ -463,13 +463,30 @@ def _login_context(request: Request) -> dict[str, Any]:
     return {"is_dev": settings.environment == "development"}
 
 
-@public_router.get("/login", response_class=HTMLResponse)
+@public_router.get("/login")
 async def login_page_public(request: Request):
-    """Login page — publicly accessible."""
-    return templates.TemplateResponse(request, "login.html", _login_context(request))
+    """ct-tdu: legacy /login path — 301-redirects to canonical /auth/login.
+
+    Previously this route served byte-identical HTML to ``/auth/login``
+    (15,457 chars each), wasting a render and creating two URLs for the
+    same page (bad for analytics, social sharing, and any "copy login
+    link" workflow). Now ``/auth/login`` is the single canonical URL and
+    ``/login`` is a permanent redirect so external bookmarks and old
+    deep-links keep working.
+
+    The redirect preserves the query string (e.g. ``?next=/costs``)
+    via Starlette's default RedirectResponse behavior on the path.
+    """
+    from fastapi.responses import RedirectResponse
+
+    target = "/auth/login"
+    if request.url.query:
+        target = f"{target}?{request.url.query}"
+    # 301 = permanent; browsers and search engines will cache the swap.
+    return RedirectResponse(url=target, status_code=301)
 
 
 @public_router.get("/auth/login", response_class=HTMLResponse)
 async def auth_login_page(request: Request):
-    """Login page at canonical /auth/login path — publicly accessible."""
+    """Canonical login page (ct-tdu chose /auth/login as the canonical URL)."""
     return templates.TemplateResponse(request, "login.html", _login_context(request))

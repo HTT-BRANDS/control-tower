@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ct-tdu: HTT Control Tower favicon.
+
+  Design rationale: a stylized "control tower" silhouette (a stylized
+  monogram circle with an antenna mark) in the HTT brand burgundy
+  (#500711). Solid SVG so it renders crisp at every zoom level and
+  has zero raster artifacts on retina displays.
+
+  We deliberately do NOT depend on a third-party icon CDN — the
+  favicon ships in our static bundle and is served by the same
+  Caddy/uvicorn process as the app, so it can't be a single point
+  of failure or a tracker.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img"
+     aria-label="HTT Control Tower">
+  <title>HTT Control Tower</title>
+  <!-- Burgundy disc (HTT primary brand color #500711) -->
+  <circle cx="32" cy="32" r="30" fill="#500711"/>
+  <!-- Antenna mast + small beacon to evoke "control tower" -->
+  <rect x="30.5" y="10" width="3" height="14" fill="#FFFFFF" rx="1"/>
+  <circle cx="32" cy="9" r="3" fill="#FFB000"/>
+  <!-- "T" tower body in white -->
+  <rect x="14" y="28" width="36" height="6" fill="#FFFFFF" rx="1"/>
+  <rect x="29" y="28" width="6" height="22" fill="#FFFFFF" rx="1"/>
+</svg>

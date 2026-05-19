@@ -6,6 +6,16 @@
     <meta name="gpc-enabled" content="{{ 'true' if request.state.gpc_enabled else 'false' }}">
     <title>{% block title %}HTT Control Tower{% endblock %}</title>
 
+    {# ct-tdu: favicon + theme-color + social card defaults.
+       Pages MAY override og:title/og:description via `extra_head` block. #}
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="theme-color" content="#500711">
+    <meta name="description" content="{% block meta_description %}Multi-tenant Azure governance, cost, and compliance platform for HTT Brands.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}HTT Control Tower{% endblock %}">
+    <meta property="og:description" content="{{ self.meta_description() }}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
