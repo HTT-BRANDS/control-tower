@@ -1,7 +1,8 @@
 """Quota utilization service — monitors Azure subscription quota usage (RM-007).
 
 Fetches compute, network, and storage quota data from the Azure Resource Manager
-Usage API using the existing LighthouseAzureClient credential infrastructure.
+Usage API using a DefaultAzureCredential (managed identity in App Service,
+az-login locally).
 """
 
 from __future__ import annotations

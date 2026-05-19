@@ -38,10 +38,9 @@ async def get_quota_utilization(
 
     Warning threshold: 75% — Critical threshold: 90%
     """
-    from app.services.lighthouse_client import get_lighthouse_client
+    from azure.identity import DefaultAzureCredential
 
-    client = get_lighthouse_client()
-    quota_svc = QuotaService(client.credential)
+    quota_svc = QuotaService(DefaultAzureCredential())
 
     # Use a placeholder subscription if none given — in production this
     # would enumerate all managed subscriptions
@@ -63,10 +62,9 @@ async def get_quota_summary(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Get aggregated quota health summary across all managed subscriptions."""
-    from app.services.lighthouse_client import get_lighthouse_client
+    from azure.identity import DefaultAzureCredential
 
-    client = get_lighthouse_client()
-    quota_svc = QuotaService(client.credential)
+    quota_svc = QuotaService(DefaultAzureCredential())
 
     # Collect compute quotas — graceful degradation if Azure is unavailable
     summaries = []

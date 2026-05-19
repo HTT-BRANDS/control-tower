@@ -7,8 +7,7 @@ onboarding message instead of an error.
 
 Architecture note (see docs/decisions/co007-scope-assessment.md):
     The Consumption reservationSummaries endpoint requires *billing account*
-    scope which is outside Azure Lighthouse's delegation reach (subscription
-    scope only).  The service therefore implements graceful degradation:
+    scope. The service therefore implements graceful degradation:
 
     • billing_account_id configured → call the real API
     • billing_account_id absent      → return available=False with setup guide

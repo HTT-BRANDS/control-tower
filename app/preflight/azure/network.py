@@ -122,7 +122,6 @@ async def check_azure_subscriptions(tenant_id: str) -> CheckResult:
                     "Verify the service principal has access to at least one subscription",
                     "Check that subscriptions are not disabled or suspended",
                     "Navigate to Subscription > Access Control (IAM) and add Reader role",
-                    "Note: Some subscriptions may be in different tenants (Lighthouse)",
                 ],
                 error_code="no_subscriptions_found",
             )
