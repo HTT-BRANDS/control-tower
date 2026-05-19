@@ -23,6 +23,9 @@
 {% set has_resource_data = resource_inventory.total_resources > 0 %}
 {% set has_identity_data = identity_summary.total_users > 0 %}
 {% set has_any_data = has_cost_data or has_compliance_data or has_resource_data or has_identity_data %}
+{# `no_tenants_configured` comes from the route. Default to False so partial-only
+   template tests that omit the flag continue to render the full layout. #}
+{% set no_tenants_configured = no_tenants_configured | default(false) %}
 
 {% block content %}
 <div class="space-y-6" data-testid="dashboard-shell">
@@ -71,11 +74,39 @@
         </div>
     </div>
 
-    {% if not has_any_data %}
+    {% if no_tenants_configured %}
     {# ================================================================
-       Empty State: First-time onboarding
+       Empty State: No tenants configured in this environment
+       Honest copy; do NOT promise data that no scheduled sync can ever
+       deliver. Surfaces the actual next step (onboard a tenant) rather
+       than a misleading "Run First Sync" button.
        ================================================================ #}
-    <div class="card-brand p-8 text-center" data-testid="dashboard-empty-state">
+    <div class="card-brand p-8 text-center" data-testid="dashboard-empty-state" data-empty-reason="no-tenants">
+        <div class="max-w-md mx-auto">
+            <svg class="w-16 h-16 mx-auto mb-4 text-brand-primary-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
+            <h2 class="text-xl font-bold text-primary-theme mb-2">No tenants configured</h2>
+            <p class="text-secondary-theme mb-6">
+                This environment has no Azure tenants connected yet, so there is nothing to display.
+                Once a tenant is onboarded, sync jobs will start populating cost, compliance, resource,
+                and identity data here automatically.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="/onboarding/" class="btn-brand text-center">
+                    Onboard a Tenant
+                </a>
+                <a href="/sync-dashboard" class="btn-brand-secondary px-4 py-2 rounded-lg text-center">
+                    View Sync Status
+                </a>
+            </div>
+        </div>
+    </div>
+    {% elif not has_any_data %}
+    {# ================================================================
+       Empty State: Tenants exist, but no data has been synced yet
+       ================================================================ #}
+    <div class="card-brand p-8 text-center" data-testid="dashboard-empty-state" data-empty-reason="no-data">
         <div class="max-w-md mx-auto">
             <svg class="w-16 h-16 mx-auto mb-4 text-brand-primary-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -97,6 +128,12 @@
         </div>
     </div>
     {% endif %}
+
+    {# When there are zero tenants there is nothing meaningful to show in the
+       KPI/Overview grids below — suppress them rather than render a wall of
+       zeros that misleads ops into thinking the data pipeline is broken.
+       The empty state above is the canonical "why is this page bare" answer. #}
+    {% if not no_tenants_configured %}
 
     {# ================================================================
        Level 1: KPI Summary Bar
@@ -320,6 +357,7 @@
             <div class="skeleton h-4 w-2/3"></div>
         </div>
     </template>
+    {% endif %}{# /no_tenants_configured guard around KPI + Overview grids #}
 </div>
 {% endblock %}
 
