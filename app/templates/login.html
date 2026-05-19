@@ -49,17 +49,17 @@
                 </button>
             </div>
 
+            {# ct-0b1: divider + dev login form render server-side ONLY in dev.
+               Never ships in HTML to staging or production. The is_dev flag
+               is set in app/api/routes/dashboard.py::_login_context. #}
+            {% if is_dev %}
             <!-- Divider (shown when dev login is available) -->
-            <div id="divider" class="hidden my-6 flex items-center">
+            <div id="divider" class="my-6 flex items-center">
                 <div class="flex-grow border-t border-default"></div>
                 <span class="px-3 text-xs text-muted-theme">or</span>
                 <div class="flex-grow border-t border-default"></div>
             </div>
 
-            {# ct-0b1: dev login form is rendered server-side ONLY in dev.
-               Never ships in HTML to staging or production. The is_dev flag
-               is set in app/api/routes/dashboard.py::_login_context. #}
-            {% if is_dev %}
             <!-- Dev Login Form (only shown in development) -->
             <form id="login-form" class="space-y-5" data-testid="login-dev-form">
                 <div>
@@ -243,10 +243,14 @@
         }
 
         // ── Dev login form handler ──────────────────────────────
+        // ct-0b1 hotfix: guard against null refs when the form is server-side
+        // gated out (production). Without this, a TypeError throws before the
+        // Microsoft SSO click handler is attached, breaking SSO entirely.
         const form = document.getElementById('login-form');
         const submitBtn = document.getElementById('submit-btn');
 
-        form.addEventListener('submit', async (e) => {
+        if (form && submitBtn) {
+            form.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorDiv.classList.add('hidden');
             const btnText = document.getElementById('btn-text');
@@ -283,32 +287,24 @@
                 btnSpinner.classList.add('hidden');
                 submitBtn.disabled = false;
             }
-        });
+            });
+        }
 
-        // Hover effects
+        // Microsoft SSO button — must always be wired up.
         const azureBtn = document.getElementById('azure-login-btn');
         // Hover colors handled via CSS classes (no inline JS needed)
-        azureBtn.addEventListener('click', signInWithAzureAD);
+        if (azureBtn) {
+            azureBtn.addEventListener('click', signInWithAzureAD);
+        }
 
         // ── Page Init ───────────────────────────────────────────
+        // ct-0b1 hotfix: dev-mode detection is now done server-side via the
+        // is_dev template variable. The /health-poll-and-unhide pattern was
+        // (a) information disclosure (revealed env to anonymous clients) and
+        // (b) the form HTML was always shipped regardless of env. Removed.
         (async () => {
             // Check for OAuth callback first
-            if (await handleOAuthCallback()) return;
-
-            // Detect dev mode from /health endpoint (no auth, no rate limit cost)
-            try {
-                const resp = await fetch('/health');
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.environment === 'development') {
-                        document.getElementById('login-form').classList.remove('hidden');
-                        document.getElementById('divider').classList.remove('hidden');
-                        document.getElementById('divider').style.display = 'flex';
-                    }
-                }
-            } catch (e) {
-                // Azure AD only — don't show dev form
-            }
+            await handleOAuthCallback();
         })();
     </script>
 </body>

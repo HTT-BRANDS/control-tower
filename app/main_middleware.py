@@ -30,9 +30,36 @@ def configure_middleware(app, settings, logger):
     _register_correlation_middleware(app)
     _register_api_logging_middleware(app)
     _register_rate_limit_middleware(app, logger)
+    _register_htmx_partial_no_push_url(app)
     _register_prometheus_metrics(app)
 
     return tracer
+
+
+def _register_htmx_partial_no_push_url(app) -> None:
+    """Defense-in-depth fix for the F1 'blank page on F5' bug.
+
+    HTMX hx-trigger="load" partials under an hx-boost ancestor can push
+    their fragment URL (e.g. /partials/riverside-badge) into browser
+    history, so a user pressing F5 re-fetches the bare partial — which
+    returns a 1-byte response and renders as a blank page.
+
+    This middleware tells HTMX never to push the URL of a partial fragment
+    response into history, regardless of what the templates say. Single
+    source of truth: the URL bar always reflects the real page route.
+
+    HTMX docs: HX-Push-Url response header overrides hx-push-url attrs.
+    https://htmx.org/reference/#response_headers
+    """
+    @app.middleware("http")
+    async def htmx_partial_no_push_url(request: Request, call_next):
+        response = await call_next(request)
+        # Cover both URL conventions used in the app: /partials/* and
+        # /admin/partials/*. The fragment routes are deliberately the only
+        # ones whose path contains the literal '/partials/' segment.
+        if "/partials/" in request.url.path:
+            response.headers["HX-Push-Url"] = "false"
+        return response
 
 
 def _configure_cors(app, settings) -> None:
