@@ -502,3 +502,102 @@ async def test_cached_decorator_does_not_cache_none_results():
         result4 = await get_nullable_data(return_none=False)
         assert result4["count"] == 3  # From cache
         assert call_count == 3  # Not called again
+
+
+# ============================================================================
+# CacheManager.check_health Tests (ct-czv)
+# ============================================================================
+#
+# These guard the shared, timeout-bounded health probe used by /health/detailed,
+# /api/v1/health, /api/v1/health/detailed, and /api/v1/monitoring. The probe
+# is the single source of truth — if it regresses, every liveness endpoint
+# can hang in lockstep against a wedged Redis backend (see ct-czv).
+
+
+class TestCacheManagerCheckHealth:
+    """Tests for CacheManager.check_health bounded probe."""
+
+    @pytest.mark.asyncio
+    async def test_returns_healthy_for_working_backend(self):
+        """Round-tripping a working backend reports status=healthy."""
+        manager = CacheManager()
+        await manager.initialize()
+
+        result = await manager.check_health()
+
+        assert result["status"] == "healthy"
+        assert "backend" in result
+        assert "hits" in result
+        assert "misses" in result
+
+    @pytest.mark.asyncio
+    async def test_returns_disabled_when_cache_disabled(self):
+        """When cache_enabled=False, probe reports status=disabled — not degraded.
+
+        A disabled cache is an intentional configuration, not a fault, and must
+        not propagate ``degraded`` upward through the health rollup.
+        """
+        from unittest.mock import patch as _patch
+
+        manager = CacheManager()
+        await manager.initialize()
+
+        with _patch("app.core.cache.manager.get_settings") as mock_settings:
+            mock_settings.return_value = MagicMock(cache_enabled=False)
+            result = await manager.check_health()
+
+        assert result["status"] == "disabled"
+        assert "reason" in result
+
+    @pytest.mark.asyncio
+    async def test_returns_degraded_on_timeout(self):
+        """A backend that blocks longer than the timeout reports degraded — does NOT hang.
+
+        This is the primary defence behind ct-czv: a slow / unreachable Redis
+        must NOT cause /health/detailed to hang past the timeout budget.
+        """
+        import asyncio
+        from unittest.mock import AsyncMock as _AsyncMock
+
+        manager = CacheManager()
+        await manager.initialize()
+
+        async def _hang(*args, **kwargs):
+            await asyncio.sleep(5)  # longer than the 0.1s test timeout below
+
+        manager.set = _AsyncMock(side_effect=_hang)
+        manager.get = _AsyncMock(side_effect=_hang)
+
+        result = await manager.check_health(timeout_seconds=0.1)
+
+        assert result["status"] == "degraded"
+        assert "unresponsive" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_returns_unhealthy_on_exception(self):
+        """A backend that raises reports status=unhealthy with the error string."""
+        from unittest.mock import AsyncMock as _AsyncMock
+
+        manager = CacheManager()
+        await manager.initialize()
+        manager.set = _AsyncMock(side_effect=RuntimeError("backend exploded"))
+
+        result = await manager.check_health()
+
+        assert result["status"] == "unhealthy"
+        assert "backend exploded" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_returns_degraded_on_value_mismatch(self):
+        """If set+get round-trip returns the wrong value, reports degraded."""
+        from unittest.mock import AsyncMock as _AsyncMock
+
+        manager = CacheManager()
+        await manager.initialize()
+        manager.set = _AsyncMock()
+        manager.get = _AsyncMock(return_value="not-ok")
+
+        result = await manager.check_health()
+
+        assert result["status"] == "degraded"
+        assert "mismatch" in result["error"].lower()

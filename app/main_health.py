@@ -1,6 +1,7 @@
 """Root, health, and status routes registered by app.main."""
 
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import Depends, Request
 from fastapi.responses import RedirectResponse
@@ -36,19 +37,37 @@ def register_health_and_status_routes(
 
     @app.get("/health/detailed")
     async def detailed_health_check():
-        """Detailed health check with component status and pool statistics."""
+        """Detailed health check with component status and pool statistics.
+
+        Each component reports a string status that participates in the
+        overall rollup via ``healthy_values``. ``azure_configured`` is the
+        outlier: a deliberately un-configured non-production environment
+        (staging, dev) must NOT mark the system ``degraded`` just because
+        it lacks Azure AD credentials. See ct-czv AC #2.
+        """
         from sqlalchemy import text
 
         from app.core.database import _IS_SQLITE, SessionLocal, _get_engine
         from app.core.scheduler import get_scheduler
 
-        components = {
+        # azure_configured uses a string sentinel that participates in the
+        # healthy_values set below rather than a bare True/False, so the
+        # rollup logic stays declarative (no special-case branches).
+        azure_status: str
+        if settings.is_configured:
+            azure_status = "configured"
+        elif settings.is_production:
+            azure_status = "missing"
+        else:
+            azure_status = "not_required"
+
+        components: dict[str, Any] = {
             "database": "unknown",
             "scheduler": "unknown",
             "cache": "unknown",
-            "azure_configured": settings.is_configured,
+            "azure_configured": azure_status,
         }
-        pool_stats = {}
+        pool_stats: dict[str, Any] = {}
 
         try:
             db = SessionLocal()
@@ -70,29 +89,34 @@ def register_health_and_status_routes(
         scheduler = get_scheduler()
         components["scheduler"] = "running" if scheduler and scheduler.running else "not_running"
 
-        try:
-            cache_metrics = cache_manager.get_metrics()
-            components["cache"] = cache_metrics.get("backend", "unknown")
-        except Exception as exc:
-            components["cache"] = f"error: {str(exc)}"
+        # Bounded cache probe — the previous ``get_metrics()`` call only
+        # checked the in-process metrics counters and never reflected a
+        # wedged Redis connection. The shared helper actually round-trips
+        # the backend with a timeout (ct-czv).
+        cache_probe = await cache_manager.check_health(
+            probe_key="root_health_detailed_probe",
+        )
+        cache_probe_status = cache_probe.get("status", "unhealthy")
+        # Mirror the shape the previous version exposed: the components map
+        # holds a short label that participates in the healthy_values set.
+        # "healthy"/"disabled" both count as fine for liveness purposes.
+        components["cache"] = (
+            cache_probe.get("backend", "unknown")
+            if cache_probe_status in {"healthy", "disabled"}
+            else cache_probe_status
+        )
 
         blacklist_backend = get_blacklist_backend()
         components["token_blacklist"] = blacklist_backend
-        healthy_values = {"healthy", "running", "memory", "redis", True}
-
-        try:
-            cm = cache_manager.get_metrics()
-            detailed_cache_metrics = {
-                "backend": cm.get("backend", "unknown"),
-                "hit_rate_percent": cm.get("hit_rate_percent", 0),
-                "hits": cm.get("hits", 0),
-                "misses": cm.get("misses", 0),
-                "sets": cm.get("sets", 0),
-                "deletes": cm.get("deletes", 0),
-                "avg_get_time_ms": cm.get("avg_get_time_ms", 0),
-            }
-        except Exception as exc:
-            detailed_cache_metrics = {"error": str(exc)}
+        healthy_values = {
+            "healthy",
+            "running",
+            "memory",
+            "redis",
+            "configured",
+            "not_required",
+            True,
+        }
 
         return {
             "status": "healthy"
@@ -100,7 +124,7 @@ def register_health_and_status_routes(
             else "degraded",
             "version": settings.app_version,
             "components": components,
-            "cache_metrics": detailed_cache_metrics,
+            "cache_metrics": cache_probe,
             "database_pool": pool_stats if pool_stats else "n/a (SQLite)",
             "token_blacklist": {
                 "backend": blacklist_backend,

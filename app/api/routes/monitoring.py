@@ -147,26 +147,13 @@ async def health_check_deep(db: Session = Depends(get_db)) -> dict[str, Any]:
         checks["database"] = {"status": "unhealthy", "error": str(e)}
         overall_status = "degraded"
 
-    # Check cache with detailed metrics
-    try:
-        await cache_manager.set("health_check", "ok", ttl_seconds=10)
-        cache_value = await cache_manager.get("health_check")
-        cache_metrics = cache_manager.get_metrics()
-
-        if cache_value == "ok":
-            checks["cache"] = {
-                "status": "healthy",
-                "backend": cache_metrics.get("backend", "unknown"),
-                "hit_rate_percent": cache_metrics.get("hit_rate_percent", 0),
-                "hits": cache_metrics.get("hits", 0),
-                "misses": cache_metrics.get("misses", 0),
-                "avg_get_time_ms": cache_metrics.get("avg_get_time_ms", 0),
-            }
-        else:
-            checks["cache"] = {"status": "degraded", "error": "Cache read/write mismatch"}
-            overall_status = "degraded"
-    except Exception as e:
-        checks["cache"] = {"status": "unhealthy", "error": str(e)}
+    # Check cache with detailed metrics via the shared, timeout-bounded probe.
+    # See app/core/cache/manager.py::CacheManager.check_health and ct-czv —
+    # the previous inline await pair could hang a liveness probe indefinitely
+    # against a wedged Redis backend.
+    cache_probe = await cache_manager.check_health()
+    checks["cache"] = cache_probe
+    if cache_probe["status"] not in {"healthy", "disabled"}:
         overall_status = "degraded"
 
     # Check Azure (lightweight - just credential check)
