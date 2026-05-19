@@ -294,6 +294,74 @@ jobs:
       - name: Set subscription context
         run: az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # ct-wph: ensure Azure AD app settings are present on the staging webapp.
+      # Before this step existed, staging webapp `app-governance-staging-xnczpwyv`
+      # had all AZURE_AD_* env vars declared empty, breaking the browser login
+      # flow with "Azure AD sign-in unavailable". Tyler patched it by hand on
+      # 2026-05-19 with `az webapp config appsettings set`, but the next bicep
+      # or workflow run could've wiped it again. This step makes the wiring
+      # idempotent across every deploy.
+      #
+      # The four ground-truth values come from GitHub Secrets (see the
+      # docs/runbooks/staging-secrets.md runbook for one-time setup). The
+      # other five values are DERIVED from the tenant ID via the Azure AD
+      # discovery URL convention, so we compute them in shell rather than
+      # storing duplicate secrets.
+      #
+      # If the four required secrets aren't set yet, the step skips with a
+      # clear log line — that keeps existing branch deploys green while
+      # Tyler walks through the one-time secret-setup runbook, instead of
+      # red-locking the pipeline until every PR is gated on his keyboard.
+      - name: Configure Azure AD app settings (ct-wph)
+        env:
+          STAGING_AZURE_AD_TENANT_ID:     ${{ secrets.STAGING_AZURE_AD_TENANT_ID }}
+          STAGING_AZURE_AD_CLIENT_ID:     ${{ secrets.STAGING_AZURE_AD_CLIENT_ID }}
+          STAGING_AZURE_AD_CLIENT_SECRET: ${{ secrets.STAGING_AZURE_AD_CLIENT_SECRET }}
+          STAGING_ADMIN_EMAILS:           ${{ secrets.STAGING_ADMIN_EMAILS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${STAGING_AZURE_AD_TENANT_ID:-}" ] || \
+             [ -z "${STAGING_AZURE_AD_CLIENT_ID:-}" ] || \
+             [ -z "${STAGING_AZURE_AD_CLIENT_SECRET:-}" ]; then
+            echo "::warning::ct-wph: STAGING_AZURE_AD_* secrets not set; skipping Azure AD wiring."
+            echo "::warning::See docs/runbooks/staging-secrets.md for one-time setup."
+            exit 0
+          fi
+
+          # Derive the discovery endpoints from the tenant ID. These mirror
+          # the bicep template's az.environment().authentication.loginEndpoint
+          # logic in infrastructure/modules/app-service.bicep, so a future
+          # bicep redeploy and this script agree on the same values.
+          login_base="https://login.microsoftonline.com/${STAGING_AZURE_AD_TENANT_ID}"
+          authority="${login_base}"
+          issuer="${login_base}/v2.0"
+          token_endpoint="${login_base}/oauth2/v2.0/token"
+          authorization_endpoint="${login_base}/oauth2/v2.0/authorize"
+          jwks_uri="${login_base}/discovery/v2.0/keys"
+
+          # ADMIN_EMAILS is optional — staging may want a different admin
+          # list than prod, but we default to empty rather than dragging
+          # production admins into a staging deploy by accident.
+          admin_emails="${STAGING_ADMIN_EMAILS:-}"
+
+          echo "Setting 9 Azure AD app settings on staging webapp..."
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings \
+              "AZURE_AD_TENANT_ID=${STAGING_AZURE_AD_TENANT_ID}" \
+              "AZURE_AD_CLIENT_ID=${STAGING_AZURE_AD_CLIENT_ID}" \
+              "AZURE_AD_CLIENT_SECRET=${STAGING_AZURE_AD_CLIENT_SECRET}" \
+              "AZURE_AD_AUTHORITY=${authority}" \
+              "AZURE_AD_ISSUER=${issuer}" \
+              "AZURE_AD_TOKEN_ENDPOINT=${token_endpoint}" \
+              "AZURE_AD_AUTHORIZATION_ENDPOINT=${authorization_endpoint}" \
+              "AZURE_AD_JWKS_URI=${jwks_uri}" \
+              "ADMIN_EMAILS=${admin_emails}" \
+            --output none
+          echo "✅ Azure AD settings applied to staging webapp"
+
       - name: Update container image and restart App Service
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
