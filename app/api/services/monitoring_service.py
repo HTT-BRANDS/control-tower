@@ -343,26 +343,117 @@ class MonitoringService:
     # Alert Operations
     # ==========================================================================
 
+    def _existing_unresolved_alert(
+        self,
+        alert_type: str,
+        job_type: str | None,
+        tenant_id: str | None,
+    ) -> Alert | None:
+        """Return an existing unresolved alert matching the (type, job, tenant) tuple.
+
+        Used by every alert-creation path to prevent duplicate alerts piling up
+        when the same condition keeps tripping (ct-l2j root cause: 1,489 active
+        ``no_records`` alerts in production because each sync run created a fresh
+        one). The pre-existing ``stale_sync`` path already used this pattern
+        inline; this helper extracts and reuses it across every alert type.
+        """
+        return (
+            self.db.query(Alert)
+            .filter(
+                Alert.alert_type == alert_type,
+                Alert.job_type == job_type,
+                Alert.tenant_id == tenant_id,
+                Alert.is_resolved == 0,
+            )
+            .first()
+        )
+
+    def _auto_resolve_recovered_alerts(self, log_entry: SyncJobLog) -> list[Alert]:
+        """Resolve alerts that are no longer applicable after a successful run.
+
+        Closing the loop on ct-l2j AC #4 ("active no_records alerts stop
+        recurring after fix"): once the underlying Azure-permission or sync
+        issue is fixed and a sync run succeeds with real data, the existing
+        unresolved alerts for that (job_type, tenant_id) should clear
+        themselves rather than requiring manual cleanup of the 1,489-item
+        backlog.
+
+        Resolution rules (intentionally conservative):
+          * ``sync_failure`` resolves on any subsequent ``completed`` run.
+          * ``no_records``   resolves on a ``completed`` run with > 0 records.
+          * ``high_error_rate`` is NOT auto-resolved here — its threshold is
+            an aggregate over the last 10 runs, so a single clean run is
+            insufficient evidence. Operators can resolve manually or the
+            alert can be revisited in a follow-up.
+        """
+        if log_entry.status != "completed":
+            return []
+
+        types_to_resolve: list[str] = ["sync_failure"]
+        if (log_entry.records_processed or 0) > 0:
+            types_to_resolve.append("no_records")
+
+        resolved: list[Alert] = []
+        for alert_type in types_to_resolve:
+            existing = self._existing_unresolved_alert(
+                alert_type=alert_type,
+                job_type=log_entry.job_type,
+                tenant_id=log_entry.tenant_id,
+            )
+            if existing is None:
+                continue
+            existing.is_resolved = True
+            existing.resolved_at = datetime.now(UTC)
+            existing.resolved_by = "auto:sync_recovered"
+            resolved.append(existing)
+            logger.info(
+                "Auto-resolved %s alert id=%s for job=%s tenant=%s (records=%s)",
+                alert_type,
+                existing.id,
+                log_entry.job_type,
+                log_entry.tenant_id,
+                log_entry.records_processed,
+            )
+
+        if resolved:
+            self.db.commit()
+        return resolved
+
     def _check_for_alerts_after_completion(self, log_entry: SyncJobLog) -> list[Alert]:
-        """Check and create alerts after a sync job completes."""
-        alerts = []
+        """Check and create alerts after a sync job completes.
+
+        Every alert-creation branch deduplicates against existing unresolved
+        alerts of the same (type, job, tenant) — see ``_existing_unresolved_alert``
+        — so a recurring failure mode produces one alert, not one per run
+        (ct-l2j). Conversely, when a sync recovers, prior alerts are cleared
+        by ``_auto_resolve_recovered_alerts`` before this method runs.
+        """
+        # First: clear out alerts that no longer apply to this (job, tenant).
+        self._auto_resolve_recovered_alerts(log_entry)
+
+        alerts: list[Alert] = []
 
         # Alert on failure
         if log_entry.status == "failed":
-            alert = self.create_alert(
+            if not self._existing_unresolved_alert(
                 alert_type="sync_failure",
-                severity="error",
                 job_type=log_entry.job_type,
                 tenant_id=log_entry.tenant_id,
-                title=f"{log_entry.job_type.title()} sync failed",
-                message=f"Sync job failed after {log_entry.duration_seconds or 0:.1f}s",
-                details={
-                    "log_id": log_entry.id,
-                    "error_message": log_entry.error_message,
-                    "records_processed": log_entry.records_processed,
-                },
-            )
-            alerts.append(alert)
+            ):
+                alert = self.create_alert(
+                    alert_type="sync_failure",
+                    severity="error",
+                    job_type=log_entry.job_type,
+                    tenant_id=log_entry.tenant_id,
+                    title=f"{log_entry.job_type.title()} sync failed",
+                    message=f"Sync job failed after {log_entry.duration_seconds or 0:.1f}s",
+                    details={
+                        "log_id": log_entry.id,
+                        "error_message": log_entry.error_message,
+                        "records_processed": log_entry.records_processed,
+                    },
+                )
+                alerts.append(alert)
 
         # Alert on zero records (potential auth issue)
         if log_entry.status == "completed" and log_entry.records_processed == 0:
@@ -380,19 +471,24 @@ class MonitoringService:
             )
 
             if recent_zeros >= ALERT_THRESHOLDS["zero_records_threshold"]:
-                alert = self.create_alert(
+                if not self._existing_unresolved_alert(
                     alert_type="no_records",
-                    severity="warning",
                     job_type=log_entry.job_type,
                     tenant_id=log_entry.tenant_id,
-                    title=f"{log_entry.job_type.title()} sync processing zero records",
-                    message=f"Last {recent_zeros} runs processed zero records - possible auth issue",
-                    details={
-                        "log_id": log_entry.id,
-                        "consecutive_zero_runs": recent_zeros,
-                    },
-                )
-                alerts.append(alert)
+                ):
+                    alert = self.create_alert(
+                        alert_type="no_records",
+                        severity="warning",
+                        job_type=log_entry.job_type,
+                        tenant_id=log_entry.tenant_id,
+                        title=f"{log_entry.job_type.title()} sync processing zero records",
+                        message=f"Last {recent_zeros} runs processed zero records - possible auth issue",
+                        details={
+                            "log_id": log_entry.id,
+                            "consecutive_zero_runs": recent_zeros,
+                        },
+                    )
+                    alerts.append(alert)
 
         # Check high error rate
         if log_entry.errors_count > 0:
@@ -415,19 +511,24 @@ class MonitoringService:
                 if total_records > 0:
                     error_rate = total_errors / total_records
                     if error_rate > ALERT_THRESHOLDS["error_rate_threshold"]:
-                        alert = self.create_alert(
+                        if not self._existing_unresolved_alert(
                             alert_type="high_error_rate",
-                            severity="warning",
                             job_type=log_entry.job_type,
-                            title=f"{log_entry.job_type.title()} sync has high error rate",
-                            message=f"Error rate is {error_rate:.1%} over last {len(recent_logs)} runs",
-                            details={
-                                "error_rate": error_rate,
-                                "total_errors": total_errors,
-                                "total_records": total_records,
-                            },
-                        )
-                        alerts.append(alert)
+                            tenant_id=log_entry.tenant_id,
+                        ):
+                            alert = self.create_alert(
+                                alert_type="high_error_rate",
+                                severity="warning",
+                                job_type=log_entry.job_type,
+                                title=f"{log_entry.job_type.title()} sync has high error rate",
+                                message=f"Error rate is {error_rate:.1%} over last {len(recent_logs)} runs",
+                                details={
+                                    "error_rate": error_rate,
+                                    "total_errors": total_errors,
+                                    "total_records": total_records,
+                                },
+                            )
+                            alerts.append(alert)
 
         return alerts
 
@@ -466,15 +567,12 @@ class MonitoringService:
             since_last_run = datetime.now(UTC) - last_run_at
 
             if since_last_run > expected_interval:
-                # Check if alert already exists
-                existing = (
-                    self.db.query(Alert)
-                    .filter(
-                        Alert.alert_type == "stale_sync",
-                        Alert.job_type == job_type,
-                        Alert.is_resolved == 0,
-                    )
-                    .first()
+                # Reuse the shared dedup helper. Note: stale_sync alerts are
+                # not tenant-scoped (job_type only), so tenant_id is None here.
+                existing = self._existing_unresolved_alert(
+                    alert_type="stale_sync",
+                    job_type=job_type,
+                    tenant_id=None,
                 )
 
                 if not existing:
