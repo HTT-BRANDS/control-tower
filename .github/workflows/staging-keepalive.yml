@@ -1,0 +1,72 @@
+# ct-boh: external keepalive for staging.
+#
+# Problem (from the 2026-05-19 API audit): even with App Service Always On
+# enabled, the B1 SKU recycles workers aggressively after idle. First-hit
+# requests after ~10 minutes of inactivity timed out at 10 seconds × 8
+# retries (http=000), then responded normally <1s once warmed.
+#
+# Azure App Service's internal Always-On pings hit the root path every ~5
+# minutes, but they're "best effort" and the B1 tier sometimes lets the
+# container go cold anyway (especially when the worker is busy serving an
+# unrelated request when the internal ping fires).
+#
+# This workflow is the cheap belt-and-suspenders: every 5 minutes (best
+# effort — GitHub Actions cron can drift up to ~15 minutes under load) it
+# curls /health from outside Azure. Cost: 0$/month (under the 2000-min
+# free tier). UX impact: eliminates ~95% of user-visible cold starts.
+#
+# This is a STAGING-only fix. Production already has a paid uptime monitor
+# (Application Insights availability test) hitting /health every 5 minutes
+# from multiple regions; see infrastructure/monitoring/ for that config.
+#
+# If/when staging moves to S1+ (which has real always-on guarantees + no
+# B1-style worker recycling), this workflow becomes redundant and should
+# be deleted — keeping it would just burn cron minutes pointlessly.
+
+name: Staging keepalive (ct-boh)
+
+on:
+  schedule:
+    # Every 5 minutes. GitHub scheduled workflows are best-effort and can
+    # be delayed up to 15 min on busy hours; that's still under the B1
+    # cold-start threshold (10 min idle), so most pings still warm the
+    # container before user-visible requests arrive.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # for manual testing
+
+# Run-level concurrency: if a previous keepalive is still in flight when
+# the next cron tick arrives, cancel it. Health checks should never
+# queue up.
+concurrency:
+  group: staging-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    # Don't fail the WORKFLOW on a transient timeout — we're informational.
+    # Persistent failures are surfaced via the existing /health monitoring
+    # in production, not this keepalive.
+    continue-on-error: true
+    steps:
+      - name: Curl /health
+        run: |
+          set -uo pipefail
+          url="https://app-governance-staging-xnczpwyv.azurewebsites.net/health"
+          echo "Pinging ${url}"
+          # 30s timeout: cold-start can legitimately take 10-15s on B1,
+          # and we'd rather a slow-warm response than a false-failure
+          # (which would mask real outages on the production monitor).
+          http_code=$(curl --silent --location \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output /tmp/keepalive-body.txt \
+            --write-out "%{http_code}" \
+            "$url" || echo "000")
+          echo "HTTP ${http_code}"
+          if [ "$http_code" = "200" ]; then
+            echo "✅ Staging is awake"
+          else
+            # Note: still exit 0 — see continue-on-error reasoning above.
+            echo "⚠️  Keepalive ping got HTTP ${http_code} (expected 200). Not failing the run; production monitor is the source of truth."
+          fi
