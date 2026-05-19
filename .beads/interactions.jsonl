@@ -58,3 +58,4 @@
 {"id":"int-cfee578b","kind":"field_change","created_at":"2026-05-19T05:07:28.774387Z","actor":"Tyler Granlund","issue_id":"ct-l2j","extra":{"field":"assignee","new_value":"code-puppy-a5faf1","old_value":"code-puppy-b7dd2f"}}
 {"id":"int-edd7fc20","kind":"field_change","created_at":"2026-05-19T15:19:18.405427Z","actor":"Tyler Granlund","issue_id":"ct-51g","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
 {"id":"int-5d58d525","kind":"field_change","created_at":"2026-05-19T15:22:32.1483Z","actor":"Tyler Granlund","issue_id":"ct-czv","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
+{"id":"int-0efaff85","kind":"field_change","created_at":"2026-05-19T15:57:42.629237Z","actor":"Tyler Granlund","issue_id":"ct-aw4","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
