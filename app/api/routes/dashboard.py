@@ -84,13 +84,21 @@ async def _get_dashboard_data(
     ]
     resource_inventory.total_resources = len(resource_inventory.resources)
 
-    # Get last sync timestamps for data freshness indicators
+    # Get last sync timestamps for data freshness indicators.
+    #
+    # ct-zNN: SyncJobLog never stores ``status == "success"``. The canonical
+    # success status across this codebase is ``"completed"`` (see
+    # app/api/services/monitoring_service.py and every job-runner write
+    # site). This route was the only consumer of the non-existent
+    # ``"success"`` status, so every lookup returned None and every
+    # dashboard card silently showed "Synced never" while the page
+    # actually rendered live data above it.
     sync_types = ["costs", "compliance", "resources", "identity"]
     last_synced = {}
     for stype in sync_types:
         last_log = (
             db.query(SyncJobLog)
-            .filter(SyncJobLog.job_type == stype, SyncJobLog.status == "success")
+            .filter(SyncJobLog.job_type == stype, SyncJobLog.status == "completed")
             .order_by(SyncJobLog.started_at.desc())
             .first()
         )

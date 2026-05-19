@@ -74,3 +74,39 @@ def _active_tenant_count() -> int:
 
 
 templates.env.globals["active_tenant_count"] = _active_tenant_count
+
+
+def _latest_sync_at():
+    """Jinja global: timestamp of the most recent successful sync, or None.
+
+    Used by ``app/templates/base.html`` to render the footer's
+    "Last sync: <timestamp>" line. Previously the footer hardcoded the
+    literal string "Never" with no JS or server binding behind it, so
+    every page on every load reported "Never" even while the same page
+    rendered live data sourced from successful syncs (bd ct-gql).
+
+    Returns the most recent ``SyncJobLog.started_at`` where status is
+    ``"completed"`` (the canonical success status — see ct-zNN), or
+    ``None`` if no sync has ever completed. ``None`` is honest; the
+    template skips the line entirely rather than lying with "Never".
+
+    Returns None on any error so a transient DB hiccup never crashes
+    the footer on every single page.
+    """
+    try:
+        from app.core.database import SessionLocal
+        from app.models.monitoring import SyncJobLog
+
+        with SessionLocal() as db:
+            row = (
+                db.query(SyncJobLog.started_at)
+                .filter(SyncJobLog.status == "completed")
+                .order_by(SyncJobLog.started_at.desc())
+                .first()
+            )
+            return row[0] if row else None
+    except Exception:  # noqa: BLE001 — footer must never crash a page render
+        return None
+
+
+templates.env.globals["latest_sync_at"] = _latest_sync_at

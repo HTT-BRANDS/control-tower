@@ -132,7 +132,22 @@
                     <a href="/privacy" class="hover:text-primary-theme underline">Privacy Policy</a>
                     <a href="/api/v1/accessibility/wcag-checklist" class="hover:text-primary-theme underline">Accessibility</a>
                 </div>
-                <span>Last sync: <span id="last-sync">Never</span></span>
+                {# ct-gql: this span was hardcoded "Never" with no JS or
+                   server binding behind it — so every page on every load
+                   reported "Never" even when sync had just succeeded.
+                   ``latest_sync_at()`` returns the most recent successful
+                   SyncJobLog.started_at (or None if no sync has ever
+                   completed). The id is kept for back-compat in case any
+                   downstream JS ever wants to live-update this value.
+                   The ``is defined`` guard mirrors active_tenant_count
+                   so bare Jinja envs used by isolated template-render
+                   unit tests don't crash the entire page. #}
+                {%- set _last_sync = latest_sync_at() if latest_sync_at is defined else None -%}
+                {% if _last_sync %}
+                <span>Last sync: <span id="last-sync">{{ _last_sync | timeago }}</span></span>
+                {% else %}
+                <span>Last sync: <span id="last-sync">no sync data</span></span>
+                {% endif %}
             </div>
         </div>
     </footer>
