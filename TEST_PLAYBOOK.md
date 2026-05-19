@@ -29,6 +29,36 @@ If any of those three is wrong, see "When something's broken" at the bottom.
 
 ---
 
+## 0.5 Deep diagnostic — "the dashboard is blank" (2 minutes)
+
+When `/health` is 200 but the dashboard still renders empty or stale, you have a
+**data-flow** problem, not an API problem. Two scripts cover this:
+
+| Script | Question it answers | When to reach for it |
+|---|---|---|
+| `scripts/smoke_test.py` | *Did the endpoint respond correctly?* | First check after a deploy. Hardcoded short-list of endpoints, asserts response shape. |
+| `scripts/endpoint_audit.py` | *Did the endpoint respond with anything **meaningful**?* | When health is green but a UI is empty. Auto-discovers every GET from `/openapi.json`, flags silently-blank responses (empty arrays, null `last_synced`, all-zero summaries). |
+
+Quick recipe:
+
+```bash
+# Unauth sweep against staging + prod (still surfaces stale data via public health endpoints)
+python scripts/endpoint_audit.py \
+    --url https://app-governance-staging-xnczpwyv.azurewebsites.net \
+    --url https://app-governance-prod.azurewebsites.net
+
+# With creds, to inspect authenticated /partials/* and /api/v1/* responses
+python scripts/endpoint_audit.py \
+    --url https://app-governance-prod.azurewebsites.net \
+    --username you@example.com --password '...'
+
+# Reports land in reports/endpoint_audit_<host>_<ts>.json for diffing across runs.
+```
+
+Exit codes: `0` everything healthy & populated, `1` at least one blank/error, `2` config error.
+
+---
+
 ## 1. Production smoke (5 minutes)
 
 ### 1.1 HTTP surface

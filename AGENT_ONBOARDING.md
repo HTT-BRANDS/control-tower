@@ -105,6 +105,9 @@ control-tower/
 │   ├── contracts/              # API contracts
 │   └── decisions/              # Cross-cutting decisions
 ├── scripts/                    # Operational scripts (one-shot tools)
+│   ├── smoke_test.py           #   correctness checks against a deployed URL
+│   ├── endpoint_audit.py       #   data-flow check ("the dashboard is blank") — auto-discovers GETs via /openapi.json, flags silently-blank responses
+│   └── sync_roadmap.py         #   WIGGUM_ROADMAP.md verifier/updater
 ├── .beads/                     # bd issue tracker DB + JSONL
 ├── .github/workflows/          # CI/CD pipelines
 ├── PORTFOLIO_PLATFORM_PLAN_V2.md      # ← strategic source of truth
