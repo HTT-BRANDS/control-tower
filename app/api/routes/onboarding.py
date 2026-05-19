@@ -22,252 +22,25 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
+from app.core.auth import User, get_current_user
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.templates import templates
+from app.core.tenant_context import get_brand_context_for_request
 from app.models.tenant import Tenant
 from app.services.lighthouse_client import (
     LighthouseAzureClient,
     LighthouseDelegationError,
 )
 
-router = APIRouter(prefix="/onboarding", tags=["onboarding"])
-
-# HTML templates as constants for HTMX responses
-LANDING_PAGE_HTML = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTT Control Tower - Self-Service Onboarding</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #0078d4;
-            border-bottom: 2px solid #0078d4;
-            padding-bottom: 10px;
-        }
-        h2 { color: #323130; margin-top: 30px; }
-        .step {
-            background: #f8f9fa;
-            border-left: 4px solid #0078d4;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-            background: #0078d4;
-            color: white;
-            border-radius: 50%;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        button {
-            background: #0078d4;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        button:hover { background: #106ebe; }
-        button:disabled {
-            background: #c8c8c8;
-            cursor: not-allowed;
-        }
-        .btn-secondary {
-            background: #605e5c;
-        }
-        .btn-secondary:hover { background: #323130; }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #8a8886;
-            border-radius: 4px;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: 600;
-            color: #323130;
-        }
-        .help-text {
-            color: #605e5c;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        .success { color: #107c10; }
-        .error { color: #d83b01; }
-        .warning { color: #ffc107; }
-        pre {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-size: 13px;
-        }
-        .code-block {
-            position: relative;
-        }
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #0078d4;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #0078d4;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .hidden { display: none; }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-        }
-        .alert-success {
-            background: #dff6dd;
-            border-left: 4px solid #107c10;
-        }
-        .alert-error {
-            background: #fde7e9;
-            border-left: 4px solid #d83b01;
-        }
-        .alert-info {
-            background: #e5f1fb;
-            border-left: 4px solid #0078d4;
-        }
-    </style>
-</head>
-<body>
-    <div class="container" id="onboarding-container">
-        <h1>🏢 HTT Control Tower - Self-Service Onboarding</h1>
-        <p>Welcome! This guided onboarding will help you connect your Azure subscription to HTT Control Tower using Azure Lighthouse delegation.</p>
-
-        <div class="step">
-            <h2><span class="step-number">1</span> Generate Your ARM Template</h2>
-            <p>Click the button below to generate a customized Azure Resource Manager (ARM) template for your organization.</p>
-            <div class="form-group">
-                <label for="template-org-name">Organization Name</label>
-                <input type="text" id="template-org-name" name="org_name" data-hint="e.g., Contoso Corporation" required>
-            </div>
-            <button hx-post="/onboarding/generate-template"
-                    hx-include="#template-org-name"
-                    hx-target="#template-result"
-                    hx-indicator="#template-loading">
-                Generate Template
-            </button>
-            <div id="template-loading" class="htmx-indicator hidden">
-                <div class="loading"></div> Generating template...
-            </div>
-            <div id="template-result"></div>
-        </div>
-
-        <div class="step">
-            <h2><span class="step-number">2</span> Deploy the Template in Azure</h2>
-            <div id="deploy-instructions" style="opacity: 0.5;">
-                <p>⚡ <strong>Generate your template first</strong> to see deployment instructions.</p>
-            </div>
-        </div>
-
-        <div class="step">
-            <h2><span class="step-number">3</span> Verify Access & Create Tenant</h2>
-            <p>After deploying the template, verify that delegation is working and complete your onboarding.</p>
-            <form hx-post="/onboarding/verify" hx-target="#verification-result">
-                <div class="form-group">
-                    <label for="tenant-name">Tenant Name</label>
-                    <input type="text" id="tenant-name" name="tenant_name" data-hint="e.g., Contoso" required>
-                    <div class="help-text">A friendly name for your organization in our platform</div>
-                </div>
-                <div class="form-group">
-                    <label for="tenant-id">Azure Tenant ID</label>
-                    <input type="text" id="tenant-id" name="tenant_id" data-hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
-                    <div class="help-text">Your Azure AD Tenant ID (find in Azure Portal > Azure Active Directory)</div>
-                </div>
-                <div class="form-group">
-                    <label for="subscription-id">Azure Subscription ID</label>
-                    <input type="text" id="subscription-id" name="subscription_id" data-hint="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
-                    <div class="help-text">The subscription ID where you deployed the template</div>
-                </div>
-                <div class="form-group">
-                    <label for="description">Description (Optional)</label>
-                    <textarea id="description" name="description" rows="3" data-hint="Brief description of this tenant"></textarea>
-                </div>
-                <button type="submit">Verify & Create Tenant</button>
-            </form>
-            <div id="verification-result"></div>
-        </div>
-
-        <div class="step">
-            <h2>📚 Need Help?</h2>
-            <ul>
-                <li><a href="https://docs.microsoft.com/azure/lighthouse/how-to/onboard-customer" target="_blank">Azure Lighthouse Documentation</a></li>
-                <li>Contact support if you encounter any issues</li>
-            </ul>
-        </div>
-    </div>
-    <script>
-        // Hydrate input hints from data attributes
-        const hintAttr = 'place' + 'holder';
-        document.querySelectorAll('[data-hint]').forEach(el => {
-            el.setAttribute(hintAttr, el.dataset.hint);
-        });
-        // Copy to clipboard functionality
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                navigator.clipboard.writeText(element.textContent).then(() => {
-                    alert('Copied to clipboard!');
-                });
-            }
-        }
-    </script>
-</body>
-</html>
-"""
+router = APIRouter(
+    prefix="/onboarding",
+    tags=["onboarding"],
+    # Authentication required: the landing page collects Azure tenant/subscription
+    # IDs and the verify endpoint writes new Tenant rows. Per ct-w6b, the page
+    # should not be publicly accessible.
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def get_delegation_template(settings: Any, org_name: str = "") -> dict[str, Any]:
@@ -427,29 +200,34 @@ New-AzSubscriptionDeployment `
 
 
 @router.get("/", response_class=HTMLResponse)
-async def onboarding_landing_page(request: Request):
+async def onboarding_landing_page(
+    request: Request,
+    user: User = Depends(get_current_user),
+):
     """Landing page for self-service onboarding.
 
-    Returns the full HTML onboarding page with HTMX integration.
+    Renders the Riverside-branded onboarding shell that extends base.html
+    (Inter font, design tokens, nav, footer). Form submissions are HTMX POSTs
+    to /onboarding/generate-template and /onboarding/verify.
     """
     settings = get_settings()
+    brand_context = get_brand_context_for_request(request)
 
-    # Check if Lighthouse is enabled
     if not getattr(settings, "lighthouse_enabled", True):
-        return HTMLResponse(
-            content="""
-            <div class="container">
-                <h1>🔒 Self-Service Onboarding Disabled</h1>
-                <div class="alert alert-error">
-                    <p>Self-service onboarding via Azure Lighthouse is currently disabled.</p>
-                    <p>Please contact your administrator to set up tenant access manually.</p>
-                </div>
-            </div>
-            """,
+        # Lighthouse disabled: render the same shell with a friendly disabled
+        # banner instead of the multi-step form. Keeps brand parity.
+        return templates.TemplateResponse(
+            request,
+            "pages/onboarding_disabled.html",
+            {**brand_context, "user": user},
             status_code=503,
         )
 
-    return HTMLResponse(content=LANDING_PAGE_HTML)
+    return templates.TemplateResponse(
+        request,
+        "pages/onboarding.html",
+        {**brand_context, "user": user},
+    )
 
 
 @router.post("/generate-template")

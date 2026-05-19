@@ -32,9 +32,14 @@ def _make_settings(**overrides) -> MagicMock:
 
 
 def _valid_form_data(**overrides) -> dict[str, str]:
-    """Return valid verify-onboarding form data."""
+    """Return valid verify-onboarding form data.
+
+    Note: 'tenant_name' deliberately differs from the seeded
+    ``authed_client`` fixture tenant ("Test Tenant") so the
+    verify endpoint's duplicate-name check does not collide.
+    """
     defaults: dict[str, str] = {
-        "tenant_name": "Test Tenant",
+        "tenant_name": "Onboarding Test Co",
         "tenant_id": str(uuid.uuid4()),
         "subscription_id": str(uuid.uuid4()),
         "description": "Test description",
@@ -88,17 +93,17 @@ def _patch_lighthouse(delegation_return=None, side_effect=None):
 class TestOnboardingLandingPage:
     """GET /onboarding/ – HTML landing page."""
 
-    def test_returns_landing_page(self, client):
+    def test_returns_landing_page(self, authed_client):
         """Landing page responds 200 with HTMX-powered HTML."""
-        response = client.get("/onboarding/")
+        response = authed_client.get("/onboarding/")
 
         assert response.status_code == 200
         assert "HTT Control Tower" in response.text
         assert "hx-" in response.text  # HTMX attributes present
 
-    def test_content_type_is_html(self, client):
+    def test_content_type_is_html(self, authed_client):
         """Landing page serves text/html."""
-        response = client.get("/onboarding/")
+        response = authed_client.get("/onboarding/")
 
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
@@ -113,10 +118,10 @@ class TestOnboardingLandingPage:
 class TestGenerateTemplate:
     """POST /onboarding/generate-template – HTML response with ARM template."""
 
-    def test_success(self, client):
+    def test_success(self, authed_client):
         """Generates an ARM template and returns success HTML."""
         with _patch_settings():
-            response = client.post(
+            response = authed_client.post(
                 "/onboarding/generate-template",
                 data={"org_name": "Test Org"},
             )
@@ -127,10 +132,10 @@ class TestGenerateTemplate:
         assert "managedByTenantId" in response.text
         assert "resources" in response.text
 
-    def test_org_name_appears_in_response(self, client):
+    def test_org_name_appears_in_response(self, authed_client):
         """Supplied org name is echoed back in the generated HTML."""
         with _patch_settings():
-            response = client.post(
+            response = authed_client.post(
                 "/onboarding/generate-template",
                 data={"org_name": "Custom Organization"},
             )
@@ -138,10 +143,10 @@ class TestGenerateTemplate:
         assert response.status_code == 200
         assert "Custom Organization" in response.text
 
-    def test_empty_org_name_defaults_gracefully(self, client):
+    def test_empty_org_name_defaults_gracefully(self, authed_client):
         """An empty org_name still produces a valid template."""
         with _patch_settings():
-            response = client.post(
+            response = authed_client.post(
                 "/onboarding/generate-template",
                 data={"org_name": ""},
             )
@@ -158,10 +163,10 @@ class TestGenerateTemplate:
 class TestGenerateTemplateJSON:
     """GET /onboarding/api/template – JSON ARM template."""
 
-    def test_returns_template_with_metadata(self, client):
+    def test_returns_template_with_metadata(self, authed_client):
         """JSON endpoint returns template + metadata."""
         with _patch_settings():
-            response = client.get("/onboarding/api/template?org_name=TestCorp")
+            response = authed_client.get("/onboarding/api/template?org_name=TestCorp")
 
         assert response.status_code == 200
         body = response.json()
@@ -180,7 +185,7 @@ class TestGenerateTemplateJSON:
 class TestVerifyOnboarding:
     """POST /onboarding/verify – delegation verification & tenant creation."""
 
-    def test_success_creates_tenant(self, client, db_session):
+    def test_success_creates_tenant(self, authed_client, db_session):
         """Successful delegation → 201, HTML confirmation, tenant in DB."""
         form = _valid_form_data()
 
@@ -193,7 +198,7 @@ class TestVerifyOnboarding:
             }
             mock_cls.return_value = inst
 
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 201
         assert "text/html" in response.headers.get("content-type", "")
@@ -209,7 +214,7 @@ class TestVerifyOnboarding:
         assert tenant.use_lighthouse is True
         assert tenant.is_active is True
 
-    def test_delegation_failed_returns_400(self, client):
+    def test_delegation_failed_returns_400(self, authed_client):
         """When is_delegated is False the endpoint returns 400 HTML."""
         form = _valid_form_data()
 
@@ -221,12 +226,12 @@ class TestVerifyOnboarding:
             }
             mock_cls.return_value = inst
 
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 400
         assert "Delegation Verification Failed" in response.text
 
-    def test_tenant_persisted_to_database(self, client, db_session):
+    def test_tenant_persisted_to_database(self, authed_client, db_session):
         """Tenant record appears in DB after successful verify."""
         form = _valid_form_data()
 
@@ -238,7 +243,7 @@ class TestVerifyOnboarding:
             }
             mock_cls.return_value = inst
 
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 201
 
@@ -248,15 +253,15 @@ class TestVerifyOnboarding:
         assert tenant is not None
         assert tenant.use_lighthouse is True
 
-    def test_missing_required_fields_returns_422(self, client):
+    def test_missing_required_fields_returns_422(self, authed_client):
         """Omitting required Form fields (tenant_id, subscription_id) → 422."""
-        response = client.post(
+        response = authed_client.post(
             "/onboarding/verify",
             data={"tenant_name": "Test Tenant"},
         )
         assert response.status_code == 422
 
-    def test_duplicate_tenant_returns_409(self, client, db_session):
+    def test_duplicate_tenant_returns_409(self, authed_client, db_session):
         """Attempting to onboard an already-registered tenant → 409."""
         form = _valid_form_data()
 
@@ -271,7 +276,7 @@ class TestVerifyOnboarding:
         db_session.commit()
 
         with patch("app.api.routes.onboarding.LighthouseAzureClient"):
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 409
         assert "Already Exists" in response.text
@@ -285,11 +290,11 @@ class TestVerifyOnboarding:
 class TestOnboardingStatus:
     """GET /onboarding/status/{tenant_id} – JSON status response."""
 
-    def test_active_tenant(self, client, db_session):
+    def test_active_tenant(self, authed_client, db_session):
         """Active Lighthouse tenant returns full status payload."""
         tenant = _create_tenant(db_session)
 
-        response = client.get(f"/onboarding/status/{tenant.id}")
+        response = authed_client.get(f"/onboarding/status/{tenant.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -299,29 +304,29 @@ class TestOnboardingStatus:
         assert data["tenant"]["use_lighthouse"] is True
         assert data["onboarding_complete"] is True
 
-    def test_not_found(self, client):
+    def test_not_found(self, authed_client):
         """Non-existent tenant ID returns 404 with descriptive message."""
         fake_id = str(uuid.uuid4())
-        response = client.get(f"/onboarding/status/{fake_id}")
+        response = authed_client.get(f"/onboarding/status/{fake_id}")
 
         assert response.status_code == 404
         data = response.json()
         assert data["status"] == "not_found"
         assert fake_id in data["message"]
 
-    def test_any_string_accepted_as_id(self, client):
+    def test_any_string_accepted_as_id(self, authed_client):
         """Route accepts arbitrary strings — no UUID validation."""
-        response = client.get("/onboarding/status/not-a-uuid")
+        response = authed_client.get("/onboarding/status/not-a-uuid")
 
         assert response.status_code == 404
         data = response.json()
         assert data["status"] == "not_found"
 
-    def test_inactive_tenant(self, client, db_session):
+    def test_inactive_tenant(self, authed_client, db_session):
         """Inactive tenant → status "inactive", onboarding_complete False."""
         tenant = _create_tenant(db_session, is_active=False)
 
-        response = client.get(f"/onboarding/status/{tenant.id}")
+        response = authed_client.get(f"/onboarding/status/{tenant.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -329,11 +334,11 @@ class TestOnboardingStatus:
         assert data["tenant"]["is_active"] is False
         assert data["onboarding_complete"] is False
 
-    def test_non_lighthouse_tenant(self, client, db_session):
+    def test_non_lighthouse_tenant(self, authed_client, db_session):
         """Tenant without Lighthouse → onboarding_complete False."""
         tenant = _create_tenant(db_session, use_lighthouse=False)
 
-        response = client.get(f"/onboarding/status/{tenant.id}")
+        response = authed_client.get(f"/onboarding/status/{tenant.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -349,29 +354,29 @@ class TestOnboardingStatus:
 class TestOnboardingErrorScenarios:
     """Assorted error-handling and edge-case coverage."""
 
-    def test_missing_fields_returns_422(self, client):
+    def test_missing_fields_returns_422(self, authed_client):
         """POST /verify with missing required Form fields → 422."""
-        response = client.post(
+        response = authed_client.post(
             "/onboarding/verify",
             data={"tenant_name": "Test"},  # tenant_id + subscription_id omitted
         )
         assert response.status_code == 422
 
-    def test_invalid_payload_returns_422(self, client):
+    def test_invalid_payload_returns_422(self, authed_client):
         """Non-form payload on a Form-only endpoint → 422."""
-        response = client.post(
+        response = authed_client.post(
             "/onboarding/verify",
             content=b"not valid data",
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
 
-    def test_method_not_allowed(self, client):
+    def test_method_not_allowed(self, authed_client):
         """Wrong HTTP methods are rejected with 405."""
-        assert client.put("/onboarding/verify").status_code == 405
-        assert client.delete("/onboarding/generate-template").status_code == 405
+        assert authed_client.put("/onboarding/verify").status_code == 405
+        assert authed_client.delete("/onboarding/generate-template").status_code == 405
 
-    def test_lighthouse_delegation_error(self, client):
+    def test_lighthouse_delegation_error(self, authed_client):
         """LighthouseDelegationError during verify → 400 with error HTML."""
         form = _valid_form_data()
 
@@ -382,7 +387,7 @@ class TestOnboardingErrorScenarios:
             )
             mock_cls.return_value = inst
 
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 400
         assert "Lighthouse Delegation Error" in response.text
@@ -396,29 +401,29 @@ class TestOnboardingErrorScenarios:
 class TestOnboardingValidation:
     """Validation rules enforced by POST /onboarding/verify."""
 
-    def test_empty_tenant_name_rejected(self, client):
+    def test_empty_tenant_name_rejected(self, authed_client):
         """Whitespace-only tenant_name → 400."""
         form = _valid_form_data(tenant_name="   ")
 
-        response = client.post("/onboarding/verify", data=form)
+        response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 400
         assert "required" in response.text.lower()
 
-    def test_invalid_tenant_id_format(self, client):
+    def test_invalid_tenant_id_format(self, authed_client):
         """tenant_id that isn't 32 hex chars (sans dashes) → 400."""
         form = _valid_form_data(tenant_id="not-a-valid-uuid")
 
-        response = client.post("/onboarding/verify", data=form)
+        response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 400
         assert "Invalid" in response.text
 
-    def test_invalid_subscription_id_format(self, client):
+    def test_invalid_subscription_id_format(self, authed_client):
         """subscription_id that isn't 32 hex chars (sans dashes) → 400."""
         form = _valid_form_data(subscription_id="invalid-sub")
 
-        response = client.post("/onboarding/verify", data=form)
+        response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 400
         assert "Invalid" in response.text
@@ -432,7 +437,7 @@ class TestOnboardingValidation:
 class TestOnboardingAsyncOperations:
     """Verify async call-through behaviour."""
 
-    def test_verify_delegation_called_with_correct_args(self, client):
+    def test_verify_delegation_called_with_correct_args(self, authed_client):
         """verify_delegation receives the exact subscription_id from the form."""
         form = _valid_form_data()
 
@@ -444,7 +449,7 @@ class TestOnboardingAsyncOperations:
             }
             mock_cls.return_value = inst
 
-            response = client.post("/onboarding/verify", data=form)
+            response = authed_client.post("/onboarding/verify", data=form)
 
         assert response.status_code == 201
         inst.verify_delegation.assert_called_once_with(form["subscription_id"])

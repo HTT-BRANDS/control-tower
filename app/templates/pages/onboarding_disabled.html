@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "macros/ds.html" import ds_page_shell, ds_card %}
+
+{% block title %}Self-Service Onboarding Unavailable - HTT Control Tower{% endblock %}
+
+{% set icon_lock %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-6 h-6" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+</svg>
+{% endset %}
+
+{% block content %}
+{% call ds_page_shell(
+    title="Self-Service Onboarding",
+    subtitle="Currently unavailable in this environment.") %}
+
+<main id="onboarding-main" class="max-w-2xl mx-auto w-full">
+    {% call ds_card() %}
+    <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-secondary text-secondary-theme flex items-center justify-center" aria-hidden="true">
+            {{ icon_lock }}
+        </div>
+        <div class="flex-1 min-w-0">
+            <h2 class="text-xl font-semibold text-primary-theme">Self-Service Onboarding Disabled</h2>
+            <p class="text-secondary-theme mt-2">
+                Tenant onboarding via Azure Lighthouse is not enabled in this environment.
+            </p>
+            <p class="text-secondary-theme mt-2">
+                Please contact your HTT administrator to provision tenant access manually.
+            </p>
+        </div>
+    </div>
+    {% endcall %}
+</main>
+
+{% endcall %}
+{% endblock %}
