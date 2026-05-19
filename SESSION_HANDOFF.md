@@ -1,10 +1,57 @@
-# Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 continuations)
+# Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 continuations)
 
 **Branch:** `main`.
-**Latest pushed HEAD at end of 2026-05-04 continuation:** to be filled by final commit of this session.
+**Latest pushed HEAD at end of 2026-05-19 continuation:** to be filled by final commit of this session.
 **Working tree:** clean after final handoff/bd-sync commit.
-**Production state:** ✅ `/health` 200 — `healthy / 2.5.0 / production` (re-verified 2026-05-04 20:33 UTC).
-**Staging state:** ✅ `/health` 200 — `healthy / 2.5.0 / staging` (re-verified 2026-05-04 20:33 UTC; running on `6b2a8c7` post-recovery).
+**Production state:** ✅ `/health` 200 — `healthy / 2.5.0 / production` (re-verified 2026-05-19 02:45 UTC).
+**Staging state:** ✅ `/health` 200 — endpoint sweep clean across 138 GET routes (2026-05-19 02:45 UTC).
+
+## 🐶 2026-05-19 continuation — blank-dashboard investigation (`code-puppy-a5faf1`)
+
+Triggered by Tyler: "after the recent login fix, the dashboard lands blank — do a comprehensive end-to-end API health check." Hypothesis up front was wrong: the auth fix is a **red herring**. Data was stale before the auth fix; the symptom got noticed *after* logging back in.
+
+### What landed
+
+| Path | What |
+|---|---|
+| `scripts/endpoint_audit.py` (new, 677 LOC, ruff-clean) | Comprehensive GET-endpoint auditor. Auto-discovers routes from `/openapi.json` (no hardcoded list), applies data-quality heuristics (empty arrays, null `last_synced`, all-zero numeric summaries), classifies each endpoint as ok/blank/auth_required/error/unreachable, emits JSON report + human-readable hypothesis block. Complements `scripts/smoke_test.py` rather than replacing it (`smoke_test` = correctness, `endpoint_audit` = data-flow). |
+| `reports/endpoint_audit_app-governance-prod_*.json` | Full machine-readable result of the prod sweep. |
+| `reports/endpoint_audit_app-governance-staging-xnczpwyv_*.json` | Same for staging. |
+
+### Findings (entirely from public, unauthenticated endpoints)
+
+1. **Staging dashboard is blank because staging has zero tenants seeded.** `/api/v1/health/data` returns `"tenants": {}`. The dashboard SSR path in `app/api/routes/dashboard.py::_get_dashboard_data` hard-filters resources by `authz.accessible_tenant_ids`; empty tenants ⇒ empty everything. Filed as **`ct-373`** (P2).
+2. **Prod data is ~20 days stale across 9 of 10 sync domains.** Latest sync for resources/costs/compliance/identity for HTT/BCC/FN is `2026-04-29`. `DCE` has *all* nulls. Only `riverside_compliance` synced today (`2026-05-19T01:10:55`). Added as a comment to existing **`ct-l2j`** (P2, already owned by `code-puppy-b7dd2f`).
+3. **APScheduler reports `running` with 10 jobs registered, but `total_jobs: 0` and `total_records_processed: 0`** in `/api/v1/status`, while `alerts.active_count: 1489`. Most likely explanation: in-memory metric counters (`cache.backend: memory`) reset on every restart, AND syncs are firing-and-failing rather than not-firing-at-all. Confirming this is the next step on `ct-l2j`.
+4. **Sweep was clean structurally**: 138 endpoints, zero 5xx, zero unreachable. This is purely a data-flow problem, not an API problem. The recent login fix is unrelated.
+
+### Issues touched / filed
+
+- ➕ Comment on `ct-l2j` — fresh evidence + per-tenant staleness table + scheduler-counter analysis
+- ➕ Comment on `ct-czv` — staging health hang correlates with empty tenant config; recommend deterministic `not_configured` health response
+- 🆕 `ct-373` (P2) — staging has zero tenants seeded → dashboard renders blank
+- 🆕 `ct-j1m` (P3) — document `endpoint_audit.py` in `TEST_PLAYBOOK.md` and `AGENT_ONBOARDING.md`
+
+### What I deliberately did NOT do
+
+- **Did not authenticate against prod/staging.** Public freshness endpoints already gave a high-confidence diagnosis; YAGNI on burning auth round-trips just to confirm what `/api/v1/health/data` already said plainly.
+- **Did not dispatch QA Kitten.** Same reason — would have visually confirmed an already-confirmed finding. Re-evaluate if `ct-l2j`/`ct-373` investigation needs UI-side evidence.
+- **Did not investigate the 1,489 active alerts in detail.** They almost certainly name the sync failure mode, but reading them requires auth and belongs to the `ct-l2j` follow-up, not this session.
+- **Did not touch `saas-vendor-review/` or `test.txt`** in the working tree — not mine, not in scope.
+
+### Live re-verification at handoff
+
+```
+2026-05-19 02:45 UTC (via scripts/endpoint_audit.py)
+Prod /health                  → 200 {status:healthy, version:2.5.0, environment:production}
+Prod /health/detailed         → 200 components: db✅ scheduler✅ cache✅ azure_configured✅
+Prod /api/v1/health/data      → 200 any_stale:true, 4 tenants, most domains 20d stale
+Prod /api/v1/status           → 200 active_jobs:10, but total_jobs/records_processed:0
+Staging /api/v1/health/data   → 200 any_stale:false, tenants: {}  ← root cause of blank staging dash
+No 5xx, no unreachable, across 138 GET endpoints / 2 environments.
+```
+
+---
 
 ## 🐶 2026-05-04 continuation — doc-freshness sweep (`code-puppy-10c964`)
 

@@ -1,0 +1,1473 @@
+{
+  "base_url": "https://app-governance-prod.azurewebsites.net",
+  "started_at": "2026-05-19T02:45:12.565761+00:00",
+  "finished_at": "2026-05-19T02:45:23.256845+00:00",
+  "authenticated": false,
+  "auth_method": "none",
+  "results": [
+    {
+      "path": "/",
+      "status_code": 307,
+      "latency_ms": 92.82741699996677,
+      "response_size": 0,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": "redirect to /auth/login",
+      "sample": null
+    },
+    {
+      "path": "/admin",
+      "status_code": 401,
+      "latency_ms": 610.0278749999006,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/admin/partials/users-table",
+      "status_code": 401,
+      "latency_ms": 610.0097910000386,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/accessibility/touch-targets",
+      "status_code": 200,
+      "latency_ms": 608.5050000000365,
+      "response_size": 67,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "compliant": "True",
+        "total_elements": "0",
+        "violations": "<list len=0>",
+        "score": "100.0"
+      }
+    },
+    {
+      "path": "/api/v1/accessibility/wcag-checklist",
+      "status_code": 200,
+      "latency_ms": 609.3377079999982,
+      "response_size": 1005,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "version": "WCAG 2.2 AA",
+        "last_updated": "2026-03-26",
+        "categories": "<list len=5>"
+      }
+    },
+    {
+      "path": "/api/v1/admin/roles",
+      "status_code": 401,
+      "latency_ms": 415.1592499999879,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/admin/stats",
+      "status_code": 401,
+      "latency_ms": 99.69499999999698,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/admin/users",
+      "status_code": 401,
+      "latency_ms": 112.50920800000586,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/audit-logs",
+      "status_code": 401,
+      "latency_ms": 304.95591699991564,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/audit-logs/summary",
+      "status_code": 401,
+      "latency_ms": 194.1537079999307,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/auth/azure/login",
+      "status_code": 200,
+      "latency_ms": 205.1834170000575,
+      "response_size": 426,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "authorization_endpoint": "https://login.microsoftonline.com/0c0e35dc-188a-4eb3-b8ba-61752154b407/oauth2/v2.0/authorize",
+        "token_endpoint": "https://login.microsoftonline.com/0c0e35dc-188a-4eb3-b8ba-61752154b407/oauth2/v2.0/token",
+        "jwks_uri": "https://login.microsoftonline.com/0c0e35dc-188a-4eb3-b8ba-61752154b407/discovery/v2.0/keys",
+        "scopes": "openid profile email User.Read",
+        "client_id": "1e3e8417-49f1-4d08-b7be-47045d8a12e9"
+      }
+    },
+    {
+      "path": "/api/v1/auth/health",
+      "status_code": 200,
+      "latency_ms": 204.9229159999868,
+      "response_size": 159,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "jwt_configured": "True",
+        "azure_ad_configured": "True",
+        "token_endpoint": "/api/v1/auth/token",
+        "authorization_endpoint": "/api/v1/auth/azure/login"
+      }
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "status_code": 401,
+      "latency_ms": 205.7892500000662,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/budgets",
+      "status_code": 401,
+      "latency_ms": 205.4604999999583,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/budgets/alerts/all",
+      "status_code": 401,
+      "latency_ms": 205.0472499998932,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/budgets/summary",
+      "status_code": 401,
+      "latency_ms": 204.91354200009937,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/frameworks",
+      "status_code": 401,
+      "latency_ms": 180.40949999999611,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/non-compliant",
+      "status_code": 401,
+      "latency_ms": 179.75083399994674,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/rules",
+      "status_code": 401,
+      "latency_ms": 177.70870800006833,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/scores",
+      "status_code": 401,
+      "latency_ms": 178.57762500000263,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/status",
+      "status_code": 401,
+      "latency_ms": 178.4701250001035,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/summary",
+      "status_code": 401,
+      "latency_ms": 178.12212499995894,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/compliance/trends",
+      "status_code": 401,
+      "latency_ms": 129.46104200000264,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/anomalies",
+      "status_code": 401,
+      "latency_ms": 149.79079199997614,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/anomalies/by-service",
+      "status_code": 401,
+      "latency_ms": 157.74712500001442,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/anomalies/top",
+      "status_code": 401,
+      "latency_ms": 148.6341250000578,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/anomalies/trends",
+      "status_code": 401,
+      "latency_ms": 148.7806659999933,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/by-tenant",
+      "status_code": 401,
+      "latency_ms": 133.30274999998437,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/chargeback",
+      "status_code": 401,
+      "latency_ms": 215.55879199991068,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/reservations",
+      "status_code": 401,
+      "latency_ms": 209.52766699997483,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/summary",
+      "status_code": 401,
+      "latency_ms": 196.23104199990848,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/trends",
+      "status_code": 401,
+      "latency_ms": 194.93945800002166,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/costs/trends/forecast",
+      "status_code": 401,
+      "latency_ms": 194.56624999997985,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/alerts",
+      "status_code": 401,
+      "latency_ms": 187.3585840000942,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/dkim",
+      "status_code": 401,
+      "latency_ms": 172.57800000004409,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/records",
+      "status_code": 401,
+      "latency_ms": 138.12270800008264,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/reports",
+      "status_code": 401,
+      "latency_ms": 168.86104200000318,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/score",
+      "status_code": 401,
+      "latency_ms": 158.51649999990514,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/summary",
+      "status_code": 401,
+      "latency_ms": 169.00479099990662,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/dmarc/trends",
+      "status_code": 401,
+      "latency_ms": 168.40091699998538,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/health",
+      "status_code": 200,
+      "latency_ms": 1823.3827080000538,
+      "response_size": 391,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "version": "2.5.0",
+        "environment": "production",
+        "timestamp": "2026-05-19T02:45:18.003742+00:00",
+        "checks": "<dict keys=['database', 'cache', 'scheduler', 'azure_configured']>"
+      }
+    },
+    {
+      "path": "/api/v1/health/data",
+      "status_code": 200,
+      "latency_ms": 1845.8465420000039,
+      "response_size": 2149,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "timestamp": "2026-05-19T02:45:18.048985+00:00",
+        "threshold_hours": "24",
+        "domains_covered": "<list len=10>",
+        "any_stale": "True",
+        "tenants": "<dict keys=['Head-To-Toe (HTT)', 'Bishops (BCC)', 'Frenchies (FN)', 'Delta Crown Extensions (DCE)', 'Lash Lounge (TLL)']>"
+      }
+    },
+    {
+      "path": "/api/v1/health/detailed",
+      "status_code": 200,
+      "latency_ms": 1835.9494999999697,
+      "response_size": 547,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "version": "2.5.0",
+        "environment": "production",
+        "timestamp": "2026-05-19T02:45:19.237505+00:00",
+        "checks": "<dict keys=['database', 'cache', 'scheduler', 'azure_configured', 'jwt_configured']>"
+      }
+    },
+    {
+      "path": "/api/v1/identity/access-reviews",
+      "status_code": 401,
+      "latency_ms": 1817.3065839999936,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/admin-roles/global-admins",
+      "status_code": 401,
+      "latency_ms": 1816.592958000001,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/admin-roles/privileged-users",
+      "status_code": 401,
+      "latency_ms": 1819.2090830000325,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/admin-roles/security-admins",
+      "status_code": 401,
+      "latency_ms": 134.57791700000143,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/admin-roles/service-principals",
+      "status_code": 401,
+      "latency_ms": 152.52895800006172,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/admin-roles/summary",
+      "status_code": 401,
+      "latency_ms": 109.67554100000143,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/guests",
+      "status_code": 401,
+      "latency_ms": 148.31316699996933,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/licenses",
+      "status_code": 401,
+      "latency_ms": 234.53916599999047,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/privileged",
+      "status_code": 401,
+      "latency_ms": 245.3922079999984,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/stale",
+      "status_code": 401,
+      "latency_ms": 143.18491699998503,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/summary",
+      "status_code": 401,
+      "latency_ms": 142.39329199995154,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/trends",
+      "status_code": 401,
+      "latency_ms": 150.73116700000355,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/identity/users",
+      "status_code": 401,
+      "latency_ms": 150.842750000038,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/metrics/cache",
+      "status_code": 401,
+      "latency_ms": 156.82433400002083,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/metrics/database",
+      "status_code": 401,
+      "latency_ms": 157.39108299999316,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/metrics/health",
+      "status_code": 401,
+      "latency_ms": 157.0416250000335,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight",
+      "status_code": 401,
+      "latency_ms": 146.22879199998806,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/github",
+      "status_code": 401,
+      "latency_ms": 144.1562500000373,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/report/json",
+      "status_code": 401,
+      "latency_ms": 144.31645800004844,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/report/markdown",
+      "status_code": 401,
+      "latency_ms": 225.82529099997828,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/status",
+      "status_code": 401,
+      "latency_ms": 223.82375000006505,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/summary/categories",
+      "status_code": 401,
+      "latency_ms": 224.17937499994878,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/preflight/summary/tenants",
+      "status_code": 401,
+      "latency_ms": 225.1669170000241,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/privacy/consent/categories",
+      "status_code": 200,
+      "latency_ms": 186.9081659999665,
+      "response_size": 834,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "categories": "<dict keys=['necessary', 'functional', 'analytics', 'marketing']>",
+        "cookie_name": "consent_preferences",
+        "version": "1.0"
+      }
+    },
+    {
+      "path": "/api/v1/privacy/consent/preferences",
+      "status_code": 200,
+      "latency_ms": 187.52679199997146,
+      "response_size": 127,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "necessary": "True",
+        "functional": "False",
+        "analytics": "False",
+        "marketing": "False",
+        "timestamp": "None",
+        "gpc_override": "False",
+        "version": "1.0"
+      }
+    },
+    {
+      "path": "/api/v1/privacy/consent/status",
+      "status_code": 200,
+      "latency_ms": 179.4188750000103,
+      "response_size": 131,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "has_consented": "False",
+        "gpc_override": "False",
+        "categories": "<dict keys=['necessary', 'functional', 'analytics', 'marketing']>"
+      }
+    },
+    {
+      "path": "/api/v1/recommendations",
+      "status_code": 401,
+      "latency_ms": 178.26195800000733,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/recommendations/by-category",
+      "status_code": 401,
+      "latency_ms": 162.72016699997494,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/recommendations/by-tenant",
+      "status_code": 401,
+      "latency_ms": 134.6356660000083,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/recommendations/savings-potential",
+      "status_code": 401,
+      "latency_ms": 176.98958299990863,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/recommendations/summary",
+      "status_code": 401,
+      "latency_ms": 156.51587499996822,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources",
+      "status_code": 401,
+      "latency_ms": 237.9646250000178,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/changes",
+      "status_code": 401,
+      "latency_ms": 216.250500000001,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/idle",
+      "status_code": 401,
+      "latency_ms": 211.0366660000409,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/idle/summary",
+      "status_code": 401,
+      "latency_ms": 345.57312499998716,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/orphaned",
+      "status_code": 401,
+      "latency_ms": 242.29287499997554,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/provisioning-standards",
+      "status_code": 401,
+      "latency_ms": 344.4995410000047,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/provisioning-standards/naming/validate",
+      "status_code": 401,
+      "latency_ms": 150.6062920000204,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/provisioning-standards/regions/validate",
+      "status_code": 401,
+      "latency_ms": 150.32579199998963,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/quotas",
+      "status_code": 401,
+      "latency_ms": 150.22862500006795,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/quotas/summary",
+      "status_code": 401,
+      "latency_ms": 133.1785840000066,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/resources/tagging",
+      "status_code": 401,
+      "latency_ms": 192.84370799994122,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/riverside/gaps",
+      "status_code": 401,
+      "latency_ms": 91.87208299999838,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/riverside/maturity-scores",
+      "status_code": 401,
+      "latency_ms": 191.45770899990566,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/riverside/mfa-status",
+      "status_code": 401,
+      "latency_ms": 172.34799999994266,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/riverside/requirements",
+      "status_code": 401,
+      "latency_ms": 171.73654099997293,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/riverside/summary",
+      "status_code": 401,
+      "latency_ms": 161.5569170000981,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/search/",
+      "status_code": 401,
+      "latency_ms": 130.34987499997897,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/search/suggestions",
+      "status_code": 401,
+      "latency_ms": 677.0045409999739,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/status",
+      "status_code": 200,
+      "latency_ms": 676.3414170000033,
+      "response_size": 1208,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "version": "2.5.0",
+        "timestamp": "2026-05-19T02:45:20.697903+00:00",
+        "components": "<dict keys=['database', 'scheduler', 'cache']>",
+        "sync_jobs": "<dict keys=['active_jobs']>",
+        "alerts": "<dict keys=['active_count', 'recent_count']>",
+        "performance": "<dict keys=['cache', 'sync_jobs', 'queries', 'timestamp']>",
+        "cache": "<dict keys=['backend', 'hits', 'misses', 'sets', 'deletes']>"
+      }
+    },
+    {
+      "path": "/api/v1/sync/alerts",
+      "status_code": 401,
+      "latency_ms": 723.9607080000496,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/history",
+      "status_code": 401,
+      "latency_ms": 710.3983329999437,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/metrics",
+      "status_code": 401,
+      "latency_ms": 710.8347089999825,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/partials/sync-alerts",
+      "status_code": 401,
+      "latency_ms": 680.2429169999868,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/partials/sync-status",
+      "status_code": 401,
+      "latency_ms": 308.969124999976,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/status",
+      "status_code": 401,
+      "latency_ms": 362.83962499999234,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/sync/status/health",
+      "status_code": 401,
+      "latency_ms": 308.71683299994856,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/tenants",
+      "status_code": 401,
+      "latency_ms": 309.60091600002215,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/api/v1/threats/cybeta",
+      "status_code": 401,
+      "latency_ms": 309.2684159998953,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/auth/login",
+      "status_code": 200,
+      "latency_ms": 296.66100000008555,
+      "response_size": 15956,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/compliance",
+      "status_code": 401,
+      "latency_ms": 132.71850000000995,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/costs",
+      "status_code": 401,
+      "latency_ms": 220.27091600000404,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/dashboard",
+      "status_code": 401,
+      "latency_ms": 219.79570799999237,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/design-system",
+      "status_code": 401,
+      "latency_ms": 219.40725000001748,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/dmarc",
+      "status_code": 401,
+      "latency_ms": 218.52337500001795,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/health",
+      "status_code": 200,
+      "latency_ms": 228.34341700001914,
+      "response_size": 65,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "version": "2.5.0",
+        "environment": "production"
+      }
+    },
+    {
+      "path": "/health/detailed",
+      "status_code": 200,
+      "latency_ms": 280.1790839999967,
+      "response_size": 413,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "status": "healthy",
+        "version": "2.5.0",
+        "components": "<dict keys=['database', 'scheduler', 'cache', 'azure_configured', 'token_blacklist']>",
+        "cache_metrics": "<dict keys=['backend', 'hit_rate_percent', 'hits', 'misses', 'sets']>",
+        "database_pool": "<dict keys=['size', 'checked_in', 'checked_out', 'overflow']>",
+        "token_blacklist": "<dict keys=['backend', 'size']>"
+      }
+    },
+    {
+      "path": "/healthz/data",
+      "status_code": 200,
+      "latency_ms": 765.2665829999705,
+      "response_size": 2149,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "timestamp": "2026-05-19T02:45:22.045495+00:00",
+        "threshold_hours": "24",
+        "domains_covered": "<list len=10>",
+        "any_stale": "True",
+        "tenants": "<dict keys=['Head-To-Toe (HTT)', 'Bishops (BCC)', 'Frenchies (FN)', 'Delta Crown Extensions (DCE)', 'Lash Lounge (TLL)']>"
+      }
+    },
+    {
+      "path": "/identity",
+      "status_code": 401,
+      "latency_ms": 763.6484590000236,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/login",
+      "status_code": 200,
+      "latency_ms": 764.5417500000349,
+      "response_size": 15956,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/metrics",
+      "status_code": 200,
+      "latency_ms": 924.3226249999452,
+      "response_size": 153506,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/cache",
+      "status_code": 401,
+      "latency_ms": 755.5184579999832,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/health",
+      "status_code": 401,
+      "latency_ms": 627.0769590000782,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/health/deep",
+      "status_code": 401,
+      "latency_ms": 160.9715419999702,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/performance",
+      "status_code": 401,
+      "latency_ms": 159.73462500005553,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/queries",
+      "status_code": 401,
+      "latency_ms": 139.51412500000515,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/monitoring/sync-jobs",
+      "status_code": 401,
+      "latency_ms": 139.76095900000018,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/onboarding/",
+      "status_code": 200,
+      "latency_ms": 148.400041000059,
+      "response_size": 8542,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/onboarding/api/template",
+      "status_code": 200,
+      "latency_ms": 140.2957080000533,
+      "response_size": 3059,
+      "verdict": "ok",
+      "blank_reasons": [],
+      "error": null,
+      "sample": {
+        "template": "<dict keys=['$schema', 'contentVersion', 'metadata', 'parameters', 'variables']>",
+        "metadata": "<dict keys=['org_name', 'generated_at']>"
+      }
+    },
+    {
+      "path": "/partials/active-alerts",
+      "status_code": 401,
+      "latency_ms": 139.50512500002787,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/compliance-gauge",
+      "status_code": 401,
+      "latency_ms": 130.48129200001313,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/cost-summary-card",
+      "status_code": 401,
+      "latency_ms": 159.47537500005637,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/identity-stats",
+      "status_code": 401,
+      "latency_ms": 143.97041699999136,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/resource-stats",
+      "status_code": 401,
+      "latency_ms": 167.04029099992113,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/riverside-badge",
+      "status_code": 401,
+      "latency_ms": 142.1818329999951,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/sync-history-table",
+      "status_code": 401,
+      "latency_ms": 152.37945800004127,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/sync-status-card",
+      "status_code": 401,
+      "latency_ms": 151.82608299994627,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/partials/tenant-sync-status",
+      "status_code": 401,
+      "latency_ms": 180.7000840000228,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/privacy",
+      "status_code": 401,
+      "latency_ms": 165.34074999992754,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/resources",
+      "status_code": 401,
+      "latency_ms": 157.93875000008484,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/riverside",
+      "status_code": 401,
+      "latency_ms": 152.76454100001047,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/sync-dashboard",
+      "status_code": 401,
+      "latency_ms": 112.89258400006474,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/topology",
+      "status_code": 401,
+      "latency_ms": 141.99970799995754,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/topology/mermaid",
+      "status_code": 401,
+      "latency_ms": 121.94683299992448,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    },
+    {
+      "path": "/topology/svg",
+      "status_code": 401,
+      "latency_ms": 122.03733299998021,
+      "response_size": 43,
+      "verdict": "auth_required",
+      "blank_reasons": [],
+      "error": null,
+      "sample": null
+    }
+  ]
+}
