@@ -58,7 +58,7 @@ class TestTenantIsSyncEligible:
 
             assert tenant_is_sync_eligible(_tenant(client_id="tenant-app-id")) is True
 
-    def test_keyvault_mode_rejects_tenant_without_app_id(self):
+    def test_keyvault_mode_attempts_standard_secret_names_without_app_id(self):
         with patch("app.core.sync.utils.settings") as settings:
             settings.use_uami_auth = False
             settings.use_oidc_federation = False
@@ -68,7 +68,7 @@ class TestTenantIsSyncEligible:
                 "shared-credential-placeholder"  # pragma: allowlist secret
             )
             with patch("app.core.sync.utils.get_app_id_for_tenant", return_value=None):
-                assert tenant_is_sync_eligible(_tenant()) is False
+                assert tenant_is_sync_eligible(_tenant()) is True
 
     def test_keyvault_mode_allows_explicit_per_tenant_secret_ref(self):
         with patch("app.core.sync.utils.settings") as settings:
@@ -123,7 +123,7 @@ class TestBuildSyncEligibilityDecision:
         assert decision.reason == "standard_per_tenant_secret_names"
         assert decision.resolved_app_id == "tenant-app-id"
 
-    def test_keyvault_mode_reports_missing_app_id(self):
+    def test_keyvault_mode_reports_standard_secret_names_without_app_id(self):
         decision = build_sync_eligibility_decision(
             tenant_is_active=True,
             tenant_id="tenant-123",
@@ -137,9 +137,9 @@ class TestBuildSyncEligibilityDecision:
             resolved_app_id=None,
         )
 
-        assert decision.eligible is False
+        assert decision.eligible is True
         assert decision.auth_mode == "key_vault_secret"
-        assert decision.reason == "missing_key_vault_app_id"
+        assert decision.reason == "standard_per_tenant_secret_names"
 
     def test_oidc_mode_prefers_resolved_app_id(self):
         decision = build_sync_eligibility_decision(
@@ -203,7 +203,7 @@ class TestDetermineSyncOutcome:
 
 
 class TestGetSyncEligibleTenants:
-    def test_filters_ineligible_tenants(self):
+    def test_filters_inactive_tenants(self):
         tenants = [
             _tenant(
                 tenant_id="good-1",
@@ -215,7 +215,7 @@ class TestGetSyncEligibleTenants:
                 client_id="tenant-app-id",
                 client_secret_ref="secret-ref",  # pragma: allowlist secret
             ),
-            _tenant(tenant_id="bad-1"),
+            _tenant(tenant_id="bad-1", is_active=False),
         ]
         with patch("app.core.sync.utils.settings") as settings:
             settings.use_uami_auth = False

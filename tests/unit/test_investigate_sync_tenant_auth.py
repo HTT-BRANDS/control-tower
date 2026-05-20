@@ -72,8 +72,8 @@ def test_classifies_keyvault_tenants_with_explicit_ref_and_standard_pair(tmp_pat
     assert explicit["explicit_secret_metadata_present"] is True
     assert explicit["scheduler_eligible"] is True
     assert standard["expected_auth_path"] == "standard_key_vault_secret_pair"
-    assert standard["scheduler_eligible"] is False
-    assert standard["scheduler_reason"] == "missing_db_declared_secret_path"
+    assert standard["scheduler_eligible"] is True
+    assert standard["scheduler_reason"] == "standard_per_tenant_secret_names"
 
 
 def test_classifies_oidc_runtime_from_app_settings(tmp_path):
@@ -121,7 +121,7 @@ def test_render_markdown_includes_table_and_counts():
             {
                 "name": "Noisy Tenant",
                 "scheduler_eligible": False,
-                "scheduler_reason": "missing_db_declared_secret_path",
+                "scheduler_reason": "standard_per_tenant_secret_names",
                 "expected_auth_path": "no_declared_secret_path",
                 "config_status": "ineligible",
                 "yaml_known": True,
@@ -139,7 +139,7 @@ def test_render_markdown_includes_table_and_counts():
     assert "Runtime mode: **secret_keyvault**" in markdown
     assert "`no_declared_secret_path`: 1" in markdown
     assert "Noisy Tenant" in markdown
-    assert "`missing_db_declared_secret_path`" in markdown
+    assert "`standard_per_tenant_secret_names`" in markdown
     # Pin that the rendered table actually surfaces the new columns the
     # render path now depends on; otherwise drift here goes undetected.
     assert "`ineligible`" in markdown

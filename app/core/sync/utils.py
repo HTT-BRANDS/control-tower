@@ -124,19 +124,17 @@ def build_sync_eligibility_decision(
             resolved_app_id=tenant_client_id,
         )
 
-    standard_app_id = resolved_app_id or tenant_client_id
-    if standard_app_id:
-        return SyncEligibilityDecision(
-            True,
-            "key_vault_secret",
-            "standard_per_tenant_secret_names",
-            resolved_app_id=standard_app_id,
-        )
-
+    # Standard Key Vault naming is a runtime-resolved credential path:
+    # ``{tenant-id}-client-id`` and ``{tenant-id}-client-secret``. This helper
+    # intentionally does not call Key Vault, so an active tenant in KV mode is
+    # eligible to *attempt* that path. Missing metadata then becomes a concrete
+    # sync failure with Azure/Key Vault evidence instead of silently filtering
+    # every tenant and reporting a fake successful zero-record run. Yuck.
     return SyncEligibilityDecision(
-        False,
+        True,
         "key_vault_secret",
-        "missing_key_vault_app_id",
+        "standard_per_tenant_secret_names",
+        resolved_app_id=resolved_app_id or tenant_client_id,
     )
 
 
