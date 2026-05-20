@@ -45,7 +45,7 @@ def register_exception_handlers(app, settings, logger) -> None:
         '<h1 id="nf-heading">404</h1>'
         "<h2>We can't find that page</h2>"
         "<p>The URL you followed doesn't match any page in HTT Control "
-        'Tower. If you arrived here from a bookmark, the link may have '
+        "Tower. If you arrived here from a bookmark, the link may have "
         "moved during a recent release.</p>"
         '<a href="/">Back to dashboard</a>'
         "</main></body></html>"

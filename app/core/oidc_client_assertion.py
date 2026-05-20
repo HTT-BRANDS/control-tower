@@ -62,9 +62,7 @@ ASSERTION_AUDIENCE: str = "api://AzureADTokenExchange"
 
 #: The grant_type extension that tells the token endpoint to treat the
 #: ``client_assertion`` field as the client credential. RFC 7521.
-CLIENT_ASSERTION_TYPE: str = (
-    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-)
+CLIENT_ASSERTION_TYPE: str = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
 
 
 class FederatedAssertionError(RuntimeError):
@@ -128,9 +126,7 @@ def get_federated_client_assertion() -> str:
         # been known to return AccessToken instances with empty .token
         # strings during quota-throttle events. Better to fail loud here
         # than to send an empty client_assertion to Entra.
-        raise FederatedAssertionError(
-            "Managed Identity returned an empty assertion token"
-        )
+        raise FederatedAssertionError("Managed Identity returned an empty assertion token")
 
     return token.token
 

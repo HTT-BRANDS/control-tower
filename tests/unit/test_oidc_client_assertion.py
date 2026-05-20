@@ -21,7 +21,6 @@ from app.core.oidc_client_assertion import (
     get_federated_client_assertion,
 )
 
-
 # ── Top-level dispatcher: build_token_exchange_credentials ─────────────────
 
 
@@ -34,13 +33,12 @@ class TestBuildTokenExchangeCredentials:
     def test_secret_mode_returns_client_secret(self):
         fields = build_token_exchange_credentials(
             client_id="cid",
-            client_secret="static-secret",  # noqa: S106 — test fixture
+            client_secret="static-secret",
             use_oidc_federation=False,
         )
         assert fields == {"client_id": "cid", "client_secret": "static-secret"}
         assert "client_assertion" not in fields, (
-            "ct-oidc-migration: secret-mode must NOT smuggle a federated "
-            "assertion into the request"
+            "ct-oidc-migration: secret-mode must NOT smuggle a federated assertion into the request"
         )
 
     def test_oidc_mode_returns_client_assertion(self, monkeypatch: pytest.MonkeyPatch):
@@ -48,13 +46,11 @@ class TestBuildTokenExchangeCredentials:
         and returns assertion fields. NO client_secret in the output."""
         from app.core import oidc_client_assertion as mod
 
-        monkeypatch.setattr(
-            mod, "get_federated_client_assertion", lambda: "fake.jwt.assertion"
-        )
+        monkeypatch.setattr(mod, "get_federated_client_assertion", lambda: "fake.jwt.assertion")
 
         fields = build_token_exchange_credentials(
             client_id="cid",
-            client_secret="static-secret",  # noqa: S106 — should be ignored
+            client_secret="static-secret",
             use_oidc_federation=True,
         )
         assert fields["client_id"] == "cid"
@@ -75,7 +71,7 @@ class TestBuildTokenExchangeCredentials:
 
         fields = build_token_exchange_credentials(
             client_id="cid",
-            client_secret="leftover-secret",  # noqa: S106 — test fixture
+            client_secret="leftover-secret",
             use_oidc_federation=True,
         )
         assert "client_secret" not in fields
@@ -119,7 +115,7 @@ class TestGetFederatedClientAssertion:
 
     def test_returns_token_from_mi(self, monkeypatch: pytest.MonkeyPatch):
         fake_token = MagicMock()
-        fake_token.token = "header.payload.signature"  # noqa: S105 — test fixture
+        fake_token.token = "header.payload.signature"
 
         fake_mi = MagicMock()
         fake_mi.get_token.return_value = fake_token
@@ -144,9 +140,7 @@ class TestGetFederatedClientAssertion:
             "update at the same time."
         )
 
-    def test_raises_federated_assertion_error_when_mi_fails(
-        self, monkeypatch: pytest.MonkeyPatch
-    ):
+    def test_raises_federated_assertion_error_when_mi_fails(self, monkeypatch: pytest.MonkeyPatch):
         """Any exception from the MI path is re-wrapped as
         FederatedAssertionError so callers can distinguish OIDC-broken
         from Entra-rejection. NEVER let azure-identity exceptions escape."""
@@ -225,7 +219,4 @@ class TestConstants:
 
     def test_client_assertion_type_constant(self):
         # RFC 7521 fixed URN. Microsoft will reject anything else.
-        assert (
-            CLIENT_ASSERTION_TYPE
-            == "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-        )
+        assert CLIENT_ASSERTION_TYPE == "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"

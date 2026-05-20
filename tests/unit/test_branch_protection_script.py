@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "gh-setup.sh"
 DOC = ROOT / "docs" / "GITHUB_CLI_GUIDE.md"

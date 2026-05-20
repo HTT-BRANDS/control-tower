@@ -38,9 +38,9 @@ def _noop_cache(cache_key):  # pragma: no cover - test fixture
 
 with patch("app.core.cache.cached", _noop_cache):
     sys.modules.pop("app.api.services.cost_service", None)
-    from app.api.services.cost_service import CostService  # noqa: E402
+    from app.api.services.cost_service import CostService
 
-from app.models.cost import CostSnapshot  # noqa: E402
+from app.models.cost import CostSnapshot
 
 
 def _empty_cost_query() -> MagicMock:

@@ -305,10 +305,7 @@ async def api_health_check_detailed(
     #                          Azure-side network blip, not our bug.
     checks["azure_configured"] = await _summarize_azure_configuration(settings)
     azure_status = checks["azure_configured"]["status"]
-    if (
-        azure_status in {"missing", "unauthenticated"}
-        and overall_status == "healthy"
-    ):
+    if azure_status in {"missing", "unauthenticated"} and overall_status == "healthy":
         overall_status = "degraded"
 
     # JWT configuration

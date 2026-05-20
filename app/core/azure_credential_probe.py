@@ -396,7 +396,9 @@ async def probe_oidc_federation(
         # disambiguate: ImportError / ModuleNotFoundError -> unreachable.
         exc_name = type(exc).__name__
         status_for_result = (
-            "unreachable" if exc_name in {"ImportError", "ModuleNotFoundError"} else "unauthenticated"
+            "unreachable"
+            if exc_name in {"ImportError", "ModuleNotFoundError"}
+            else "unauthenticated"
         )
         # Try to extract an AADSTS code from the SDK's error message — Azure
         # threads them through verbatim, e.g. "AADSTS70011: scope is invalid".

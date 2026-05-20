@@ -261,9 +261,7 @@ async def azure_oauth_callback(
     # absent — that's the entire point of the migration. So we only require
     # client_id (always needed) and client_secret (ONLY when not federated).
     if not settings.azure_ad_client_id:
-        logger.error(
-            "Azure AD OAuth2 not configured: missing AZURE_AD_CLIENT_ID"
-        )
+        logger.error("Azure AD OAuth2 not configured: missing AZURE_AD_CLIENT_ID")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Azure AD authentication is not configured. Contact your administrator.",

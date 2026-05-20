@@ -489,9 +489,8 @@ class MonitoringService:
                 .limit(zero_threshold)
                 .all()
             )
-            is_consecutive_zero_streak = (
-                len(recent_runs) >= zero_threshold
-                and all(r.records_processed == 0 for r in recent_runs)
+            is_consecutive_zero_streak = len(recent_runs) >= zero_threshold and all(
+                r.records_processed == 0 for r in recent_runs
             )
 
             if is_consecutive_zero_streak:

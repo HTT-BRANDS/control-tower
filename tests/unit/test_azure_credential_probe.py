@@ -13,7 +13,6 @@ health check" PR can't quietly regress us back to shape-only.
 
 from __future__ import annotations
 
-import asyncio
 import time
 from typing import Any
 
@@ -29,7 +28,6 @@ from app.core.azure_credential_probe import (
     probe_client_credential,
     reset_probe_cache,
 )
-
 
 # ── Test fixtures ──────────────────────────────────────────────────────────
 
@@ -72,7 +70,9 @@ class TestStatusMapping:
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -83,6 +83,7 @@ class TestStatusMapping:
     @pytest.mark.asyncio
     async def test_unauthenticated_on_401_with_aadsts_code(self, monkeypatch: pytest.MonkeyPatch):
         """The exact ct-jxe scenario: expired secret -> AADSTS7000215."""
+
         def _handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
                 401,
@@ -98,7 +99,9 @@ class TestStatusMapping:
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -112,6 +115,7 @@ class TestStatusMapping:
     @pytest.mark.asyncio
     async def test_unauthenticated_on_400_invalid_grant(self, monkeypatch: pytest.MonkeyPatch):
         """Azure also returns 400 for some credential failures."""
+
         def _handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(
                 400,
@@ -123,7 +127,9 @@ class TestStatusMapping:
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -137,7 +143,9 @@ class TestStatusMapping:
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -151,7 +159,9 @@ class TestStatusMapping:
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -163,7 +173,9 @@ class TestStatusMapping:
     @pytest.mark.asyncio
     async def test_missing_when_creds_absent_in_prod(self):
         result = await probe_client_credential(
-            tenant_id=None, client_id=None, client_secret=None,
+            tenant_id=None,
+            client_id=None,
+            client_secret=None,
             token_endpoint="https://login.microsoftonline.com/common/oauth2/v2.0/token",
             is_production=True,
         )
@@ -174,7 +186,9 @@ class TestStatusMapping:
         """Don't poison local-dev /health with degraded just because the dev
         forgot to set AZURE_AD_*. ct-czv AC #2."""
         result = await probe_client_credential(
-            tenant_id=None, client_id=None, client_secret=None,
+            tenant_id=None,
+            client_id=None,
+            client_secret=None,
             token_endpoint="https://login.microsoftonline.com/common/oauth2/v2.0/token",
             is_production=False,
         )
@@ -185,7 +199,9 @@ class TestStatusMapping:
         """Two-out-of-three set is just as broken as zero-out-of-three; must
         not trip a real network call."""
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret=None,
+            tenant_id="t",
+            client_id="c",
+            client_secret=None,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -209,11 +225,13 @@ class TestCaching:
             return httpx.Response(200, json={"access_token": "x"})
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
-        kwargs = dict(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
-            token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
-            is_production=True,
-        )
+        kwargs = {
+            "tenant_id": "t",
+            "client_id": "c",
+            "client_secret": "s" * 40,
+            "token_endpoint": "https://login.microsoftonline.com/t/oauth2/v2.0/token",
+            "is_production": True,
+        }
         r1 = await probe_client_credential(**kwargs)
         r2 = await probe_client_credential(**kwargs)
         r3 = await probe_client_credential(**kwargs)
@@ -236,11 +254,13 @@ class TestCaching:
             return httpx.Response(200, json={"access_token": "x"})
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
-        kwargs = dict(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
-            token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
-            is_production=True,
-        )
+        kwargs = {
+            "tenant_id": "t",
+            "client_id": "c",
+            "client_secret": "s" * 40,
+            "token_endpoint": "https://login.microsoftonline.com/t/oauth2/v2.0/token",
+            "is_production": True,
+        }
         await probe_client_credential(**kwargs, use_cache=False)
         await probe_client_credential(**kwargs, use_cache=False)
         assert call_count == 2
@@ -258,11 +278,11 @@ class TestCaching:
             return httpx.Response(200, json={"access_token": "x"})
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
-        common = dict(
-            client_secret="s" * 40,
-            token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
-            is_production=True,
-        )
+        common = {
+            "client_secret": "s" * 40,
+            "token_endpoint": "https://login.microsoftonline.com/t/oauth2/v2.0/token",
+            "is_production": True,
+        }
         await probe_client_credential(tenant_id="t1", client_id="c1", **common)
         await probe_client_credential(tenant_id="t1", client_id="c2", **common)
         await probe_client_credential(tenant_id="t2", client_id="c1", **common)
@@ -289,11 +309,13 @@ class TestCaching:
             return httpx.Response(200, json={"access_token": "x"})
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
-        kwargs = dict(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
-            token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
-            is_production=True,
-        )
+        kwargs = {
+            "tenant_id": "t",
+            "client_id": "c",
+            "client_secret": "s" * 40,
+            "token_endpoint": "https://login.microsoftonline.com/t/oauth2/v2.0/token",
+            "is_production": True,
+        }
 
         # First call populates cache.
         await probe_client_credential(**kwargs)
@@ -323,12 +345,15 @@ class TestSafetyInvariants:
     async def test_never_raises_on_garbage_response(self, monkeypatch: pytest.MonkeyPatch):
         """A token endpoint returning non-JSON garbage must still produce a
         ProbeResult, not a 500 in /health/detailed."""
+
         def _handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(500, content=b"<html>500 Internal Server Error</html>")
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -344,12 +369,15 @@ class TestSafetyInvariants:
     async def test_never_raises_on_internal_exception(self, monkeypatch: pytest.MonkeyPatch):
         """If httpx itself blows up in some weird way, the probe must still
         return a ProbeResult."""
+
         def _handler(request: httpx.Request) -> httpx.Response:
             raise RuntimeError("simulated unexpected error")
 
         _patch_httpx(monkeypatch, httpx.MockTransport(_handler))
         result = await probe_client_credential(
-            tenant_id="t", client_id="c", client_secret="s" * 40,
+            tenant_id="t",
+            client_id="c",
+            client_secret="s" * 40,
             token_endpoint="https://login.microsoftonline.com/t/oauth2/v2.0/token",
             is_production=True,
         )
@@ -381,6 +409,7 @@ class TestSafetyInvariants:
         timeout is exactly 5s without a real-time fixture, but we CAN
         verify the timeout config knob exists and is finite."""
         from app.core.azure_credential_probe import PROBE_TIMEOUT_SECONDS
+
         assert 0 < PROBE_TIMEOUT_SECONDS < 30, (
             "ct-jxe: PROBE_TIMEOUT_SECONDS must be finite and aggressive "
             "(health checks must not hang)"
@@ -451,7 +480,7 @@ class TestOIDCProbe:
 
         # Build a credential whose get_token returns a fake AccessToken.
         fake_token = MagicMock()
-        fake_token.token = "fake.jwt"  # noqa: S105 — test fixture, not a real secret
+        fake_token.token = "fake.jwt"
         fake_credential = MagicMock()
         fake_credential.get_token.return_value = fake_token
 
@@ -464,7 +493,9 @@ class TestOIDCProbe:
         monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
 
         result = await probe_oidc_federation(
-            tenant_id="tid", client_id="cid", is_production=True,
+            tenant_id="tid",
+            client_id="cid",
+            is_production=True,
         )
         assert result.status == "configured"
         assert result.auth_mode == "oidc", (
@@ -509,7 +540,9 @@ class TestOIDCProbe:
         monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
 
         result = await probe_oidc_federation(
-            tenant_id="tid", client_id="cid", is_production=True,
+            tenant_id="tid",
+            client_id="cid",
+            is_production=True,
         )
         assert result.status == "unauthenticated"
         assert result.auth_mode == "oidc"
@@ -542,7 +575,9 @@ class TestOIDCProbe:
         monkeypatch.setattr(oidc_mod, "get_oidc_provider", lambda: fake_provider)
 
         result = await probe_oidc_federation(
-            tenant_id="tid", client_id="cid", is_production=True,
+            tenant_id="tid",
+            client_id="cid",
+            is_production=True,
         )
         assert result.status == "unreachable"
         assert result.auth_mode == "oidc"
@@ -555,7 +590,9 @@ class TestOIDCProbe:
         # point. So 'missing' here means tenant_id or client_id absent, not
         # secret absent.
         result = await probe_oidc_federation(
-            tenant_id=None, client_id="cid", is_production=True,
+            tenant_id=None,
+            client_id="cid",
+            is_production=True,
         )
         assert result.status == "missing"
         assert result.auth_mode == "oidc"
@@ -570,7 +607,9 @@ class TestOIDCProbe:
         from app.core.azure_credential_probe import probe_oidc_federation
 
         result = await probe_oidc_federation(
-            tenant_id=None, client_id=None, is_production=False,
+            tenant_id=None,
+            client_id=None,
+            is_production=False,
         )
         assert result.status == "not_required"
         assert result.auth_mode == "oidc"
@@ -609,11 +648,14 @@ class TestDispatcher:
         result = await probe_active_credential(settings=settings)
         assert result.auth_mode == "oidc"
         oidc_stub.assert_awaited_once()
-        secret_stub.assert_not_called(), (
-            "ct-oidc-migration: when use_oidc_federation=True, the secret-"
-            "path probe must NOT be called. If it is, the dispatcher is "
-            "OR-ing the two probes instead of dispatching, which would let "
-            "a stale secret-mode 'configured' mask a broken OIDC config."
+        (
+            secret_stub.assert_not_called(),
+            (
+                "ct-oidc-migration: when use_oidc_federation=True, the secret-"
+                "path probe must NOT be called. If it is, the dispatcher is "
+                "OR-ing the two probes instead of dispatching, which would let "
+                "a stale secret-mode 'configured' mask a broken OIDC config."
+            ),
         )
 
     @pytest.mark.asyncio
@@ -636,7 +678,7 @@ class TestDispatcher:
         settings.use_oidc_federation = False
         settings.azure_ad_tenant_id = "tid"
         settings.azure_ad_client_id = "cid"
-        settings.azure_ad_client_secret = "s"  # noqa: S105 — test fixture
+        settings.azure_ad_client_secret = "s"
         settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
         settings.is_production = True
 
@@ -668,7 +710,7 @@ class TestDispatcher:
         class _BareSettings:
             azure_ad_tenant_id = "tid"
             azure_ad_client_id = "cid"
-            azure_ad_client_secret = "s"  # noqa: S105 — test fixture
+            azure_ad_client_secret = "s"
             azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
             is_production = True
 

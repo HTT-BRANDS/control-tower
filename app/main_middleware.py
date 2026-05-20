@@ -51,6 +51,7 @@ def _register_htmx_partial_no_push_url(app) -> None:
     HTMX docs: HX-Push-Url response header overrides hx-push-url attrs.
     https://htmx.org/reference/#response_headers
     """
+
     @app.middleware("http")
     async def htmx_partial_no_push_url(request: Request, call_next):
         response = await call_next(request)

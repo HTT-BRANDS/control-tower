@@ -67,6 +67,4 @@ def test_dev_form_gating_saves_bytes(login_template, fake_request):
 def test_error_region_has_alert_role(login_template, fake_request):
     """F4 from Round 1 design audit — error region must be announced (WCAG 4.1.3)."""
     html = _render(login_template, is_dev=False, request=fake_request)
-    assert 'role="alert"' in html, (
-        "login error region must have role=alert for screen reader users"
-    )
+    assert 'role="alert"' in html, "login error region must have role=alert for screen reader users"

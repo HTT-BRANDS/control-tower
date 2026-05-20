@@ -27,7 +27,6 @@ the endpoint exists.
 
 from __future__ import annotations
 
-import os
 from unittest.mock import patch
 
 import pytest
@@ -114,6 +113,4 @@ def test_production_environment_always_404s(monkeypatch):
             "/api/v1/auth/staging-token",
             headers={"X-Staging-Admin-Key": "test-key-abc123"},
         )
-        assert r.status_code == 404, (
-            "ct-wvn: production must always 404, even with correct key"
-        )
+        assert r.status_code == 404, "ct-wvn: production must always 404, even with correct key"

@@ -28,10 +28,10 @@ def _noop_cache(cache_key):  # pragma: no cover - test fixture
 
 with patch("app.core.cache.cached", _noop_cache):
     sys.modules.pop("app.api.services.identity_service", None)
-    from app.api.services.identity_service import IdentityService  # noqa: E402
+    from app.api.services.identity_service import IdentityService
 
-from app.models.identity import PrivilegedUser  # noqa: E402
-from app.models.tenant import Tenant  # noqa: E402
+from app.models.identity import PrivilegedUser
+from app.models.tenant import Tenant
 
 
 def _make_user(int_id: int, upn: str, tenant_id: str = "t1") -> MagicMock:

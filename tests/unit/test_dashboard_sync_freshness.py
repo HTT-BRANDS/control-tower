@@ -26,7 +26,6 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-
 # ── ct-zNN ────────────────────────────────────────────────────────────
 
 
@@ -45,11 +44,7 @@ def test_dashboard_route_uses_completed_not_success_for_sync_status():
         text = py_file.read_text()
         # Only flag lines that look like a SyncJobLog status comparison.
         for lineno, line in enumerate(text.splitlines(), 1):
-            if (
-                "SyncJobLog.status" in line
-                and '"success"' in line
-                and "==" in line
-            ):
+            if "SyncJobLog.status" in line and '"success"' in line and "==" in line:
                 bad.append(f"{py_file}:{lineno}: {line.strip()}")
     assert not bad, (
         "ct-zNN regression: SyncJobLog.status == 'success' will always match "
@@ -62,11 +57,7 @@ def test_dashboard_route_filters_on_completed_status():
     from pathlib import Path
 
     src = (
-        Path(__file__).resolve().parents[2]
-        / "app"
-        / "api"
-        / "routes"
-        / "dashboard.py"
+        Path(__file__).resolve().parents[2] / "app" / "api" / "routes" / "dashboard.py"
     ).read_text()
     assert 'SyncJobLog.status == "completed"' in src, (
         "ct-zNN: dashboard route must filter on 'completed' status"
@@ -148,13 +139,12 @@ def test_base_template_footer_no_longer_hardcodes_never():
 
 def test_base_template_footer_renders_timeago_with_real_timestamp():
     """End-to-end render: passing a real timestamp produces a relative string."""
-    from jinja2 import Environment, FileSystemLoader, select_autoescape
     from pathlib import Path
     from types import SimpleNamespace
 
-    templates_dir = (
-        Path(__file__).resolve().parents[2] / "app" / "templates"
-    )
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+    templates_dir = Path(__file__).resolve().parents[2] / "app" / "templates"
 
     # Build an env that mimics the real one's relevant features.
     env = Environment(

@@ -18,21 +18,13 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import pytest
-
-
 MIGRATION_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "alembic"
-    / "versions"
-    / "012_real_performance_indexes.py"
+    Path(__file__).resolve().parents[2] / "alembic" / "versions" / "012_real_performance_indexes.py"
 )
 
 
 def _load_migration_module():
-    spec = importlib.util.spec_from_file_location(
-        "migration_012", MIGRATION_PATH
-    )
+    spec = importlib.util.spec_from_file_location("migration_012", MIGRATION_PATH)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -90,9 +82,8 @@ def test_every_indexed_column_is_real():
         for col in columns:
             if col not in table_cols:
                 bad.append(f"{table}.{col} (index {index_name})")
-    assert not bad, (
-        "ct-6uj: migration 012 indexes columns that don't exist:\n"
-        + "\n".join(f"  - {b}" for b in bad)
+    assert not bad, "ct-6uj: migration 012 indexes columns that don't exist:\n" + "\n".join(
+        f"  - {b}" for b in bad
     )
 
 
@@ -132,9 +123,7 @@ def test_downgrade_drops_what_upgrade_creates():
         "ct-6uj: downgrade must iterate _INDEX_SPECS so it stays in sync "
         "with upgrade automatically — no copy-paste drift allowed"
     )
-    assert "op.drop_index(" in downgrade_block, (
-        "ct-6uj: downgrade must actually call op.drop_index"
-    )
+    assert "op.drop_index(" in downgrade_block, "ct-6uj: downgrade must actually call op.drop_index"
     assert "_index_exists(" in downgrade_block, (
         "ct-6uj: downgrade must guard drops with _index_exists for idempotency"
     )
@@ -155,6 +144,7 @@ def test_no_phantom_table_references_in_any_migration():
     or DROP tables (lifecycle migrations).
     """
     import re
+
     import app.models  # noqa: F401
     from app.core.database import Base
 

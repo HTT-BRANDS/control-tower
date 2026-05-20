@@ -206,20 +206,26 @@ step_2() {
     fi
     log_info "App reg object ID: ${app_object_id}"
 
-    log_info "Checking for existing federated credential named '${FED_CRED_NAME}'..."
+    # Azure deduplicates federated credentials on the (issuer, subject)
+    # tuple, NOT the name. So we MUST check that tuple — looking up by
+    # name alone gives us a false 'no duplicate' and Azure rejects the
+    # create with a confusing error. (Real example: 'governance-platform-
+    # staging' already trusts our MI principal under a different name.)
+    local issuer="https://login.microsoftonline.com/${TENANT_ID}/v2.0"
+    log_info "Checking for existing federated credential trusting our MI..."
+    log_info "  (matching by issuer=${issuer} + subject=${mi_principal})"
     local existing
     existing=$(az ad app federated-credential list --id "${app_object_id}" \
-        --query "[?name=='${FED_CRED_NAME}'] | [0]" -o json 2>/dev/null || echo 'null')
+        --query "[?issuer=='${issuer}' && subject=='${mi_principal}'] | [0]" \
+        -o json 2>/dev/null || echo 'null')
 
     if [[ "${existing}" != "null" && -n "${existing}" ]]; then
-        log_ok "Federated credential '${FED_CRED_NAME}' already exists. Skipping create."
-        local existing_subject
-        existing_subject=$(echo "${existing}" | jq -r '.subject')
-        if [[ "${existing_subject}" != "${mi_principal}" ]]; then
-            log_warn "Existing subject (${existing_subject}) ≠ current MI principal (${mi_principal})"
-            log_warn "Delete the existing credential first if you want to point at the new MI:"
-            log_warn "    az ad app federated-credential delete --id ${app_object_id} --federated-credential-id <id>"
-        fi
+        local existing_name
+        existing_name=$(echo "${existing}" | jq -r '.name')
+        log_ok "Federated credential already exists under name '${existing_name}'"
+        log_info "  (subject + issuer + audience all match — no work needed)"
+        log_info "  If you wanted the canonical name '${FED_CRED_NAME}', you'd need"
+        log_info "  to delete the existing one first — but functionally it's irrelevant."
         return 0
     fi
 
@@ -513,18 +519,20 @@ cmd_status() {
         log_warn "App Service MI NOT bound"
     fi
 
-    # 2. Federated credential?
+    # 2. Federated credential? Match by (issuer, subject) tuple — see
+    # step_2 docstring for why name-matching is incorrect.
     if [[ -n "${APP_REG_CLIENT_ID}" ]]; then
         local app_oid
         app_oid=$(az ad app show --id "${APP_REG_CLIENT_ID}" --query id -o tsv 2>/dev/null || true)
-        if [[ -n "${app_oid}" ]]; then
-            local fed_count
-            fed_count=$(az ad app federated-credential list --id "${app_oid}" \
-                --query "length([?name=='${FED_CRED_NAME}'])" -o tsv 2>/dev/null || echo 0)
-            if [[ "${fed_count}" -gt 0 ]]; then
-                log_ok "Federated credential '${FED_CRED_NAME}' present on app reg"
+        if [[ -n "${app_oid}" && -n "${mi}" ]]; then
+            local issuer="https://login.microsoftonline.com/${TENANT_ID}/v2.0"
+            local fed_match
+            fed_match=$(az ad app federated-credential list --id "${app_oid}" \
+                --query "[?issuer=='${issuer}' && subject=='${mi}'] | [0].name" -o tsv 2>/dev/null || echo "")
+            if [[ -n "${fed_match}" ]]; then
+                log_ok "Federated credential present (name='${fed_match}', subject=MI principal)"
             else
-                log_warn "Federated credential '${FED_CRED_NAME}' NOT present on app reg"
+                log_warn "No federated credential trusts the current MI principal"
             fi
             local secret_count
             secret_count=$(az ad app credential list --id "${app_oid}" \

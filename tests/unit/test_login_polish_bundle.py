@@ -20,14 +20,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
+LOGIN_HTML = (Path(__file__).resolve().parents[2] / "app" / "templates" / "login.html").read_text()
 
-LOGIN_HTML = (
-    Path(__file__).resolve().parents[2] / "app" / "templates" / "login.html"
-).read_text()
-
-BASE_HTML = (
-    Path(__file__).resolve().parents[2] / "app" / "templates" / "base.html"
-).read_text()
+BASE_HTML = (Path(__file__).resolve().parents[2] / "app" / "templates" / "base.html").read_text()
 
 
 # ── Static template assertions ────────────────────────────────────────
@@ -80,9 +75,7 @@ def test_ms_button_has_visible_focus_ring():
     """Item 7: focus ring must be a contrasting color (amber), not same as bg."""
     # We look for the focus-visible:ring-amber-* utility on the button.
     btn_block = LOGIN_HTML.split('id="azure-login-btn"', 1)[1].split("</button>", 1)[0]
-    assert "focus-visible:ring" in btn_block, (
-        "ct-tdu: MS button must have a focus-visible ring"
-    )
+    assert "focus-visible:ring" in btn_block, "ct-tdu: MS button must have a focus-visible ring"
     assert "amber" in btn_block, (
         "ct-tdu: focus ring color must be amber (high contrast vs both the dark "
         "button background AND the white card behind it)"
@@ -102,9 +95,7 @@ def test_legacy_login_301_redirects_to_canonical():
     """Item 8: /login → 301 → /auth/login (single canonical URL)."""
     client = TestClient(app, follow_redirects=False)
     r = client.get("/login")
-    assert r.status_code == 301, (
-        f"ct-tdu: /login must be a permanent redirect; got {r.status_code}"
-    )
+    assert r.status_code == 301, f"ct-tdu: /login must be a permanent redirect; got {r.status_code}"
     assert r.headers["location"].endswith("/auth/login")
 
 

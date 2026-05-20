@@ -17,7 +17,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "staging-keepalive.yml"
 
@@ -27,9 +26,7 @@ def _load():
 
 
 def test_keepalive_workflow_exists():
-    assert WORKFLOW.exists(), (
-        "ct-boh: staging-keepalive.yml must exist to mitigate B1 cold-starts"
-    )
+    assert WORKFLOW.exists(), "ct-boh: staging-keepalive.yml must exist to mitigate B1 cold-starts"
 
 
 def test_keepalive_runs_at_5_minute_cadence():
@@ -81,8 +78,7 @@ def test_keepalive_uses_concurrency_to_avoid_pileup():
     we'd queue up indefinitely."""
     wf = _load()
     assert "concurrency" in wf, (
-        "ct-boh: keepalive must declare concurrency to avoid run-pileup "
-        "during slow-warm scenarios"
+        "ct-boh: keepalive must declare concurrency to avoid run-pileup during slow-warm scenarios"
     )
     assert wf["concurrency"].get("cancel-in-progress") is True, (
         "ct-boh: concurrency.cancel-in-progress must be true"

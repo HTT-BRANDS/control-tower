@@ -87,9 +87,7 @@ class CostService:
         if tenant_ids:
             scoped_tenant_count = len(set(tenant_ids))
         else:
-            scoped_tenant_count = (
-                self.db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
-            )
+            scoped_tenant_count = self.db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
         sub_ids = {c.subscription_id for c in current_costs}
 
         # Top services by cost

@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "rotate-azure-secret.sh"
 
@@ -54,8 +53,7 @@ def test_secret_never_passed_via_argv(src: str):
     # What we DO NOT want: --settings AZURE_AD_CLIENT_SECRET=$1 or similar
     # positional-arg pattern.
     assert "${SETTING_NAME}=${NEW_SECRET}" in src, (
-        "ct-jxe: the az appsetting assignment must use the variable form, "
-        "not a raw inline secret"
+        "ct-jxe: the az appsetting assignment must use the variable form, not a raw inline secret"
     )
     # And `gh secret set` must read from stdin (printf piped in), not --body.
     # Match only the dangerous *call-site* pattern (gh secret set ... --body)
@@ -64,12 +62,9 @@ def test_secret_never_passed_via_argv(src: str):
     # first (lines whose first non-whitespace char is `#`).
     assert "gh secret set" in src
     non_comment_src = "\n".join(
-        line for line in src.splitlines()
-        if not line.lstrip().startswith("#")
+        line for line in src.splitlines() if not line.lstrip().startswith("#")
     )
-    dangerous_body_call = re.search(
-        r"gh\s+secret\s+set[^\n]*--body", non_comment_src
-    )
+    dangerous_body_call = re.search(r"gh\s+secret\s+set[^\n]*--body", non_comment_src)
     assert dangerous_body_call is None, (
         "ct-jxe: gh secret set must read from stdin (piped via printf), "
         "NOT from --body — --body puts the secret in argv where it can "
@@ -98,8 +93,7 @@ def test_min_length_validation(src: str):
         "ct-jxe: must validate ${#NEW_SECRET} length to catch truncated pastes"
     )
     assert re.search(r"\b32\b|\bminimum length\b", src), (
-        "ct-jxe: must enforce a minimum length of at least 32 chars "
-        "(default Azure secrets are 40)"
+        "ct-jxe: must enforce a minimum length of at least 32 chars (default Azure secrets are 40)"
     )
 
 
@@ -107,9 +101,7 @@ def test_supports_dry_run(src: str):
     """A rotation script with no dry-run mode is impossible to test safely.
     Tyler needs to be able to validate az/gh auth + see the plan without
     actually touching the live secret."""
-    assert "--dry-run" in src, (
-        "ct-jxe: must support --dry-run for safe pre-flight validation"
-    )
+    assert "--dry-run" in src, "ct-jxe: must support --dry-run for safe pre-flight validation"
     assert "DRY_RUN=true" in src or 'DRY_RUN="true"' in src, (
         "ct-jxe: dry-run must short-circuit before any az/gh writes"
     )
@@ -119,9 +111,7 @@ def test_supports_skip_flags_for_partial_rotation(src: str):
     """If gh CLI isn't installed, or if Tyler wants to rotate just prod first
     and verify before touching staging, the script should support it."""
     for flag in ("--skip-prod", "--skip-staging", "--skip-github"):
-        assert flag in src, (
-            f"ct-jxe: must support {flag} for partial-rotation flows"
-        )
+        assert flag in src, f"ct-jxe: must support {flag} for partial-rotation flows"
 
 
 def test_restarts_webapps_after_appsetting_change(src: str):
@@ -162,9 +152,7 @@ def test_post_rotation_verification_is_present(src: str):
     """After the writes succeed, the script must verify the rotation worked
     by hitting /health on both webapps and dumping /api/v1/health/data so
     Tyler can see sync timestamps start climbing."""
-    assert "/health" in src, (
-        "ct-jxe: must include a /health readiness probe after restart"
-    )
+    assert "/health" in src, "ct-jxe: must include a /health readiness probe after restart"
     assert "/api/v1/health/data" in src, (
         "ct-jxe: must dump /api/v1/health/data so Tyler can confirm syncs "
         "actually start climbing (the whole point of rotating)"

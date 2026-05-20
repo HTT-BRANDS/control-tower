@@ -45,9 +45,8 @@ from app.api.services.monitoring_service import (
     ALERT_THRESHOLDS,
     MonitoringService,
 )
-from app.models.monitoring import Alert, SyncJobLog
+from app.models.monitoring import SyncJobLog
 from app.models.tenant import Tenant
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────
 
@@ -109,16 +108,14 @@ def _seed_log(
 # ── F-2 bug-#3: "consecutive" must actually mean consecutive ─────────
 
 
-def test_single_zero_among_successes_does_NOT_trigger_alert(
-    db_session, tenant_a
-):
+def test_single_zero_among_successes_does_NOT_trigger_alert(db_session, tenant_a):
     """One zero scattered among non-zero runs must NOT fire the alert.
 
     Pre-fix this DID fire because the filter included
     ``records_processed == 0`` directly, so non-zero runs were never
     even considered.
     """
-    threshold = ALERT_THRESHOLDS["zero_records_threshold"]  # 3
+    ALERT_THRESHOLDS["zero_records_threshold"]  # 3
     # Seed lots of successful non-zero runs, with ONE zero scattered in.
     for i in range(10):
         _seed_log(
@@ -176,8 +173,7 @@ def test_three_consecutive_zeros_DOES_trigger_alert(db_session, tenant_a):
 
     no_record_alerts = [a for a in alerts if a.alert_type == "no_records"]
     assert len(no_record_alerts) == 1, (
-        f"ct-l2j: 3 consecutive zeros must fire the alert; "
-        f"got {len(no_record_alerts)}"
+        f"ct-l2j: 3 consecutive zeros must fire the alert; got {len(no_record_alerts)}"
     )
 
 
@@ -219,8 +215,7 @@ def test_zeros_from_other_tenants_do_NOT_count(db_session, tenant_a, tenant_b):
     alerts = svc._check_for_alerts_after_completion(trigger_b)
 
     no_record_alerts_for_b = [
-        a for a in alerts
-        if a.alert_type == "no_records" and a.tenant_id == tenant_b.id
+        a for a in alerts if a.alert_type == "no_records" and a.tenant_id == tenant_b.id
     ]
     assert not no_record_alerts_for_b, (
         "ct-l2j: tenant B has only 1 zero run (with a 500-record success "
@@ -284,16 +279,14 @@ def test_each_tenant_alerts_independently(db_session, tenant_a, tenant_b):
 # ── F-2 bug-#1: dialect portability (count() on a limited query) ──────
 
 
-def test_threshold_check_does_NOT_fire_with_only_two_zeros(
-    db_session, tenant_a
-):
+def test_threshold_check_does_NOT_fire_with_only_two_zeros(db_session, tenant_a):
     """Pre-fix on MSSQL: any 3+ historical zeros tripped the alert because
     ``.limit(3).count()`` returned the total count, not 3.
 
     Post-fix: 2 zero runs (threshold-1) must NOT fire the alert, even if
     there are dozens of unrelated zero runs in old history.
     """
-    threshold = ALERT_THRESHOLDS["zero_records_threshold"]  # 3
+    ALERT_THRESHOLDS["zero_records_threshold"]  # 3
     # Seed 50 ancient zero runs — pre-fix this would have made
     # .count() return >= threshold immediately.
     for i in range(50):
@@ -343,7 +336,7 @@ def test_threshold_check_does_NOT_fire_with_only_two_zeros(
 def test_streak_broken_by_recent_success_resets(db_session, tenant_a):
     """If the most recent successful run was non-zero, the streak isn't
     consecutive — even if older history is all zeros."""
-    threshold = ALERT_THRESHOLDS["zero_records_threshold"]  # 3
+    ALERT_THRESHOLDS["zero_records_threshold"]  # 3
     # Old: zeros.
     for i in range(5):
         _seed_log(

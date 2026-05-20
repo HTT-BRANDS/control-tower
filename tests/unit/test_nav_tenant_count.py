@@ -48,9 +48,7 @@ def _render_badge(count: int) -> str:
 
 
 def _extract_badge(html: str) -> str:
-    match = re.search(
-        r'data-testid="nav-tenant-count"[^>]*>([^<]+)<', html, re.DOTALL
-    )
+    match = re.search(r'data-testid="nav-tenant-count"[^>]*>([^<]+)<', html, re.DOTALL)
     assert match, "nav-tenant-count badge missing from base.html"
     return match.group(1).strip()
 

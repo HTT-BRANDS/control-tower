@@ -23,7 +23,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "deploy-staging.yml"
 RUNBOOK = ROOT / "docs" / "runbooks" / "staging-secrets.md"
@@ -81,8 +80,7 @@ def test_azure_ad_step_uses_github_secrets_not_inline_values():
         "STAGING_AZURE_AD_CLIENT_SECRET",
     ):
         assert required_secret in azure_block, (
-            f"ct-wph: the Azure AD step must reference the {required_secret} "
-            f"GitHub Secret"
+            f"ct-wph: the Azure AD step must reference the {required_secret} GitHub Secret"
         )
         # And it must be referenced via the secrets context, not env injection.
         assert f"secrets.{required_secret}" in azure_block, (
@@ -120,9 +118,7 @@ def test_azure_ad_step_derives_endpoints_from_tenant_id():
         "AZURE_AD_AUTHORIZATION_ENDPOINT",
         "AZURE_AD_JWKS_URI",
     ):
-        assert endpoint in azure_block, (
-            f"ct-wph: the Azure AD step must set {endpoint}"
-        )
+        assert endpoint in azure_block, f"ct-wph: the Azure AD step must set {endpoint}"
     # And the derivation logic itself must be present.
     assert "login.microsoftonline.com" in azure_block, (
         "ct-wph: derived endpoints must use the login.microsoftonline.com "

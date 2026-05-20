@@ -734,9 +734,7 @@ class TestAzureConfigTriState:
         settings.azure_ad_tenant_id = "tid"
         settings.azure_ad_client_id = "cid"
         settings.azure_ad_client_secret = "csec"  # pragma: allowlist secret
-        settings.azure_ad_token_endpoint = (
-            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
-        )
+        settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
         settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
         settings.app_version = "2.0.0"
         settings.environment = "production"
@@ -786,9 +784,7 @@ class TestAzureConfigTriState:
         settings.azure_ad_tenant_id = "tid"
         settings.azure_ad_client_id = "cid"
         settings.azure_ad_client_secret = "expired-secret"  # pragma: allowlist secret
-        settings.azure_ad_token_endpoint = (
-            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
-        )
+        settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
         settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
         settings.app_version = "2.0.0"
         settings.environment = "production"
@@ -808,9 +804,7 @@ class TestAzureConfigTriState:
             http_status=401,
             auth_mode="secret",
         )
-        with patch.object(
-            probe_mod, "probe_active_credential", AsyncMock(return_value=unauth)
-        ):
+        with patch.object(probe_mod, "probe_active_credential", AsyncMock(return_value=unauth)):
             resp = client.get(DETAILED_URL)
         data = resp.json()
 
@@ -841,9 +835,7 @@ class TestAzureConfigTriState:
         settings.azure_ad_tenant_id = "tid"
         settings.azure_ad_client_id = "cid"
         settings.azure_ad_client_secret = "csec"  # pragma: allowlist secret
-        settings.azure_ad_token_endpoint = (
-            "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
-        )
+        settings.azure_ad_token_endpoint = "https://login.microsoftonline.com/tid/oauth2/v2.0/token"
         settings.jwt_secret_key = "jwt"  # pragma: allowlist secret
         settings.app_version = "2.0.0"
         settings.environment = "production"

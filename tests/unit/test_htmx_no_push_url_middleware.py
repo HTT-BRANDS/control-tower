@@ -42,8 +42,7 @@ def test_partial_responses_set_no_push_url(client, path):
     """F1: every /partials/* response must carry HX-Push-Url:false."""
     response = client.get(path)
     assert response.headers.get("hx-push-url") == "false", (
-        f"F1 regression: {path} did not set HX-Push-Url:false "
-        f"(status={response.status_code})"
+        f"F1 regression: {path} did not set HX-Push-Url:false (status={response.status_code})"
     )
 
 

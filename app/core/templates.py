@@ -69,7 +69,7 @@ def _active_tenant_count() -> int:
 
         with SessionLocal() as db:
             return db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
-    except Exception:  # noqa: BLE001 — nav must never crash a page render
+    except Exception:
         return 0
 
 
@@ -105,7 +105,7 @@ def _latest_sync_at():
                 .first()
             )
             return row[0] if row else None
-    except Exception:  # noqa: BLE001 — footer must never crash a page render
+    except Exception:
         return None
 
 

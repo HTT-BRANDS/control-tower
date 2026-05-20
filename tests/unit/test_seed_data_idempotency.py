@@ -18,10 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
-SEED_SCRIPT = (
-    Path(__file__).resolve().parents[2] / "scripts" / "seed_data.py"
-)
+SEED_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "seed_data.py"
 
 
 def test_seed_sync_history_clears_sync_tables_first():
@@ -38,9 +35,9 @@ def test_seed_sync_history_clears_sync_tables_first():
 
     # All four tables must be cleared.
     for model in ("Alert", "SyncJobMetrics", "SyncJobLog", "SyncJob"):
-        assert (
-            f"db.query({model}).delete(" in body
-        ), f"ct-cjg: seed_sync_history must delete prior {model} rows"
+        assert f"db.query({model}).delete(" in body, (
+            f"ct-cjg: seed_sync_history must delete prior {model} rows"
+        )
 
 
 def test_seed_sync_history_uses_bulk_delete_idiom():
