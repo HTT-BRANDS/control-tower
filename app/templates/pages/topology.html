@@ -4,7 +4,7 @@
 {% block title %}Azure Topology{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" integrity="sha384-sIKkbMaXEogg8JBYSe/89e+GkgaqXO0xU2SEyq7Xkf/0i4jyvQW5IHAyxdk0j1Ei" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret — SRI integrity hash, not a credential #}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" integrity="sha384-yQ4mmBBT+vhTAwjFH0toJXNYJ6O4usWnt6EPIdWwrRvx2V/n5lXuDZQwQFeSFydF" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret — SRI integrity hash, not a credential #}
 {% endblock %}
 
 {# ── Header action buttons — pre-rendered so ds_page_shell can inject them. ── #}

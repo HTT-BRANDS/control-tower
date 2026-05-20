@@ -132,7 +132,11 @@ def _register_rate_limit_middleware(app, logger) -> None:
     async def rate_limit_middleware(request: Request, call_next):
         """Apply request rate limiting."""
         current_settings = get_settings()
-        if current_settings.is_development or request.url.path in RATE_LIMIT_EXEMPT_PATHS:
+        if (
+            current_settings.is_development
+            or (current_settings.is_test and current_settings.e2e_harness)
+            or request.url.path in RATE_LIMIT_EXEMPT_PATHS
+        ):
             return await call_next(request)
 
         limit_config = rate_limiter.get_limit_config(request.url.path)

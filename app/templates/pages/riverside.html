@@ -63,6 +63,8 @@
          hx-trigger="load, every 60s"
          hx-target="#executive-cards"
          hx-swap="innerHTML"
+         hx-push-url="false"
+         hx-boost="false"
          hx-indicator="#executive-loading">
         <div id="executive-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {# Loading skeletons — replaced by JS on first HTMX response. #}
@@ -94,12 +96,14 @@
                 hx-get="/api/v1/riverside/mfa-status"
                 hx-target="#mfa-chart-container"
                 hx-swap="innerHTML"
+                hx-push-url="false"
+                hx-boost="false"
                 aria-label="Refresh MFA enrollment data"
                 class="text-brand-primary-100 hover:text-brand-primary-110 text-sm font-medium">
                 Refresh
             </button>
         </div>
-        <div id="mfa-chart-container" hx-get="/api/v1/riverside/mfa-status" hx-trigger="load" hx-swap="innerHTML" data-testid="riverside-mfa-region">
+        <div id="mfa-chart-container" hx-get="/api/v1/riverside/mfa-status" hx-trigger="load" hx-swap="innerHTML" hx-push-url="false" hx-boost="false" data-testid="riverside-mfa-region">
             <div class="h-64 flex items-center justify-center">
                 <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -120,12 +124,14 @@
                 hx-get="/api/v1/riverside/maturity-scores"
                 hx-target="#maturity-gauges"
                 hx-swap="innerHTML"
+                hx-push-url="false"
+                hx-boost="false"
                 aria-label="Refresh domain maturity scores"
                 class="text-brand-primary-100 hover:text-brand-primary-110 text-sm font-medium">
                 Refresh
             </button>
         </div>
-        <div id="maturity-gauges" hx-get="/api/v1/riverside/maturity-scores" hx-trigger="load" hx-swap="innerHTML" data-testid="riverside-maturity-region">
+        <div id="maturity-gauges" hx-get="/api/v1/riverside/maturity-scores" hx-trigger="load" hx-swap="innerHTML" hx-push-url="false" hx-boost="false" data-testid="riverside-maturity-region">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {% for domain in ['IAM', 'GS', 'DS'] %}
                 <div class="text-center p-4 bg-brand-gray-5 rounded-lg animate-pulse">
@@ -144,7 +150,7 @@
        app/api/routes/riverside.py. #}
     <div id="requirements-table-container"
          data-testid="riverside-requirements-region"
-         hx-get="/api/v1/riverside/requirements" hx-trigger="load" hx-swap="innerHTML">
+         hx-get="/api/v1/riverside/requirements" hx-trigger="load" hx-swap="innerHTML" hx-push-url="false" hx-boost="false">
         <div class="p-8 flex items-center justify-center bg-white rounded-lg shadow">
             <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -160,7 +166,7 @@
        app/api/routes/riverside.py. #}
     <div id="critical-alerts-container"
          data-testid="riverside-alerts-region"
-         hx-get="/api/v1/riverside/gaps" hx-trigger="load" hx-swap="innerHTML">
+         hx-get="/api/v1/riverside/gaps" hx-trigger="load" hx-swap="innerHTML" hx-push-url="false" hx-boost="false">
         <div class="p-8 flex items-center justify-center bg-white rounded-lg shadow border-l-4 border-brand-error-100">
             <svg class="w-8 h-8 text-brand-gray-50 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

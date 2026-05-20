@@ -498,7 +498,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def _build_csp(self, nonce: str) -> str:
         """Build Content-Security-Policy header value."""
         directives = []
-        for directive, value in self.csp_directives.items():
+        csp_directives = self.csp_directives.copy()
+        if (
+            getattr(self.settings, "is_test", False) is True
+            and getattr(self.settings, "e2e_harness", False) is True
+        ):
+            # WebKit obeys upgrade-insecure-requests for localhost resources and
+            # upgrades the Playwright HTTP server to HTTPS, causing TLS failures.
+            # Keep the production directive intact; remove it only inside the
+            # explicit browser-test harness.
+            csp_directives.pop("upgrade-insecure-requests", None)
+
+        for directive, value in csp_directives.items():
             # Replace nonce placeholder
             if "{nonce}" in value:
                 value = value.format(nonce=nonce)
