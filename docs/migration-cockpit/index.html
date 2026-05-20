@@ -636,6 +636,85 @@ details.config[open] > summary .chevron { transform: rotate(90deg); }
   </div>
 
   <!-- ──────────────────────────────────────────────────────────────
+       Live mission status banner (populated by Richard on 2026-05-19)
+       ────────────────────────────────────────────────────────────── -->
+  <section class="mission-status" id="mission-status">
+    <div class="ms-head">
+      <span class="ms-icon">📡</span>
+      <div>
+        <strong>Live status — last verified 2026-05-19 21:25 UTC</strong>
+        <div style="font-size:13px;color:var(--text-2);margin-top:2px;">Auto-executed by Richard (code-puppy-a5faf1) against staging</div>
+      </div>
+      <button class="btn ghost" style="margin-left:auto;font-size:12px;" onclick="document.getElementById('mission-status').style.display='none'">✕</button>
+    </div>
+    <div class="ms-grid">
+      <div class="ms-check done">✓ MI bound<div class="ms-val">0f74784d-...</div></div>
+      <div class="ms-check done">✓ Federated cred<div class="ms-val">governance-platform-staging</div></div>
+      <div class="ms-check done">✓ GH variable<div class="ms-val">STAGING_USE_OIDC_FEDERATION=true</div></div>
+      <div class="ms-check done">✓ Deploy green<div class="ms-val">run 26137079715 · all 5 jobs ✓</div></div>
+      <div class="ms-check done">✓ Runtime probe<div class="ms-val">auth_mode=oidc · status=configured</div></div>
+      <div class="ms-check pending">⟳ Step 6<div class="ms-val">needs your browser (incognito sign-in)</div></div>
+      <div class="ms-check warn">⏳ Step 7<div class="ms-val">wait 24h after step 6 passes</div></div>
+    </div>
+    <div class="callout warn" style="margin-top:14px;">
+      <strong>⚠ GH secrets gap found during deploy:</strong>
+      <code>STAGING_AZURE_AD_TENANT_ID</code> and <code>STAGING_AZURE_AD_CLIENT_ID</code>
+      are <strong>not set</strong> as GitHub repository secrets — so the deploy workflow's
+      "Configure Azure AD app settings" step skips every time. The OIDC probe works <em>now</em>
+      because those env vars were previously set directly on the App Service. But the next
+      deploy that changes app settings could clobber them. Fix: add both values as GH secrets
+      (non-sensitive IDs, but the workflow reads them from <code>secrets.*</code>).
+      <div style="margin-top:10px;">
+        <a class="portal-btn gh"
+           href="https://github.com/HTT-BRANDS/control-tower/settings/secrets/actions"
+           target="_blank" rel="noopener" style="font-size:13px;padding:8px 14px;">
+          🔑 Add STAGING_AZURE_AD_TENANT_ID + CLIENT_ID as GH secrets ↗
+        </a>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:10px;">
+      <strong>Also present:</strong> <code>AZURE_AD_CLIENT_SECRET</code> is still set on the
+      App Service (length=40) and the app reg still has 1 active client_secret credential.
+      Both get deleted in <strong>Step 7</strong> — but step 6 (browser sign-in) must pass
+      first, and we need the 24h soak window.
+    </div>
+  </section>
+
+  <style>
+  .mission-status {
+    background: var(--bg-1);
+    border: 1px solid rgba(255, 201, 87, 0.35);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-bottom: 28px;
+  }
+  .ms-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ms-icon { font-size: 24px; }
+  .ms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .ms-check {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .ms-check.done   { border-color: rgba(74,222,128,0.4); color: var(--ok); }
+  .ms-check.pending{ border-color: rgba(255,201,87,0.4); color: var(--htt-gold); }
+  .ms-check.warn   { border-color: rgba(255,201,87,0.3); color: var(--text-2); }
+  .ms-val { font-size: 11px; font-family: var(--font-mono); font-weight: 400; margin-top: 4px; color: var(--text-2); }
+  </style>
+
+  <!-- ──────────────────────────────────────────────────────────────
        Pre-flight checklist: configuration
        ────────────────────────────────────────────────────────────── -->
   <details class="config" open>
@@ -660,8 +739,8 @@ details.config[open] > summary .chevron { transform: rotate(90deg); }
         </div>
         <div class="config-field">
           <label>App registration client ID</label>
-          <input id="cfg-app" type="text" placeholder="The client_id of your management app reg" />
-          <div class="hint">Same value as <code>AZURE_AD_CLIENT_ID</code> in App Service settings</div>
+          <input id="cfg-app" type="text" value="1e3e8417-49f1-4d08-b7be-47045d8a12e9" />
+          <div class="hint">Management app reg — confirmed from App Service env <code>AZURE_AD_CLIENT_ID</code></div>
         </div>
         <div class="config-field">
           <label>App Service name</label>
@@ -675,13 +754,13 @@ details.config[open] > summary .chevron { transform: rotate(90deg); }
         </div>
         <div class="config-field">
           <label>Subscription ID</label>
-          <input id="cfg-sub" type="text" placeholder="Azure subscription GUID" />
-          <div class="hint">Run <code>az account show --query id -o tsv</code> if unsure</div>
+          <input id="cfg-sub" type="text" value="32a28177-6fb2-4668-a528-6d6cafb9665e" />
+          <div class="hint">HTT-CORE subscription — confirmed via <code>az account show</code></div>
         </div>
         <div class="config-field">
           <label>MI principal ID</label>
-          <input id="cfg-mi" type="text" value="8ff7caa7-566b-428f-b76e-b122ebd43365" />
-          <div class="hint">Auto-fetched in Step 1; pre-filled with last known value</div>
+          <input id="cfg-mi" type="text" value="0f74784d-6da1-4ad1-9c01-2b6dfca9c1e4" />
+          <div class="hint">Confirmed live via <code>az webapp identity show</code> on staging</div>
         </div>
       </div>
       <div style="margin-top:14px;">
@@ -1490,7 +1569,31 @@ function closeIssue() {
 // ──────────────────────────────────────────────────────────────────
 // Wire up — load saved state, render templates, attach config listeners
 // ──────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────
+// Seed verified progress — Richard completed steps 1-5 on 2026-05-19.
+// Only seeds if localStorage is completely empty (first-ever open).
+// A returning user who has already ticked boxes won't get overwritten.
+// ──────────────────────────────────────────────────────────────────
+const SEED_VERSION = 'v1-2026-05-19';
+function seedIfFresh() {
+  if (localStorage.getItem('oidc-cockpit-seed') === SEED_VERSION) return;
+  if (localStorage.getItem(LS_STEPS_KEY)) return; // user already has state
+  const steps = {1:'done', 2:'done', 3:'done', 4:'done', 5:'done'};
+  localStorage.setItem(LS_STEPS_KEY, JSON.stringify(steps));
+  const config = {
+    tenant: '0c0e35dc-188a-4eb3-b8ba-61752154b407',
+    app:    '1e3e8417-49f1-4d08-b7be-47045d8a12e9',
+    site:   'app-governance-staging-xnczpwyv',
+    rg:     'rg-governance-staging',
+    sub:    '32a28177-6fb2-4668-a528-6d6cafb9665e',
+    mi:     '0f74784d-6da1-4ad1-9c01-2b6dfca9c1e4',
+  };
+  localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(config));
+  localStorage.setItem('oidc-cockpit-seed', SEED_VERSION);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  seedIfFresh();
   loadConfig();
   for (const [id] of CONFIG_FIELDS) {
     const el = document.getElementById(id);
