@@ -51,7 +51,7 @@ else
     echo "         Run 'python -m alembic upgrade head' manually once DB is reachable."
 fi
 
-# 3a — Seed Riverside tenants if requested (backward-compatible env var)
+# 3 — Optionally seed reference data (run once on fresh deployments)
 if [ "${SEED_ON_STARTUP:-false}" = "true" ]; then
     SEED_ARGS=""
     if [ "${SEED_RESET_ALL:-false}" = "true" ]; then
@@ -68,39 +68,6 @@ if [ "${SEED_ON_STARTUP:-false}" = "true" ]; then
     else
         echo "WARNING: Seed script failed - app will still start"
     fi
-fi
-
-# 3b — Auto-seed demo data when DB tables are empty (staging cold-start).
-#
-# Staging containers restart from fresh images but mount /home/data as a
-# persistent Azure Files share. The schema (init_db + Alembic) survives,
-# but if the data tables were never populated the dashboard returns blank
-# cards with zero-value KPIs. This block seeds IFF the CostSnapshot table
-# has 0 rows — it's a no-op against a populated DB, and it's safe to re-
-# run because seed_data.py skips existing rows by tenant_id + date.
-echo "--- Checking if demo data is needed ---"
-python - <<'PYEOF'
-import os, sys
-from app.core.database import SessionLocal
-from app.models.cost import CostSnapshot
-
-db = SessionLocal()
-try:
-    count = db.query(CostSnapshot).count()
-    if count == 0:
-        print(f"CostSnapshot empty ({count} rows); seeding demo data...")
-        sys.exit(0)   # 0 → seed
-    else:
-        print(f"CostSnapshot has {count} rows; skipping seed.")
-        sys.exit(1)   # 1 → skip
-finally:
-    db.close()
-PYEOF
-if [ $? -eq 0 ]; then
-    echo "--- Seeding demo data (seed_data.py) ---"
-    python scripts/seed_data.py || echo "WARNING: seed_data.py failed — app will still start"
-else
-    echo "--- Demo data already present ---"
 fi
 
 # 4 — Start the application
