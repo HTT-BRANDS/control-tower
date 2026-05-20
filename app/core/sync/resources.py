@@ -12,7 +12,7 @@ from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import RESOURCE_SYNC_BREAKER, circuit_breaker
 from app.core.database import get_db_context
 from app.core.retry import RESOURCE_SYNC_POLICY, retry_with_backoff
-from app.core.sync.utils import get_sync_eligible_tenants
+from app.core.sync.utils import determine_sync_outcome, get_sync_eligible_tenants
 from app.models.resource import Resource
 from app.models.tenant import Tenant
 
@@ -34,6 +34,8 @@ async def sync_resources():
     total_synced = 0
     total_errors = 0
     total_orphaned = 0
+    total_subscriptions_seen = 0
+    eligible_tenant_count = 0
     log_id = None
 
     try:
@@ -45,6 +47,7 @@ async def sync_resources():
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
             eligible_tenants = get_sync_eligible_tenants(tenants)
             tenant_data = [(t.id, t.name, t.tenant_id) for t in eligible_tenants]
+            eligible_tenant_count = len(tenant_data)
 
         logger.info(f"Found {len(tenant_data)} sync-eligible tenants to sync for resources")
 
@@ -55,6 +58,7 @@ async def sync_resources():
                 with get_db_context() as tenant_db:
                     # Get subscriptions for this tenant
                     subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
+                    total_subscriptions_seen += len(subscriptions)
                     logger.info(
                         f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}"
                     )
@@ -245,13 +249,22 @@ async def sync_resources():
                 )
                 continue
 
+        final_status, error_summary, _outcome_details = determine_sync_outcome(
+            job_type="resources",
+            records_processed=total_synced,
+            errors_count=total_errors,
+            eligible_tenants=eligible_tenant_count,
+            subscriptions_seen=total_subscriptions_seen,
+        )
+
         # Update monitoring with final status
         if log_id:
             with get_db_context() as db:
                 monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
-                    status="completed" if total_errors == 0 else "failed",
+                    status=final_status,
+                    error_message=error_summary,
                     final_records={
                         "records_processed": total_synced,
                         "records_created": total_synced,

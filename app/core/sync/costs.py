@@ -16,7 +16,7 @@ from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import COST_SYNC_BREAKER, circuit_breaker
 from app.core.database import get_db_context
 from app.core.retry import COST_SYNC_POLICY, retry_with_backoff
-from app.core.sync.utils import get_sync_eligible_tenants
+from app.core.sync.utils import determine_sync_outcome, get_sync_eligible_tenants
 from app.models.cost import CostSnapshot
 from app.models.tenant import Tenant
 
@@ -119,6 +119,8 @@ async def sync_costs():
 
     total_synced = 0
     total_errors = 0
+    total_subscriptions_seen = 0
+    eligible_tenant_count = 0
     log_id = None
 
     try:
@@ -130,6 +132,7 @@ async def sync_costs():
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
             eligible_tenants = get_sync_eligible_tenants(tenants)
             tenant_data = [(t.id, t.name, t.tenant_id) for t in eligible_tenants]
+            eligible_tenant_count = len(tenant_data)
 
         logger.info(f"Found {len(tenant_data)} sync-eligible tenants to sync")
 
@@ -140,6 +143,7 @@ async def sync_costs():
                 # Get subscription list (Azure API call, no DB session needed)
                 subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
 
+                total_subscriptions_seen += len(subscriptions)
                 logger.info(f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}")
 
                 # Process each subscription in its own session to prevent
@@ -193,12 +197,13 @@ async def sync_costs():
                 continue
 
         # Determine final status and error summary
-        final_status = "completed" if total_errors == 0 else "failed"
-        error_summary = None
-        if total_errors > 0:
-            error_summary = (
-                f"Cost sync completed with {total_errors} error(s). {total_synced} records synced."
-            )
+        final_status, error_summary, _outcome_details = determine_sync_outcome(
+            job_type="costs",
+            records_processed=total_synced,
+            errors_count=total_errors,
+            eligible_tenants=eligible_tenant_count,
+            subscriptions_seen=total_subscriptions_seen,
+        )
 
         # Update monitoring with final status
         if log_id:
