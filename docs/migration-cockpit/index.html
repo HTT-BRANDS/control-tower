@@ -653,30 +653,21 @@ details.config[open] > summary .chevron { transform: rotate(90deg); }
       <div class="ms-check done">✓ GH variable<div class="ms-val">STAGING_USE_OIDC_FEDERATION=true</div></div>
       <div class="ms-check done">✓ Deploy green<div class="ms-val">run 26137079715 · all 5 jobs ✓</div></div>
       <div class="ms-check done">✓ Runtime probe<div class="ms-val">auth_mode=oidc · status=configured</div></div>
+      <div class="ms-check done">✓ GH secrets<div class="ms-val">TENANT_ID + CLIENT_ID set 21:44 UTC</div></div>
       <div class="ms-check pending">⟳ Step 6<div class="ms-val">needs your browser (incognito sign-in)</div></div>
       <div class="ms-check warn">⏳ Step 7<div class="ms-val">wait 24h after step 6 passes</div></div>
     </div>
-    <div class="callout warn" style="margin-top:14px;">
-      <strong>⚠ GH secrets gap found during deploy:</strong>
+    <div class="callout ok" style="margin-top:14px;">
+      <strong>✓ GH secrets gap resolved (2026-05-19 21:44 UTC):</strong>
       <code>STAGING_AZURE_AD_TENANT_ID</code> and <code>STAGING_AZURE_AD_CLIENT_ID</code>
-      are <strong>not set</strong> as GitHub repository secrets — so the deploy workflow's
-      "Configure Azure AD app settings" step skips every time. The OIDC probe works <em>now</em>
-      because those env vars were previously set directly on the App Service. But the next
-      deploy that changes app settings could clobber them. Fix: add both values as GH secrets
-      (non-sensitive IDs, but the workflow reads them from <code>secrets.*</code>).
-      <div style="margin-top:10px;">
-        <a class="portal-btn gh"
-           href="https://github.com/HTT-BRANDS/control-tower/settings/secrets/actions"
-           target="_blank" rel="noopener" style="font-size:13px;padding:8px 14px;">
-          🔑 Add STAGING_AZURE_AD_TENANT_ID + CLIENT_ID as GH secrets ↗
-        </a>
-      </div>
+      added via <code>gh secret set</code>. The deploy workflow's "Configure Azure AD app
+      settings" step will now wire app settings correctly on every future deploy.
     </div>
     <div class="callout" style="margin-top:10px;">
-      <strong>Also present:</strong> <code>AZURE_AD_CLIENT_SECRET</code> is still set on the
-      App Service (length=40) and the app reg still has 1 active client_secret credential.
-      Both get deleted in <strong>Step 7</strong> — but step 6 (browser sign-in) must pass
-      first, and we need the 24h soak window.
+      <strong>Still present (by design, until step 7):</strong> <code>AZURE_AD_CLIENT_SECRET</code>
+      is still set on the App Service (length=40) and the app reg still has 1 active
+      client_secret credential. Both get deleted in <strong>Step 7</strong> — step 6 (browser
+      sign-in) must pass first, then a 24h soak window.
     </div>
   </section>
 
@@ -1574,7 +1565,7 @@ function closeIssue() {
 // Only seeds if localStorage is completely empty (first-ever open).
 // A returning user who has already ticked boxes won't get overwritten.
 // ──────────────────────────────────────────────────────────────────
-const SEED_VERSION = 'v1-2026-05-19';
+const SEED_VERSION = 'v2-2026-05-19'; // bumped: GH secrets added
 function seedIfFresh() {
   if (localStorage.getItem('oidc-cockpit-seed') === SEED_VERSION) return;
   if (localStorage.getItem(LS_STEPS_KEY)) return; // user already has state
