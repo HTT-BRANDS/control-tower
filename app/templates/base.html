@@ -33,6 +33,26 @@
     <!-- HTMX 2.0 — selfRequestsOnly:true is now default (security) -->
     <meta name="htmx-config" content='{"inlineScriptNonce":"{{ request.state.csp_nonce }}","selfRequestsOnly":true}'>
     <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>
+    <script nonce="{{ request.state.csp_nonce }}">
+        // Defense-in-depth: auto-refresh HTMX fragments must never poison browser history.
+        (function () {
+            const partialPath = value => {
+                if (!value) return false;
+                try { return new URL(value, window.location.origin).pathname.includes('/partials/'); }
+                catch (_) { return String(value).includes('/partials/'); }
+            };
+            const pushState = history.pushState.bind(history);
+            const replaceState = history.replaceState.bind(history);
+            history.pushState = function (state, title, url) {
+                if (partialPath(url)) return;
+                return pushState(state, title, url);
+            };
+            history.replaceState = function (state, title, url) {
+                if (partialPath(url)) return;
+                return replaceState(state, title, url);
+            };
+        })();
+    </script>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous" nonce="{{ request.state.csp_nonce }}"></script>  {# pragma: allowlist secret #}
@@ -125,7 +145,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main id="main-content" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 w-full">
+    <main id="main-content" data-page-path="{{ request.url.path if request.url is defined else '' }}" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 w-full">
         {% block content %}{% endblock %}
     </main>
 
@@ -174,6 +194,25 @@
 
     <!-- Design System: tabs keyboard navigation (WAI-ARIA APG) -->
     <script src="/static/js/ds-tabs.js" nonce="{{ request.state.csp_nonce }}"></script>
+
+    <!-- HTMX history guard: load-triggered fragments must never become the address bar. -->
+    <script nonce="{{ request.state.csp_nonce }}">
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            const xhr = event.detail && event.detail.xhr;
+            if (!xhr || !xhr.responseURL) return;
+
+            const responseUrl = new URL(xhr.responseURL);
+            const isFragmentResponse = responseUrl.pathname.includes('/partials/');
+            const explicitlyNoPush = event.detail.elt && event.detail.elt.getAttribute('hx-push-url') === 'false';
+            if (!isFragmentResponse && !explicitlyNoPush) return;
+
+            const main = document.querySelector('main[data-page-path]');
+            const pagePath = main && main.dataset.pagePath;
+            if (!pagePath || window.location.pathname === pagePath) return;
+
+            history.replaceState(history.state, document.title, pagePath + window.location.search + window.location.hash);
+        });
+    </script>
 
     <!-- Skip Link Smooth Scroll & Focus Management -->
     <script nonce="{{ request.state.csp_nonce }}">

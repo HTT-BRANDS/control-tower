@@ -17,7 +17,7 @@ PAGE_SPECS = [
     {
         "path": "/login",
         "fixture": "unauthenticated_page",
-        "title": "Login",
+        "title": "Sign in",
         "markers": ["[data-testid='login-shell']", "[data-testid='login-azure-entry']"],
         "text": "Sign in with Microsoft",
         "requires_nav": False,
