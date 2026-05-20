@@ -1,6 +1,8 @@
 """Admin API routes for user management and role assignment.
 
 All endpoints require ``system:admin`` permission (admin role only).
+A ``POST /api/v1/admin/seed`` endpoint is also available for staging
+cold-starts—protected by the ``admin`` role.
 
 Endpoints::
 
@@ -14,12 +16,14 @@ Endpoints::
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.services.admin_service import AdminService
-from app.core.auth import User
+from app.core.auth import User, require_roles
 from app.core.database import get_db
 from app.core.permissions import (
     ALL_PERMISSIONS,
@@ -29,6 +33,8 @@ from app.core.permissions import (
 )
 from app.core.rate_limit import rate_limit
 from app.core.rbac import require_permissions
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Pydantic Schemas
@@ -288,3 +294,106 @@ async def get_admin_stats(
     svc = AdminService(db)
     data = svc.get_admin_stats()
     return AdminStatsResponse(**data)
+
+
+# ============================================================================
+# One-off data seed endpoint (staging cold-start helper)
+# ============================================================================
+
+
+class SeedResponse(BaseModel):
+    """Result of a one-off seed operation."""
+
+    seeded: bool
+    message: str
+    rows: dict[str, int]
+
+
+@router.post(
+    "/seed",
+    response_model=SeedResponse,
+    summary="Seed demo data if tables are empty",
+)
+async def post_admin_seed(
+    user: User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+) -> SeedResponse:
+    """Populate the local SQLite database with demo data for all dashboards.
+
+    Idempotent: safe to call multiple times — existing rows are skipped
+    by composite key (tenant_id + snapshot_date). Protected behind admin
+    role so it cannot be triggered by unauthenticated callers.
+
+    *Intended for staging cold-starts only.*  Production databases should
+    never be seeded via this endpoint.
+    """
+    from app.models.compliance import ComplianceSnapshot
+    from app.models.cost import CostSnapshot
+    from app.models.identity import IdentitySnapshot
+    from app.models.resource import Resource
+    from app.models.tenant import Tenant
+
+    # Fast guard: if CostSnapshot has rows, the DB is already seeded.
+    existing_cost = db.query(CostSnapshot).count()
+    if existing_cost > 0:
+        return SeedResponse(
+            seeded=False,
+            message="Database already seeded (CostSnapshot has rows).",
+            rows={
+                "cost_snapshots": existing_cost,
+                "compliance_snapshots": db.query(ComplianceSnapshot).count(),
+                "identity_snapshots": db.query(IdentitySnapshot).count(),
+                "resources": db.query(Resource).count(),
+                "tenants": db.query(Tenant).count(),
+            },
+        )
+
+    try:
+        # Only perform heavy import when actually seeding
+        import subprocess
+        import sys
+
+        # Run the existing seed_data.py CLI in-process
+        # This reuses the same SQLAlchemy models and inserts via SessionLocal
+        result = subprocess.run(
+            [sys.executable, "scripts/seed_data.py", "--yes"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            logger.error(f"seed_data.py failed: {result.stderr}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Seed script failed: {result.stderr[:200]}",
+            )
+
+        db.invalidate()  # Refresh session after external inserts
+
+        return SeedResponse(
+            seeded=True,
+            message="Demo data seeded successfully. Refresh the dashboard.",
+            rows={
+                "cost_snapshots": db.query(CostSnapshot).count(),
+                "compliance_snapshots": db.query(ComplianceSnapshot).count(),
+                "identity_snapshots": db.query(IdentitySnapshot).count(),
+                "resources": db.query(Resource).count(),
+                "tenants": db.query(Tenant).count(),
+            },
+        )
+
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Seed script timed out after 60s.",
+        ) from None
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Unexpected error during admin seed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {exc}",
+        ) from exc
