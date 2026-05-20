@@ -161,8 +161,10 @@ class TestCostSync:
             ]
             await sync_costs()
 
-            # 1 SyncJobLog + 1 cost record (two zero-cost rows skipped)
-            assert mock_db_session.add.call_count == 2
+            # 1 global SyncJobLog + 1 cost record + 1 tenant freshness marker.
+            # The two zero-cost rows are still skipped as CostSnapshot facts;
+            # the marker records "Cost API succeeded" without fabricating $0 rows.
+            assert mock_db_session.add.call_count == 3
 
     @pytest.mark.asyncio
     async def test_sync_costs_malformed_row(

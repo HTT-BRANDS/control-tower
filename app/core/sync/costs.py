@@ -18,11 +18,52 @@ from app.core.database import get_db_context
 from app.core.retry import COST_SYNC_POLICY, retry_with_backoff
 from app.core.sync.utils import determine_sync_outcome, get_sync_eligible_tenants
 from app.models.cost import CostSnapshot
+from app.models.monitoring import SyncJobLog
 from app.models.tenant import Tenant
 
 logger = logging.getLogger(__name__)
 
 COST_API_VERSION = "2023-11-01"
+COST_TENANT_FRESHNESS_JOB_TYPE = "costs_tenant"
+
+
+def _record_tenant_cost_freshness(
+    tenant_id: str,
+    started_at: datetime,
+    records_processed: int,
+    errors_count: int,
+    subscriptions_seen: int,
+    error_messages: list[str],
+) -> None:
+    """Record per-tenant cost sync freshness, even when Azure returns $0 rows.
+
+    CostSnapshot rows intentionally skip zero-cost entries. Without this marker,
+    a tenant whose Cost Management query succeeds but returns no non-zero usage
+    looks stale forever in /healthz/data. That is observability goblin nonsense:
+    "freshly checked and zero" is different from "we never checked".
+    """
+    ended_at = datetime.now(UTC)
+    status = "completed" if errors_count == 0 else "failed"
+    with get_db_context() as db:
+        db.add(
+            SyncJobLog(
+                job_type=COST_TENANT_FRESHNESS_JOB_TYPE,
+                tenant_id=tenant_id,
+                status=status,
+                started_at=started_at,
+                ended_at=ended_at,
+                duration_ms=int((ended_at - started_at).total_seconds() * 1000),
+                records_processed=records_processed,
+                records_created=records_processed,
+                records_updated=0,
+                errors_count=errors_count,
+                error_message="; ".join(error_messages)[:5000] if error_messages else None,
+                details_json=(
+                    f'{{"subscriptions_seen": {subscriptions_seen}, '
+                    f'"zero_cost_success": {str(records_processed == 0 and errors_count == 0).lower()}}}'
+                ),
+            )
+        )
 
 
 async def _sync_subscription_costs(
@@ -138,12 +179,18 @@ async def sync_costs():
 
         for tenant_id, tenant_name, azure_tenant_id in tenant_data:
             logger.info(f"Syncing costs for tenant: {tenant_name} ({azure_tenant_id})")
+            tenant_started_at = datetime.now(UTC)
+            tenant_synced = 0
+            tenant_errors = 0
+            tenant_subscriptions_seen = 0
+            tenant_error_messages: list[str] = []
 
             try:
                 # Get subscription list (Azure API call, no DB session needed)
                 subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
 
                 total_subscriptions_seen += len(subscriptions)
+                tenant_subscriptions_seen = len(subscriptions)
                 logger.info(f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}")
 
                 # Process each subscription in its own session to prevent
@@ -169,32 +216,52 @@ async def sync_costs():
                                 to_date=to_date,
                             )
                             total_synced += synced
+                            tenant_synced += synced
                     except (IntegrityError, DataError, ProgrammingError) as e:
                         total_errors += 1
-                        logger.error(f"Data error for subscription {sub_name}: {e}")
+                        tenant_errors += 1
+                        message = f"Data error for subscription {sub_name}: {e}"
+                        tenant_error_messages.append(message)
+                        logger.error(message)
                     except httpx.HTTPStatusError as e:
                         total_errors += 1
+                        tenant_errors += 1
                         if e.response.status_code == 403:
-                            logger.error(
+                            message = (
                                 f"Access denied to cost data for subscription {sub_name}. "
                                 f"Missing Cost Management Reader role?"
                             )
+                            tenant_error_messages.append(message)
+                            logger.error(message)
                         else:
-                            logger.error(
+                            message = (
                                 f"HTTP error querying costs for subscription {sub_name}: "
                                 f"{e.response.status_code} - {e.response.text[:200]}"
                             )
+                            tenant_error_messages.append(message)
+                            logger.error(message)
                     except Exception as e:
                         total_errors += 1
-                        logger.error(
-                            f"Unexpected error for subscription {sub_name}: {e}",
-                            exc_info=True,
-                        )
+                        tenant_errors += 1
+                        message = f"Unexpected error for subscription {sub_name}: {e}"
+                        tenant_error_messages.append(message)
+                        logger.error(message, exc_info=True)
 
             except Exception as e:
                 total_errors += 1
-                logger.error(f"Error processing tenant {tenant_name}: {e}", exc_info=True)
-                continue
+                tenant_errors += 1
+                message = f"Error processing tenant {tenant_name}: {e}"
+                tenant_error_messages.append(message)
+                logger.error(message, exc_info=True)
+            finally:
+                _record_tenant_cost_freshness(
+                    tenant_id=tenant_id,
+                    started_at=tenant_started_at,
+                    records_processed=tenant_synced,
+                    errors_count=tenant_errors,
+                    subscriptions_seen=tenant_subscriptions_seen,
+                    error_messages=tenant_error_messages,
+                )
 
         # Determine final status and error summary
         final_status, error_summary, _outcome_details = determine_sync_outcome(

@@ -27,6 +27,35 @@ def _get_data_freshness_threshold() -> timedelta:
     return timedelta(hours=settings.sync_stale_threshold_hours)
 
 
+def _latest_timestamp(*values: datetime | None) -> datetime | None:
+    """Return the newest non-null timestamp."""
+    present = [value for value in values if value is not None]
+    return max(present) if present else None
+
+
+def _latest_cost_freshness(db: Session, tenant_id: str, snapshot_ts: datetime | None):
+    """Return cost freshness from snapshots or zero-cost tenant sync markers.
+
+    Cost snapshots skip zero-cost rows by design. A tenant can therefore have a
+    successful Cost Management API sync and still have no CostSnapshot rows.
+    The per-tenant marker lets /healthz/data report "freshly checked, $0" as
+    fresh instead of stale/missing. Tiny distinction, enormous dashboard drama.
+    """
+    from app.core.sync.costs import COST_TENANT_FRESHNESS_JOB_TYPE
+    from app.models.monitoring import SyncJobLog
+
+    marker_ts = (
+        db.query(func.max(SyncJobLog.ended_at))
+        .filter(
+            SyncJobLog.job_type == COST_TENANT_FRESHNESS_JOB_TYPE,
+            SyncJobLog.tenant_id == tenant_id,
+            SyncJobLog.status == "completed",
+        )
+        .scalar()
+    )
+    return _latest_timestamp(snapshot_ts, marker_ts)
+
+
 def _build_scheduler_check(
     request: Request, include_jobs: bool, has_auth: bool
 ) -> tuple[dict[str, Any], str | None]:
@@ -397,6 +426,8 @@ async def data_freshness_check(
             if ts_attr is not None:
                 try:
                     last = db.query(func.max(ts_attr)).filter(model.tenant_id == tenant.id).scalar()
+                    if name == "costs":
+                        last = _latest_cost_freshness(db, tenant.id, last)
                 except Exception:  # pragma: no cover — per-domain isolation
                     # Graceful degradation: one failing domain must not 500 the
                     # whole endpoint (bd-c56t AC: endpoint returns 200 regardless
