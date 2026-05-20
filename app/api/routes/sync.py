@@ -100,7 +100,7 @@ async def get_sync_status(
 
 
 @router.get(
-    "/diagnostics",
+    "/status/diagnostics",
     dependencies=[Depends(rate_limit("default"))],
 )
 async def get_sync_diagnostics(
