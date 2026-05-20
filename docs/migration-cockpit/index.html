@@ -1181,6 +1181,15 @@ OIDC mode: removing AZURE_AD_CLIENT_SECRET from app settings (if present)
         &nbsp;&nbsp;&nbsp;&nbsp;→ Entra accepted our assertion but rejected the code. Likely user/group permissions — not OIDC.
       </p>
 
+      <div class="callout err" style="margin-top:14px;">
+        <strong>🚨 Dashboard shows blank cards after login?</strong><br>
+        The staging DB has schema but zero demo-data rows (CostSnapshot,
+        Resource, etc). After logging in, open DevTools → Console and run:
+        <div class="code" style="margin-top:8px"><span class="copy" onclick="copyCode(this)">Copy</span>fetch('/api/v1/admin/seed', {method:'POST', credentials:'include'}).then(r => r.json()).then(j => console.log(j))</div>
+        This populates the tables. Idempotent — safe to re-run. Refresh
+        the dashboard ; data should appear.
+      </div>
+
       <div class="step-controls">
         <button class="btn primary" onclick="completeStep(6)">✓ Mark complete</button>
         <button class="btn ghost" onclick="resetStep(6)">↺ Reset this step</button>
