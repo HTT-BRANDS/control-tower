@@ -75,9 +75,22 @@ class TestSyncRiverside:
                     assert results["requirements_synced"] == 5
                     assert results["maturity_calculated"] == 2
 
-                    # Verify monitoring was called
+                    # Verify monitoring was called with the public
+                    # MonitoringService.complete_sync_job contract. Prod was
+                    # ghosting this job because this sync used stale
+                    # items_processed/items_failed kwargs. Tiny signature drift,
+                    # giant operational faceplant.
                     mock_monitoring.start_sync_job.assert_called_once_with(job_type="riverside")
-                    mock_monitoring.complete_sync_job.assert_called_once()
+                    mock_monitoring.complete_sync_job.assert_called_once_with(
+                        log_id="log123",
+                        status="completed",
+                        error_message=None,
+                        final_records={
+                            "records_processed": 11,
+                            "records_created": 11,
+                            "errors_count": 0,
+                        },
+                    )
 
     @pytest.mark.asyncio
     async def test_sync_riverside_with_errors(self):
