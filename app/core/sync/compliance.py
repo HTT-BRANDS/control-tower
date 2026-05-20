@@ -11,7 +11,7 @@ from app.api.services.monitoring_service import MonitoringService
 from app.core.circuit_breaker import COMPLIANCE_SYNC_BREAKER, circuit_breaker
 from app.core.database import get_db_context
 from app.core.retry import COMPLIANCE_SYNC_POLICY, retry_with_backoff
-from app.core.sync.utils import get_sync_eligible_tenants, safe_truncate
+from app.core.sync.utils import determine_sync_outcome, get_sync_eligible_tenants, safe_truncate
 from app.models.compliance import ComplianceSnapshot, PolicyState
 from app.models.tenant import Tenant
 
@@ -34,6 +34,8 @@ async def sync_compliance():
     total_snapshots = 0
     total_policy_states = 0
     total_errors = 0
+    total_subscriptions_seen = 0
+    eligible_tenant_count = 0
     log_id = None
 
     try:
@@ -45,6 +47,7 @@ async def sync_compliance():
             tenants = db.query(Tenant).filter(Tenant.is_active).all()
             eligible_tenants = get_sync_eligible_tenants(tenants)
             tenant_data = [(t.id, t.name, t.tenant_id) for t in eligible_tenants]
+            eligible_tenant_count = len(tenant_data)
 
         logger.info(f"Found {len(tenant_data)} sync-eligible tenants to sync for compliance")
 
@@ -55,6 +58,7 @@ async def sync_compliance():
                 with get_db_context() as tenant_db:
                     # Get subscriptions for this tenant
                     subscriptions = await azure_client_manager.list_subscriptions(azure_tenant_id)
+                    total_subscriptions_seen += len(subscriptions)
                     logger.info(
                         f"Found {len(subscriptions)} subscriptions for tenant {tenant_name}"
                     )
@@ -297,13 +301,14 @@ async def sync_compliance():
                 continue
 
         # Determine final status and error summary
-        final_status = "completed" if total_errors == 0 else "failed"
-        error_summary = None
-        if total_errors > 0:
-            error_summary = (
-                f"Compliance sync completed with {total_errors} error(s). "
-                f"{total_snapshots} snapshots, {total_policy_states} policy states synced."
-            )
+        final_records_processed = total_snapshots + total_policy_states
+        final_status, error_summary, _outcome_details = determine_sync_outcome(
+            job_type="compliance",
+            records_processed=final_records_processed,
+            errors_count=total_errors,
+            eligible_tenants=eligible_tenant_count,
+            subscriptions_seen=total_subscriptions_seen,
+        )
 
         # Update monitoring with final status
         if log_id:
@@ -314,8 +319,8 @@ async def sync_compliance():
                     status=final_status,
                     error_message=error_summary,
                     final_records={
-                        "records_processed": total_snapshots + total_policy_states,
-                        "records_created": total_snapshots + total_policy_states,
+                        "records_processed": final_records_processed,
+                        "records_created": final_records_processed,
                         "records_updated": 0,
                         "errors_count": total_errors,
                     },

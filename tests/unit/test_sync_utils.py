@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from app.core.sync.utils import (
     build_sync_eligibility_decision,
+    determine_sync_outcome,
     get_sync_eligible_tenants,
     tenant_is_sync_eligible,
 )
@@ -45,7 +46,7 @@ class TestTenantIsSyncEligible:
 
             assert tenant_is_sync_eligible(_tenant()) is True
 
-    def test_keyvault_mode_rejects_tenant_without_real_secret_path(self):
+    def test_keyvault_mode_allows_standard_secret_names_when_app_id_exists(self):
         with patch("app.core.sync.utils.settings") as settings:
             settings.use_uami_auth = False
             settings.use_oidc_federation = False
@@ -55,7 +56,19 @@ class TestTenantIsSyncEligible:
                 "shared-credential-placeholder"  # pragma: allowlist secret
             )
 
-            assert tenant_is_sync_eligible(_tenant()) is False
+            assert tenant_is_sync_eligible(_tenant(client_id="tenant-app-id")) is True
+
+    def test_keyvault_mode_rejects_tenant_without_app_id(self):
+        with patch("app.core.sync.utils.settings") as settings:
+            settings.use_uami_auth = False
+            settings.use_oidc_federation = False
+            settings.key_vault_url = "https://vault.example"
+            settings.azure_client_id = "shared-client"
+            settings.azure_client_secret = (
+                "shared-credential-placeholder"  # pragma: allowlist secret
+            )
+            with patch("app.core.sync.utils.get_app_id_for_tenant", return_value=None):
+                assert tenant_is_sync_eligible(_tenant()) is False
 
     def test_keyvault_mode_allows_explicit_per_tenant_secret_ref(self):
         with patch("app.core.sync.utils.settings") as settings:
@@ -91,7 +104,26 @@ class TestTenantIsSyncEligible:
 
 
 class TestBuildSyncEligibilityDecision:
-    def test_keyvault_mode_reports_missing_db_declared_secret_path(self):
+    def test_keyvault_mode_reports_standard_secret_names_when_app_id_exists(self):
+        decision = build_sync_eligibility_decision(
+            tenant_is_active=True,
+            tenant_id="tenant-123",
+            tenant_client_id="tenant-app-id",
+            tenant_client_secret_ref=None,
+            use_uami_auth=False,
+            use_oidc_federation=False,
+            key_vault_url="https://vault.example",
+            azure_client_id="shared-client",
+            azure_client_secret="shared-credential",  # pragma: allowlist secret
+            resolved_app_id=None,
+        )
+
+        assert decision.eligible is True
+        assert decision.auth_mode == "key_vault_secret"
+        assert decision.reason == "standard_per_tenant_secret_names"
+        assert decision.resolved_app_id == "tenant-app-id"
+
+    def test_keyvault_mode_reports_missing_app_id(self):
         decision = build_sync_eligibility_decision(
             tenant_is_active=True,
             tenant_id="tenant-123",
@@ -107,7 +139,7 @@ class TestBuildSyncEligibilityDecision:
 
         assert decision.eligible is False
         assert decision.auth_mode == "key_vault_secret"
-        assert decision.reason == "missing_db_declared_secret_path"
+        assert decision.reason == "missing_key_vault_app_id"
 
     def test_oidc_mode_prefers_resolved_app_id(self):
         decision = build_sync_eligibility_decision(
@@ -127,6 +159,47 @@ class TestBuildSyncEligibilityDecision:
         assert decision.auth_mode == "oidc"
         assert decision.reason == "oidc_app_id_resolved"
         assert decision.resolved_app_id == "app-123"
+
+
+class TestDetermineSyncOutcome:
+    def test_zero_records_with_eligible_tenants_is_failed(self):
+        status, message, details = determine_sync_outcome(
+            job_type="resources",
+            records_processed=0,
+            errors_count=0,
+            eligible_tenants=5,
+            subscriptions_seen=0,
+        )
+
+        assert status == "failed"
+        assert message is not None
+        assert "processed zero records" in message
+        assert details["eligible_tenants"] == 5
+        assert details["subscriptions_seen"] == 0
+
+    def test_zero_eligible_tenants_is_failed(self):
+        status, message, _details = determine_sync_outcome(
+            job_type="costs",
+            records_processed=0,
+            errors_count=0,
+            eligible_tenants=0,
+        )
+
+        assert status == "failed"
+        assert message is not None
+        assert "zero sync-eligible tenants" in message
+
+    def test_nonzero_records_is_completed(self):
+        status, message, details = determine_sync_outcome(
+            job_type="identity",
+            records_processed=7,
+            errors_count=0,
+            eligible_tenants=2,
+        )
+
+        assert status == "completed"
+        assert message is None
+        assert details["records_processed"] == 7
 
 
 class TestGetSyncEligibleTenants:

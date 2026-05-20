@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.api.services.monitoring_service import MonitoringService
-from app.core.auth import User, get_current_user
+from app.core.auth import User, get_current_user, require_roles
 from app.core.authorization import (
     TenantAuthorization,
     get_tenant_authorization,
@@ -20,6 +20,7 @@ from app.core.authorization import (
 from app.core.database import get_db
 from app.core.rate_limit import rate_limit
 from app.core.scheduler import get_scheduler, trigger_manual_sync
+from app.core.sync.utils import explain_tenant_sync_eligibility
 from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
 
@@ -96,6 +97,92 @@ async def get_sync_status(
         )
 
     return {"status": "running", "jobs": jobs}
+
+
+@router.get(
+    "/diagnostics",
+    dependencies=[Depends(rate_limit("default"))],
+)
+async def get_sync_diagnostics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["admin", "operator"])),
+):
+    """Return secret-safe production sync diagnostics.
+
+    This endpoint intentionally reports *configuration shape* and recent
+    outcomes, not secret values. Its job is to answer: "will sync jobs have
+    any chance of authenticating and producing records?" without making us
+    spelunk App Service settings and SQL like caffeinated goblins.
+    """
+    from app.core.config import get_settings
+    from app.models.monitoring import SyncJobLog, SyncJobMetrics
+    from app.models.tenant import Tenant
+
+    settings = get_settings()
+    tenants = db.query(Tenant).filter(Tenant.is_active).order_by(Tenant.name).all()
+    tenant_rows = []
+    for tenant in tenants:
+        decision = explain_tenant_sync_eligibility(tenant)
+        tenant_rows.append(
+            {
+                "name": tenant.name,
+                "tenant_id": tenant.tenant_id,
+                "eligible": decision.eligible,
+                "auth_mode": decision.auth_mode,
+                "reason": decision.reason,
+                "client_id_present": bool(tenant.client_id),
+                "client_secret_ref_present": bool(tenant.client_secret_ref),
+                "expected_standard_secret_names": [
+                    f"{tenant.tenant_id}-client-id",
+                    f"{tenant.tenant_id}-client-secret",
+                ]
+                if settings.key_vault_url and not tenant.client_secret_ref
+                else [],
+            }
+        )
+
+    recent_logs = db.query(SyncJobLog).order_by(SyncJobLog.started_at.desc()).limit(20).all()
+    metrics = db.query(SyncJobMetrics).order_by(SyncJobMetrics.job_type).all()
+
+    return {
+        "configuration": {
+            "environment": settings.environment,
+            "key_vault_configured": bool(settings.key_vault_url),
+            "use_oidc_federation": bool(settings.use_oidc_federation),
+            "use_uami_auth": bool(settings.use_uami_auth),
+            "shared_azure_client_id_present": bool(settings.azure_client_id),
+            "shared_azure_client_secret_present": bool(settings.azure_client_secret),
+        },
+        "tenants": tenant_rows,
+        "recent_logs": [
+            {
+                "job_type": log.job_type,
+                "tenant_id": log.tenant_id,
+                "status": log.status,
+                "started_at": log.started_at.isoformat() if log.started_at else None,
+                "ended_at": log.ended_at.isoformat() if log.ended_at else None,
+                "records_processed": log.records_processed,
+                "errors_count": log.errors_count,
+                "error_message": log.error_message,
+            }
+            for log in recent_logs
+        ],
+        "metrics": [
+            {
+                "job_type": metric.job_type,
+                "success_rate": metric.success_rate,
+                "last_run_at": metric.last_run_at.isoformat() if metric.last_run_at else None,
+                "last_success_at": metric.last_success_at.isoformat()
+                if metric.last_success_at
+                else None,
+                "last_failure_at": metric.last_failure_at.isoformat()
+                if metric.last_failure_at
+                else None,
+                "last_error_message": metric.last_error_message,
+            }
+            for metric in metrics
+        ],
+    }
 
 
 @router.get(
