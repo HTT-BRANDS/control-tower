@@ -380,13 +380,17 @@ async def data_freshness_check(
         ("riverside_device_compliance", RiversideDeviceCompliance, "snapshot_date"),
         ("riverside_threat_data", RiversideThreatData, "snapshot_date"),
     ]
+    required_domains = {"resources", "costs", "compliance", "identity"}
+    optional_domains = {name for name, _, _ in domains} - required_domains
 
     result: dict[str, Any] = {}
     overall_any_stale = False
+    overall_optional_stale = False
 
     for tenant in tenants:
         per_tenant: dict[str, Any] = {}
         tenant_stale = False
+        tenant_optional_stale = False
         for name, model, ts_col in domains:
             ts_attr = getattr(model, ts_col, None)
             last = None
@@ -400,16 +404,24 @@ async def data_freshness_check(
                     last = None
             if last is None:
                 per_tenant[name] = None
-                tenant_stale = True
+                if name in required_domains:
+                    tenant_stale = True
+                else:
+                    tenant_optional_stale = True
                 continue
             # SQLite may return naive datetimes — normalise to UTC for comparison
             last_utc = last if last.tzinfo else last.replace(tzinfo=UTC)
             per_tenant[name] = last_utc.isoformat()
             if now - last_utc > _get_data_freshness_threshold():
-                tenant_stale = True
+                if name in required_domains:
+                    tenant_stale = True
+                else:
+                    tenant_optional_stale = True
 
         per_tenant["stale"] = tenant_stale
+        per_tenant["optional_stale"] = tenant_optional_stale
         overall_any_stale = overall_any_stale or tenant_stale
+        overall_optional_stale = overall_optional_stale or tenant_optional_stale
         key = getattr(tenant, "name", None) or tenant.tenant_id
         result[key] = per_tenant
 
@@ -417,6 +429,9 @@ async def data_freshness_check(
         "timestamp": now.isoformat(),
         "threshold_hours": int(_get_data_freshness_threshold().total_seconds() // 3600),
         "domains_covered": [name for name, _, _ in domains],
+        "required_domains": sorted(required_domains),
+        "optional_domains": sorted(optional_domains),
         "any_stale": overall_any_stale,
+        "any_optional_stale": overall_optional_stale,
         "tenants": result,
     }

@@ -35,7 +35,6 @@ async def sync_riverside():
     """
     logger.info(f"Starting Riverside compliance sync at {datetime.now(UTC)}")
 
-    total_tenants = 0
     total_errors = 0
     results = {
         "mfa_synced": 0,
@@ -70,7 +69,6 @@ async def sync_riverside():
                     for r in mfa_results.values()
                     if isinstance(r, dict) and r.get("status") == "error"
                 )
-                total_tenants = len(mfa_results)
         except Exception as e:
             logger.error(f"MFA sync failed: {e}")
             total_errors += 1
@@ -134,10 +132,17 @@ async def sync_riverside():
                 monitoring = MonitoringService(db)
                 monitoring.complete_sync_job(
                     log_id=log_id,
-                    status="success" if total_errors == 0 else "completed_with_errors",
-                    items_processed=sum(results.values()),
-                    items_failed=total_errors,
-                    message=f"Synced {total_tenants} tenants",
+                    status="completed" if total_errors == 0 else "completed_with_errors",
+                    error_message=(
+                        None
+                        if total_errors == 0
+                        else f"Riverside sync completed with {total_errors} error(s)"
+                    ),
+                    final_records={
+                        "records_processed": sum(results.values()),
+                        "records_created": sum(results.values()),
+                        "errors_count": total_errors,
+                    },
                 )
 
     except Exception as e:
@@ -148,9 +153,12 @@ async def sync_riverside():
                 monitoring.complete_sync_job(
                     log_id=log_id,
                     status="failed",
-                    items_processed=0,
-                    items_failed=0,
-                    message=f"Error: {e!s}",
+                    error_message=f"Error: {e!s}",
+                    final_records={
+                        "records_processed": 0,
+                        "records_created": 0,
+                        "errors_count": 1,
+                    },
                 )
         raise
 
