@@ -22,6 +22,7 @@ from app.models.compliance import ComplianceSnapshot
 from app.models.cost import CostSnapshot
 from app.models.dmarc import DKIMRecord, DMARCRecord
 from app.models.identity import IdentitySnapshot
+from app.models.monitoring import SyncJobLog
 from app.models.resource import Resource
 from app.models.riverside import (
     RiversideCompliance,
@@ -108,6 +109,82 @@ class TestHealthDataDomainCoverage:
             assert tenant_block[domain] is None
         assert body["any_stale"] is True
         assert body["any_optional_stale"] is True
+
+    def test_zero_cost_tenant_marker_counts_as_fresh_cost_domain(
+        self, client, db_session, active_tenant
+    ):
+        """A successful $0 cost sync must not look like missing cost data.
+
+        CostSnapshot intentionally skips zero-cost rows. The tenant-level sync
+        marker is the source of truth for "we checked Cost Management and Azure
+        returned no billable usage". Otherwise BCC/FN/TLL stay stale forever,
+        which is technically consistent and practically useless. Great combo.
+        """
+        now = _utc_now()
+        db_session.add_all(
+            [
+                Resource(
+                    id="/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Mock/test",
+                    tenant_id=active_tenant.id,
+                    subscription_id="sub",
+                    resource_group="rg",
+                    resource_type="Microsoft.Mock/test",
+                    name="test",
+                    synced_at=now,
+                ),
+                ComplianceSnapshot(
+                    tenant_id=active_tenant.id,
+                    subscription_id="sub",
+                    snapshot_date=now,
+                    overall_compliance_percent=100.0,
+                    synced_at=now,
+                ),
+                IdentitySnapshot(
+                    tenant_id=active_tenant.id,
+                    snapshot_date=now.date(),
+                    total_users=1,
+                    synced_at=now,
+                ),
+                SyncJobLog(
+                    job_type="costs_tenant",
+                    tenant_id=active_tenant.id,
+                    status="completed",
+                    started_at=now,
+                    ended_at=now,
+                    records_processed=0,
+                    errors_count=0,
+                ),
+            ]
+        )
+        db_session.commit()
+
+        body = client.get(DATA_URL).json()
+        tenant_block = body["tenants"][active_tenant.name]
+        assert tenant_block["costs"] is not None
+        assert tenant_block["stale"] is False
+        assert body["any_stale"] is False
+
+    def test_failed_zero_cost_tenant_marker_does_not_count_as_fresh_cost_domain(
+        self, client, db_session, active_tenant
+    ):
+        now = _utc_now()
+        db_session.add(
+            SyncJobLog(
+                job_type="costs_tenant",
+                tenant_id=active_tenant.id,
+                status="failed",
+                started_at=now,
+                ended_at=now,
+                records_processed=0,
+                errors_count=1,
+            )
+        )
+        db_session.commit()
+
+        body = client.get(DATA_URL).json()
+        tenant_block = body["tenants"][active_tenant.name]
+        assert tenant_block["costs"] is None
+        assert tenant_block["stale"] is True
 
     def test_required_fresh_optional_missing_does_not_mark_tenant_stale(
         self, client, db_session, active_tenant
