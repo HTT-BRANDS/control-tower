@@ -609,8 +609,16 @@ details.config[open] > summary .chevron { transform: rotate(90deg); }
     <div class="meta">
       <span>📋 Tracking: <strong>ct-6fj</strong></span>
       <span>📖 Runbook: <strong><a href="../runbooks/migrate-to-oidc-federation.md">migrate-to-oidc-federation.md</a></strong></span>
+      <span>⌨️ Pure CLI: <strong><code style="color:var(--htt-gold);font-size:12px">scripts/migrate-to-oidc.sh</code></strong></span>
       <span>⏱ Estimated: <strong>20-30 min</strong></span>
-      <span>↪ Rollback: <strong>~2 min</strong></span>
+    </div>
+    <div class="callout" style="margin-top:20px;background:rgba(255,201,87,0.08);border-color:var(--htt-gold);color:var(--text-0);font-size:13px;">
+      <strong style="color:var(--htt-gold)">Prefer the terminal?</strong>
+      Everything below (except step 6) can be driven from the CLI via
+      <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;">./scripts/migrate-to-oidc.sh all</code>.
+      Idempotent, color output, dry-run mode (<code>DRY_RUN=1</code>),
+      live <code>status</code> command, one-shot <code>rollback</code>.
+      Step 6 is browser-only by design (real user OAuth flow).
     </div>
   </section>
 

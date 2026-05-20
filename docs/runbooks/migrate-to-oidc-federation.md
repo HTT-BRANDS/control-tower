@@ -1,10 +1,15 @@
 # Migrate Home-Tenant App Reg to OIDC Federation (kill the runtime secret)
 
-> 🎯 **Prefer a clickable, branded walkthrough?**
-> Open [`../migration-cockpit/index.html`](../migration-cockpit/index.html)
-> in your browser. Same content, with portal deep-links templated to
-> your environment values + click-to-copy commands + progress tracking.
-> This Markdown doc is the long-form companion.
+> Three ways to do this migration:
+>
+> | Interface | Where | Best for |
+> |---|---|---|
+> | 🖥 **Clickable walkthrough** | [`../migration-cockpit/index.html`](../migration-cockpit/index.html) | First time, want portal deep-links |
+> | ⌨️ **Pure CLI** | [`../../scripts/migrate-to-oidc.sh`](../../scripts/migrate-to-oidc.sh) | You like the terminal; want idempotent, scriptable, dry-runnable |
+> | 📖 **Long-form prose** | this file | Reference, audit, onboarding |
+>
+> They're all in sync — the cockpit and the script execute the same
+> operations in the same order with the same verification.
 
 ## TL;DR
 
