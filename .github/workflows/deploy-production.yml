@@ -240,9 +240,12 @@ jobs:
             --ignore-vuln PYSEC-2025-183 \
             --ignore-vuln CVE-2025-45768
           # Fail if any non-ignored CVE remains.
-          python -c "
-          import json, sys
-          data = json.load(open('pip-audit.json'))
+          python <<'PY'
+          import json
+          import sys
+
+          with open('pip-audit.json') as fh:
+              data = json.load(fh)
           vulns = [v for pkg in data.get('dependencies', []) for v in pkg.get('vulns', [])]
           if vulns:
               print(f'FAIL: {len(vulns)} known CVEs found')
@@ -250,7 +253,7 @@ jobs:
                   print(f'- {vuln.get("id")}: {vuln.get("description", "")[:160]}')
               sys.exit(1)
           print('PASS: No non-ignored known CVEs')
-          "
+          PY
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -492,6 +495,50 @@ jobs:
 
       - name: Set subscription context
         run: az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure production Azure AD app settings (OIDC runtime auth)
+        env:
+          PROD_AZURE_AD_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          PROD_AZURE_AD_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PROD_AZURE_AD_TENANT_ID:-}" ] || [ -z "${PROD_AZURE_AD_CLIENT_ID:-}" ]; then
+            echo "::error::AZURE_TENANT_ID and AZURE_CLIENT_ID are required to configure production OIDC runtime auth."
+            exit 1
+          fi
+
+          login_base="https://login.microsoftonline.com/${PROD_AZURE_AD_TENANT_ID}"
+          authority="${login_base}"
+          issuer="${login_base}/v2.0"
+          token_endpoint="${login_base}/oauth2/v2.0/token"
+          authorization_endpoint="${login_base}/oauth2/v2.0/authorize"
+          jwks_uri="${login_base}/discovery/v2.0/keys"
+
+          echo "Setting production Azure AD app settings for OIDC mode..."
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings \
+              "AZURE_AD_TENANT_ID=${PROD_AZURE_AD_TENANT_ID}" \
+              "AZURE_AD_CLIENT_ID=${PROD_AZURE_AD_CLIENT_ID}" \
+              "AZURE_AD_AUTHORITY=${authority}" \
+              "AZURE_AD_ISSUER=${issuer}" \
+              "AZURE_AD_TOKEN_ENDPOINT=${token_endpoint}" \
+              "AZURE_AD_AUTHORIZATION_ENDPOINT=${authorization_endpoint}" \
+              "AZURE_AD_JWKS_URI=${jwks_uri}" \
+              "USE_OIDC_FEDERATION=true" \
+              "OIDC_ALLOW_DEV_FALLBACK=false" \
+            --output none
+
+          echo "Removing legacy production client-secret settings (if present)..."
+          az webapp config appsettings delete \
+            --name ${{ env.AZURE_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --setting-names AZURE_AD_CLIENT_SECRET AZURE_CLIENT_SECRET \
+            --output none || true
+
+          echo "✅ Production runtime auth configured for OIDC federation (no client_secret app settings)."
 
       - name: Capture previous-good container image (pre-deploy)
         id: prev-good
