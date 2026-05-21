@@ -290,10 +290,10 @@ class AzureClientManager:
             )
 
         known_config_tenant = get_tenant_by_id(tenant_id)
-        if settings.key_vault_url and tenant and not known_config_tenant:
+        if settings.key_vault_url and not tenant and not known_config_tenant:
             raise ValueError(
                 f"Tenant {tenant_id} is not configured for per-tenant Key Vault credentials. "
-                "Add explicit tenant credentials or disable the tenant."
+                "Add the tenant to the database/static config or disable sync for it."
             )
 
         raise ValueError(

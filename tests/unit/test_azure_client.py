@@ -171,8 +171,8 @@ class TestCredentialResolution:
                     assert client_secret == "kv-client-secret"
                     assert tenant == mock_tenant
 
-    def test_keyvault_missing_tenant_credentials_raises_error(self):
-        """Test Key Vault mode does not silently borrow shared creds for unknown tenants."""
+    def test_keyvault_db_tenant_missing_secrets_raises_generic_error(self):
+        """DB tenants are configured tenants even when packaged static config is stale."""
         from app.api.services.azure_client import AzureClientManager
 
         self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
@@ -185,6 +185,20 @@ class TestCredentialResolution:
         with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
             manager = AzureClientManager()
             with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
+                with patch("app.api.services.azure_client.get_tenant_by_id", return_value=None):
+                    with patch.object(manager, "_fetch_key_vault_secret", return_value=None):
+                        with pytest.raises(ValueError, match="Could not resolve credentials"):
+                            manager._resolve_credentials("tenant-123")
+
+    def test_keyvault_unknown_tenant_raises_not_configured_error(self):
+        """Key Vault mode still fails closed for tenants absent from DB and static config."""
+        from app.api.services.azure_client import AzureClientManager
+
+        self.mock_settings.key_vault_url = "https://test-kv.vault.azure.net/"
+
+        with patch("app.api.services.azure_client.KEYVAULT_AVAILABLE", True):
+            manager = AzureClientManager()
+            with patch.object(manager, "_get_tenant_from_db", return_value=None):
                 with patch("app.api.services.azure_client.get_tenant_by_id", return_value=None):
                     with patch.object(manager, "_fetch_key_vault_secret", return_value=None):
                         with pytest.raises(
@@ -230,10 +244,7 @@ class TestCredentialResolution:
             manager = AzureClientManager()
             with patch.object(manager, "_get_tenant_from_db", return_value=mock_tenant):
                 with patch.object(manager, "_fetch_key_vault_secret", return_value=None):
-                    with pytest.raises(
-                        ValueError,
-                        match="not configured for per-tenant Key Vault credentials",
-                    ):
+                    with pytest.raises(ValueError, match="Could not resolve credentials"):
                         manager._resolve_credentials("tenant-123")
 
 
