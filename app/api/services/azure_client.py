@@ -20,7 +20,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from azure.core.credentials import TokenCredential
-from azure.identity import ClientSecretCredential, DefaultAzureCredential
+from azure.identity import (
+    ClientSecretCredential,
+    DefaultAzureCredential,
+    ManagedIdentityCredential,
+)
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.policyinsights import PolicyInsightsClient
 from azure.mgmt.resource import ResourceManagementClient
@@ -98,9 +102,31 @@ class AzureClientManager:
 
     DEFAULT_CREDENTIAL_TTL_SECONDS = 3600  # 1 hour
 
+    @staticmethod
+    def _build_managed_credential() -> TokenCredential:
+        """Build the credential used for App Service-owned resources (Key Vault, ARM).
+
+        On App Service we MUST NOT use ``DefaultAzureCredential`` because it picks
+        up the ``AZURE_CLIENT_ID`` env var as a UAMI client_id hint. In this app,
+        ``AZURE_CLIENT_ID`` is the multi-tenant *app registration* client ID
+        (used for OAuth user login + per-tenant Graph access), NOT a UAMI. The
+        App Service only has a System-Assigned Managed Identity, so the SDK
+        ends up asking IMDS for a UAMI that doesn't exist and fails with
+        ``invalid_scope: No User Assigned ... Managed Identity found``.
+
+        ``ManagedIdentityCredential()`` with no args does NOT honor the env
+        var, so it correctly resolves to the SAMI on App Service.
+
+        Off App Service (local dev, tests), fall back to DefaultAzureCredential
+        so developer flows (az-login, env-vars) still work.
+        """
+        if os.environ.get("WEBSITE_SITE_NAME"):
+            return ManagedIdentityCredential()
+        return DefaultAzureCredential()
+
     def __init__(self, credential_ttl_seconds: int | None = None) -> None:
         self._credentials: dict[str, CachedCredential] = {}
-        self._default_credential: DefaultAzureCredential | None = None
+        self._default_credential: TokenCredential | None = None
         self._key_vault_client: SecretClient | None = None
         self._key_vault_cache: dict[str, tuple[str, float]] = {}  # (value, expires_at)
         self._settings = get_settings()
@@ -124,7 +150,7 @@ class AzureClientManager:
 
         if self._key_vault_client is None:
             try:
-                credential = DefaultAzureCredential()
+                credential = self._build_managed_credential()
                 self._key_vault_client = SecretClient(
                     vault_url=str(settings.key_vault_url),
                     credential=credential,
@@ -428,10 +454,15 @@ class AzureClientManager:
         )
         return new_credential
 
-    def get_default_credential(self) -> DefaultAzureCredential:
-        """Get the shared DefaultAzureCredential (managed identity / az-login)."""
+    def get_default_credential(self) -> TokenCredential:
+        """Get the shared App-Service / dev credential.
+
+        On App Service this is a ``ManagedIdentityCredential`` (SAMI). Locally
+        it falls back to ``DefaultAzureCredential``. See
+        :meth:`_build_managed_credential` for the rationale.
+        """
         if not self._default_credential:
-            self._default_credential = DefaultAzureCredential()
+            self._default_credential = self._build_managed_credential()
         return self._default_credential
 
     def get_subscription_client(self, tenant_id: str) -> SubscriptionClient:

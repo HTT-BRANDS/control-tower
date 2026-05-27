@@ -15,6 +15,7 @@ Coverage:
 - Cache clearing and bulk operations
 """
 
+import os
 import time
 from unittest.mock import MagicMock, patch
 
@@ -547,21 +548,50 @@ class TestClientCreation:
             assert args[1] == "sub-456"
 
     def test_get_default_credential(self):
-        """Test getting the shared DefaultAzureCredential."""
+        """Off App Service (no WEBSITE_SITE_NAME), should use DefaultAzureCredential."""
         from app.api.services.azure_client import AzureClientManager
 
-        with patch("app.api.services.azure_client.DefaultAzureCredential") as mock_default_cred:
-            mock_default_instance = MagicMock()
-            mock_default_cred.return_value = mock_default_instance
+        with patch.dict("os.environ", {}, clear=False):
+            os.environ.pop("WEBSITE_SITE_NAME", None)
+            with patch("app.api.services.azure_client.DefaultAzureCredential") as mock_default_cred:
+                mock_default_instance = MagicMock()
+                mock_default_cred.return_value = mock_default_instance
 
-            manager = AzureClientManager()
-            cred1 = manager.get_default_credential()
-            cred2 = manager.get_default_credential()
+                manager = AzureClientManager()
+                cred1 = manager.get_default_credential()
+                cred2 = manager.get_default_credential()
 
-            # Should create only once and cache
-            assert cred1 == mock_default_instance
-            assert cred2 == mock_default_instance
-            mock_default_cred.assert_called_once()
+                # Should create only once and cache
+                assert cred1 == mock_default_instance
+                assert cred2 == mock_default_instance
+                mock_default_cred.assert_called_once()
+
+    def test_get_default_credential_on_app_service_uses_managed_identity(self):
+        """On App Service (WEBSITE_SITE_NAME set), must NOT use DefaultAzureCredential.
+
+        Regression guard for the AZURE_CLIENT_ID hijacking bug: DefaultAzureCredential
+        picks up AZURE_CLIENT_ID env as a UAMI hint, but in this app that env var is
+        the multi-tenant app-registration client ID (not a UAMI). On App Service we
+        only have a System-Assigned MI, so we must use ManagedIdentityCredential()
+        directly to get the SAMI.
+        """
+        from app.api.services.azure_client import AzureClientManager
+
+        with patch.dict(
+            "os.environ",
+            {"WEBSITE_SITE_NAME": "app-governance-prod", "AZURE_CLIENT_ID": "some-app-reg-id"},
+        ):
+            with patch("app.api.services.azure_client.ManagedIdentityCredential") as mock_mi:
+                with patch("app.api.services.azure_client.DefaultAzureCredential") as mock_default:
+                    mock_mi.return_value = MagicMock()
+                    mock_default.return_value = MagicMock()
+
+                    manager = AzureClientManager()
+                    cred = manager.get_default_credential()
+
+                    mock_mi.assert_called_once_with()  # called with no args = SAMI
+                    mock_default.assert_not_called()
+                    assert cred == mock_mi.return_value
 
 
 class TestCacheManagement:
