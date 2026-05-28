@@ -52,18 +52,39 @@ def test_dashboard_route_uses_completed_not_success_for_sync_status():
     )
 
 
-def test_dashboard_route_filters_on_completed_status():
-    """Belt-and-suspenders: the actual route source uses 'completed'."""
+def test_dashboard_route_uses_model_synced_at_not_job_log():
+    """ct-lzi: the dashboard freshness calculation must use MAX(model.synced_at),
+    not SyncJobLog.started_at. A job can 'complete' with zero rows due to an
+    auth error — the UI then lies 'Synced 0h ago' while the data is stale.
+    """
     from pathlib import Path
 
     src = (
         Path(__file__).resolve().parents[2] / "app" / "api" / "routes" / "dashboard.py"
     ).read_text()
-    assert 'SyncJobLog.status == "completed"' in src, (
-        "ct-zNN: dashboard route must filter on 'completed' status"
+    assert "func.max" in src and ".synced_at)" in src, (
+        "ct-lzi: dashboard route must query MAX(model.synced_at) for real data presence"
     )
-    assert 'SyncJobLog.status == "success"' not in src, (
-        "ct-zNN: 'success' status doesn't exist in SyncJobLog data"
+    # Only check _get_dashboard_data body. Find its start, then find the
+    # next top-level function definition (decorated with @router.get).
+    func_start = src.find("async def _get_dashboard_data")
+    assert func_start != -1
+    func_end = src.find('@router.get("/dashboard"', func_start)
+    assert func_end != -1
+    func_body = src[func_start:func_end]
+    # SyncJobLog is still imported and used elsewhere in the file (the
+    # sync-dashboard route at the bottom). We only care that it's not
+    # used *inside* _get_dashboard_data for freshness calculation.
+    # SyncJobLog may appear in docstrings/comments (ct-lzi documents the
+    # old bug); we only care about *code* references.
+    code_lines = [
+        line
+        for line in func_body.splitlines()
+        if not line.strip().startswith("#") and not line.strip().startswith('"""')
+    ]
+    assert not any("SyncJobLog" in line for line in code_lines), (
+        "ct-lzi: SyncJobLog must not be used for freshness inside _get_dashboard_data "
+        "(it tracks when the job ran, not when data arrived)"
     )
 
 
