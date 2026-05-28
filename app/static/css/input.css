@@ -163,26 +163,3 @@
   --color-error: #b91c1c;
 }
 
-/* ── Backward-compat utility shims ──────────────────────────────────────────
-   During the multi-template migration we keep the legacy ``bg-brand-primary``,
-   ``text-htt-primary`` etc. class names alive by mapping them to the new
-   DaisyUI tokens. Templates can migrate at their own pace; once all 49 are
-   converted these aliases can be deleted in a future PR.
-
-   This block is intentionally short — anything more elaborate belongs in
-   design-utilities.css. */
-@utility bg-brand-primary {
-  background-color: var(--color-primary);
-}
-@utility text-brand-primary {
-  color: var(--color-primary);
-}
-@utility border-brand-primary {
-  border-color: var(--color-primary);
-}
-@utility bg-htt-primary {
-  background-color: var(--color-primary);
-}
-@utility text-htt-primary {
-  color: var(--color-primary);
-}
