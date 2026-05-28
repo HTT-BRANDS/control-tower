@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 
 def register_docs_routes(app, settings, jwt_manager) -> None:
-    """Register protected Swagger UI and ReDoc routes."""
+    """Register protected Swagger UI, ReDoc, and OpenAPI JSON routes."""
 
     @app.get("/docs", include_in_schema=False)
     async def swagger_ui_html(request: Request):
@@ -50,6 +50,17 @@ def register_docs_routes(app, settings, jwt_manager) -> None:
             title=f"{settings.app_name} - ReDoc",
             redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2/bundles/redoc.standalone.js",
         )
+
+    # ct-g7q: Gate /openapi.json behind the same auth as /docs in production.
+    # FastAPI auto-generates this when openapi_url is set; we override with
+    # an explicit route so the auth guard is consistent across all doc surfaces.
+    @app.get("/openapi.json", include_in_schema=False)
+    async def openapi_json(request: Request):
+        """OpenAPI JSON spec with auth protection in production."""
+        auth_error = _production_docs_auth_error(request, settings, jwt_manager)
+        if auth_error:
+            return auth_error
+        return JSONResponse(content=app.openapi())
 
 
 def _production_docs_auth_error(request: Request, settings, jwt_manager):

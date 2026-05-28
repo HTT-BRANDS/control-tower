@@ -78,7 +78,7 @@ def create_application(settings, lifespan: Callable[[FastAPI], AsyncIterator[Non
         lifespan=lifespan,
         docs_url=None,
         redoc_url=None,
-        openapi_url="/openapi.json",
+        openapi_url=None,
         openapi_tags=[
             {
                 "name": "Authentication",
