@@ -22,20 +22,27 @@
          <p>Card body</p>
      {% endcall %}
 #}
+{# Phase C: now uses DaisyUI's `card` component family (card / card-body /
+   card-title) for theme-aware surface/border/shadow handling. The wrapper
+   stays a <section> so existing aria-labelledby contracts hold; the title
+   stays an <h3> so heading-level semantics don't shift. Public API
+   (title/subtitle/extra_classes + {% call %} body) is unchanged. See
+   ct-dsi. #}
 {% macro ds_card(title=None, subtitle=None, extra_classes="") %}
-<section class="bg-surface-primary rounded-xl shadow-sm border border-default
-                hover:shadow-md transition-shadow p-6 {{ extra_classes }}"
+<section class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow {{ extra_classes }}"
          {% if title %}aria-labelledby="card-{{ title|lower|replace(' ', '-') }}"{% endif %}>
-    {% if title %}
-    <header class="mb-4">
-        <h3 id="card-{{ title|lower|replace(' ', '-') }}"
-            class="text-lg font-semibold text-primary-theme">{{ title }}</h3>
-        {% if subtitle %}
-        <p class="text-sm text-secondary-theme mt-1">{{ subtitle }}</p>
+    <div class="card-body">
+        {% if title %}
+        <header class="mb-2">
+            <h3 id="card-{{ title|lower|replace(' ', '-') }}"
+                class="card-title text-lg font-semibold">{{ title }}</h3>
+            {% if subtitle %}
+            <p class="text-sm text-base-content/70 mt-1">{{ subtitle }}</p>
+            {% endif %}
+        </header>
         {% endif %}
-    </header>
-    {% endif %}
-    {{ caller() }}
+        {{ caller() }}
+    </div>
 </section>
 {% endmacro %}
 

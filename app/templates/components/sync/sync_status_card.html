@@ -1,6 +1,8 @@
 {# Sync Status Card Component - Main dashboard status overview #}
-<div id="sync-status-card" data-testid="sync-status-card" class="bg-base-100 rounded-lg shadow-lg p-6 border-l-4 
-    {{ 'border-brand-success-100' if status.status == 'healthy' else ('border-brand-error-100' if status.status == 'critical' else 'border-brand-warning-100') }}">
+{# Phase C: DaisyUI card. Status-accent left-border is layered on top —
+   DaisyUI has no built-in status-accent slot. See ct-dsi. #}
+<div id="sync-status-card" data-testid="sync-status-card" class="card bg-base-100 border border-base-300 shadow-lg border-l-4 {{ 'border-l-success' if status.status == 'healthy' else ('border-l-error' if status.status == 'critical' else 'border-l-warning') }}">
+    <div class="card-body p-6">
     {# Header with Status #}
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -122,4 +124,5 @@
         </span>
         <span>Last updated: {{ last_refresh.strftime('%Y-%m-%d %H:%M:%S UTC') if last_refresh else 'Unknown' }}</span>
     </div>
-</div>
+    </div>{# /card-body #}
+</div>{# /card #}
