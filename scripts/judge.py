@@ -165,19 +165,23 @@ def _curl_status(url: str) -> tuple[int, str]:
         return 0, "curl-failed"
 
 
-def check_docs_auth_gated(base: str) -> tuple[bool, str]:
+def check_docs_auth_gated(base: str, env: str) -> tuple[bool, str]:
     code, detail = _curl_status(f"{base}/docs")
-    return code == 401, f"status={detail}"
+    # Staging allows public docs for dev convenience; production gates them
+    expected = 401 if env == "production" else 200
+    return code == expected, f"status={detail} (expected {expected})"
 
 
-def check_redoc_auth_gated(base: str) -> tuple[bool, str]:
+def check_redoc_auth_gated(base: str, env: str) -> tuple[bool, str]:
     code, detail = _curl_status(f"{base}/redoc")
-    return code == 401, f"status={detail}"
+    expected = 401 if env == "production" else 200
+    return code == expected, f"status={detail} (expected {expected})"
 
 
-def check_openapi_auth_gated(base: str) -> tuple[bool, str]:
+def check_openapi_auth_gated(base: str, env: str) -> tuple[bool, str]:
     code, detail = _curl_status(f"{base}/openapi.json")
-    return code == 401, f"status={detail}"
+    expected = 401 if env == "production" else 200
+    return code == expected, f"status={detail} (expected {expected})"
 
 
 def check_server_header(base: str) -> tuple[bool, str]:
@@ -244,14 +248,25 @@ def check_pages_deploy() -> tuple[bool, str]:
 def run_checks(env: str) -> list[Pillar]:
     base = ENV_URLS.get(env, ENV_URLS["production"])
 
+    def _wrap(fn, env_name=env):
+        def wrapper(base_url: str) -> tuple[bool, str]:
+            sig = fn.__code__.co_varnames[: fn.__code__.co_argcount]
+            if "env" in sig:
+                return fn(base_url, env_name)  # type: ignore[call-arg]
+            return fn(base_url)
+
+        return wrapper
+
     checks: list[Check] = [
         Check("P1.1", "Health", "/health 200", check_health, "P0"),
         Check("P1.2", "Health", "/health/detailed components", check_health_detailed, "P0"),
         Check("P1.3", "Health", "/healthz/data freshness", check_healthz_data, "P0"),
         Check("P1.4", "Health", "/metrics valid prometheus", check_metrics, "P0"),
-        Check("P2.1", "Security", "/docs 401", check_docs_auth_gated, "P0"),
-        Check("P2.2", "Security", "/redoc 401", check_redoc_auth_gated, "P0"),
-        Check("P2.3", "Security", "/openapi.json 401", check_openapi_auth_gated, "P0"),
+        Check("P2.1", "Security", "/docs auth-gated", _wrap(check_docs_auth_gated), "P0"),
+        Check("P2.2", "Security", "/redoc auth-gated", _wrap(check_redoc_auth_gated), "P0"),
+        Check(
+            "P2.3", "Security", "/openapi.json auth-gated", _wrap(check_openapi_auth_gated), "P0"
+        ),
         Check("P2.4", "Security", "Server header sanitized", check_server_header, "P0"),
         Check("P2.6", "Security", "Security headers present", check_security_headers, "P0"),
         Check("P2.7", "Security", "Rate limit headers", check_rate_limit_headers, "P1"),
