@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 
 def register_docs_routes(app, settings, jwt_manager) -> None:
@@ -30,11 +30,12 @@ def register_docs_routes(app, settings, jwt_manager) -> None:
         # with no nonce support. We inject the per-request nonce after generation.
         nonce = getattr(request.state, "csp_nonce", "")
         if nonce:
-            html.body = html.body.replace(
+            body = html.body.replace(
                 b"<script>",
                 f'<script nonce="{nonce}">'.encode(),
                 1,  # only the first (inline init) script; external ones keep their integrity
             )
+            return HTMLResponse(content=body.decode())
         return html
 
     @app.get("/redoc", include_in_schema=False)
