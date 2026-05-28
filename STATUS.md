@@ -1,19 +1,24 @@
 # HTT Control Tower — Live Status
 
 > **Read this first.** This is the single-glance "where are we right now" answer.
-> Refreshed 2026-05-27 by Richard (`code-puppy-5deed9`). If a fact below is older
-> than 24 hours, cross-check against `git log`, `bd ready`, and live `/health`.
+> Refreshed 2026-05-28 00:30 UTC by Richard (`code-puppy-5deed9`) after the
+> ct-y47 deploy-attempt #2 + rollback. If a fact below is older than 24 hours,
+> cross-check against `git log`, `bd ready`, and live `/health`.
 
-**Latest commit on `main`:** `e070181 fix: mark zero-cost tenant syncs fresh (#57)`
-**Package version:** `2.5.0` (per `pyproject.toml` — no `v2.5.1` tag yet; release-gate work in progress)
-**Last successful prod deploy:** [run `26194535675`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26194535675) — 2026-05-20 22:50 UTC (commit `e070181`, image `sha256:78362d36…`)
+**Latest commit on `main`:** `49b777b bd: ct-38g — file P0 followup for AZURE_AD_CLIENT_SECRET prereq blocking OIDC=false flip`
+**Package version:** `2.5.0` (per `pyproject.toml` — no `v2.5.1` tag yet; release-gate now blocked on ct-y47/ct-38g, not the April 30 conditions)
+**Last successful prod deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge commit `96611ec`, image `sha256:5f550ae5…`). All 6 jobs green: QA Gate, Security Scan, Build & Push to GHCR, Deploy to Production, Production Smoke Tests, Notify Teams.
 
-> ⚠️ **Active production incident (open):** Customer-tenant Graph/ARM sync (BCC/FN/DCE/TLL)
-> has been stale since 2026-05-20 23:10 UTC due to layered auth bugs. HTT (home tenant) still
-> fresh. Root cause + fix shipped on [PR #63](https://github.com/HTT-BRANDS/control-tower/pull/63) —
-> awaiting merge + prod deploy + `USE_OIDC_FEDERATION=false` flip. See `bd show ct-y47` for the
-> full diagnosis. Public app `/health` still 200 because health gate is too lenient — that's a
-> separate follow-up.
+> ⚠️ **Active production incident (still open after 2026-05-27 attempt #2):** Customer-tenant Graph/ARM
+> sync (BCC/FN/DCE/TLL) remains stale. PR #63 (`ManagedIdentityCredential` for Key Vault access) **shipped
+> successfully** and is now live on prod (`sha256:5f550ae5…`), but it only fixed **one of two**
+> `USE_OIDC_FEDERATION`-gated code paths. Flipping `USE_OIDC_FEDERATION=false` 503s the user-login
+> OAuth callback (`app/api/routes/auth.py:269` requires either federation OR `AZURE_AD_CLIENT_SECRET`,
+> and the latter is **not** configured on App Service). Rolled back within ~3 min; login restored.
+> **Next attempt blocked on `bd show ct-38g` (P0):** configure `AZURE_AD_CLIENT_SECRET` as a Key Vault
+> reference before re-flipping. ~30–60 min of work per `docs/runbooks/enable-secret-fallback.md`.
+> HTT (home tenant) still fresh because OIDC works for own-tenant. Public app `/health` still 200
+> because health gate is too lenient — separate follow-up.
 **Repo:** <https://github.com/HTT-BRANDS/control-tower>
 **Public docs (GitHub Pages):** <https://htt-brands.github.io/control-tower/>
 
@@ -25,7 +30,7 @@
 |---|---|---|
 | **Production app** | <https://app-governance-prod.azurewebsites.net> | ✅ `/health` 200 — `{status:healthy, version:2.5.0, environment:production}` |
 | **Production deep health** | <https://app-governance-prod.azurewebsites.net/health/detailed> | ✅ 200 — database:healthy, scheduler:running, cache:memory, azure_configured:true |
-| **Production data freshness** | <https://app-governance-prod.azurewebsites.net/healthz/data> | ⚠️ **STALE for BCC/FN/DCE/TLL since 2026-05-20** — only HTT fresh. See incident banner above + `bd show ct-y47`. |
+| **Production data freshness** | <https://app-governance-prod.azurewebsites.net/healthz/data> | ⚠️ **STILL stale for BCC/FN/DCE/TLL** (2026-05-27 deploy attempt rolled back — see incident banner above + `bd show ct-y47` / `bd show ct-38g`). Only HTT fresh. |
 | **Production OpenAPI** | <https://app-governance-prod.azurewebsites.net/openapi.json> | ✅ live, refreshed into Pages on every Pages deploy |
 | **Production Swagger UI** | <https://app-governance-prod.azurewebsites.net/docs> | ✅ live |
 | **Staging app** | <https://app-governance-staging-xnczpwyv.azurewebsites.net> | ✅ `/health` 200 — `{status:healthy, version:2.5.0, environment:staging}` |
@@ -40,10 +45,10 @@
 
 ```
 App Service: app-governance-prod (Linux container, Basic B1, 1 instance)
-   linuxFxVersion: DOCKER|ghcr.io/htt-brands/control-tower@sha256:78362d366c8b4f10ea86fd6b38c5e294f33cd2e9853ff82ff3c87e4a4b50ee7d
-   Last modified : 2026-05-20T22:50 UTC (run 26194535675, commit e070181)
+   linuxFxVersion: DOCKER|ghcr.io/htt-brands/control-tower@sha256:5f550ae53b2660a2fb8f60a2c9ca37f5668b948f86a3b76ee9f2dd15d6b2e937
+   Last modified : 2026-05-28T00:12 UTC (PR #63 deploy run 26535827775 + rollback restart)
    State         : Running
-   USE_OIDC_FEDERATION : true  ← active root cause; see PR #63 + ct-y47
+   USE_OIDC_FEDERATION : true  ← rolled back from false-attempt; blocked on ct-38g (AZURE_AD_CLIENT_SECRET prereq)
 ```
 
 This image is on the post-rebrand canonical GHCR path (`htt-brands/control-tower`).
@@ -124,6 +129,11 @@ Authoritative source: [`docs/COST_MODEL_AND_SCALING.md`](./docs/COST_MODEL_AND_S
 
 | Date (UTC) | Commit | What |
 |---|---|---|
+| 2026-05-28 00:25 | `49b777b` | **bd: ct-38g filed (P0)** — Followup for AZURE_AD_CLIENT_SECRET prereq blocking OIDC=false flip. Full RCA + 8-step fix path captured. |
+| 2026-05-27 23:55 | (operational) | **`USE_OIDC_FEDERATION=false` attempted + rolled back** (~3 min total). New ManagedIdentity code path loaded fine, but OAuth callback 503'd because `AZURE_AD_CLIENT_SECRET` is unset on App Service. Login restored, customer-tenant sync still broken. |
+| 2026-05-27 23:40 | (deploy) | **Production deploy succeeded — PR #63 image now live** ([run 26535827775](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775)). All 6 jobs green (QA, Security, Build, Deploy, Smoke, Notify). Image `sha256:5f550ae5…`. First successful prod deploy since 2026-05-20. |
+| 2026-05-27 ~23:00 | `150b023` | **`ops: ignore PYSEC-2026-161` in prod pip-audit gate** — starlette<1.0 transitive cap from `prometheus-fastapi-instrumentator 7.1.0`; documented risk-accept (URL injection not user-controllable in our sinks). Tracked as ct-n0n for proper fix. |
+| 2026-05-27 ~22:30 | `96611ec` | **PR #63 MERGED — `fix(auth): use ManagedIdentityCredential on App Service`** (squash-merge; closes ct-y47 root cause #1 of 2). `azure_client.py` now uses `ManagedIdentityCredential` for Key Vault access when `USE_OIDC_FEDERATION=false`. **Does not** address OAuth-callback path — see ct-38g. |
 | 2026-05-03 16:39 | `7e28417` | Session handoff: staging apply recovery recorded |
 | 2026-05-03 16:27 | `6b2a8c7` | **`fix(migrations)`** — Alembic 009/010 made no-op on SQLite (was bricking SQLite startup with SQL Server-only `ALTER COLUMN`). Azure SQL behavior preserved. |
 | 2026-05-03 16:04 | `d20e392` | bd: xzt4 staging recovery evidence recorded |
@@ -166,6 +176,12 @@ Not blocking, but worth knowing about. Full write-up in `SESSION_HANDOFF.md` § 
 
 ## 🎯 v2.5.1 release-gate state
 
+> **Updated 2026-05-28:** The April 30 internal-rehearsal verdict (`PASS-pending-9lfn`)
+> is no longer the binding gate. The customer-tenant sync incident (`ct-y47`) is now
+> the actual blocker for any v2.5.1 release tag. Internal scorecard below preserved for
+> historical reference but represents pre-incident state.
+
+
 Internal rehearsal verdict (`docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md`):
 
 | Pillar | Verdict |
@@ -183,11 +199,14 @@ Internal rehearsal verdict (`docs/release-gate/verdicts/rehearsal-2026-04-30-int
 
 ---
 
-## 🐞 Open work (`bd ready` — 4 issues)
+## 🐞 Open work (top blockers)
 
 | bd | Priority | Owner | Note |
 |---|---|---|---|
-| `9lfn` | **P1** | **Tyler-only** | Author `SECRETS_OF_RECORD.md` non-secret inventory. Skeleton + evidenced pointers landed (commit `00d076e`); Tyler still must fill storage paths, rotation dates, and secondary readers for Azure subs x5, AWS, Pax8, M365, GitHub PAT/deploy tokens. **The last v2.5.1 gate condition.** |
+| `ct-y47` | **P1** | next-session | **Active production incident — customer-tenant Graph/ARM sync stale.** PR #63 shipped half the fix; ct-38g is the remaining prerequisite. Closes when all 5 tenants flip to `stale=false` on `/healthz/data`. |
+| `ct-38g` | **P0** | next-session | **Blocks ct-y47.** `AZURE_AD_CLIENT_SECRET` missing from App Service settings — must be added as a Key Vault reference BEFORE re-flipping `USE_OIDC_FEDERATION=false`. 8-step fix path documented in ticket; follows `docs/runbooks/enable-secret-fallback.md`. **Do NOT flip again until this is done.** |
+| `ct-n0n` | P2 | next-puppy | Replace or wait-on `prometheus-fastapi-instrumentator` (starlette<1.0 transitive cap blocking PYSEC-2026-161 fix). Interim `--ignore-vuln` in prod pip-audit gate is documented + risk-accepted. |
+| `9lfn` | **P1** | **Tyler-only** | Author `SECRETS_OF_RECORD.md` non-secret inventory. Skeleton + evidenced pointers landed (commit `00d076e`); Tyler still must fill storage paths, rotation dates, and secondary readers for Azure subs x5, AWS, Pax8, M365, GitHub PAT/deploy tokens. Long-standing v2.5.1 gate condition. |
 | `uchp` | P2 | Tyler / Dustin | Q3 2026 quarterly DR test cycle (PITR + redeploy + KV recover). Evidence checklist landed `3ad45ca`. Due 2026-07-31. |
 | `l96f` | P3 | next-puppy | JWT issuer rotation. Phase 1 (accept both issuers) shipped in `88d7cf1`. Final cutover (drop `azure-governance-platform`) still pending. |
 | `xzt4` | P2 | Tyler | **In progress, intentionally open.** All 12 child tasks closed; staging Bicep apply recovered + hardened. **Production Bicep apply explicitly deferred** — do not run prod `az deployment sub create` without Tyler direction. |

@@ -1,7 +1,27 @@
 # Production Migration Status
 
+> ## ⚠️ SUPERSEDED — historical record only
+>
+> **This document was last meaningfully updated 2026-03-31** when the production rollout
+> was blocked on a GHCR authentication problem. **That problem was resolved long ago.**
+> Production has been deploying via GHCR successfully for months (most recent green run:
+> [26535827775](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) on 2026-05-27).
+>
+> **For current state, read these instead:**
+> - [`STATUS.md`](../STATUS.md) — live single-glance dashboard (refreshed 2026-05-28)
+> - [`CHANGELOG.md`](../CHANGELOG.md) `[Unreleased]` section — what shipped this week
+> - [`SESSION_HANDOFF.md`](../SESSION_HANDOFF.md) — narrative of recent sessions
+> - `bd ready` / `bd show ct-y47` — the current open production incident (customer-tenant sync)
+> - [`docs/runbooks/enable-secret-fallback.md`](./runbooks/enable-secret-fallback.md) — the relevant
+>   runbook for the **current** production-readiness blocker (`USE_OIDC_FEDERATION=false` switchover)
+>
+> The narrative below is preserved verbatim as historical context for the March 2026
+> GHCR-auth incident. Do not treat any "current" claim in it as current.
+
+---
+
 **Azure Governance Platform**  
-**Current Status:** 🔴 Phase 3 Blocked  
+**Current Status:** 🔴 Phase 3 Blocked  *(as of 2026-03-31 — see SUPERSEDED banner above)*
 **Last Updated:** 2026-03-31 13:49:12 CDT
 
 ---

@@ -18,7 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Pre-release state on `main` toward v2.5.1; no release tag yet. Internal release-gate verdict is `PASS-pending-9lfn` as of 2026-04-30 22:54 UTC._
+_Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28, the v2.5.1 gate is no longer the April-30 `PASS-pending-9lfn` verdict — the binding blocker is now the open `ct-y47` customer-tenant sync incident (see `STATUS.md` for current state)._
+
+### ct-y47 deploy attempt #2 + partial fix (May 27, 2026)
+
+First successful production deploy in 7 days landed PR #63 (`fix(auth): use ManagedIdentityCredential on App Service`, commit `96611ec`, squash-merged). Image `sha256:5f550ae5…` is now live on `app-governance-prod`. Deploy pipeline executed all 6 jobs green: QA Gate → Security Scan → Build & Push to GHCR → Deploy to Production → Production Smoke Tests → Notify Teams ([run 26535827775](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775)).
+
+- **ct-y47 NOT yet resolved** — the customer-tenant Graph/ARM sync remains broken for BCC/FN/DCE/TLL. PR #63 only fixed `azure_client.py` (the Key Vault access path); the OAuth user-login callback (`app/api/routes/auth.py:269`) **also** needs an alternative to `USE_OIDC_FEDERATION=true`, namely a configured `AZURE_AD_CLIENT_SECRET` App Service setting.
+- **`USE_OIDC_FEDERATION=false` flip attempted and rolled back** (~3 min total). New container started healthy with the ManagedIdentity code path, but `/login` immediately 503'd with "Azure AD authentication is not configured" because the OAuth-callback guard requires either federation OR client-secret, and we have neither for the non-OIDC branch. `USE_OIDC_FEDERATION=true` restored, login working again.
+- **`bd ct-38g` filed (P0)** — full RCA + 8-step fix path captured. Follows `docs/runbooks/enable-secret-fallback.md`. **Hard rule: do not re-flip `USE_OIDC_FEDERATION=false` until `AZURE_AD_CLIENT_SECRET` is added as a KV reference first.**
+- **Pip-audit prod-gate unblocked** (commit `150b023`) — `PYSEC-2026-161` (starlette<1.0 Host-header URL injection) ignored with documented risk-accept: `prometheus-fastapi-instrumentator 7.1.0` transitively caps `starlette<1.0.0` with no upstream release; App Service rewrites the Host header before our app sees it; URL reconstruction in our code only feeds OAuth redirect URI + OpenAPI server URL (neither user-controllable). Tracked as `bd ct-n0n` for proper fix (replace dep OR wait for upstream).
+- **Net production progress on ct-y47:** zero. The image is in place; the switch can't be flipped until ct-38g lands. Customer-tenant sync incident remains in the same state it has been since 2026-05-20.
 
 ### End-to-end audit & login/dashboard hotfixes (May 19, 2026)
 
