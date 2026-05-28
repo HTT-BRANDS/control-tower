@@ -164,6 +164,9 @@ ALL_PERMISSIONS: Final[frozenset[str]] = frozenset(
         # Monitoring
         MONITORING_READ,
         MONITORING_MANAGE,
+        # Franchise Coach (ADR-0012, MANAGER-tier)
+        FRANCHISE_COACH_READ,
+        FRANCHISE_COACH_EXPORT,
     }
 )
 

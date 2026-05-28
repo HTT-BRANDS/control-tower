@@ -285,9 +285,14 @@ def _build_sync_freshness(session: Session, tenant_id: str, now: datetime) -> Sy
     domain_to_ts["costs"] = latest_synced_at(CostSnapshot)
     domain_to_ts["resources"] = latest_synced_at(Resource)
 
-    stale_domains = [
-        domain for domain, ts in domain_to_ts.items() if ts is None or (now - ts) > _STALE_AFTER
-    ]
+    def _is_stale(ts: datetime | None) -> bool:
+        if ts is None:
+            return True
+        # SQLite (and some MSSQL columns) hand back naive datetimes — normalize.
+        ts_utc = ts if ts.tzinfo else ts.replace(tzinfo=UTC)
+        return (now - ts_utc) > _STALE_AFTER
+
+    stale_domains = [domain for domain, ts in domain_to_ts.items() if _is_stale(ts)]
     return SyncFreshness(
         costs_synced_at=domain_to_ts["costs"],
         identity_synced_at=domain_to_ts["identity"],
