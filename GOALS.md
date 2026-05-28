@@ -3,6 +3,11 @@
 > **Single source of truth for "are we production-ready?"**
 > Evaluated by `scripts/judge.py` — objective criteria, no hand-waving.
 > Last updated: 2026-05-28
+>
+> **Judge coverage:** 17 of 62 criteria (~27%) are evaluated automatically by
+> `scripts/judge.py`. The rest are CI-only (test suite, deploy status, Azure
+> spend) or manual (UX polish, runbook drills). See `scripts/judge.py` for
+> the authoritative list. ct-fz0 tracks further expansion.
 
 ---
 

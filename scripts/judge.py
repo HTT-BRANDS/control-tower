@@ -243,6 +243,142 @@ def check_pages_deploy() -> tuple[bool, str]:
     return r.status_code == 200 if r else False, f"status={r.status_code if r else 'none'}"
 
 
+# ─── Phase-C extensions (ct-fz0): low-friction GOALS.md coverage wins ──────
+# Each check follows the existing (bool, str) contract. Repo-local checks
+# ignore the base URL but keep the parameter for run_checks() uniformity.
+
+
+def check_csp_nonce(base: str) -> tuple[bool, str]:
+    """P2.5 — Content-Security-Policy header present with a nonce directive.
+
+    /health is unauthenticated so we can probe it without credentials. CSP
+    is applied app-wide via middleware so any endpoint that responds 200
+    must carry it.
+    """
+    r = _head(f"{base}/health")
+    if r is None:
+        return False, "Connection failed"
+    csp = r.headers.get("Content-Security-Policy") or r.headers.get(
+        "content-security-policy"
+    )
+    if not csp:
+        return False, "CSP header missing"
+    has_nonce = "nonce-" in csp
+    return has_nonce, f"CSP={'with nonce' if has_nonce else 'no nonce directive'}"
+
+
+def check_scheduler_running(base: str) -> tuple[bool, str]:
+    """P3.2 — Sync scheduler is running (explicit assertion).
+
+    Already implicitly validated by P1.2 (`check_health_detailed`), but the
+    GOALS.md matrix lists it as its own line item. Surfacing it separately
+    gives the report a clearer failure signal when the scheduler is the
+    sole regression.
+    """
+    r = _get(f"{base}/health/detailed")
+    if r is None or r.status_code != 200:
+        return False, f"Status {r.status_code if r else 'none'}"
+    try:
+        comps = r.json().get("components", {})
+        state = comps.get("scheduler")
+        return state == "running", f"scheduler={state}"
+    except Exception as exc:
+        return False, f"parse error: {exc}"
+
+
+def check_alembic_current() -> tuple[bool, str]:
+    """P3.4 — `alembic current` revision matches `alembic heads`.
+
+    Local subprocess check; doesn't need the running server. Useful as a
+    pre-deploy guard and as a CI safety net against drift between the
+    deployed schema and the migration tree's latest head.
+    """
+    import subprocess
+
+    try:
+        cur = subprocess.run(
+            ["uv", "run", "alembic", "current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        heads = subprocess.run(
+            ["uv", "run", "alembic", "heads"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except Exception as exc:
+        return False, f"alembic invocation failed: {exc}"
+
+    def _rev(out: str) -> str:
+        # alembic prints lines like '012 (head)' — first token is the revision id
+        for line in out.splitlines():
+            line = line.strip()
+            if line and not line.startswith("INFO"):
+                return line.split()[0]
+        return ""
+
+    cur_rev = _rev(cur.stdout)
+    head_rev = _rev(heads.stdout)
+    ok = bool(cur_rev) and cur_rev == head_rev
+    return ok, f"current={cur_rev!r} head={head_rev!r}"
+
+
+def check_dockerfile_non_root() -> tuple[bool, str]:
+    """P6.6 — Dockerfile sets a USER directive (i.e. doesn't run as root)."""
+    from pathlib import Path
+
+    dockerfile = Path(__file__).resolve().parent.parent / "Dockerfile"
+    if not dockerfile.exists():
+        return False, "Dockerfile missing"
+    user_lines = [
+        line.strip()
+        for line in dockerfile.read_text().splitlines()
+        if line.strip().startswith("USER ")
+    ]
+    if not user_lines:
+        return False, "no USER directive"
+    # All USER directives must be non-root; reject any literal 'USER root'
+    bad = [u for u in user_lines if u.split()[1].lower() == "root"]
+    if bad:
+        return False, f"runs as root: {bad}"
+    return True, f"USER directives: {user_lines}"
+
+
+def check_bicep_drift() -> tuple[bool, str]:
+    """P6.8 — Bicep drift directory has <= 5 entries (or doesn't exist = no drift)."""
+    from pathlib import Path
+
+    drift_dir = Path(__file__).resolve().parent.parent / "infrastructure" / "bicep" / "drift"
+    if not drift_dir.exists():
+        return True, "no drift dir (= 0 items)"
+    items = [p for p in drift_dir.iterdir() if not p.name.startswith(".")]
+    ok = len(items) <= 5
+    return ok, f"{len(items)} drift items (threshold 5)"
+
+
+def check_bd_open_count() -> tuple[bool, str]:
+    """P7.6 — `bd` open issue count <= 10."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["bd", "list", "--status", "open", "--json", "--no-pager"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode != 0:
+            return False, f"bd exited {result.returncode}"
+        data = json.loads(result.stdout)
+        count = len(data)
+        ok = count <= 10
+        return ok, f"{count} open issues (threshold 10)"
+    except Exception as exc:
+        return False, f"bd invocation/parse failed: {exc}"
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -269,12 +405,29 @@ def run_checks(env: str) -> list[Pillar]:
             "P2.3", "Security", "/openapi.json auth-gated", _wrap(check_openapi_auth_gated), "P0"
         ),
         Check("P2.4", "Security", "Server header sanitized", check_server_header, "P0"),
+        Check("P2.5", "Security", "CSP nonce present", check_csp_nonce, "P0"),
         Check("P2.6", "Security", "Security headers present", check_security_headers, "P0"),
         Check("P2.7", "Security", "Rate limit headers", check_rate_limit_headers, "P1"),
+        Check("P3.2", "Sync", "Scheduler running", check_scheduler_running, "P0"),
         Check("P4.4", "Design", "/design-system responds", check_design_system_endpoint, "P1"),
     ]
 
-    # Non-HTTP checks
+    # Non-HTTP, repo-local checks (run regardless of env — they probe the
+    # source tree, not the live server). ct-fz0 Phase-C coverage extension.
+    checks.extend(
+        [
+            Check("P3.4", "Sync", "Alembic migrations current",
+                  lambda _: check_alembic_current(), "P0"),
+            Check("P6.6", "Infra", "Dockerfile runs non-root",
+                  lambda _: check_dockerfile_non_root(), "P0"),
+            Check("P6.8", "Infra", "Bicep drift <= 5",
+                  lambda _: check_bicep_drift(), "P1"),
+            Check("P7.6", "Process", "bd open issues <= 10",
+                  lambda _: check_bd_open_count(), "P1"),
+        ]
+    )
+
+    # Production-only HTTP checks
     if env == "production":
         checks.append(
             Check("P6.4", "Infra", "GitHub Pages live", lambda _: check_pages_deploy(), "P1")
