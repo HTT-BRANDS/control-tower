@@ -1,35 +1,22 @@
 #!/usr/bin/env bash
-# Build Tailwind CSS for the app using the v3 standalone binary.
-# Downloads the binary on first run if missing.
+# Build Tailwind v4 + DaisyUI v5 CSS for the app.
+#
+# Phase A of the DaisyUI migration (ct-uij): switched from the v3 standalone
+# binary to the npm-installed v4 CLI so we get `@plugin "daisyui"` support
+# without vendoring a 50MB binary. The output path is unchanged
+# (``app/static/css/tailwind-output.css``) so base.html links keep working.
+#
+# Dockerfile / CI did NOT need updates: ``tailwind-output.css`` is committed
+# to the repo, the runtime container just serves it as a static asset.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-BIN="bin/tailwindcss"
-VERSION="v3.4.17"
-
-# Resolve platform suffix for Tailwind's release binaries
-resolve_platform() {
-  local os arch
-  os="$(uname -s)"
-  arch="$(uname -m)"
-  case "$os-$arch" in
-    Darwin-arm64)  echo "macos-arm64" ;;
-    Darwin-x86_64) echo "macos-x64" ;;
-    Linux-x86_64)  echo "linux-x64" ;;
-    Linux-aarch64) echo "linux-arm64" ;;
-    *) echo "unsupported-platform: $os-$arch" >&2; exit 1 ;;
-  esac
-}
-
-if [ ! -x "$BIN" ]; then
-  PLATFORM="$(resolve_platform)"
-  URL="https://github.com/tailwindlabs/tailwindcss/releases/download/${VERSION}/tailwindcss-${PLATFORM}"
-  echo "→ Downloading Tailwind $VERSION for $PLATFORM..."
-  mkdir -p bin
-  curl -fsSL -o "$BIN" "$URL"
-  chmod +x "$BIN"
+# Auto-install npm deps on first run so dev workflow is one-shot.
+if [ ! -d "node_modules" ]; then
+  echo "→ node_modules missing; running npm install..."
+  npm install --no-audit --no-fund --silent
 fi
 
 INPUT="app/static/css/input.css"
@@ -38,14 +25,14 @@ MODE="${1:-build}"   # build | watch
 
 case "$MODE" in
   build)
-    echo "→ Building $OUTPUT (minified)"
-    "$BIN" -i "$INPUT" -o "$OUTPUT" --minify
+    echo "→ Building $OUTPUT (Tailwind v4 + DaisyUI v5, minified)"
+    npx @tailwindcss/cli -i "$INPUT" -o "$OUTPUT" --minify
     SIZE=$(wc -c < "$OUTPUT")
     echo "✓ Wrote $OUTPUT ($SIZE bytes)"
     ;;
   watch)
     echo "→ Watching $INPUT (Ctrl+C to stop)"
-    exec "$BIN" -i "$INPUT" -o "$OUTPUT" --watch
+    exec npx @tailwindcss/cli -i "$INPUT" -o "$OUTPUT" --watch
     ;;
   *)
     echo "Usage: $0 [build|watch]" >&2
