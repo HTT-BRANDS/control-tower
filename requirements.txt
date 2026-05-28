@@ -53,7 +53,7 @@ azure-mgmt-core==1.6.0
     #   azure-mgmt-subscription
 azure-mgmt-costmanagement==4.0.1
     # via control-tower
-azure-mgmt-policyinsights==1.0.0
+azure-mgmt-policyinsights==1.0.1
     # via control-tower
 azure-mgmt-resource==23.4.0
     # via control-tower
@@ -63,7 +63,7 @@ azure-mgmt-subscription==3.1.1
     # via control-tower
 bcrypt==5.0.0
     # via passlib
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   httpcore
     #   httpx
@@ -73,7 +73,7 @@ cffi==2.0.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 charset-normalizer==3.4.7
     # via requests
-click==8.4.0
+click==8.4.1
     # via uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
@@ -85,13 +85,13 @@ cryptography==47.0.0
     #   control-tower
     #   msal
     #   pyjwt
-fastapi==0.136.1
+fastapi==0.136.3
     # via control-tower
 googleapis-common-protos==1.75.0
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-greenlet==3.5.0 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
+greenlet==3.5.1 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
     # via sqlalchemy
 grpcio==1.80.0
     # via opentelemetry-exporter-otlp-proto-grpc
@@ -101,11 +101,11 @@ h11==0.16.0
     #   uvicorn
 httpcore==1.0.9
     # via httpx
-httptools==0.7.1
+httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
     # via control-tower
-idna==3.15
+idna==3.17
     # via
     #   anyio
     #   httpx
@@ -145,7 +145,7 @@ msrest==0.7.1
     #   azure-mgmt-subscription
 oauthlib==3.3.1
     # via requests-oauthlib
-opentelemetry-api==1.41.1
+opentelemetry-api==1.42.1
     # via
     #   control-tower
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -155,41 +155,41 @@ opentelemetry-api==1.41.1
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp==1.41.1
+opentelemetry-exporter-otlp==1.42.1
     # via control-tower
-opentelemetry-exporter-otlp-proto-common==1.41.1
+opentelemetry-exporter-otlp-proto-common==1.42.1
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-grpc==1.41.1
+opentelemetry-exporter-otlp-proto-grpc==1.42.1
     # via opentelemetry-exporter-otlp
-opentelemetry-exporter-otlp-proto-http==1.41.1
+opentelemetry-exporter-otlp-proto-http==1.42.1
     # via opentelemetry-exporter-otlp
-opentelemetry-instrumentation==0.62b1
+opentelemetry-instrumentation==0.63b1
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-asgi==0.62b1
+opentelemetry-instrumentation-asgi==0.63b1
     # via opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-fastapi==0.62b1
+opentelemetry-instrumentation-fastapi==0.63b1
     # via control-tower
-opentelemetry-proto==1.41.1
+opentelemetry-proto==1.42.1
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.41.1
+opentelemetry-sdk==1.42.1
     # via
     #   control-tower
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-semantic-conventions==0.62b1
+opentelemetry-semantic-conventions==0.63b1
     # via
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
-opentelemetry-util-http==0.62b1
+opentelemetry-util-http==0.63b1
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
@@ -212,11 +212,11 @@ pydantic==2.13.4
     #   control-tower
     #   fastapi
     #   pydantic-settings
-pydantic-core==2.46.4
+pydantic-core==2.47.0
     # via pydantic
 pydantic-settings==2.14.1
     # via control-tower
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via
     #   control-tower
     #   msal
@@ -254,7 +254,7 @@ rpds-py==0.30.0
     #   referencing
 six==1.17.0
     # via control-tower
-sqlalchemy==2.0.49
+sqlalchemy==2.0.50
     # via
     #   alembic
     #   control-tower
@@ -295,7 +295,7 @@ tzlocal==5.3.1
     # via apscheduler
 urllib3==2.7.0
     # via requests
-uvicorn==0.47.0
+uvicorn==0.48.0
     # via control-tower
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
@@ -303,7 +303,7 @@ watchfiles==1.2.0
     # via uvicorn
 websockets==16.0
     # via uvicorn
-wrapt==2.1.2
+wrapt==2.2.1
     # via opentelemetry-instrumentation
 zipp==3.23.1
     # via importlib-metadata
