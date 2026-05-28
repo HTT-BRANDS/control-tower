@@ -243,27 +243,36 @@ class TestHSTS:
 
 
 class TestSkipPaths:
-    """Paths in skip_paths should NOT receive security headers."""
+    """Paths in skip_paths receive MINIMAL security headers (no CSP).
 
-    def test_metrics_path_skipped_by_default(self):
+    Rationale: CSP can break text/plain Prometheus scrapers, but
+    X-Frame-Options, HSTS, etc. are safe and required for defense-in-depth.
+    """
+
+    def test_metrics_path_gets_minimal_headers(self):
         client = _make_app()
         resp = client.get("/metrics")
-        assert "X-Frame-Options" not in resp.headers
+        # Minimal headers present
+        assert "X-Frame-Options" in resp.headers
+        assert "Strict-Transport-Security" in resp.headers
+        assert "Server" in resp.headers
+        # CSP NOT present (would break scrapers)
         assert "Content-Security-Policy" not in resp.headers
 
     def test_custom_skip_paths(self):
         client = _make_app(
             middleware_kwargs={"skip_paths": ("/health", "/metrics")},
         )
-        resp_health = client.get("/health")
-        assert "X-Frame-Options" not in resp_health.headers
+        for path in ("/health", "/metrics"):
+            resp = client.get(path)
+            assert "X-Frame-Options" in resp.headers
+            assert "Strict-Transport-Security" in resp.headers
+            assert "Content-Security-Policy" not in resp.headers
 
-        resp_metrics = client.get("/metrics")
-        assert "X-Frame-Options" not in resp_metrics.headers
-
-        # Non-skipped path still gets headers
+        # Non-skipped path still gets full headers including CSP
         resp_test = client.get("/test")
         assert "X-Frame-Options" in resp_test.headers
+        assert "Content-Security-Policy" in resp_test.headers
 
     def test_non_skipped_path_gets_headers(self):
         client = _make_app()
