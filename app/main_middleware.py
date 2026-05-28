@@ -6,7 +6,7 @@ import uuid
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
+from app.core.prometheus_middleware import PrometheusMiddleware, expose_metrics
 
 from app.core.config import get_settings
 from app.core.gpc_middleware import GPCMiddleware
@@ -170,8 +170,13 @@ def _register_rate_limit_middleware(app, logger) -> None:
 
 
 def _register_prometheus_metrics(app) -> None:
-    Instrumentator(
+    app.add_middleware(
+        PrometheusMiddleware,
+        excluded_handlers=["/health", "/health/detailed"],
         should_group_status_codes=False,
         should_ignore_untemplated=True,
-        excluded_handlers=["/health", "/health/detailed"],
-    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=True)
+    )
+
+    @app.get("/metrics", include_in_schema=True)
+    async def metrics():
+        return expose_metrics()

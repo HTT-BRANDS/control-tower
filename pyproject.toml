@@ -43,7 +43,7 @@ dependencies = [
     "azure-keyvault-secrets>=4.7.0",  # Key Vault secret storage
     "six>=1.17.0",
     "alembic>=1.18.4",
-    "prometheus-fastapi-instrumentator>=7.1.0",
+    "prometheus-client>=0.25.0",
     "pyyaml>=6.0",
     "jsonschema>=4.20.0",  # JSON Schema validation for custom compliance rules (CM-002)
     # Token blacklist & caching (optional but required for production)
