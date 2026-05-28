@@ -421,14 +421,32 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
-        # Skip headers for certain paths (health checks, metrics)
+        # Skip full headers for metrics/health to avoid breaking scrapers,
+        # but still add the baseline security headers.
         if request.url.path in self.skip_paths:
+            self._add_minimal_security_headers(response)
             return response
 
         # Add security headers
         self._add_security_headers(response, nonce)
 
         return response
+
+    def _add_minimal_security_headers(self, response: Response) -> None:
+        """Add baseline security headers for scraper endpoints (/metrics, /health).
+
+        Avoids CSP (which can break text/plain scrapers) while still
+        hardening the transport layer.
+        """
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = self.referrer_policy
+        response.headers["Strict-Transport-Security"] = (
+            f"max-age={self.hsts_max_age}; includeSubDomains"
+            + ("; preload" if self.hsts_preload else "")
+        )
+        response.headers["Server"] = "Azure-Governance-Platform"
 
     def _add_security_headers(self, response: Response, nonce: str) -> None:
         """Add all security headers to response."""
