@@ -38,7 +38,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         should_ignore_untemplated: bool = True,
     ):
         super().__init__(app)
-        self.excluded_handlers = set(excluded_handlers or ["/health", "/health/detailed", "/metrics"])
+        self.excluded_handlers = set(
+            excluded_handlers or ["/health", "/health/detailed", "/metrics"]
+        )
         self.should_group_status_codes = should_group_status_codes
         self.should_ignore_untemplated = should_ignore_untemplated
 
