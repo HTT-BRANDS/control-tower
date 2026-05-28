@@ -49,13 +49,22 @@ class TestPublicEndpoints:
         data = resp.json()
         assert "jwt_configured" in data, f"Missing jwt_configured in: {data}"
 
-    def test_openapi_schema_is_public(self, client: requests.Session, staging_url: str) -> None:
-        """GET /openapi.json must be accessible (powers /docs)."""
+    def test_openapi_schema_is_public(
+        self, client: requests.Session, staging_url: str, is_production: bool
+    ) -> None:
+        """GET /openapi.json — 200 in dev/staging, 401 in production (auth-gated)."""
         resp = client.get(f"{staging_url}/openapi.json", timeout=30)
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "paths" in data, "openapi.json missing 'paths'"
-        assert "info" in data, "openapi.json missing 'info'"
+        if is_production:
+            assert resp.status_code == 401, (
+                f"/openapi.json returned {resp.status_code} in production — expected 401"
+            )
+        else:
+            assert resp.status_code == 200, (
+                f"/openapi.json returned {resp.status_code} — expected 200"
+            )
+            data = resp.json()
+            assert "paths" in data, "openapi.json missing 'paths'"
+            assert "info" in data, "openapi.json missing 'info'"
 
     def test_docs_ui_responds_correctly(
         self, client: requests.Session, staging_url: str, is_production: bool
