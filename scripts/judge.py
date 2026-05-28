@@ -22,6 +22,7 @@ import requests
 ENV_URLS = {
     "production": "https://app-governance-prod.azurewebsites.net",
     "staging": "https://app-governance-staging-xnczpwyv.azurewebsites.net",
+    "dev": "https://app-governance-dev.azurewebsites.net",
 }
 
 HEADERS = {"User-Agent": "htt-judge/1.0"}
@@ -224,7 +225,7 @@ def check_rate_limit_headers(base: str) -> tuple[bool, str]:
             for k, v in [
                 line.split(":", 1)
                 for line in result.stdout.splitlines()
-                if ":" in line and line.split(":", 1)[0].strip().startswith("X-RateLimit")
+                if ":" in line and line.split(":", 1)[0].strip().lower().startswith("x-ratelimit")
             ]
         }
         return bool(headers), f"headers={headers}"
