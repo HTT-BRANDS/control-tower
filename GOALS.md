@@ -1,0 +1,117 @@
+# HTT Control Tower — Production Readiness Goals
+
+> **Single source of truth for "are we production-ready?"**
+> Evaluated by `scripts/judge.py` — objective criteria, no hand-waving.
+> Last updated: 2026-05-28
+
+---
+
+## Scoring
+
+| Symbol | Meaning |
+|---|---|
+| 🟢 PASS | Criterion met, no action needed |
+| 🟡 CONDITIONAL | Met with caveats; monitor or remediate in next sprint |
+| 🔴 FAIL | Criterion not met; blocks release tag |
+
+**Release tag rule:** All P0 criteria must be 🟢. No more than 2 P1 criteria may be 🟡. Zero 🔴 anywhere.
+
+---
+
+## Pillar 1: Health & Observability
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P1.1 | `/health` returns 200 | `< 500ms`, healthy body | `curl` every 60s |
+| P1.2 | `/health/detailed` shows all components healthy | `database: healthy`, `scheduler: running`, `cache: healthy`, `azure_configured: true` | `curl` |
+| P1.3 | `/healthz/data` tenant freshness | `any_stale: false` OR documented exception with ETA | `curl` + bd issue |
+| P1.4 | `/metrics` returns valid Prometheus | `200`, non-empty, parseable | `curl` + `promtool check metrics` |
+| P1.5 | App Insights telemetry flowing | Traces + logs visible in Azure portal | Manual check |
+| P1.6 | Alert rules armed | 9× alerts configured + 2× availability tests | Azure portal |
+
+## Pillar 2: Security Surface
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P2.1 | `/docs` auth-gated in production | `401` without valid Bearer/cookie | `curl` |
+| P2.2 | `/redoc` auth-gated in production | `401` without valid Bearer/cookie | `curl` |
+| P2.3 | `/openapi.json` auth-gated in production | `401` without valid Bearer/cookie | `curl` |
+| P2.4 | Server header sanitized | Only `Azure-Governance-Platform`, no `uvicorn` | `curl -I` |
+| P2.5 | CSP nonce present on `/docs` | `nonce="..."` in inline script | `curl` + grep |
+| P2.6 | Security headers on all responses | `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `HSTS` | `curl -I` |
+| P2.7 | Rate limiting active | `X-RateLimit-*` headers on non-exempt endpoints | `curl` |
+| P2.8 | JWT secret enforced | `JWT_SECRET_KEY` set, not default/dev value | `test_config.py` |
+| P2.9 | No PYSEC advisories in direct deps | `pip-audit` clean OR documented risk-accept | CI Security Scan |
+| P2.10 | STRIDE analysis current | Threat model reviewed within last 90 days | `docs/security/` |
+
+## Pillar 3: Data Integrity & Sync
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P3.1 | All tenants have required-domain data | `resources`, `compliance`, `costs`, `identity` all non-null | `/healthz/data` |
+| P3.2 | Sync scheduler running | `scheduler: running` in `/health/detailed` | `curl` |
+| P3.3 | No orphaned sync job logs | All `started_at` have matching `completed_at` or are < 24h old | DB query |
+| P3.4 | Alembic migrations current | `alembic current` == `alembic heads` | `alembic current` |
+
+## Pillar 4: Design System & UX
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P4.1 | No `text-gray-100` invisible text | Zero occurrences in templates | `grep` |
+| P4.2 | No `focus:outline-none` without ring color | Zero occurrences in templates/JS | `grep` |
+| P4.3 | `:focus-visible` uses brand token | `var(--brand-primary)` not hardcoded blue | `grep` in CSS |
+| P4.4 | `/design-system` endpoint renders | `200` with HTML, all macro variants visible | `curl` + browser |
+| P4.5 | WCAG contrast tests pass | All brand colors pass AA on intended backgrounds | `test_wcag_brand_validation.py` |
+| P4.6 | Dark mode toggle functional | Theme switches, no FOUC, persisted per-user | Manual test |
+
+## Pillar 5: Test Coverage
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P5.1 | Unit test suite passes | `pytest tests/unit/` — all green | CI QA Gate |
+| P5.2 | Core smoke tests pass | `tests/unit/test_main_app.py` + `test_config.py` + `test_security_headers.py` | CI QA Gate |
+| P5.3 | Integration test suite passes | `pytest tests/integration/` — all green | CI QA Gate |
+| P5.4 | E2E smoke tests pass | `pytest tests/e2e/test_smoke.py` — all green | CI QA Gate |
+| P5.5 | No xpass markers | `pytest` reports zero xpassed tests | CI QA Gate |
+| P5.6 | Code coverage ≥ 60% | `pytest --cov` overall ≥ 60% | CI QA Gate |
+
+## Pillar 6: Infrastructure & Deploy
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P6.1 | Production deploy succeeds | All 6 jobs green (QA, Security, Build, Deploy, Smoke, Notify) | GitHub Actions |
+| P6.2 | Auto-rollback tested | Previous-good image captured + rollback command known | `docs/release-gate/rollback-current-state.yaml` |
+| P6.3 | Staging deploy succeeds | Deploy to Staging workflow green | GitHub Actions |
+| P6.4 | GitHub Pages deploy succeeds | Pages workflow green | GitHub Actions |
+| P6.5 | Container image labeled | `version` label present, not `-dev` suffix | Docker inspect |
+| P6.6 | Runs as non-root | `USER appuser` in Dockerfile | `docker inspect` |
+| P6.7 | SLSA attestation present | Cosign-signed attestation on GHCR image | `cosign verify` |
+| P6.8 | Bicep drift ≤ 5 items | `infrastructure/bicep/drift/` count ≤ 5 | `ls` |
+
+## Pillar 7: Documentation & Operability
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P7.1 | `STATUS.md` current | Updated within last 24h of any deploy | Git log |
+| P7.2 | `CHANGELOG.md` current | v2.5.0 entry exists, dated | File check |
+| P7.3 | `SECRETS_OF_RECORD.md` complete | Tyler-only fields filled, rotation dates present | Manual review |
+| P7.4 | `RUNBOOK.md` current | Deploy/rollback/DR procedures match current infra | Manual review |
+| P7.5 | `SESSION_HANDOFF.md` current | Last session recorded with clear next steps | Git log |
+| P7.6 | `bd` issues ≤ 10 open | Open issue count ≤ 10 | `bd list --status open` |
+
+## Pillar 8: Cost & Sustainability
+
+| ID | Criterion | Target | How Verified |
+|---|---|---|---|
+| P8.1 | Monthly Azure spend ≤ $60 | Production + staging combined | Azure Cost Management |
+| P8.2 | No orphaned resources | Resource groups match `INFRASTRUCTURE_INVENTORY.md` | `az resource list` |
+| P8.3 | PITR backups enabled | Azure SQL PITR retention ≥ 7 days | Azure portal |
+| P8.4 | Schema backups automated | Weekly schema backup to `stgovprodbkup001` | Azure portal |
+
+---
+
+## Current Verdict
+
+Run `python scripts/judge.py` for live evaluation.
+
+**Last manual evaluation:** 2026-05-28 — see `SESSION_HANDOFF.md` for context.
