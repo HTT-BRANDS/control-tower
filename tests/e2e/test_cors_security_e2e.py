@@ -20,16 +20,17 @@ class TestCORS:
         # CORS preflight should return 200 or 405 (method not allowed)
         assert resp.status in (200, 204, 400, 405)
 
-    def test_response_has_cors_header_for_allowed_origin(
+    def test_response_has_cors_header_for_allowed_local_origins(
         self, unauth_api_context: APIRequestContext
     ):
-        """Responses should include CORS headers for allowed origins."""
-        resp = unauth_api_context.get(
-            "/api/v1/health",
-            headers={"Origin": "http://localhost:8099"},
-        )
-        # The health endpoint should respond regardless of origin
-        assert resp.status == 200
+        """Responses should include CORS headers for browser-test origins."""
+        for origin in ("http://localhost:8099", "http://127.0.0.1:8099"):
+            resp = unauth_api_context.get(
+                "/api/v1/health",
+                headers={"Origin": origin},
+            )
+            assert resp.status == 200
+            assert resp.headers.get("access-control-allow-origin") == origin
 
 
 class TestSecurityMiddleware:

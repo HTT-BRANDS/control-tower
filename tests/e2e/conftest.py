@@ -4,6 +4,7 @@ Spins up a real FastAPI server and provides authenticated/unauthenticated
 Playwright browser contexts for full end-to-end testing.
 """
 
+import json
 import multiprocessing
 import os
 import time
@@ -25,6 +26,13 @@ def _run_server():
     os.environ["ENVIRONMENT"] = "test"
     os.environ["E2E_HARNESS"] = "1"
     os.environ["BROWSER_TEST_DISABLE_SCHEDULERS"] = "true"
+    os.environ["CORS_ORIGINS"] = json.dumps(
+        [
+            "http://localhost:3000",
+            "http://localhost:8099",
+            "http://127.0.0.1:8099",
+        ]
+    )
 
     uvicorn.run(
         "app.main:app",
