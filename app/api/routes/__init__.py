@@ -15,6 +15,7 @@ from app.api.routes.dashboard import router as dashboard_router
 from app.api.routes.design_system import router as design_system_router
 from app.api.routes.dmarc import router as dmarc_router
 from app.api.routes.exports import router as exports_router
+from app.api.routes.franchise_coach import router as franchise_coach_router
 from app.api.routes.health import router as health_router
 from app.api.routes.identity import router as identity_router
 from app.api.routes.metrics import router as metrics_router
@@ -49,6 +50,7 @@ __all__ = [
     "design_system_router",
     "dmarc_router",
     "exports_router",
+    "franchise_coach_router",
     "health_router",
     "identity_router",
     "metrics_router",

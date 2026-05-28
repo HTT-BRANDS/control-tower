@@ -35,7 +35,7 @@ Each tenant needs an app registration with the `app_id` (client_id) from `config
 | Bishops | BCC | `b5380912-79ec-452d-a6ca-6d897b19b294` | `4861906b-2079-...` |
 | Frenchies | FN | `98723287-044b-4bbb-9294-19857d4128a0` | `7648d04d-ccc4-...` |
 | Lash Lounge | TLL | `3c7d2bf3-b597-4766-b5cb-2b489c2904d6` | `52531a02-78fd-...` |
-| Delta Crown | DCE | `ce62e17d-2feb-4e67-a115-8ea4af68da30` | `79c22a10-3f2d-...` |
+| Delta Crown | DCE | `ce62e17d-2feb-4e67-a115-8ea4af68da30` | `1e3e8417-49f1-...` |
 
 ### Step 2: Add Federated Identity Credential
 

@@ -17,6 +17,7 @@ from app.api.routes import (
     design_system_router,
     dmarc_router,
     exports_router,
+    franchise_coach_router,
     health_router,
     identity_router,
     metrics_router,
@@ -73,6 +74,7 @@ PROTECTED_ROUTERS = (
     monitoring_router,
     recommendations_router,
     admin_router,
+    franchise_coach_router,
 )
 
 

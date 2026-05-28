@@ -9,14 +9,14 @@ HTT Control Tower is an internal multi-brand governance hub for cost, identity, 
 
 > **Naming note:** Control Tower is HTT's internal name for this platform. It is unrelated to AWS Control Tower. Do not use this name for external commercialization without a separate naming/legal review.
 
-> **Current release truth:** the package version in `pyproject.toml` is **2.5.0**. The v2.5.1 internal release-gate rehearsal verdict is `PASS-pending-9lfn` as of 2026-04-30 22:54 UTC — only the Tyler-only `SECRETS_OF_RECORD.md` task (bd `9lfn`) remains. See [`STATUS.md`](./STATUS.md) for the live single-glance state.
+> **Current release truth (2026-05-28 end of session):** package version in `pyproject.toml` is **2.5.0**. Production judge score is **11/12 (92%)**, expected to hit 12/12 on the next sync cycle after today's live DCE RBAC fix (`ct-1m0`). 4/5 tenants fully healthy. Today also shipped the Manager role end-to-end (`ct-2nk` closed, per ADR-0012), the design-system Miro spec import (issue #66), and closed `ct-yb1` (palette canon) + `xzt4` (Bicep drift). See [`STATE.md`](./STATE.md) for the canonical session snapshot and [`STATUS.md`](./STATUS.md) for operational/deploy detail.
 
 ## Release status snapshot
 
 - **Package version:** `2.5.0`
-- **Latest commit on `main`:** [`6c75220`](https://github.com/HTT-BRANDS/control-tower/commit/6c75220) (2026-04-30)
-- **Last successful prod deploy:** [run `25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) — 2026-04-30 22:54 UTC, 9m 52s wall-clock
-- **Live prod image:** `ghcr.io/htt-brands/control-tower@sha256:f762c98a03c40f2d6cc77912d8bd13a82ed64e41969a9545094da262c8ff21ef`
+- **Production judge score:** **11/12 (92%)** as of 2026-05-28; **expected 12/12 next sync cycle**
+- **Latest production deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge `96611ec`)
+- **Live prod image:** `ghcr.io/htt-brands/control-tower@sha256:5f550ae53b2660a2fb8f60a2c9ca37f5668b948f86a3b76ee9f2dd15d6b2e937`
 - **Current production app URL:** <https://app-governance-prod.azurewebsites.net> · `/health` ✅ 200
 - **Current production resource group:** `rg-governance-production` (West US 2)
 - **Current staging app URL:** <https://app-governance-staging-xnczpwyv.azurewebsites.net>

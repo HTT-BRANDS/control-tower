@@ -1,24 +1,32 @@
 # HTT Control Tower — Live Status
 
 > **Read this first.** This is the single-glance "where are we right now" answer.
-> Refreshed 2026-05-28 00:30 UTC by Richard (`code-puppy-5deed9`) after the
-> ct-y47 deploy-attempt #2 + rollback. If a fact below is older than 24 hours,
-> cross-check against `git log`, `bd ready`, and live `/health`.
+> Refreshed **2026-05-28 (end of session)** by Richard (`code-puppy-5deed9`) after
+> the DCE RBAC live-fix, Manager role shipment, and design-system spec import.
+> If a fact below is older than 24 hours, cross-check against `git log`, `bd ready`,
+> and live `/health`.
+>
+> **Canonical single-glance snapshot is now [`STATE.md`](./STATE.md).** This page
+> keeps operational/deploy detail; `STATE.md` is the always-current truth.
 
-**Latest commit on `main`:** `49b777b bd: ct-38g — file P0 followup for AZURE_AD_CLIENT_SECRET prereq blocking OIDC=false flip`
-**Package version:** `2.5.0` (per `pyproject.toml` — no `v2.5.1` tag yet; release-gate now blocked on ct-y47/ct-38g, not the April 30 conditions)
-**Last successful prod deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge commit `96611ec`, image `sha256:5f550ae5…`). All 6 jobs green: QA Gate, Security Scan, Build & Push to GHCR, Deploy to Production, Production Smoke Tests, Notify Teams.
+**Latest commit on `richard/issue-66-design-system-spec` (PR #67, the big in-flight branch):** `aa3a162 chore(bd): track ct-1m0 progress + file script cleanup follow-up`
+**Package version:** `2.5.0` (per `pyproject.toml`)
+**Last successful prod deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge `96611ec`)
 
-> ⚠️ **Active production incident (still open after 2026-05-27 attempt #2):** Customer-tenant Graph/ARM
-> sync (BCC/FN/DCE/TLL) remains stale. PR #63 (`ManagedIdentityCredential` for Key Vault access) **shipped
-> successfully** and is now live on prod (`sha256:5f550ae5…`), but it only fixed **one of two**
-> `USE_OIDC_FEDERATION`-gated code paths. Flipping `USE_OIDC_FEDERATION=false` 503s the user-login
-> OAuth callback (`app/api/routes/auth.py:269` requires either federation OR `AZURE_AD_CLIENT_SECRET`,
-> and the latter is **not** configured on App Service). Rolled back within ~3 min; login restored.
-> **Next attempt blocked on `bd show ct-38g` (P0):** configure `AZURE_AD_CLIENT_SECRET` as a Key Vault
-> reference before re-flipping. ~30–60 min of work per `docs/runbooks/enable-secret-fallback.md`.
-> HTT (home tenant) still fresh because OIDC works for own-tenant. Public app `/health` still 200
-> because health gate is too lenient — separate follow-up.
+> 🟢 → 🟢 **Production state (2026-05-28 end of session):** 11/12 judge score, **expected 12/12 next sync cycle.**
+> 4/5 tenants (HTT, BCC, FN, TLL) fully healthy on all 4 data domains. DCE was the only remaining
+> partial sync (`ct-1m0`) — **root cause found and fix shipped LIVE today** with Tyler's DCE Global
+> Admin elevation. Reader + Security Reader granted at root scope to SP `b8e67903-abf5-4b53-9ced-d194d43ca277`
+> in DCE tenant. Resources + compliance for DCE will populate within the next sync window.
+>
+> **Root cause was a stale `app_id`** in `config/tenants.yaml` (`79c22a10-...`) that never existed
+> in DCE. The real multi-tenant app is `1e3e8417-...` (Riverside-Capital-PE-Governance-Platform),
+> shared across all 5 brands per ADR-0014. Local config corrected; ops docs updated.
+>
+> **Closed in this session:** `ct-yb1` (P0 palette canon), `ct-2nk` (P1 Manager role), `xzt4` (P2 Bicep drift).
+> **Filed in this session:** `ct-buo`, `ct-uij`, `ct-a2t`.
+>
+> See [`STATE.md`](./STATE.md) for the full session summary and `CHANGELOG.md` for the unreleased-window entry.
 **Repo:** <https://github.com/HTT-BRANDS/control-tower>
 **Public docs (GitHub Pages):** <https://htt-brands.github.io/control-tower/>
 

@@ -96,6 +96,10 @@ BUDGETS_MANAGE: Final[str] = "budgets:manage"
 # -- Recommendations ---------------------------------------------------------
 RECOMMENDATIONS_READ: Final[str] = "recommendations:read"
 
+# -- Franchise Coach (cross-brand insights for franchise leadership) ---------
+FRANCHISE_COACH_READ: Final[str] = "franchise_coach:read"
+FRANCHISE_COACH_EXPORT: Final[str] = "franchise_coach:export"
+
 # -- Monitoring --------------------------------------------------------------
 MONITORING_READ: Final[str] = "monitoring:read"
 MONITORING_MANAGE: Final[str] = "monitoring:manage"
@@ -160,6 +164,9 @@ ALL_PERMISSIONS: Final[frozenset[str]] = frozenset(
         # Monitoring
         MONITORING_READ,
         MONITORING_MANAGE,
+        # Franchise Coach (ADR-0012, MANAGER-tier)
+        FRANCHISE_COACH_READ,
+        FRANCHISE_COACH_EXPORT,
     }
 )
 
@@ -172,11 +179,17 @@ ALL_PERMISSIONS: Final[frozenset[str]] = frozenset(
 class Role(StrEnum):
     """Application roles matching Entra ID App Roles.
 
-    Containment hierarchy: ``VIEWER ⊂ ANALYST ⊂ TENANT_ADMIN ⊂ ADMIN``
+    Containment hierarchy: ``VIEWER ⊂ ANALYST ⊂ MANAGER ⊂ TENANT_ADMIN ⊂ ADMIN``
+
+    ``MANAGER`` is the franchise-leadership tier: cross-brand insight access
+    plus exports, but no write/manage capability. Designed to equip franchise
+    executives to have data-driven conversations with brand operators.
+    See: docs/decisions/adr-0012-manager-role-franchise-coach.md
     """
 
     ADMIN = "admin"
     TENANT_ADMIN = "tenant_admin"
+    MANAGER = "manager"
     ANALYST = "analyst"
     VIEWER = "viewer"
 
@@ -216,6 +229,16 @@ _ANALYST_PERMISSIONS: Final[frozenset[str]] = _VIEWER_PERMISSIONS | frozenset(
     }
 )
 
+# Manager (Franchise Coach): Analyst + cross-brand insight view.
+# Designed for franchise leadership coaching conversations with brand operators.
+# Read-only by design — Managers surface conversations, not configuration changes.
+_MANAGER_PERMISSIONS: Final[frozenset[str]] = _ANALYST_PERMISSIONS | frozenset(
+    {
+        FRANCHISE_COACH_READ,
+        FRANCHISE_COACH_EXPORT,
+    }
+)
+
 # Tenant Admin: Analyst + manage/write/trigger/run
 # EXCEPT system:admin and tenants:manage (those are admin-only).
 _TENANT_ADMIN_PERMISSIONS: Final[frozenset[str]] = _ANALYST_PERMISSIONS | frozenset(
@@ -245,6 +268,7 @@ _ADMIN_PERMISSIONS: Final[frozenset[str]] = frozenset({"*"})
 ROLE_PERMISSIONS: Final[dict[Role, frozenset[str]]] = {
     Role.ADMIN: _ADMIN_PERMISSIONS,
     Role.TENANT_ADMIN: _TENANT_ADMIN_PERMISSIONS,
+    Role.MANAGER: _MANAGER_PERMISSIONS,
     Role.ANALYST: _ANALYST_PERMISSIONS,
     Role.VIEWER: _VIEWER_PERMISSIONS,
 }
@@ -257,6 +281,7 @@ ROLE_PERMISSIONS: Final[dict[Role, frozenset[str]]] = {
 LEGACY_ROLE_MAP: Final[dict[str, str]] = {
     "admin": "admin",
     "operator": "tenant_admin",
+    "manager": "manager",
     "reader": "viewer",
     "user": "viewer",
 }

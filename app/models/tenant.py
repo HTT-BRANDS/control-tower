@@ -86,7 +86,9 @@ class UserTenant(Base):
     tenant_id: Mapped[str] = Column(String(36), ForeignKey("tenants.id"), nullable=False)
 
     # Permission level within this tenant
-    role: Mapped[str] = Column(String(50), default="viewer")  # viewer, operator, admin
+    role: Mapped[str] = Column(
+        String(50), default="viewer"
+    )  # viewer, analyst, manager, operator/tenant_admin, admin
 
     # Access control
     is_active: Mapped[bool] = Column(Boolean, default=True)

@@ -433,3 +433,74 @@ class TestResourceSync:
 
         # Verify - called for each tenant
         assert mock_azure_client_manager["resources"].list_subscriptions.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_sync_resources_partial_tenant_failure(
+        self,
+        mock_azure_client_manager,
+        mock_db_session,
+        mock_get_db_context,
+        mock_tenant,
+        mock_subscription,
+        sample_resources,
+    ):
+        """Test that one tenant's failure doesn't block others.
+
+        Regression: ct-1m0 — DCE showed partial sync (costs worked,
+        resources/compliance failed) suggesting a tenant-specific auth
+        or config issue. This test verifies the sync loop continues
+        even when one tenant's subscription list or resource query
+        raises HttpResponseError 403.
+        """
+        from azure.core.exceptions import HttpResponseError
+
+        # Create second tenant — this one will fail
+        failing_tenant = MagicMock()
+        failing_tenant.id = "tenant-fail-uuid"
+        failing_tenant.tenant_id = "fail-tenant-id"
+        failing_tenant.name = "Failing Tenant"
+        failing_tenant.is_active = True
+
+        # First tenant succeeds, second returns empty (403 on list_subscriptions)
+        from app.models.monitoring import SyncJobLog
+
+        multi_tenant_query = MagicMock()
+        multi_tenant_query.filter.return_value = multi_tenant_query
+        multi_tenant_query.all.return_value = [mock_tenant, failing_tenant]
+
+        ghost_query = MagicMock()
+        ghost_query.filter.return_value.all.return_value = []
+        ghost_query.filter.return_value.first.return_value = None
+
+        mock_db_session.query.side_effect = lambda model: (
+            ghost_query if model is SyncJobLog else multi_tenant_query
+        )
+
+        # First tenant: normal subscriptions
+        # Second tenant: HttpResponseError 403 (missing Reader role)
+        def _list_subs(tenant_id: str) -> list[dict]:
+            if tenant_id == "fail-tenant-id":
+                raise HttpResponseError(
+                    message="The client does not have authorization to perform action",
+                    response=MagicMock(status_code=403),
+                )
+            return [mock_subscription]
+
+        mock_azure_client_manager["resources"].list_subscriptions.side_effect = _list_subs
+
+        mock_resource_client = MagicMock()
+        mock_resource_client.resources = MagicMock()
+        mock_resource_client.resources.list.return_value = sample_resources
+        mock_azure_client_manager[
+            "resources"
+        ].get_resource_client.return_value = mock_resource_client
+
+        # Execute — should NOT raise
+        await sync_resources()
+
+        # Verify — both tenants were attempted
+        assert mock_azure_client_manager["resources"].list_subscriptions.call_count == 2
+        # First tenant's resources were processed
+        mock_resource_client.resources.list.assert_called()
+        # Monitoring logged the failure
+        assert mock_db_session.commit.call_count >= 2
