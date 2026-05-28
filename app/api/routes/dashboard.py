@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.services.compliance_service import ComplianceService
@@ -22,7 +23,11 @@ from app.core.authorization import (
 from app.core.database import get_db
 from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
+from app.models.compliance import ComplianceSnapshot
+from app.models.cost import CostSnapshot
+from app.models.identity import IdentitySnapshot
 from app.models.monitoring import Alert, SyncJobLog
+from app.models.resource import Resource
 from app.models.tenant import Tenant
 
 router = APIRouter(
@@ -84,25 +89,43 @@ async def _get_dashboard_data(
     ]
     resource_inventory.total_resources = len(resource_inventory.resources)
 
-    # Get last sync timestamps for data freshness indicators.
+    # ct-lzi (P1): Use actual model synced_at timestamps, NOT SyncJobLog.started_at.
+    # The job log records when the *sync process ran* (or even when it failed
+    # gracefully), but it does NOT reflect whether data actually arrived in the
+    # database. A job can complete while bringing back zero rows because of an
+    # auth error — the UI then happily shows "Synced 0h ago" while the real data
+    # is days stale. That exact scenario is how ct-y47 went undetected for 7 days.
     #
-    # ct-zNN: SyncJobLog never stores ``status == "success"``. The canonical
-    # success status across this codebase is ``"completed"`` (see
-    # app/api/services/monitoring_service.py and every job-runner write
-    # site). This route was the only consumer of the non-existent
-    # ``"success"`` status, so every lookup returned None and every
-    # dashboard card silently showed "Synced never" while the page
-    # actually rendered live data above it.
+    # We now query MAX(synced_at) from the actual domain tables scoped to the
+    # accessible tenant set. If a tenant has no rows in a domain table, the
+    # timestamp is None and the UI will show "Synced never" — which is the honest
+    # signal.
     sync_types = ["costs", "compliance", "resources", "identity"]
-    last_synced = {}
-    for stype in sync_types:
-        last_log = (
-            db.query(SyncJobLog)
-            .filter(SyncJobLog.job_type == stype, SyncJobLog.status == "completed")
-            .order_by(SyncJobLog.started_at.desc())
-            .first()
+    last_synced: dict[str, Any] = {}
+    tenant_ids = list(authz.accessible_tenant_ids)
+    if tenant_ids:
+        last_synced["costs"] = (
+            db.query(func.max(CostSnapshot.synced_at))
+            .filter(CostSnapshot.tenant_id.in_(tenant_ids))
+            .scalar()
         )
-        last_synced[stype] = last_log.started_at if last_log else None
+        last_synced["compliance"] = (
+            db.query(func.max(ComplianceSnapshot.synced_at))
+            .filter(ComplianceSnapshot.tenant_id.in_(tenant_ids))
+            .scalar()
+        )
+        last_synced["resources"] = (
+            db.query(func.max(Resource.synced_at))
+            .filter(Resource.tenant_id.in_(tenant_ids))
+            .scalar()
+        )
+        last_synced["identity"] = (
+            db.query(func.max(IdentitySnapshot.synced_at))
+            .filter(IdentitySnapshot.tenant_id.in_(tenant_ids))
+            .scalar()
+        )
+    else:
+        last_synced = dict.fromkeys(sync_types)
 
     return {
         "cost_summary": cost_summary,

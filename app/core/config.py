@@ -183,8 +183,8 @@ class Settings(RuntimeSettingsMixin, BaseSettings):
         alias="UAMI_CLIENT_ID",
         description=(
             "Client ID of the User-Assigned Managed Identity for Phase C. "
-            "The UAMI should have a Federated Identity Credential attached to the multi-tenant app. "
-            "Required when USE_UAMI_AUTH=true."
+            "The UAMI should have a Federated Identity Credential "
+            "attached to the multi-tenant app. Required when USE_UAMI_AUTH=true."
         ),
     )
     uami_principal_id: str | None = Field(
@@ -239,7 +239,8 @@ class Settings(RuntimeSettingsMixin, BaseSettings):
         alias="BROWSER_TEST_DISABLE_SCHEDULERS",
         description=(
             "Disable background schedulers for the browser-test harness only. "
-            "This is allowlisted to explicit non-deployable test contexts and must fail closed elsewhere."
+            "Allowlisted to explicit non-deployable test contexts; "
+            "must fail closed elsewhere."
         ),
     )
     e2e_harness: bool = Field(

@@ -19,12 +19,23 @@ def register_docs_routes(app, settings, jwt_manager) -> None:
         if auth_error:
             return auth_error
 
-        return get_swagger_ui_html(
+        html = get_swagger_ui_html(
             openapi_url="/openapi.json",
             title=f"{settings.app_name} - Swagger UI",
             swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
             swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
         )
+        # ct-z0b: CSP on staging blocks inline <script> without nonce.
+        # FastAPI's get_swagger_ui_html emits an inline initializer script
+        # with no nonce support. We inject the per-request nonce after generation.
+        nonce = getattr(request.state, "csp_nonce", "")
+        if nonce:
+            html.body = html.body.replace(
+                b"<script>",
+                f'<script nonce="{nonce}">'.encode(),
+                1,  # only the first (inline init) script; external ones keep their integrity
+            )
+        return html
 
     @app.get("/redoc", include_in_schema=False)
     async def redoc_html(request: Request):

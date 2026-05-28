@@ -81,4 +81,5 @@ exec python -m uvicorn app.main:app \
     --workers 1 \
     --loop uvloop \
     --http httptools \
+    --no-server-header \
     --log-level "$(echo ${LOG_LEVEL:-info} | tr A-Z a-z)"
