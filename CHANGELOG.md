@@ -18,7 +18,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28, the v2.5.1 gate is no longer the April-30 `PASS-pending-9lfn` verdict — the binding blocker is now the open `ct-y47` customer-tenant sync incident (see `STATUS.md` for current state)._
+_Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28 (end of session), 4/5 production tenants are fully healthy and DCE RBAC has been granted live — full 12/12 production score expected on next sync cycle. See [`STATE.md`](./STATE.md) for the canonical current-state snapshot._
+
+### Major level-set + DCE production fix (May 28, 2026 — afternoon session)
+
+Production shipped from 92% (11/12) toward a confirmed 12/12 path. Manager role landed end-to-end. Multi-document drift across STATE/docs/bd reconciled.
+
+**🟢 DCE RBAC fix shipped LIVE in production (`ct-1m0` P0)**
+
+- Root cause uncovered: `config/tenants.yaml` referenced a stale DCE `app_id` (`79c22a10-3f2d-4e6a-bddc-ee65c9a46cb0`) that **never existed in the DCE tenant**. The actual multi-tenant app used across HTT/BCC/FN/TLL/DCE is `1e3e8417-49f1-4d08-b7be-47045d8a12e9` (Riverside-Capital-PE-Governance-Platform), consistent with ADR-0014.
+- Fix executed via documented Microsoft elevation pattern: Tyler authed to DCE as Global Admin → self-elevated to root-scope User Access Administrator → granted Reader + Security Reader at `/` to SP `b8e67903-abf5-4b53-9ced-d194d43ca277` → revoked elevation immediately. Full audit trail in ct-1m0 notes.
+- New tooling: `scripts/grant-dce-sync-permissions.sh` now supports `--elevate-access` / `--cleanup-elevation` flags for the GA elevation lifecycle.
+- Docs corrected: `docs/runbooks/resource-cleanup.md`, `docs/runbooks/oidc-federation-setup.md`, `docs/OIDC_TENANT_AUTH.md` all updated. Follow-up `ct-a2t` (P3) tracks remaining script cleanup.
+- Local `config/tenants.yaml` corrected (gitignored). Next production deploy from `main` will sync the corrected app_id into prod runtime.
+
+**🟢 Manager role shipped end-to-end (`ct-2nk` P1 → CLOSED, per ADR-0012)**
+
+- Phase A: RBAC layer — `MANAGER` role added with franchise-coach permissions (`d11c6f0`).
+- Phase B: Service layer — `franchise_coach_service` for cross-brand insights (`e660efb`).
+- Phase C: UI — Manager dashboard route + template (`c8d10a1`).
+- Follow-up filed: `ct-buo` (P2) — Playwright Manager-tier RBAC visual experience test.
+
+**🟢 Design system spec imported (issue #66) + palette canonized (`ct-yb1` P0 → CLOSED)**
+
+- 8-page Miro spec PDF imported at `docs/design-system/issue-66-design-system-spec-v1.pdf` (`81dc3a4`).
+- Detailed gap analysis: `docs/design-system/gap-analysis-v1.md`.
+- Palette decision: burgundy/deep red `#500711` is canonical (matches current code). Miro spec's `#0046FF` HTT Blue is deprecated.
+- Follow-up filed: `ct-uij` (P2) — Full DaisyUI 5.x migration (palette is canon, migration is the carrier).
+- Follow-up tracked: `ct-lw2` (P2) — Label architecture diagram as 'target' + add 'current' companion.
+
+**🟢 Judge framework HTTP/2 fix — production score 83% → 92% (`5eb3115`)**
+
+- HTTP/2 lowercases all header names; `judge.py` was doing case-sensitive lookups and missing rate-limit headers from the live response. Fixed to use case-insensitive parsing. Single bug, single line, +9 points on the scoreboard.
+- New: `scripts/diagnose_sync.py` surfaces partial-sync tenants (the diagnostic that pointed at DCE specifically).
+- 2 regression tests added covering DCE-style partial tenant failure (72/72 sync tests pass).
+
+**🟢 Bicep drift reconciliation closed (`azure-governance-platform-xzt4` P2 → CLOSED)**
+
+- All 12 child tasks (xzt4.1–xzt4.12) closed. Staging Bicep recovered + hardened. Production Bicep apply intentionally deferred per ADR; drift-detection workflow operational and producing what-if reports against `main`.
+
+**📋 Documentation level-set**
+
+- `STATE.md` rewritten to reflect end-of-session truth (canonical "where are we now" snapshot).
+- `docs/index.md` (GitHub Pages landing) updated — removed stale `ct-y47` active-incident warning, added current 92→100% trajectory and closed-issue summary.
+- `CHANGELOG.md` (this entry) appended.
+
+### ct-y47 deploy attempt #2 + partial fix (May 27, 2026)
 
 ### ct-y47 deploy attempt #2 + partial fix (May 27, 2026)
 
