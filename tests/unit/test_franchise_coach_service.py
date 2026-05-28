@@ -23,7 +23,6 @@ from app.api.services.franchise_coach_service import (
     build_franchise_coach_view,
 )
 
-
 # ============================================================================
 # Pure-function tests (no DB)
 # ============================================================================
