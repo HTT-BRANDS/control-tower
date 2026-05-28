@@ -17,7 +17,8 @@
         </div>
         <div class="flex items-center gap-2 ml-2">
             {% if tenant_data.alert_count > 0 %}
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-error-100 text-white text-xs font-bold" title="{{ tenant_data.alert_count }} active alert{{ 's' if tenant_data.alert_count != 1 }}">
+            {# Phase C: DaisyUI badge — theme-aware error variant, ct-g93 #}
+            <span class="badge badge-error badge-sm font-bold" title="{{ tenant_data.alert_count }} active alert{{ 's' if tenant_data.alert_count != 1 }}">
                 {{ tenant_data.alert_count }}
             </span>
             {% endif %}
