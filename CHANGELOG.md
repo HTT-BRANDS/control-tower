@@ -18,7 +18,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28 (end of session), 4/5 production tenants are fully healthy and DCE RBAC has been granted live — full 12/12 production score expected on next sync cycle. See [`STATE.md`](./STATE.md) for the canonical current-state snapshot._
+_Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28 late-evening: production still **11/12 (92%)** — DCE RBAC was granted live in the afternoon but the next sync cycle hasn't yet refreshed DCE resources/compliance, so judge re-run at 23:04 UTC still shows the same P1.3 stale tenant blocker. See [`STATE.md`](./STATE.md) for the canonical current-state snapshot._
+
+### Design system DaisyUI 5.x migration + Playwright Manager test (May 28, 2026 — evening session)
+
+**📦 PR #68 — OPEN, MERGEABLE: `feat(design-system + tests): DaisyUI 5.x migration (Phases A+B) + Playwright Manager RBAC test`**
+
+**🟢 Playwright Manager-tier RBAC test shipped (`ct-buo` P3 closed)**
+- `tests/e2e/test_manager_rbac_visual.py` — 7 contract tests covering RBAC + landmarks + a11y + template-branching
+- Role-scoped JWT mint via `jwt_manager.create_access_token()` sidesteps the dev `/api/v1/auth/login` admin shortcut to actually exercise `permissions.py` role resolution
+- Cross-browser verified: chromium / firefox / webkit all 7/7 passing
+- `franchise-coach` added to `tests/e2e/test_visual_parity.py` PAGES for pinned visual baselines
+
+**🟢 DaisyUI 5.x migration Phases A+B (`ct-uij` P2 closed)**
+- **Phase A (foundation):** `package.json` with `daisyui@^5` + `@tailwindcss/cli@^4`; `app/static/css/input.css` rewritten for Tailwind v4 + DaisyUI v5 syntax; all 5 brand themes defined (`httbrands` burgundy, `bishops` orange, `lashlounge` purple, `frenchies` blue, `deltacrown` green); `scripts/build-css.sh` updated to use npm-installed v4 CLI with auto-install; backward-compat `@utility` shims keep legacy class names working; obsolete `tailwind.config.cjs` deleted; `franchise_coach.html` migrated to DaisyUI semantic components (`card`/`stats`/`badge`/`btn`/`link`).
+- **Phase B (safe-rename sweep):** Built `scripts/migrate_to_daisyui.py` — regex migrator for SAFE 1:1 renames only. 48 renames across 25 templates: `bg-white→bg-base-100` (27×), `text-brand-primary→text-primary` (15×), `border-brand-primary→border-primary` (4×), `bg-brand-primary→bg-primary` (2×). The other 24 templates already used semantic tokens from prior audit work.
+- **Bridge fix:** Added `data-theme="{brand.key}"` alongside existing `data-brand` on `<html>` in `base.html` so DaisyUI 5's theme system actually activates the per-tenant palette swap.
+- **Test scoreboard:** 55/55 + 1 XPASS (`test_no_js_console_errors` unexpectedly passed — cleaner CSS removed a prior console warning).
+- **Phase C deferred** as 4 P3 follow-up bd issues (ct-g93/ct-2cr/ct-dsi/ct-kc7) — covers component swaps (badges/buttons/cards → DaisyUI components) + final shim cleanup. Templates work today via backward-compat shims; Phase C is polish, not blocking.
+- **Zero Dockerfile/CI changes** — `tailwind-output.css` is committed; runtime just serves it.
 
 ### Major level-set + DCE production fix (May 28, 2026 — afternoon session)
 
