@@ -19,9 +19,38 @@
 set -euo pipefail
 
 DCE_TENANT_ID="ce62e17d-2feb-4e67-a115-8ea4af68da30"
-DCE_APP_CLIENT_ID="79c22a10-3f2d-4e6a-bddc-ee65c9a46cb0"
+# 2026-05-28: the multi-tenant app Riverside-Capital-PE-Governance-Platform.
+# Same appId is used in HTT/BCC/FN/TLL — DCE just needed its SP granted RBAC.
+# Previous value (79c22a10-...) was stale and never existed in DCE.
+DCE_APP_CLIENT_ID="1e3e8417-49f1-4d08-b7be-47045d8a12e9"
 DRY_RUN=true
-[[ "${1:-}" == "--apply" ]] && DRY_RUN=false
+ELEVATE=false
+CLEANUP_ELEVATION=false
+for arg in "$@"; do
+  case "$arg" in
+    --apply) DRY_RUN=false ;;
+    --elevate-access) ELEVATE=true ;;
+    --cleanup-elevation) CLEANUP_ELEVATION=true ;;
+    -h|--help)
+      cat <<HELP
+Usage: $(basename "$0") [flags]
+
+Flags:
+  --apply              Actually perform grants (default is dry-run)
+  --elevate-access     Self-elevate Global Admin → root-scope User Access Admin
+                       (required first time if caller has no sub-scope RBAC)
+  --cleanup-elevation  Remove the root-scope UAA assignment after grants
+                       (recommended after --apply succeeds)
+  -h, --help           Show this help
+
+Typical flow for a Global Admin (Tyler) running this the first time:
+  1. az login --tenant <DCE> --allow-no-subscriptions
+  2. ./grant-dce-sync-permissions.sh --elevate-access --apply --cleanup-elevation
+HELP
+      exit 0
+      ;;
+  esac
+done
 
 echo "═══════════════════════════════════════════════════════════════"
 echo "  Grant DCE sync RBAC — Reader + Security Reader"
@@ -32,12 +61,32 @@ echo "  Mode:        $([ "$DRY_RUN" = true ] && echo 'DRY RUN (preview only)' ||
 echo "═══════════════════════════════════════════════════════════════"
 echo
 
-# Confirm auth is to DCE tenant
+# Confirm auth is to DCE tenant — supports both subscription and tenant-only context
 CURRENT_TENANT="$(az account show --query tenantId -o tsv 2>/dev/null || echo '')"
+if [[ -z "$CURRENT_TENANT" ]]; then
+  # No active subscription — query via Graph token for tenant-only logins
+  CURRENT_TENANT="$(az rest --method get --url 'https://graph.microsoft.com/v1.0/organization' --query 'value[0].id' -o tsv 2>/dev/null || echo '')"
+fi
 if [[ "$CURRENT_TENANT" != "$DCE_TENANT_ID" ]]; then
   echo "❌ Current az context is tenant '$CURRENT_TENANT', expected DCE '$DCE_TENANT_ID'."
-  echo "   Run:  az login --tenant $DCE_TENANT_ID --use-device-code"
+  echo "   Run:  az login --tenant $DCE_TENANT_ID --use-device-code --allow-no-subscriptions"
   exit 1
+fi
+
+# Step 0: Optionally elevate Global Admin → root-scope User Access Administrator
+if [[ "$ELEVATE" = true ]]; then
+  echo "→ Elevating access: GA → User Access Admin at root scope '/'..."
+  if [[ "$DRY_RUN" = true ]]; then
+    echo "  (DRY RUN — would POST /providers/Microsoft.Authorization/elevateAccess)"
+  else
+    az rest --method post \
+      --url "https://management.azure.com/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01" \
+      2>&1 | tail -3
+    echo "  ✓ Elevation granted (propagation can take 30s-2min)"
+    echo "  Waiting 30s for propagation..."
+    sleep 30
+  fi
+  echo
 fi
 
 # Find the SP object ID inside DCE tenant by app client ID
@@ -98,6 +147,24 @@ for s in json.load(sys.stdin): print(s["id"])'); do
 done
 
 echo
+# Step N: Optionally remove root-scope UAA assignment (cleanup)
+if [[ "$CLEANUP_ELEVATION" = true ]]; then
+  echo "→ Cleaning up: removing root-scope User Access Admin elevation..."
+  CALLER_OBJECT_ID="$(az ad signed-in-user show --query id -o tsv 2>/dev/null || echo '')"
+  if [[ -z "$CALLER_OBJECT_ID" ]]; then
+    echo "  ⚠ Could not resolve caller object ID — skip manual cleanup."
+  elif [[ "$DRY_RUN" = true ]]; then
+    echo "  (DRY RUN — would remove UAA assignment for $CALLER_OBJECT_ID at scope '/')"
+  else
+    az role assignment delete \
+      --assignee "$CALLER_OBJECT_ID" \
+      --role "User Access Administrator" \
+      --scope "/" 2>&1 | tail -3
+    echo "  ✓ Elevation revoked"
+  fi
+  echo
+fi
+
 if [[ "$DRY_RUN" = true ]]; then
   echo "═══ DRY RUN COMPLETE — rerun with --apply to actually grant ═══"
 else
