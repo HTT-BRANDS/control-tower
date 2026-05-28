@@ -26,11 +26,11 @@
             {# Tags #}
             <div class="flex flex-wrap items-center gap-2">
                 {% if alert.job_type %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-brand-gray-130 border border-brand-gray-50 capitalize">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-base-100 text-brand-gray-130 border border-brand-gray-50 capitalize">
                     {{ alert.job_type }}
                 </span>
                 {% endif %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-white text-brand-gray-130 border border-brand-gray-50">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-base-100 text-brand-gray-130 border border-brand-gray-50">
                     {{ alert.alert_type.replace('_', ' ').title() }}
                 </span>
                 <span class="text-xs text-muted-theme">

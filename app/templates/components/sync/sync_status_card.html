@@ -1,5 +1,5 @@
 {# Sync Status Card Component - Main dashboard status overview #}
-<div id="sync-status-card" data-testid="sync-status-card" class="bg-white rounded-lg shadow-lg p-6 border-l-4 
+<div id="sync-status-card" data-testid="sync-status-card" class="bg-base-100 rounded-lg shadow-lg p-6 border-l-4 
     {{ 'border-brand-success-100' if status.status == 'healthy' else ('border-brand-error-100' if status.status == 'critical' else 'border-brand-warning-100') }}">
     {# Header with Status #}
     <div class="flex items-center justify-between mb-6">

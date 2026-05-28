@@ -68,7 +68,7 @@
 #}
 {% macro ds_stat_card(label, value, icon_svg="",
                       icon_bg="bg-brand-primary-5 dark:bg-brand-primary-50",
-                      icon_color="text-brand-primary dark:text-brand-secondary",
+                      icon_color="text-primary dark:text-brand-secondary",
                       trend=None, caption=None, caption_html=False,
                       footer=None, border_accent=None,
                       value_id=None, caption_id=None) %}
@@ -175,7 +175,7 @@
   "success": "bg-brand-success-5 text-success",
   "warning": "bg-brand-warning-5 text-warning",
   "danger":  "bg-brand-error-5 text-danger",
-  "info":    "bg-brand-primary-5 text-brand-primary",
+  "info":    "bg-brand-primary-5 text-primary",
   "neutral": "bg-surface-secondary text-secondary-theme",
 } %}
 <span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full {{ variants.get(variant, variants['primary']) }} {{ extra_classes }}" role="status">{{ text }}</span>

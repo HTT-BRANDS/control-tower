@@ -59,7 +59,7 @@
         loading_message="Loading tenants…"
     ) %}
         <button type="button" data-filter-tenant="all"
-                class="px-3 py-1 text-sm rounded-full bg-brand-primary-5 text-brand-primary dark:text-brand-secondary">
+                class="px-3 py-1 text-sm rounded-full bg-brand-primary-5 text-primary dark:text-brand-secondary">
             All
         </button>
         <button type="button" data-filter-tenant="riverside"
@@ -145,7 +145,7 @@
         critical: 'bg-brand-error-5 text-danger',
         high:     'bg-brand-warning-5 text-warning',
         medium:   'bg-brand-warning-5 text-warning',
-        low:      'bg-brand-primary-5 text-brand-primary',
+        low:      'bg-brand-primary-5 text-primary',
     };
     const SEVERITY_FALLBACK = 'bg-surface-tertiary text-primary-theme';
 
@@ -389,7 +389,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${new Date(alert.created_at).toLocaleDateString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button type="button" data-action="acknowledge-alert" data-alert-id="${alert.id}"
-                            class="text-brand-primary hover:text-brand-primary-110 dark:text-brand-secondary">
+                            class="text-primary hover:text-brand-primary-110 dark:text-brand-secondary">
                         Acknowledge
                     </button>
                 </td>

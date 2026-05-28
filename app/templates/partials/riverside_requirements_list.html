@@ -14,7 +14,7 @@
    - requirements_by_status: dict of status counts
 #}
 {% from "macros/ds.html" import ds_static_table %}
-<div id="riverside-requirements-list" class="bg-white rounded-lg shadow">
+<div id="riverside-requirements-list" class="bg-base-100 rounded-lg shadow">
     {# Header with Filters #}
     <div class="p-6 border-b border-brand-gray-50">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -32,7 +32,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Categories</option>
                     <option value="IAM">Identity & Access (IAM)</option>
                     <option value="GS">Governance & Security (GS)</option>
@@ -45,7 +45,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Priorities</option>
                     <option value="P0">P0 - Critical</option>
                     <option value="P1">P1 - High</option>
@@ -58,7 +58,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Statuses</option>
                     <option value="completed">Completed</option>
                     <option value="in_progress">In Progress</option>

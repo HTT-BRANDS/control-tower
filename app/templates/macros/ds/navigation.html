@@ -51,7 +51,7 @@
             tabindex="{{ '0' if act else '-1' }}"
             {% if tab.disabled %}aria-disabled="true" disabled{% endif %}
             class="inline-flex items-center min-h-[44px] px-4 py-2 text-sm font-medium border-b-2 transition-colors
-                   {% if act %}border-brand-primary text-brand-primary{% else %}border-transparent text-secondary-theme hover:text-primary-theme{% endif %}
+                   {% if act %}border-primary text-primary{% else %}border-transparent text-secondary-theme hover:text-primary-theme{% endif %}
                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary
                    {% if tab.disabled %}opacity-50 cursor-not-allowed{% endif %}">{{ tab.label }}</button>
     {% endfor %}
