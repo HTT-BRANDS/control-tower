@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="light" data-brand="{{ brand.key if brand else 'httbrands' }}" style="{{ brand.inline_style if brand else '' }}">
+<html lang="en" class="light" data-brand="{{ brand.key if brand and brand.key else 'httbrands' }}" data-theme="{{ brand.key if brand and brand.key else 'httbrands' }}" style="{{ brand.inline_style if brand else '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

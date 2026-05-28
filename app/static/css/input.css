@@ -36,7 +36,7 @@
   themes:
     light --default,
     dark --prefersdark,
-    htt,
+    httbrands,
     bishops,
     lashlounge,
     frenchies,
@@ -53,7 +53,7 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 @plugin "daisyui/theme" {
-  name: "htt";
+  name: "httbrands";
   default: false;
   prefersdark: false;
   color-scheme: light;
