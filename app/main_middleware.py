@@ -6,11 +6,11 @@ import uuid
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.core.prometheus_middleware import PrometheusMiddleware, expose_metrics
 
 from app.core.config import get_settings
 from app.core.gpc_middleware import GPCMiddleware
 from app.core.logging_config import log_api_request, set_correlation_id, set_request_start_time
+from app.core.prometheus_middleware import PrometheusMiddleware, expose_metrics
 from app.core.rate_limit import rate_limiter
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.core.tracing import setup_tracing
