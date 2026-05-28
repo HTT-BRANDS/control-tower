@@ -93,13 +93,15 @@ class TestPermissionStringFormat:
 class TestRoleDefinitions:
     """Role enum and role→permission mappings."""
 
-    def test_enum_has_four_roles(self) -> None:
+    def test_enum_has_five_roles(self) -> None:
+        # ADR-0012 added MANAGER (franchise-coach tier).
         roles = list(Role)
-        assert len(roles) == 4
+        assert len(roles) == 5
 
     def test_enum_members(self) -> None:
         assert Role.ADMIN in Role
         assert Role.TENANT_ADMIN in Role
+        assert Role.MANAGER in Role  # ADR-0012
         assert Role.ANALYST in Role
         assert Role.VIEWER in Role
 
