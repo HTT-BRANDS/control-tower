@@ -69,6 +69,7 @@
 | P4.4 | `/design-system` endpoint renders | `200` with HTML, all macro variants visible | `curl` + browser |
 | P4.5 | WCAG contrast tests pass | All brand colors pass AA on intended backgrounds | `test_wcag_brand_validation.py` |
 | P4.6 | Dark mode toggle functional | Theme switches, no FOUC, persisted per-user | Manual test |
+| P4.7 | No hand-rolled badge spans | All badge-shaped `<span>` elements use DaisyUI `.badge` (theme-aware) | `judge.py` (P4.7) |
 
 ## Pillar 5: Test Coverage
 

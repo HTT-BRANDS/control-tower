@@ -47,10 +47,10 @@
                 {{ status.alerts.total_active }} Active Alert{{ 's' if status.alerts.total_active != 1 }}
             </span>
             {% if status.alerts.critical > 0 %}
-            <span class="px-2 py-1 text-xs font-medium bg-danger text-white rounded">{{ status.alerts.critical }} Critical</span>
+            <span class="badge badge-error badge-sm">{{ status.alerts.critical }} Critical</span>
             {% endif %}
             {% if status.alerts.error > 0 %}
-            <span class="px-2 py-1 text-xs font-medium bg-warning text-primary-theme rounded">{{ status.alerts.error }} Error</span>
+            <span class="badge badge-warning badge-sm">{{ status.alerts.error }} Error</span>
             {% endif %}
         </div>
     </div>

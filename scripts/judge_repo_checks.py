@@ -286,6 +286,56 @@ def check_session_handoff_fresh() -> tuple[bool, str]:
     return ok, f"mtime age {age:.1f} days (threshold 7)"
 
 
+_HANDROLLED_BADGE_PATTERN = re.compile(
+    # <span ... class="..."> where the class contains all the visual hallmarks
+    # of a badge (small text, rounded, padded) but no `badge` class. Captures
+    # the inline anti-pattern of rolling a pill instead of using DaisyUI's
+    # .badge component. Buttons (btn class), <code>, and <kbd> are skipped
+    # because they match different tags.
+    r'<span\b[^>]*\bclass\s*=\s*"([^"]*\brounded(?:-full)?\b[^"]*)"',
+    re.IGNORECASE,
+)
+
+
+def check_no_handrolled_badges() -> tuple[bool, str]:
+    """P4.7 — No hand-rolled badge spans in Jinja templates (use DaisyUI .badge).
+
+    Pattern flagged: ``<span class="... text-xs ... px-N ... rounded ...">`` with
+    NO ``badge`` class. That combo is the design-system anti-pattern
+    (re-implementing DaisyUI's ``.badge`` from primitives) — theme switches,
+    dark mode and a11y don't carry over. Origin: bd ct-ofx.
+    """
+    bad: list[str] = []
+    for path in (REPO_ROOT / "app" / "templates").rglob("*.html"):
+        try:
+            text = path.read_text(errors="ignore")
+        except OSError:
+            continue
+        lines = text.splitlines()
+        for n, line in enumerate(lines, 1):
+            m = _HANDROLLED_BADGE_PATTERN.search(line)
+            if not m:
+                continue
+            classes = m.group(1)
+            if "badge" in classes:
+                continue  # legitimate DaisyUI usage
+            if "text-xs" not in classes:
+                continue  # bigger pills aren't badges
+            if not re.search(r"\bpx-\d", classes):
+                continue  # need explicit padding to qualify
+            # Skip JS template literals — separately tracked (follow-up bd issue).
+            # Look at the line + 2 lines on each side to catch multi-line `${...}`
+            # interpolations split across the span tag.
+            window = "\n".join(lines[max(0, n - 3) : n + 2])
+            if "${" in window:
+                continue
+            rel = path.relative_to(REPO_ROOT)
+            bad.append(f"{rel}:{n}")
+    if bad:
+        return False, f"{len(bad)} hand-rolled badge span(s): {bad[0]} (+{len(bad) - 1} more)"
+    return True, "no hand-rolled badge spans"
+
+
 def check_role_enum_lockstep() -> tuple[bool, str]:
     """P5.x — Role enum stays in lockstep with its description map.
 

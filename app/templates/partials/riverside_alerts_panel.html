@@ -58,27 +58,28 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-muted-theme">{{ gap.category }}</td>
                     <td class="px-4 py-3 whitespace-nowrap">
+                        {# Phase D: DaisyUI badge variants (ct-ofx) #}
                         {% if gap.priority == 'P0' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-error-100 text-white">{{ gap.priority }}</span>
+                        <span class="badge badge-error badge-sm font-semibold">{{ gap.priority }}</span>
                         {% elif gap.priority == 'P1' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-primary-theme">{{ gap.priority }}</span>
+                        <span class="badge badge-warning badge-sm font-semibold">{{ gap.priority }}</span>
                         {% else %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-primary-100 text-white">{{ gap.priority }}</span>
+                        <span class="badge badge-primary badge-sm font-semibold">{{ gap.priority }}</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         {% if gap.risk_level == 'Critical' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-error-100 text-white">{{ gap.risk_level }}</span>
+                        <span class="badge badge-error badge-sm font-semibold">{{ gap.risk_level }}</span>
                         {% elif gap.risk_level == 'High' %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-warning-100 text-primary-theme">{{ gap.risk_level }}</span>
+                        <span class="badge badge-warning badge-sm font-semibold">{{ gap.risk_level }}</span>
                         {% else %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-gray-100 text-white">{{ gap.risk_level }}</span>
+                        <span class="badge badge-neutral badge-sm font-semibold">{{ gap.risk_level }}</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm {{ 'text-brand-error-100 font-bold' if gap.is_overdue else 'text-muted-theme' }}">
                         {{ gap.due_date if gap.due_date else 'N/A' }}
                         {% if gap.is_overdue %}
-                        <span class="ml-1 text-xs bg-brand-error-100 text-white px-1.5 py-0.5 rounded">Overdue</span>
+                        <span class="badge badge-error badge-xs ml-1">Overdue</span>
                         {% endif %}
                     </td>
                 </tr>

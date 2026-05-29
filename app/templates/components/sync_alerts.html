@@ -4,13 +4,14 @@
    ───────────────────────────────────────────────────────────────────── #}
 
 {# Severity → visual tokens. Single source of truth: adding a new severity
-   means one row here, not 4 scattered ternaries. Uses design-utilities
-   semantic classes (bg-danger/warning/info + text-*). #}
+   means one row here, not 4 scattered ternaries. The `badge` value is a
+   DaisyUI variant (theme-aware) instead of hand-rolled bg/text utilities
+   — see bd ct-ofx (judge check P4.7) for the regression guard. #}
 {% set severity_styles = {
-  "critical": {"badge": "bg-danger text-white",         "dot": "bg-danger",  "card": "border-default bg-surface-secondary"},
-  "error":    {"badge": "bg-warning text-primary-theme","dot": "bg-warning", "card": "border-default bg-surface-secondary"},
-  "warning":  {"badge": "bg-warning text-primary-theme","dot": "bg-warning", "card": "border-default bg-surface-secondary"},
-  "info":     {"badge": "bg-info text-white",           "dot": "bg-info",    "card": "border-default bg-surface-secondary"},
+  "critical": {"badge": "badge-error",   "dot": "bg-danger",  "card": "border-default bg-surface-secondary"},
+  "error":    {"badge": "badge-warning", "dot": "bg-warning", "card": "border-default bg-surface-secondary"},
+  "warning":  {"badge": "badge-warning", "dot": "bg-warning", "card": "border-default bg-surface-secondary"},
+  "info":     {"badge": "badge-info",    "dot": "bg-info",    "card": "border-default bg-surface-secondary"},
 } %}
 {% set default_severity = severity_styles["info"] %}
 
@@ -41,7 +42,7 @@
     <div class="flex flex-wrap gap-2 mb-4">
         {% for severity, count in stats.by_severity.items() %}
         {% set s = severity_styles.get(severity, default_severity) %}
-        <span class="px-2 py-1 text-xs font-medium rounded {{ s.badge }}">
+        <span class="badge badge-sm {{ s.badge }}">
             {{ severity.title() }}: {{ count }}
         </span>
         {% endfor %}
@@ -62,7 +63,7 @@
                     <p class="text-xs text-secondary-theme mt-1">{{ alert.message }}</p>
                     {% if alert.job_type %}
                     <div class="flex items-center gap-2 mt-2">
-                        <span class="px-2 py-0.5 text-xs bg-surface-secondary text-secondary-theme rounded capitalize">{{ alert.job_type }}</span>
+                        <span class="badge badge-ghost badge-sm capitalize">{{ alert.job_type }}</span>
                         <span class="text-xs text-secondary-theme">{{ alert.alert_type.replace('_', ' ').title() }}</span>
                     </div>
                     {% endif %}
@@ -96,7 +97,7 @@
         <h4 class="text-xs font-medium text-primary-theme mb-2">Alert Types</h4>
         <div class="flex flex-wrap gap-2">
             {% for alert_type, count in stats.by_type.items() %}
-            <span class="px-2 py-1 text-xs bg-surface-secondary text-secondary-theme rounded">
+            <span class="badge badge-ghost badge-sm">
                 {{ count }} {{ alert_type.replace('_', ' ').title() }}
             </span>
             {% endfor %}

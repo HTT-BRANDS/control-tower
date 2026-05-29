@@ -24,6 +24,7 @@ from scripts.judge_repo_checks import (
     check_dockerfile_non_root,
     check_focus_visible_uses_brand_token,
     check_no_focus_outline_none,
+    check_no_handrolled_badges,
     check_no_invisible_text,
     check_no_xpassed,
     check_role_enum_lockstep,
@@ -364,6 +365,10 @@ def run_checks(env: str) -> list[Pillar]:
             Check(
                 "P4.3", "Design", "focus-visible uses brand token",
                 lambda _: check_focus_visible_uses_brand_token(), "P1",
+            ),
+            Check(
+                "P4.7", "Design", "No hand-rolled badge spans (DaisyUI)",
+                lambda _: check_no_handrolled_badges(), "P1",
             ),
             Check(
                 "P5.5", "Tests", "No xpassed markers",

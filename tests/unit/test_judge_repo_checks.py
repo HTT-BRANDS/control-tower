@@ -17,6 +17,7 @@ from scripts.judge_repo_checks import (
     check_dockerfile_non_root,
     check_focus_visible_uses_brand_token,
     check_no_focus_outline_none,
+    check_no_handrolled_badges,
     check_no_invisible_text,
     check_role_enum_lockstep,
     check_session_handoff_fresh,
@@ -62,6 +63,10 @@ class TestHappyPathAgainstRealRepo:
     def test_dockerfile_non_root(self):
         ok, detail = check_dockerfile_non_root()
         assert ok, f"Dockerfile runs as root: {detail}"
+
+    def test_no_handrolled_badges(self):
+        ok, detail = check_no_handrolled_badges()
+        assert ok, f"hand-rolled badge spans reappeared in Jinja templates: {detail}"
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +167,49 @@ class TestFailureDetailFormat:
         ok, detail = mod.check_no_invisible_text()
         assert ok is False
         assert "occurrence" in detail
+
+    def test_handrolled_badge_flagged(self, tmp_path, monkeypatch):
+        from scripts import judge_repo_checks as mod
+
+        templates = tmp_path / "app" / "templates"
+        templates.mkdir(parents=True)
+        (templates / "bad.html").write_text(
+            '<span class="px-2 py-1 text-xs rounded bg-red-500 text-white">P0</span>\n'
+        )
+        monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
+        ok, detail = mod.check_no_handrolled_badges()
+        assert ok is False
+        assert "hand-rolled" in detail
+
+    def test_handrolled_badge_daisyui_passes(self, tmp_path, monkeypatch):
+        from scripts import judge_repo_checks as mod
+
+        templates = tmp_path / "app" / "templates"
+        templates.mkdir(parents=True)
+        # DaisyUI badge — should NOT be flagged despite text-xs rounded px-
+        (templates / "good.html").write_text(
+            '<span class="badge badge-error badge-sm">P0</span>\n'
+        )
+        monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
+        ok, _ = mod.check_no_handrolled_badges()
+        assert ok is True
+
+    def test_handrolled_badge_js_template_literal_skipped(self, tmp_path, monkeypatch):
+        from scripts import judge_repo_checks as mod
+
+        templates = tmp_path / "app" / "templates"
+        templates.mkdir(parents=True)
+        # JS template literal context — tracked separately (ct-ofx follow-up)
+        (templates / "js.html").write_text(
+            "<script>\n"
+            "const html = `\n"
+            '<span class="px-2 py-1 text-xs rounded bg-red-500 text-white">${name}</span>\n'
+            "`;\n"
+            "</script>\n"
+        )
+        monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
+        ok, _ = mod.check_no_handrolled_badges()
+        assert ok is True
 
 
 # ---------------------------------------------------------------------------
