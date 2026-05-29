@@ -16,6 +16,21 @@ from dataclasses import dataclass, field
 
 import requests
 
+from scripts.judge_repo_checks import (
+    check_alembic_current,
+    check_bd_open_count,
+    check_bicep_drift,
+    check_changelog_current,
+    check_dockerfile_non_root,
+    check_focus_visible_uses_brand_token,
+    check_no_focus_outline_none,
+    check_no_invisible_text,
+    check_no_xpassed,
+    check_role_enum_lockstep,
+    check_session_handoff_fresh,
+    check_status_md_fresh,
+)
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
@@ -284,99 +299,6 @@ def check_scheduler_running(base: str) -> tuple[bool, str]:
         return False, f"parse error: {exc}"
 
 
-def check_alembic_current() -> tuple[bool, str]:
-    """P3.4 — `alembic current` revision matches `alembic heads`.
-
-    Local subprocess check; doesn't need the running server. Useful as a
-    pre-deploy guard and as a CI safety net against drift between the
-    deployed schema and the migration tree's latest head.
-    """
-    import subprocess
-
-    try:
-        cur = subprocess.run(
-            ["uv", "run", "alembic", "current"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        heads = subprocess.run(
-            ["uv", "run", "alembic", "heads"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-    except Exception as exc:
-        return False, f"alembic invocation failed: {exc}"
-
-    def _rev(out: str) -> str:
-        # alembic prints lines like '012 (head)' — first token is the revision id
-        for line in out.splitlines():
-            line = line.strip()
-            if line and not line.startswith("INFO"):
-                return line.split()[0]
-        return ""
-
-    cur_rev = _rev(cur.stdout)
-    head_rev = _rev(heads.stdout)
-    ok = bool(cur_rev) and cur_rev == head_rev
-    return ok, f"current={cur_rev!r} head={head_rev!r}"
-
-
-def check_dockerfile_non_root() -> tuple[bool, str]:
-    """P6.6 — Dockerfile sets a USER directive (i.e. doesn't run as root)."""
-    from pathlib import Path
-
-    dockerfile = Path(__file__).resolve().parent.parent / "Dockerfile"
-    if not dockerfile.exists():
-        return False, "Dockerfile missing"
-    user_lines = [
-        line.strip()
-        for line in dockerfile.read_text().splitlines()
-        if line.strip().startswith("USER ")
-    ]
-    if not user_lines:
-        return False, "no USER directive"
-    # All USER directives must be non-root; reject any literal 'USER root'
-    bad = [u for u in user_lines if u.split()[1].lower() == "root"]
-    if bad:
-        return False, f"runs as root: {bad}"
-    return True, f"USER directives: {user_lines}"
-
-
-def check_bicep_drift() -> tuple[bool, str]:
-    """P6.8 — Bicep drift directory has <= 5 entries (or doesn't exist = no drift)."""
-    from pathlib import Path
-
-    drift_dir = Path(__file__).resolve().parent.parent / "infrastructure" / "bicep" / "drift"
-    if not drift_dir.exists():
-        return True, "no drift dir (= 0 items)"
-    items = [p for p in drift_dir.iterdir() if not p.name.startswith(".")]
-    ok = len(items) <= 5
-    return ok, f"{len(items)} drift items (threshold 5)"
-
-
-def check_bd_open_count() -> tuple[bool, str]:
-    """P7.6 — `bd` open issue count <= 10."""
-    import subprocess
-
-    try:
-        result = subprocess.run(
-            ["bd", "list", "--status", "open", "--json", "--no-pager"],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        if result.returncode != 0:
-            return False, f"bd exited {result.returncode}"
-        data = json.loads(result.stdout)
-        count = len(data)
-        ok = count <= 10
-        return ok, f"{count} open issues (threshold 10)"
-    except Exception as exc:
-        return False, f"bd invocation/parse failed: {exc}"
-
-
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -430,6 +352,39 @@ def run_checks(env: str) -> list[Pillar]:
             ),
             Check("P6.8", "Infra", "Bicep drift <= 5", lambda _: check_bicep_drift(), "P1"),
             Check("P7.6", "Process", "bd open issues <= 10", lambda _: check_bd_open_count(), "P1"),
+            # ---- Phase 2 of GOALS_WIGGUM_WORKBOOK additions ----
+            Check(
+                "P4.1", "Design", "No invisible text-gray-100",
+                lambda _: check_no_invisible_text(), "P1",
+            ),
+            Check(
+                "P4.2", "Design", "No naked focus:outline-none",
+                lambda _: check_no_focus_outline_none(), "P1",
+            ),
+            Check(
+                "P4.3", "Design", "focus-visible uses brand token",
+                lambda _: check_focus_visible_uses_brand_token(), "P1",
+            ),
+            Check(
+                "P5.5", "Tests", "No xpassed markers",
+                lambda _: check_no_xpassed(), "P1",
+            ),
+            Check(
+                "P7.1", "Process", "STATUS.md fresh (<=14d)",
+                lambda _: check_status_md_fresh(), "P1",
+            ),
+            Check(
+                "P7.2", "Process", "CHANGELOG.md current (<=90d)",
+                lambda _: check_changelog_current(), "P1",
+            ),
+            Check(
+                "P7.5", "Process", "SESSION_HANDOFF.md fresh (<=7d)",
+                lambda _: check_session_handoff_fresh(), "P1",
+            ),
+            Check(
+                "P5.7", "Tests", "Role enum lockstep with descriptions",
+                lambda _: check_role_enum_lockstep(), "P0",
+            ),
         ]
     )
 

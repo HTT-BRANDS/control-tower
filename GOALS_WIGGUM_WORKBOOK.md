@@ -252,11 +252,11 @@ git push
 ```
 Phase 0: ✅✅✅          (3/3)
 Phase 1: ⬜⬜⬜⬜        (0/4)
-Phase 2: ⬜⬜⬜⬜⬜⬜⬜⬜⬜  (0/9)
+Phase 2: ✅✅✅⏭✅✅✅✅✅  (8/9, 2.4 deferred→ct-ofx)
 Phase 3: ✅✅✅✅       (4/4) DONE
 Phase 4: ⬜⬜⬜⬜⬜      (0/5)
                        ─────
-                       7/25 tasks
+                       15/25 tasks (60%)
 ```
 
 Update this banner whenever a phase changes state. Source of truth is the

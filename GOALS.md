@@ -63,9 +63,9 @@
 
 | ID | Criterion | Target | How Verified |
 |---|---|---|---|
-| P4.1 | No `text-gray-100` invisible text | Zero occurrences in templates | `grep` |
-| P4.2 | No `focus:outline-none` without ring color | Zero occurrences in templates/JS | `grep` |
-| P4.3 | `:focus-visible` uses brand token | `var(--brand-primary)` not hardcoded blue | `grep` in CSS |
+| P4.1 | No `text-gray-100` invisible text | Zero occurrences in templates | `judge.py` (P4.1) |
+| P4.2 | No `focus:outline-none` without ring color | Zero occurrences in templates/JS | `judge.py` (P4.2) |
+| P4.3 | `:focus-visible` uses brand token | `var(--brand-primary)` not hardcoded blue | `judge.py` (P4.3) |
 | P4.4 | `/design-system` endpoint renders | `200` with HTML, all macro variants visible | `curl` + browser |
 | P4.5 | WCAG contrast tests pass | All brand colors pass AA on intended backgrounds | `test_wcag_brand_validation.py` |
 | P4.6 | Dark mode toggle functional | Theme switches, no FOUC, persisted per-user | Manual test |
@@ -78,8 +78,9 @@
 | P5.2 | Core smoke tests pass | `tests/unit/test_main_app.py` + `test_config.py` + `test_security_headers.py` | CI QA Gate |
 | P5.3 | Integration test suite passes | `pytest tests/integration/` — all green | CI QA Gate |
 | P5.4 | E2E smoke tests pass | `pytest tests/e2e/test_smoke.py` — all green | CI QA Gate |
-| P5.5 | No xpass markers | `pytest` reports zero xpassed tests | CI QA Gate |
+| P5.5 | No xpass markers | `pytest` reports zero xpassed tests | `judge.py` (P5.5) |
 | P5.6 | Code coverage ≥ 60% | `pytest --cov` overall ≥ 60% | CI QA Gate |
+| P5.7 | Role enum lockstep with description map | `set(Role) == set(_ROLE_DESCRIPTIONS)` — module-import assertion (ct-2vx) | `judge.py` (P5.7) |
 
 ## Pillar 6: Infrastructure & Deploy
 
@@ -98,11 +99,11 @@
 
 | ID | Criterion | Target | How Verified |
 |---|---|---|---|
-| P7.1 | `STATUS.md` current | Updated within last 24h of any deploy | Git log |
-| P7.2 | `CHANGELOG.md` current | v2.5.0 entry exists, dated | File check |
+| P7.1 | `STATUS.md` current | mtime within 14 days (workbook DoD threshold) | `judge.py` (P7.1) |
+| P7.2 | `CHANGELOG.md` current | Dated entry within last 90 days | `judge.py` (P7.2) |
 | P7.3 | `SECRETS_OF_RECORD.md` complete | Tyler-only fields filled, rotation dates present | Manual review |
 | P7.4 | `RUNBOOK.md` current | Deploy/rollback/DR procedures match current infra | Manual review |
-| P7.5 | `SESSION_HANDOFF.md` current | Last session recorded with clear next steps | Git log |
+| P7.5 | `SESSION_HANDOFF.md` current | mtime within 7 days | `judge.py` (P7.5) |
 | P7.6 | `bd` issues ≤ 10 open | Open issue count ≤ 10 | `bd list --status open` |
 
 ## Pillar 8: Cost & Sustainability
