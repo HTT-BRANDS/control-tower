@@ -229,7 +229,9 @@ def check_no_xpassed() -> tuple[bool, str]:
 
 
 def _mtime_age_days(path: Path) -> float:
-    return (datetime.now(UTC) - datetime.fromtimestamp(path.stat().st_mtime, UTC)).total_seconds() / 86400
+    return (
+        datetime.now(UTC) - datetime.fromtimestamp(path.stat().st_mtime, UTC)
+    ).total_seconds() / 86400
 
 
 def check_status_md_fresh() -> tuple[bool, str]:
@@ -353,7 +355,10 @@ def check_role_enum_lockstep() -> tuple[bool, str]:
         missing = role_keys - desc_keys
         extra = desc_keys - role_keys
         if missing or extra:
-            return False, f"missing={sorted(str(m) for m in missing)} extra={sorted(str(e) for e in extra)}"
+            return (
+                False,
+                f"missing={sorted(str(m) for m in missing)} extra={sorted(str(e) for e in extra)}",
+            )
         return True, f"{len(role_keys)} roles, all described"
     except AssertionError as exc:
         return False, f"module-import assertion fired: {exc}"

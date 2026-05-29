@@ -91,6 +91,7 @@ class TestFailureDetailFormat:
         # Force mtime to 30 days ago
         import os
         import time
+
         thirty_days_ago = time.time() - 30 * 86400
         os.utime(stale, (thirty_days_ago, thirty_days_ago))
 
@@ -136,9 +137,7 @@ class TestFailureDetailFormat:
 
         templates = tmp_path / "app" / "templates"
         templates.mkdir(parents=True)
-        (templates / "bad.html").write_text(
-            '<button class="focus:outline-none">click</button>\n'
-        )
+        (templates / "bad.html").write_text('<button class="focus:outline-none">click</button>\n')
         # No static dir is fine — the function tolerates missing globs
         monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
         ok, detail = mod.check_no_focus_outline_none()
@@ -187,9 +186,7 @@ class TestFailureDetailFormat:
         templates = tmp_path / "app" / "templates"
         templates.mkdir(parents=True)
         # DaisyUI badge — should NOT be flagged despite text-xs rounded px-
-        (templates / "good.html").write_text(
-            '<span class="badge badge-error badge-sm">P0</span>\n'
-        )
+        (templates / "good.html").write_text('<span class="badge badge-error badge-sm">P0</span>\n')
         monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
         ok, _ = mod.check_no_handrolled_badges()
         assert ok is True
