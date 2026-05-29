@@ -112,7 +112,7 @@ Auto-rollback (bd 39yp + bd 1vui field-fix):
   fails health gate → restores previous-good digest. Field-tested 2026-04-30.
 ```
 
-For full detail see [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`INFRASTRUCTURE_END_TO_END.md`](./INFRASTRUCTURE_END_TO_END.md), and [`docs/architecture/overview.md`](./docs/architecture/overview.md).
+For full detail see [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`INFRASTRUCTURE_END_TO_END.md`](./INFRASTRUCTURE_END_TO_END.md), [`docs/architecture/current.md`](./docs/architecture/current.md) (what's actually deployed), and [`docs/architecture/overview.md`](./docs/architecture/overview.md) (target / aspirational).
 
 ---
 
@@ -250,7 +250,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://htt-brands.github.io/control-to
 | What can I `curl`/click to test it? | [`TEST_PLAYBOOK.md`](./TEST_PLAYBOOK.md) |
 | What's blocking the next release? | [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md) |
 | What did the last session do? | [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md) |
-| What's the high-level architecture? | [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`docs/architecture/overview.md`](./docs/architecture/overview.md) |
+| What's the high-level architecture? | [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`docs/architecture/current.md`](./docs/architecture/current.md) (current), [`docs/architecture/overview.md`](./docs/architecture/overview.md) (target) |
 | What infra is actually deployed? | [`INFRASTRUCTURE_END_TO_END.md`](./INFRASTRUCTURE_END_TO_END.md) |
 | What does it cost? | [`docs/COST_MODEL_AND_SCALING.md`](./docs/COST_MODEL_AND_SCALING.md), [`docs/cost/consumption-vs-reserved-analysis.md`](./docs/cost/consumption-vs-reserved-analysis.md) |
 | How do I deploy / roll back? | [`RUNBOOK.md`](./RUNBOOK.md), [`docs/runbooks/disaster-recovery.md`](./docs/runbooks/disaster-recovery.md) |

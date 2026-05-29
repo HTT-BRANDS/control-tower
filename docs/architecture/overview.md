@@ -1,4 +1,19 @@
-# Architecture Overview
+# Architecture Overview — **Target State (Q3 2026+)**
+
+> ⚠️ **READ THIS FIRST** — This document describes the **target / aspirational**
+> architecture: where we're heading, not what's deployed today. For the
+> ground-truth view of what actually runs in production right now, see
+> [**`current.md`**](./current.md).
+>
+> Components mentioned here that **do not yet exist** in production include
+> Azure Front Door / CDN, Service Bus, a provisioned Redis cache, and a
+> separate auth/audit microservice. The current system is a single FastAPI
+> monolith on App Service with in-process APScheduler workers — see
+> [`current.md`](./current.md#what-is-not-deployed-despite-appearing-in-target-diagrams) for the full gap list.
+>
+> _Banner added per bd ct-lw2 to prevent newcomers hunting for nonexistent infra._
+
+---
 
 ## System Design Philosophy
 
