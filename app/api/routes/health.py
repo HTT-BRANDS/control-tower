@@ -27,6 +27,29 @@ def _get_data_freshness_threshold() -> timedelta:
     return timedelta(hours=settings.sync_stale_threshold_hours)
 
 
+# Tenants that exist in Entra ID (Azure AD) but have *zero* Azure subscriptions
+# attached. For these, ARM-derived domains (resources, compliance) cannot ever
+# produce data — the resources/compliance sync correctly finds nothing and
+# writes nothing, so flagging them "stale" is a false positive.
+#
+# Verified 2026-05-29 (bd ct-1m0): DCE tenant `ce62e17d-...` has zero subs
+# visible even with root UAA elevation, and Management Groups are not enabled.
+# The sync paths that target ARM are no-ops by physics, not by configuration.
+#
+# If this list grows beyond ~2 tenants, promote it to a `Tenant.is_arm_enabled`
+# column with an Alembic migration (tracked: follow-up bd issue).
+ENTRA_ONLY_TENANT_IDS: frozenset[str] = frozenset(
+    {
+        "ce62e17d-2feb-4e67-a115-8ea4af68da30",  # Delta Crown Extensions (DCE)
+    }
+)
+
+# Domains that depend on Azure Resource Manager (subscriptions). Entra-only
+# tenants skip these in the freshness check because they're physically
+# impossible to populate without a subscription.
+ARM_DEPENDENT_DOMAINS: frozenset[str] = frozenset({"resources", "compliance"})
+
+
 def _latest_timestamp(*values: datetime | None) -> datetime | None:
     """Return the newest non-null timestamp."""
     present = [value for value in values if value is not None]
@@ -409,8 +432,8 @@ async def data_freshness_check(
         ("riverside_device_compliance", RiversideDeviceCompliance, "snapshot_date"),
         ("riverside_threat_data", RiversideThreatData, "snapshot_date"),
     ]
-    required_domains = {"resources", "costs", "compliance", "identity"}
-    optional_domains = {name for name, _, _ in domains} - required_domains
+    base_required_domains = {"resources", "costs", "compliance", "identity"}
+    optional_domains = {name for name, _, _ in domains} - base_required_domains
 
     result: dict[str, Any] = {}
     overall_any_stale = False
@@ -420,6 +443,13 @@ async def data_freshness_check(
         per_tenant: dict[str, Any] = {}
         tenant_stale = False
         tenant_optional_stale = False
+        # Entra-only tenants (no Azure subs) cannot populate ARM-dependent
+        # domains. Narrow required_domains for them so the freshness check
+        # reflects what's actually fetchable, not an aspirational schema.
+        if tenant.tenant_id in ENTRA_ONLY_TENANT_IDS:
+            required_domains = base_required_domains - ARM_DEPENDENT_DOMAINS
+        else:
+            required_domains = base_required_domains
         for name, model, ts_col in domains:
             ts_attr = getattr(model, ts_col, None)
             last = None
@@ -451,6 +481,7 @@ async def data_freshness_check(
 
         per_tenant["stale"] = tenant_stale
         per_tenant["optional_stale"] = tenant_optional_stale
+        per_tenant["arm_enabled"] = tenant.tenant_id not in ENTRA_ONLY_TENANT_IDS
         overall_any_stale = overall_any_stale or tenant_stale
         overall_optional_stale = overall_optional_stale or tenant_optional_stale
         key = getattr(tenant, "name", None) or tenant.tenant_id
@@ -460,8 +491,9 @@ async def data_freshness_check(
         "timestamp": now.isoformat(),
         "threshold_hours": int(_get_data_freshness_threshold().total_seconds() // 3600),
         "domains_covered": [name for name, _, _ in domains],
-        "required_domains": sorted(required_domains),
+        "required_domains": sorted(base_required_domains),
         "optional_domains": sorted(optional_domains),
+        "arm_dependent_domains": sorted(ARM_DEPENDENT_DOMAINS),
         "any_stale": overall_any_stale,
         "any_optional_stale": overall_optional_stale,
         "tenants": result,
