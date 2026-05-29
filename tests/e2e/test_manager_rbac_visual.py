@@ -183,9 +183,7 @@ class TestManagerLandmarks:
             )
 
     @pytest.mark.e2e
-    def test_csv_export_link_present_for_manager(
-        self, manager_page: Page, base_url: str
-    ):
+    def test_csv_export_link_present_for_manager(self, manager_page: Page, base_url: str):
         """Manager has ``franchise_coach:export`` — the CSV link must render."""
         manager_page.goto(f"{base_url}{DASHBOARD_PATH}")
         export_link = manager_page.get_by_test_id("fc-export-csv")
@@ -212,9 +210,7 @@ class TestManagerAccessibility:
     )
 
     @pytest.mark.e2e
-    def test_severity_badges_define_aria_labels(
-        self, manager_page: Page, base_url: str
-    ):
+    def test_severity_badges_define_aria_labels(self, manager_page: Page, base_url: str):
         """At least one of each severity ARIA label is reachable in the rendered HTML.
 
         We don't require all three to be visible simultaneously (depends on
@@ -252,9 +248,7 @@ class TestManagerTemplateBranching:
     """
 
     @pytest.mark.e2e
-    def test_empty_and_cards_are_mutually_exclusive(
-        self, manager_page: Page, base_url: str
-    ):
+    def test_empty_and_cards_are_mutually_exclusive(self, manager_page: Page, base_url: str):
         """Exactly one of (fc-empty-state, fc-brand-cards) renders. Never both, never neither."""
         manager_page.goto(f"{base_url}{DASHBOARD_PATH}")
         manager_page.wait_for_load_state("networkidle")
@@ -268,9 +262,7 @@ class TestManagerTemplateBranching:
         )
 
     @pytest.mark.e2e
-    def test_brand_count_matches_card_count(
-        self, manager_page: Page, base_url: str
-    ):
+    def test_brand_count_matches_card_count(self, manager_page: Page, base_url: str):
         """The displayed brand count agrees with the number of fc-card elements.
 
         If empty-state renders, count must be 0 and no fc-card elements exist.

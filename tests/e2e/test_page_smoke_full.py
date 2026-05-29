@@ -67,7 +67,9 @@ PAGE_ROUTES = [
 MIN_BODY_BYTES = 500
 
 
-@pytest.mark.parametrize("path", PAGE_ROUTES, ids=lambda p: p.replace("/", "_").strip("_") or "root")
+@pytest.mark.parametrize(
+    "path", PAGE_ROUTES, ids=lambda p: p.replace("/", "_").strip("_") or "root"
+)
 def test_page_renders_with_design_system(authenticated_page: Page, path: str) -> None:
     """Every Manager-tier page renders with design-system CSS + landmarks + content."""
     response = authenticated_page.goto(path, wait_until="domcontentloaded")
@@ -83,8 +85,7 @@ def test_page_renders_with_design_system(authenticated_page: Page, path: str) ->
     # invariant load-bearing for visual correctness.
     css_link = authenticated_page.locator("link[rel='stylesheet'][href*='tailwind-output.css']")
     assert css_link.count() >= 1, (
-        f"{path} is missing tailwind-output.css <link> — design system "
-        f"not wired into this page"
+        f"{path} is missing tailwind-output.css <link> — design system not wired into this page"
     )
 
     # base.html guarantees a <main id="main-content"> landmark for skip-link

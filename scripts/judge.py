@@ -258,9 +258,7 @@ def check_csp_nonce(base: str) -> tuple[bool, str]:
     r = _head(f"{base}/health")
     if r is None:
         return False, "Connection failed"
-    csp = r.headers.get("Content-Security-Policy") or r.headers.get(
-        "content-security-policy"
-    )
+    csp = r.headers.get("Content-Security-Policy") or r.headers.get("content-security-policy")
     if not csp:
         return False, "CSP header missing"
     has_nonce = "nonce-" in csp
@@ -416,14 +414,22 @@ def run_checks(env: str) -> list[Pillar]:
     # source tree, not the live server). ct-fz0 Phase-C coverage extension.
     checks.extend(
         [
-            Check("P3.4", "Sync", "Alembic migrations current",
-                  lambda _: check_alembic_current(), "P0"),
-            Check("P6.6", "Infra", "Dockerfile runs non-root",
-                  lambda _: check_dockerfile_non_root(), "P0"),
-            Check("P6.8", "Infra", "Bicep drift <= 5",
-                  lambda _: check_bicep_drift(), "P1"),
-            Check("P7.6", "Process", "bd open issues <= 10",
-                  lambda _: check_bd_open_count(), "P1"),
+            Check(
+                "P3.4",
+                "Sync",
+                "Alembic migrations current",
+                lambda _: check_alembic_current(),
+                "P0",
+            ),
+            Check(
+                "P6.6",
+                "Infra",
+                "Dockerfile runs non-root",
+                lambda _: check_dockerfile_non_root(),
+                "P0",
+            ),
+            Check("P6.8", "Infra", "Bicep drift <= 5", lambda _: check_bicep_drift(), "P1"),
+            Check("P7.6", "Process", "bd open issues <= 10", lambda _: check_bd_open_count(), "P1"),
         ]
     )
 
