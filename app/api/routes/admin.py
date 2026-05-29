@@ -142,6 +142,22 @@ _ROLE_DESCRIPTIONS: dict[str, tuple[str, str]] = {
     ),
 }
 
+# ---------------------------------------------------------------------------
+# Structural invariant: every Role enum member MUST have a description.
+# This is a fail-fast guard against the ADR-0012 regression where MANAGER
+# was added to the enum but _ROLE_DESCRIPTIONS was not updated — that
+# caused a KeyError at runtime on GET /api/v1/admin/roles (ct-2vx).
+# ---------------------------------------------------------------------------
+if set(Role) != set(_ROLE_DESCRIPTIONS):
+    _missing = sorted(set(Role) - set(_ROLE_DESCRIPTIONS))
+    _extra = sorted(set(_ROLE_DESCRIPTIONS) - set(Role))
+    raise RuntimeError(
+        f"Role enum / _ROLE_DESCRIPTIONS lockstep invariant violated. "
+        f"Missing in _ROLE_DESCRIPTIONS: {_missing}. "
+        f"Extra in _ROLE_DESCRIPTIONS (not in enum): {_extra}. "
+        f"Fix the dict to match the enum exactly (see ct-2vx)."
+    )
+
 
 def _role_to_detail(role: Role) -> RoleDetailResponse:
     """Build a ``RoleDetailResponse`` from a Role enum member."""
