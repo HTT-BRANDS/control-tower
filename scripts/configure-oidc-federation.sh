@@ -52,7 +52,8 @@ declare -A APP_IDS=(
   ["BCC"]="4861906b-2079-4335-923f-a55cc0e44d64"
   ["FN"]="7648d04d-ccc4-43ac-bace-da1b68bf11b4"
   ["TLL"]="52531a02-78fd-44ba-9ab9-b29675767955"
-  ["DCE"]="79c22a10-3f2d-4e6a-bddc-ee65c9a46cb0"
+  # 2026-05-29: DCE corrected from stale 79c22a10 → Riverside multi-tenant app (ADR-0014)
+  ["DCE"]="1e3e8417-49f1-4d08-b7be-47045d8a12e9"
 )
 
 declare -A TENANT_NAMES=(

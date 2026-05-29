@@ -107,7 +107,8 @@ RIVERSIDE_TENANTS: dict[str, TenantConfig] = {
         code="DCE",
         tenant_id="ce62e17d-2feb-4e67-a115-8ea4af68da30",
         admin_upn="tyler.granlund-admin_httbrands.com#EXT#@deltacrown.onmicrosoft.com",
-        app_id="79c22a10-3f2d-4e6a-bddc-ee65c9a46cb0",
+        # 2026-05-29: corrected from stale 79c22a10 → Riverside multi-tenant app (ADR-0014)
+        app_id="1e3e8417-49f1-4d08-b7be-47045d8a12e9",
         domains=["deltacrown.onmicrosoft.com"],
         is_active=True,
     ),
