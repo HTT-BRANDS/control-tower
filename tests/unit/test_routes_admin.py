@@ -423,9 +423,12 @@ class TestListRoles:
         resp = client.get("/api/v1/admin/roles")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) == 4
+        # 5 roles: admin, tenant_admin, manager (ADR-0012 franchise-coach),
+        # analyst, viewer. If you're adding/removing a role, update both this
+        # count AND the slug set so a partial enum/desc-dict sync fails loud.
+        assert len(data) == 5
         slugs = {r["slug"] for r in data}
-        assert slugs == {"admin", "tenant_admin", "analyst", "viewer"}
+        assert slugs == {"admin", "tenant_admin", "manager", "analyst", "viewer"}
 
     def test_each_role_has_permissions(self, seeded_db) -> None:
         client = _admin_client(seeded_db)

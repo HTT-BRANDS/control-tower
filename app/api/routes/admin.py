@@ -126,6 +126,12 @@ _ROLE_DESCRIPTIONS: dict[str, tuple[str, str]] = {
         "Manages tenant config, users, compliance, and data. "
         "Cannot create tenants or access system settings.",
     ),
+    Role.MANAGER: (
+        "Manager",
+        "Franchise-leadership tier: cross-brand insight access plus exports, "
+        "but no write/manage capability. Equips franchise executives to have "
+        "data-driven conversations with brand operators. See ADR-0012.",
+    ),
     Role.ANALYST: (
         "Analyst",
         "Read and export data across accessible modules. Cannot modify configuration.",
