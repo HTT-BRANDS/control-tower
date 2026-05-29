@@ -253,10 +253,10 @@ git push
 Phase 0: ✅✅✅          (3/3)
 Phase 1: ⬜⬜⬜⬜        (0/4)
 Phase 2: ⬜⬜⬜⬜⬜⬜⬜⬜⬜  (0/9)
-Phase 3: ✅✅⬜⬜        (2/4)
+Phase 3: ✅✅✅⬜        (3/4)
 Phase 4: ⬜⬜⬜⬜⬜      (0/5)
                        ─────
-                       5/25 tasks
+                       6/25 tasks
 ```
 
 Update this banner whenever a phase changes state. Source of truth is the
