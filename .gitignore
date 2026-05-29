@@ -106,3 +106,9 @@ tests/e2e/visual_diffs/
 # Beads / Dolt files (added by bd init)
 .dolt/
 .beads-credential-key
+
+# Tyler's personal vault (auto-generated, not part of repo)
+.obsidian/
+
+# Security research scratch space (ephemeral)
+research/PYSEC-*/
