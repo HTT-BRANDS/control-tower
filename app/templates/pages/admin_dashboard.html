@@ -29,7 +29,7 @@
         <div id="admin-stats-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {# Skeleton cards shown until HTMX replaces them #}
             {% for label in ["Total Users", "Active Tenants", "Roles Defined", "Last Sync"] %}
-            <div class="card-brand p-4 border-l-4 border-brand-primary animate-pulse" role="region" aria-label="{{ label }}">
+            <div class="card-brand p-4 border-l-4 border-primary animate-pulse" role="region" aria-label="{{ label }}">
                 <p class="text-sm text-muted-theme">{{ label }}</p>
                 <div class="h-8 bg-surface-secondary rounded mt-2 w-16"></div>
             </div>
@@ -158,7 +158,7 @@
                         {% for role_slug, role_name in [("admin", "Admin"), ("tenant_admin", "Tenant Admin"), ("analyst", "Analyst"), ("viewer", "Viewer")] %}
                         <label class="inline-flex items-center gap-1.5 cursor-pointer text-sm">
                             <input type="checkbox" name="roles" value="{{ role_slug }}"
-                                   class="rounded border-default text-brand-primary focus:ring-brand-primary">
+                                   class="rounded border-default text-primary focus:ring-brand-primary">
                             {{ role_name }}
                         </label>
                         {% endfor %}
@@ -243,7 +243,7 @@
                 var target = document.getElementById('roles-reference-grid');
                 if (!target) return;
                 target.innerHTML = roles.map(function (r) {
-                    return '<div class="card-brand p-4 border-l-4 border-brand-primary">'
+                    return '<div class="card-brand p-4 border-l-4 border-primary">'
                         + '<h4 class="font-semibold text-primary-theme">' + _esc(r.name) + ' <code class="text-xs text-muted-theme ml-1">' + _esc(r.slug) + '</code></h4>'
                         + '<p class="text-sm text-secondary-theme mt-1">' + _esc(r.description) + '</p>'
                         + '<p class="text-xs text-muted-theme mt-2">' + r.permission_count + ' permissions</p>'
@@ -256,7 +256,7 @@
     });
 
     function _mc(label, value, icon) {
-        return '<div class="card-brand p-4 border-l-4 border-brand-primary" role="region" aria-label="' + label + '">'
+        return '<div class="card-brand p-4 border-l-4 border-primary" role="region" aria-label="' + label + '">'
             + '<div class="flex items-center justify-between"><div>'
             + '<p class="text-sm text-muted-theme">' + label + '</p>'
             + '<p class="text-2xl font-bold text-primary-theme mt-1">' + _esc(String(value)) + '</p>'

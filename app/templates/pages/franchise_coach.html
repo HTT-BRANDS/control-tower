@@ -7,22 +7,34 @@
    by design (ADR-0012).
 
    Each card answers: objective → reality → action → expected outcome.
+
+   ── ct-uij migration (Phase A pilot) ────────────────────────────────────
+   Migrated from raw Tailwind utilities to DaisyUI v5 semantic components:
+     · ``rounded-lg border bg-base-100`` cards    →  ``card bg-base-100 border border-base-300``
+     · summary tiles                            →  ``stats / stat`` component
+     · severity badges                          →  ``badge badge-error|badge-warning|badge-success``
+     · CSV export button                        →  ``btn btn-outline btn-sm``
+     · empty state                              →  ``card`` with centred content
+     · raw gray-scale utilities                  →  ``text-base-content/60`` (semantic, theme-aware)
+
+   Visual contract preserved: data-testid hooks are unchanged so the Playwright
+   Manager-tier RBAC test (ct-buo) still passes against this template.
 #}
 
 {% block title %}Franchise Coach – HTT Control Tower{% endblock %}
 
 {% macro severity_badge(severity) %}
 {% if severity == "critical" %}
-  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800" aria-label="Severity: critical, needs attention this week">
-    <span class="w-2 h-2 rounded-full bg-red-500" aria-hidden="true"></span> Critical
+  <span class="badge badge-error gap-1" aria-label="Severity: critical, needs attention this week">
+    <span class="w-2 h-2 rounded-full bg-current opacity-80" aria-hidden="true"></span> Critical
   </span>
 {% elif severity == "attention" %}
-  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800" aria-label="Severity: attention, slipping but recoverable">
-    <span class="w-2 h-2 rounded-full bg-amber-500" aria-hidden="true"></span> Attention
+  <span class="badge badge-warning gap-1" aria-label="Severity: attention, slipping but recoverable">
+    <span class="w-2 h-2 rounded-full bg-current opacity-80" aria-hidden="true"></span> Attention
   </span>
 {% else %}
-  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800" aria-label="Severity: healthy, standards holding">
-    <span class="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span> Healthy
+  <span class="badge badge-success gap-1" aria-label="Severity: healthy, standards holding">
+    <span class="w-2 h-2 rounded-full bg-current opacity-80" aria-hidden="true"></span> Healthy
   </span>
 {% endif %}
 {% endmacro %}
@@ -32,36 +44,36 @@
 
   {# ── Header — brand-voice intro ───────────────────────────── #}
   <header class="space-y-2">
-    <h1 class="text-2xl font-bold text-brand-primary">Franchise Coach</h1>
-    <p class="text-gray-700 max-w-3xl">
+    <h1 class="text-2xl font-bold text-primary">Franchise Coach</h1>
+    <p class="text-base-content/80 max-w-3xl">
       A cross-brand view designed for the conversations you need to have this week.
       Each card surfaces the operational reality and the one action that will move
       the number — so you can coach the brand lead with the same standard, every time.
     </p>
   </header>
 
-  {# ── Summary strip ───────────────────────────────────────── #}
-  <section class="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="fc-summary-strip">
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-xs uppercase tracking-wide text-gray-500">Brands in view</div>
-      <div class="mt-1 text-3xl font-semibold text-brand-primary" data-testid="fc-brand-count">{{ view.brand_count }}</div>
+  {# ── Summary strip — DaisyUI stats component ─────────────── #}
+  <section class="stats stats-vertical md:stats-horizontal shadow w-full bg-base-100" data-testid="fc-summary-strip">
+    <div class="stat">
+      <div class="stat-title">Brands in view</div>
+      <div class="stat-value text-primary" data-testid="fc-brand-count">{{ view.brand_count }}</div>
     </div>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-xs uppercase tracking-wide text-gray-500">Healthy</div>
-      <div class="mt-1 text-3xl font-semibold text-emerald-700" data-testid="fc-healthy-count">{{ view.healthy_brands }}</div>
-      <div class="text-xs text-gray-500 mt-1">Standards holding — reinforce.</div>
+    <div class="stat">
+      <div class="stat-title">Healthy</div>
+      <div class="stat-value text-success" data-testid="fc-healthy-count">{{ view.healthy_brands }}</div>
+      <div class="stat-desc">Standards holding — reinforce.</div>
     </div>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div class="text-xs uppercase tracking-wide text-gray-500">Need attention</div>
-      <div class="mt-1 text-3xl font-semibold text-amber-700" data-testid="fc-attention-count">{{ view.brands_needing_attention }}</div>
-      <div class="text-xs text-gray-500 mt-1">Have the conversation this week.</div>
+    <div class="stat">
+      <div class="stat-title">Need attention</div>
+      <div class="stat-value text-warning" data-testid="fc-attention-count">{{ view.brands_needing_attention }}</div>
+      <div class="stat-desc">Have the conversation this week.</div>
     </div>
   </section>
 
   {# ── Export action (requires franchise_coach:export) ───────── #}
   <div class="flex justify-end">
     <a href="/franchise-coach/export.csv"
-       class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50"
+       class="btn btn-outline btn-sm"
        data-testid="fc-export-csv"
        download>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4" aria-hidden="true">
@@ -75,101 +87,105 @@
   {% if view.cards %}
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="fc-brand-cards">
     {% for card in view.cards %}
-    <article class="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden"
+    <article class="card bg-base-100 border border-base-300 shadow-sm"
              data-testid="fc-card"
              data-brand-code="{{ card.brand_short_code }}"
              data-severity="{{ card.overall_severity }}">
-      <header class="flex items-start justify-between p-4 border-b border-gray-100">
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900">{{ card.brand_name }}</h2>
-          <p class="text-sm text-gray-600 mt-1">{{ card.headline }}</p>
-        </div>
-        {{ severity_badge(card.overall_severity) }}
-      </header>
+      <div class="card-body p-0">
+        <header class="flex items-start justify-between p-4 border-b border-base-300">
+          <div>
+            <h2 class="text-lg font-semibold text-base-content">{{ card.brand_name }}</h2>
+            <p class="text-sm text-base-content/70 mt-1">{{ card.headline }}</p>
+          </div>
+          {{ severity_badge(card.overall_severity) }}
+        </header>
 
-      {# Identity pillar #}
-      {% if card.identity %}
-      <section class="p-4 border-b border-gray-100" data-testid="fc-identity-pillar">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-800">Identity</h3>
-          {{ severity_badge(card.identity.severity) }}
-        </div>
-        <div class="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <div class="text-xs text-gray-500">MFA coverage</div>
-            <div class="text-lg font-medium">{{ card.identity.mfa_coverage_percent }}%</div>
+        {# Identity pillar #}
+        {% if card.identity %}
+        <section class="p-4 border-b border-base-300" data-testid="fc-identity-pillar">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-base-content">Identity</h3>
+            {{ severity_badge(card.identity.severity) }}
           </div>
-          <div>
-            <div class="text-xs text-gray-500">Stale 30d</div>
-            <div class="text-lg font-medium">{{ card.identity.stale_accounts_30d }}</div>
-          </div>
-        </div>
-        {% if not card.identity.has_premium_p1 %}
-        <p class="mt-2 text-xs italic text-amber-700">
-          Tenant lacks Entra ID P1 — MFA reporting is blocked. The coaching message reflects this gap.
-        </p>
-        {% endif %}
-        <p class="mt-3 text-sm text-gray-700">{{ card.identity.coaching_message }}</p>
-      </section>
-      {% endif %}
-
-      {# Compliance pillar #}
-      {% if card.compliance %}
-      <section class="p-4 border-b border-gray-100" data-testid="fc-compliance-pillar">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-800">Compliance</h3>
-          {{ severity_badge(card.compliance.severity) }}
-        </div>
-        <div class="grid grid-cols-3 gap-3 text-sm">
-          <div>
-            <div class="text-xs text-gray-500">Overall %</div>
-            <div class="text-lg font-medium">{{ card.compliance.overall_compliance_percent }}%</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500">Secure score</div>
-            <div class="text-lg font-medium">
-              {% if card.compliance.secure_score is not none %}{{ card.compliance.secure_score }}{% else %}—{% endif %}
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div class="text-xs text-base-content/60">MFA coverage</div>
+              <div class="text-lg font-medium">{{ card.identity.mfa_coverage_percent }}%</div>
+            </div>
+            <div>
+              <div class="text-xs text-base-content/60">Stale 30d</div>
+              <div class="text-lg font-medium">{{ card.identity.stale_accounts_30d }}</div>
             </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500">Out of policy</div>
-            <div class="text-lg font-medium">{{ card.compliance.non_compliant_resource_count }}</div>
-          </div>
-        </div>
-        {% if card.compliance.top_failing_categories %}
-        <div class="mt-2 flex flex-wrap gap-1">
-          {% for cat in card.compliance.top_failing_categories %}
-          <span class="inline-block px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">{{ cat }}</span>
-          {% endfor %}
-        </div>
+          {% if not card.identity.has_premium_p1 %}
+          <p class="mt-2 text-xs italic text-warning">
+            Tenant lacks Entra ID P1 — MFA reporting is blocked. The coaching message reflects this gap.
+          </p>
+          {% endif %}
+          <p class="mt-3 text-sm text-base-content/80">{{ card.identity.coaching_message }}</p>
+        </section>
         {% endif %}
-        <p class="mt-3 text-sm text-gray-700">{{ card.compliance.coaching_message }}</p>
-      </section>
-      {% endif %}
 
-      {# Sync freshness footer #}
-      <footer class="p-3 bg-gray-50 text-xs text-gray-600 flex items-center justify-between" data-testid="fc-sync-footer">
-        {% if card.sync_freshness.any_stale %}
-        <span class="text-amber-700">
-          ⚠ Stale: {{ card.sync_freshness.stale_domains | join(", ") }} — coaching numbers may be out of date.
-        </span>
-        {% else %}
-        <span>All sync domains current.</span>
+        {# Compliance pillar #}
+        {% if card.compliance %}
+        <section class="p-4 border-b border-base-300" data-testid="fc-compliance-pillar">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-base-content">Compliance</h3>
+            {{ severity_badge(card.compliance.severity) }}
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <div class="text-xs text-base-content/60">Overall %</div>
+              <div class="text-lg font-medium">{{ card.compliance.overall_compliance_percent }}%</div>
+            </div>
+            <div>
+              <div class="text-xs text-base-content/60">Secure score</div>
+              <div class="text-lg font-medium">
+                {% if card.compliance.secure_score is not none %}{{ card.compliance.secure_score }}{% else %}—{% endif %}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-base-content/60">Out of policy</div>
+              <div class="text-lg font-medium">{{ card.compliance.non_compliant_resource_count }}</div>
+            </div>
+          </div>
+          {% if card.compliance.top_failing_categories %}
+          <div class="mt-2 flex flex-wrap gap-1">
+            {% for cat in card.compliance.top_failing_categories %}
+            <span class="badge badge-ghost badge-sm">{{ cat }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <p class="mt-3 text-sm text-base-content/80">{{ card.compliance.coaching_message }}</p>
+        </section>
         {% endif %}
-      </footer>
+
+        {# Sync freshness footer #}
+        <footer class="p-3 bg-base-200 text-xs text-base-content/70 flex items-center justify-between" data-testid="fc-sync-footer">
+          {% if card.sync_freshness.any_stale %}
+          <span class="text-warning">
+            ⚠ Stale: {{ card.sync_freshness.stale_domains | join(", ") }} — coaching numbers may be out of date.
+          </span>
+          {% else %}
+          <span>All sync domains current.</span>
+          {% endif %}
+        </footer>
+      </div>
     </article>
     {% endfor %}
   </section>
   {% else %}
-  <div class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600" data-testid="fc-empty-state">
-    <p class="text-lg font-medium">No brands configured yet.</p>
-    <p class="mt-2 text-sm">Once a tenant is added and syncing, its coaching card will appear here.</p>
+  <div class="card bg-base-100 border border-base-300" data-testid="fc-empty-state">
+    <div class="card-body items-center text-center text-base-content/70">
+      <p class="text-lg font-medium">No brands configured yet.</p>
+      <p class="text-sm">Once a tenant is added and syncing, its coaching card will appear here.</p>
+    </div>
   </div>
   {% endif %}
 
-  <footer class="text-xs text-gray-500 pt-4 border-t border-gray-100">
+  <footer class="text-xs text-base-content/60 pt-4 border-t border-base-300">
     Generated {{ view.generated_at.strftime("%Y-%m-%d %H:%M UTC") }} · Manager view ·
-    <a href="/docs/decisions/adr-0012-manager-role-franchise-coach.md" class="underline">About this view</a>
+    <a href="/docs/decisions/adr-0012-manager-role-franchise-coach.md" class="link link-hover">About this view</a>
   </footer>
 </div>
 {% endblock %}

@@ -44,16 +44,22 @@ BASELINE_DIR = Path(__file__).parent / "baselines"
 DIFF_DIR = Path(__file__).parent / "visual_diffs"
 TOLERANCE_PCT = float(os.getenv("VISUAL_TOLERANCE_PCT", "0.5"))
 
-# The 5 design-system-migrated pages per py7u.2 scope.
+# Design-system-migrated pages with pinned visual baselines.
 # Tuple shape: (baseline-name, url-path, wait-selector)
 # The wait-selector is an element guaranteed to exist after HTMX hydration;
 # it stabilizes the screenshot (no layout shift mid-capture).
+#
+# franchise-coach is the Manager-tier surface (ADR-0012). Admin role used
+# by ``authenticated_page`` has wildcard permissions so the capture works
+# the same way as for the read-only pages; the Manager-specific access
+# contract is enforced by ``tests/e2e/test_manager_rbac_visual.py``.
 PAGES: list[tuple[str, str, str]] = [
     ("dashboard", "/dashboard", "main"),
     ("costs", "/costs", "main"),
     ("compliance", "/compliance", "main"),
     ("resources", "/resources", "main"),
     ("identity", "/identity", "main"),
+    ("franchise-coach", "/franchise-coach", "[data-testid='franchise-coach-dashboard']"),
 ]
 
 

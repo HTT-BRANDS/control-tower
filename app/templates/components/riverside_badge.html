@@ -1,6 +1,7 @@
-{# Riverside Badge Component - HTMX fragment for nav badge #}
+{# Riverside Badge — HTMX fragment for nav badge.
+   Phase C: DaisyUI badge component; theme-aware. See ct-g93. #}
 {% if total_critical_gaps > 0 %}
-<span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-white bg-danger rounded-full min-w-[1.5rem]">
+<span class="badge badge-error badge-sm font-bold">
     {{ total_critical_gaps }}
 </span>
 {% endif %}

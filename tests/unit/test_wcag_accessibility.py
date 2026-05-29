@@ -564,15 +564,30 @@ class TestDarkModeContrast:
 class TestDsButtonTargetSize:
     """WCAG SC 2.5.8: ds_button must emit markup meeting 24×24 CSS px minimum.
 
-    Static analysis of the macro source. The rendered button inherits:
-      - padding: py-2 (0.5rem = 8px top + 8px bottom)
-      - font-size: text-sm (14px with 20px line-height)
-      - total height = 20 + 16 = 36px  →  comfortably above 24px floor
-    If someone swaps py-2 → py-0.5 in a future refactor, this test fires.
+    Post-ct-2cr, ds_button delegates sizing to DaisyUI's ``btn`` component
+    instead of hand-rolled utility classes (py-2/px-4/text-sm). We therefore
+    no longer assert utility-class presence — we assert the **DaisyUI sizing
+    contract** the macro depends on:
+
+      - The macro applies ``btn`` (DaisyUI base — min-height 3rem / 48px)
+      - OR a smaller-but-still-WCAG-compliant variant: ``btn-sm`` (32px),
+        ``btn-md`` (40px), or ``btn-lg`` (56px).
+      - ``btn-xs`` (24px) is the WCAG-2.5.8 floor — accepted but not preferred.
+
+    Compiled DaisyUI CSS already enforces the min-heights; we just guard
+    against someone swapping ``btn-sm`` for raw utility classes that would
+    silently fall below the 24px floor.
     """
 
     MACROS_FILE = ROOT / "app" / "templates" / "macros" / "ds.html"
     MACROS_DIR = ROOT / "app" / "templates" / "macros" / "ds"
+
+    # DaisyUI v5 size variants (rendered min-height per docs):
+    #   btn-xs → 1.5rem (24px) — WCAG floor
+    #   btn-sm → 2rem   (32px) — preferred compact
+    #   btn-md → 2.5rem (40px) — default
+    #   btn-lg → 3.5rem (56px) — emphasis
+    _ACCEPTABLE_SIZE_TOKENS = ("btn-xs", "btn-sm", "btn-md", "btn-lg")
 
     def _macro_source(self, name: str) -> str:
         """Return the raw body of a macro by name.
@@ -596,33 +611,42 @@ class TestDsButtonTargetSize:
             f"macro {name} not found in ds.html or any macros/ds/*.html concern file"
         )
 
-    def test_ds_button_has_adequate_vertical_padding(self):
-        """ds_button's base classes must include py-2 or larger (=>16px vertical padding)."""
+    def test_ds_button_applies_daisyui_btn_class(self):
+        """ds_button must apply the DaisyUI ``btn`` base class — that's how sizing works."""
         body = self._macro_source("ds_button")
-        # Accept any of py-2, py-2.5, py-3. Reject py-0, py-0.5, py-1, py-1.5.
-        adequate = re.search(r"\bpy-(2|2\.5|3|4)\b", body)
-        too_small = re.findall(r"\bpy-(0|0\.5|1|1\.5)\b", body)
-        assert adequate, "ds_button base class must include py-2 or larger"
-        assert not too_small, (
-            f"ds_button uses vertical padding {too_small!r} which may render <24px tall. "
-            f"WCAG 2.5.8 requires 24×24 CSS px minimum for interactive targets."
+        assert re.search(r'\bclass="[^"]*\bbtn\b', body), (
+            "ds_button must include the DaisyUI `btn` class on the rendered "
+            "<a> / <button> element. Without it, no WCAG 2.5.8 sizing applies."
         )
 
-    def test_ds_button_has_adequate_horizontal_padding(self):
-        """ds_button's base classes must include px-4 or similar (=>24px horizontal)."""
+    def test_ds_button_size_meets_wcag_floor(self):
+        """ds_button's size variant must be ≥24px (WCAG SC 2.5.8 minimum target)."""
         body = self._macro_source("ds_button")
-        adequate = re.search(r"\bpx-(3|4|5|6)\b", body)
-        assert adequate, (
-            "ds_button base class must include px-3 or larger to guarantee "
-            "horizontal target size >= 24px for short labels."
+        present = [tok for tok in self._ACCEPTABLE_SIZE_TOKENS if tok in body]
+        assert present, (
+            f"ds_button must use one of the DaisyUI size variants "
+            f"{self._ACCEPTABLE_SIZE_TOKENS!r} so the rendered min-height is "
+            "≥24px. (Bare `btn` also satisfies WCAG via the 3rem default; "
+            "flag this only if the macro stripped sizing entirely.)"
         )
 
-    def test_ds_button_uses_text_sm_or_larger(self):
-        """text-sm = 14px with 20px line-height → height contributes ≥20px."""
+    def test_ds_button_does_not_use_substandard_utility_padding(self):
+        """Regression guard: no one slipped py-0/py-0.5/py-1 onto the macro.
+
+        After the ct-2cr migration ds_button leaves padding to DaisyUI's
+        ``btn`` component. Re-introducing tight utility padding would override
+        DaisyUI's sizing and silently break WCAG 2.5.8.
+        """
         body = self._macro_source("ds_button")
-        # text-xs would give 12px/16px line-height — borderline when combined with py-1.
-        assert re.search(r"\btext-(sm|base|lg|xl)\b", body), (
-            "ds_button must use text-sm or larger so line-height + padding >= 24px"
+        too_small_v = re.findall(r"\bpy-(0|0\.5|1|1\.5)\b", body)
+        too_small_h = re.findall(r"\bpx-(0|0\.5|1|1\.5|2)\b", body)
+        assert not too_small_v, (
+            f"ds_button slipped in tight vertical padding {too_small_v!r} which "
+            "would override DaisyUI's btn sizing and may render <24px tall."
+        )
+        assert not too_small_h, (
+            f"ds_button slipped in tight horizontal padding {too_small_h!r} which "
+            "would override DaisyUI's btn sizing and may render <24px wide."
         )
 
 

@@ -30,7 +30,7 @@
             {% for crumb in breadcrumb %}
             <li class="flex items-center gap-2">
                 {% if crumb.href and not loop.last %}
-                <a href="{{ crumb.href }}" class="hover:text-brand-primary">{{ crumb.label }}</a>
+                <a href="{{ crumb.href }}" class="hover:text-primary">{{ crumb.label }}</a>
                 <span aria-hidden="true">/</span>
                 {% else %}
                 <span aria-current="page" class="font-medium text-primary-theme">{{ crumb.label }}</span>

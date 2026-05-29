@@ -1,6 +1,6 @@
 # HTT Control Tower — Current State
 
-**Snapshot:** 2026-05-28 (end-of-day, post-merge sweep)
+**Snapshot:** 2026-05-28 (late-evening, post-PR-#68 sweep)
 **Authors:** Tyler + Richard (code-puppy-5deed9)
 **Refresh with:** `python scripts/judge.py --env production && python scripts/diagnose_sync.py --env production && bd ready && gh pr list`
 
@@ -12,7 +12,7 @@
 
 | Environment | URL | Score | Status | Sole blocker |
 |-------------|-----|-------|--------|--------------|
-| **Production** | `app-governance-prod.azurewebsites.net` | **11/12 (92%)** → expecting 12/12 next sync | 🟡 → 🟢 imminent | Awaiting next sync cycle to verify DCE RBAC fix |
+| **Production** | `app-governance-prod.azurewebsites.net` | **17/18 (94%)** (judge re-run 2026-05-29 00:35 UTC) | 🟡 Still blocked | DCE freshness still stale — RBAC granted but subscription-scope propagation needs Azure portal fix (see ct-1m0 action items) |
 | **Staging** | `app-governance-staging-xnczpwyv.azurewebsites.net` | 9/11 (82%) | 🟡 Expected | No Azure creds + mock data (by design) |
 | **Dev** | n/a | n/a | ⚫ Not deployed | App Service doesn't exist |
 
@@ -20,10 +20,12 @@
 
 | Pillar | Result | P0 status |
 |--------|--------|-----------|
-| 🟢 Security | 6/6 | All green (rate limit headers, auth gating, CSP, HSTS, server header, security headers) |
+| 🟢 Security | 7/7 | All green (all auth gating, CSP, HSTS, server header, security headers, rate limits) |
 | 🟢 Design | 1/1 | All green |
-| 🟢 Infra | 1/1 | GitHub Pages live |
-| 🟡 Health | 3/4 → 4/4 imminent | DCE freshness fails P1.3 — RBAC fix shipped, awaiting next sync |
+| 🟢 Sync | 2/2 | Scheduler running, Alembic current |
+| 🟢 Infra | 3/3 | GitHub Pages live, Dockerfile non-root, Bicep drift = 0 |
+| 🟢 Process | 1/1 | bd open issues = 10 (threshold 10) |
+| 🟡 Health | 3/4 | DCE freshness fails P1.3 — RBAC fix shipped, awaiting Azure portal subscription-scope propagation + next sync |
 
 ---
 
@@ -82,28 +84,61 @@ Detailed analysis: `docs/design-system/gap-analysis-v1.md`.
 
 ---
 
-## 📋 Open bd issues (P0/P1 only)
+## 📋 Open bd issues (live as of 2026-05-28 late-evening)
 
-| ID | Pri | Status | Title | Blocks |
-|----|-----|--------|-------|--------|
-| **ct-1m0** | P0 | in_progress | DCE partial sync (resources + compliance failing) | Prod 12/12 — fix shipped, awaiting sync verify |
-| ct-4iq | P1 | in_progress | Treat zero-cost Azure tenants as fresh syncs | May be obsolete after PR #63 deploy |
-| ct-4uu | P1 | in_progress | Comprehensive E2E UAT endpoint/design-system health gate | QA coverage |
-| ct-7oe | P1 | in_progress | Resolve remaining tenant consent/RBAC gaps after sync recovery | Cross-tenant rollout (DCE now done) |
-| ct-las | P1 | in_progress | Stabilize staging tenant credential source of truth | Staging hygiene |
-| ct-t5e | P1 | in_progress | Production Riverside batch sync failures + ghost jobs | Riverside sync — PR #63 should resolve |
-| ct-y47 | P1 | in_progress | Restore production tenant credential resolution | PR #63 merged 2026-05-27 — verify and close |
-| azure-governance-platform-9lfn | P1 | open | Tyler authors SECRETS_OF_RECORD.md | DR runbook completeness |
+**Counts:** 7 in_progress (claimed P1 cluster) + 12 open (available to pick up) = **19 alive** | 0 P0 open | 1 P1 open | 3 P2 open | 7 P3 open | 1 P4 open
 
-**🔔 Action needed:** ct-4iq / ct-7oe / ct-t5e / ct-y47 all cross-linked to PR #63 (merged 2026-05-27). After today's DCE fix sync cycle, **re-verify and close any that are actually resolved.**
+### P0/P1 in_progress (claimed cluster — needs verification sweep)
 
-**Lower priority (P2/P3):** ct-lw2 (arch diagram labeling), ct-uij (DaisyUI 5.x migration), ct-buo (Playwright Manager RBAC test), ct-f9p (UAMI migration long-term), ct-a2t (script cleanup follow-up to ct-1m0), azure-governance-platform-uchp (Q3 DR test), ct-2eo (legacy JWT issuer cleanup), ct-8tg (PG pause re-check).
+| ID | Pri | Status | Title | Verification needed |
+|----|-----|--------|-------|---------------------|
+| **ct-1m0** | P0 | in_progress | DCE partial sync (resources + compliance failing) | Judge re-run 2026-05-28 23:04 still shows DCE stale — sync hasn't picked up the RBAC grant yet. **Re-run `diagnose_sync.py` after next hourly cycle, then close if green.** |
+| ct-4iq | P1 | in_progress | Treat zero-cost Azure tenants as fresh syncs | PR #63 should have addressed; verify against current `/healthz/data` payload |
+| ct-4uu | P1 | in_progress | Comprehensive E2E UAT endpoint/design-system health gate | Partially shipped via Playwright Manager test (PR #68); check remaining gaps |
+| ct-7oe | P1 | in_progress | Remaining tenant consent/RBAC gaps after sync recovery | DCE now has Reader+Security Reader; verify no other tenants missing |
+| ct-las | P1 | in_progress | Stabilize staging tenant credential source of truth | Staging hygiene — check whether KV-mode migration completed |
+| ct-t5e | P1 | in_progress | Production Riverside batch sync failures + ghost jobs | PR #63 should resolve — verify no ghost rows in `sync_logs` |
+| ct-y47 | P1 | in_progress | Restore production tenant credential resolution | PR #63 merged 2026-05-27 — should be closeable |
+
+**🔔 Action needed:** Run a **P1 verification sweep** — for each of the 6 P1s above, run the validation command and close-or-update.
+
+### P1 open (no verification — needs net-new work)
+
+| ID | Pri | Status | Title | Notes |
+|----|-----|--------|-------|-------|
+| azure-governance-platform-9lfn | P1 | open | Tyler authors SECRETS_OF_RECORD.md | **Tyler-only** (must be human-authored for legal/DR provenance) |
+
+### P2/P3/P4 — picked up by ralph loop
+
+| ID | Pri | Type | Title |
+|----|-----|------|-------|
+| azure-governance-platform-uchp | P2 | task | infra(dr): execute Q3 2026 quarterly DR test cycle |
+| ct-f9p | P2 | task | infra: long-term UAMI migration plan (App Service zero-secret) |
+| ct-lw2 | P2 | task | design-system: label arch diagram 'target' + add 'current' companion |
+| **ct-g93** | P3 | feature | design-system Phase C — custom badges → DaisyUI `badge` *(filed 2026-05-28)* |
+| **ct-2cr** | P3 | feature | design-system Phase C — custom buttons → DaisyUI `btn` *(filed 2026-05-28)* |
+| **ct-dsi** | P3 | feature | design-system Phase C — hand-rolled cards → DaisyUI `card` *(filed 2026-05-28)* |
+| **ct-kc7** | P3 | chore | design-system: remove backward-compat `@utility` shims (post-Phase-C) *(filed 2026-05-28)* |
+| ct-2eo | P3 | task | ops(rebrand): remove legacy azure-governance-platform JWT issuer after TTL |
+| ct-8tg | P3 | task | ops: re-check domain-intelligence PG pause after auto-start window |
+| ct-a2t | P3 | bug | ops: remove stale `79c22a10` app_id refs from other scripts |
+| azure-governance-platform-m4xw | P4 | task | ops: automate quarterly audit-log archive to Blob Archive tier |
+
+**Recently closed this session (2026-05-28 evening):** ct-uij (DaisyUI 5.x Phases A+B), ct-buo (Playwright Manager RBAC test) → see PR #68.
 
 ---
 
 ## 🔀 Open PRs awaiting action
 
-**🎉 Zero open PRs!** Full sweep completed end-of-day 2026-05-28:
+**1 open PR (filed this session):**
+
+| PR | Status | Title | Branch |
+|----|--------|-------|--------|
+| **#68** | 🟢 OPEN, MERGEABLE | feat(design-system + tests): DaisyUI 5.x migration (Phases A+B) + Playwright Manager RBAC test | `richard/ct-buo-manager-playwright-test` |
+
+**PR #68 covers ct-uij + ct-buo** — both bd issues closed pre-merge so they don't re-appear in `bd ready`. 55/55 + 1 XPASS. Awaiting Tyler review + merge.
+
+### Historical (closed 2026-05-28 afternoon)
 
 | PR | Resolution | Merge / close commit |
 |----|------------|----------------------|
@@ -242,3 +277,50 @@ After PR #67 merge, executed full PR triage + level-set:
 - 🟢 0 open priority-high GitHub issues
 - 🟡 Production judge still 11/12 (DCE freshness — fix shipped, awaiting sync)
 - 🟢 4/5 tenants fully healthy on all 4 domains
+
+---
+
+## 🎯 GOALS.md / judge.py alignment — which bd issues move which pillar
+
+This table maps every open bd issue to the **GOALS.md pillar it advances** so the ralph loop has a clear "what does this work BUY us" line per task. Generated 2026-05-28 late-evening.
+
+| bd issue | Pri | GOALS pillar | Current pillar score | This work moves it to | judge.py check |
+|----------|-----|--------------|---------------------|----------------------|----------------|
+| **ct-1m0** | P0 | P1 Health & Observability | 🔴 3/4 (P1.3 fails) | 🟢 4/4 → unblocks 12/12 release tag | `P1.3 /healthz/data freshness` |
+| ct-4iq | P1 | P3 Data Integrity & Sync | 🟢 (presumed) | Maintain | `P3.1 tenants have required-domain data` |
+| ct-4uu | P1 | P5 Test Coverage | 🟢 (presumed) | Strengthen | `P5.4 E2E smoke tests pass` |
+| ct-7oe | P1 | P3 Data Integrity & Sync | 🟢 (presumed) | Cleanup | `P3.1` |
+| ct-las | P1 | P7 Documentation & Operability | 🟡 | Strengthen | `P7.5 SESSION_HANDOFF.md current` (staging hygiene) |
+| ct-t5e | P1 | P1 Health & Observability | 🔴 3/4 | 🟢 4/4 (Riverside batch ghost-job cleanup) | `P1.3` indirectly |
+| ct-y47 | P1 | P3 Data Integrity & Sync | 🟢 (presumed) | Cleanup | `P3.1` |
+| azure-governance-platform-9lfn | P1 | P7 Documentation & Operability | 🟡 | 🟢 (`SECRETS_OF_RECORD.md` complete) | `P7.3 SECRETS_OF_RECORD.md complete` |
+| azure-governance-platform-uchp | P2 | P6 Infra & Deploy | 🟢 | Validate (`P6.2 auto-rollback tested`) | `P6.2` |
+| ct-f9p | P2 | P2 Security Surface | 🟢 6/6 | Future-proof (UAMI = zero-secret) | (long-term, no current judge check) |
+| ct-lw2 | P2 | P7 Documentation & Operability | 🟡 | Polish (`P7.1 STATUS.md current` accuracy) | `P7.1` |
+| **ct-g93** | P3 | P4 Design System & UX | 🟢 base + 🟡 polish | Strengthen — DaisyUI semantic badges | (no current judge check; new `P4.7` candidate?) |
+| **ct-2cr** | P3 | P4 Design System & UX | 🟢 base + 🟡 polish | Strengthen — DaisyUI semantic buttons | (no current judge check) |
+| **ct-dsi** | P3 | P4 Design System & UX | 🟢 base + 🟡 polish | Strengthen — DaisyUI semantic cards | (no current judge check) |
+| **ct-kc7** | P3 | P4 Design System & UX | (Phase-C tail) | Final cleanup — delete legacy shims | (no current judge check) |
+| ct-2eo | P3 | P2 Security Surface | 🟢 6/6 | Hygiene (remove obsolete JWT issuer) | (no current judge check) |
+| ct-8tg | P3 | P8 Cost & Sustainability | 🟢 | Hygiene (PG pause cost check) | `P8.1 monthly Azure spend ≤ $60` |
+| ct-a2t | P3 | P7 Documentation & Operability | 🟡 | Hygiene (stale app_id refs) | (no current judge check) |
+| azure-governance-platform-m4xw | P4 | P8 Cost & Sustainability | 🟢 | Automate (audit-log Blob archive tier) | `P8.1` indirectly |
+
+### Highest-leverage takeaways
+
+1. **ct-1m0 (P0) is the only thing standing between us and a 12/12 release tag.** It's already in_progress and the fix is shipped — what's missing is a sync-cycle verification. Once the next sync runs and `judge.py` reports `P1.3 ✅`, six other in_progress P1s (ct-4iq/ct-7oe/ct-t5e/ct-y47 cluster) likely get verified-and-closed in the same sweep.
+2. **azure-governance-platform-9lfn (P1)** is the only "blocker" requiring a human (Tyler) — `SECRETS_OF_RECORD.md` must be authored by him for legal/DR provenance. Ralph cannot do this.
+3. **The 4 Phase C design-system issues (ct-g93/2cr/dsi/kc7)** are clean ralph-loop fodder — each is small (1–3 templates), well-scoped, and backward-compat shims mean zero regression risk during the swap. Recommended bundle order: ct-g93 → ct-2cr → ct-dsi → ct-kc7 (each builds on the prior).
+4. **GOALS.md gap:** P4 (Design System) has only 6 criteria (P4.1–P4.6), none of which assert "uses DaisyUI semantic component classes." Consider adding `P4.7: zero hand-rolled badge HTML (use \`.badge\`)` as a new criterion after Phase C lands — this would turn the polish work into a measurable pillar advance.
+
+### Pinned models (`/pin_model` per code-puppy)
+
+Current model pin in `~/.code_puppy/agents/*.json`:
+
+| Sub-agent | Pinned model | Why |
+|-----------|--------------|-----|
+| `release-gate-arbiter` | `claude-opus-4-7` | Adversarial release gating — heavyweight reasoning |
+| `planning-agent` | (built-in default) | Lightweight orchestration |
+| others | (no pin — use session default) | Cost-efficient by default |
+
+**Recommended Phase C / verification-sweep model:** session default (Sonnet) is sufficient — each task is mechanical and well-scoped. **Bump to Opus only if a Phase C visual regression appears** that needs deeper layout reasoning.

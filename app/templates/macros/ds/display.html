@@ -22,20 +22,27 @@
          <p>Card body</p>
      {% endcall %}
 #}
+{# Phase C: now uses DaisyUI's `card` component family (card / card-body /
+   card-title) for theme-aware surface/border/shadow handling. The wrapper
+   stays a <section> so existing aria-labelledby contracts hold; the title
+   stays an <h3> so heading-level semantics don't shift. Public API
+   (title/subtitle/extra_classes + {% call %} body) is unchanged. See
+   ct-dsi. #}
 {% macro ds_card(title=None, subtitle=None, extra_classes="") %}
-<section class="bg-surface-primary rounded-xl shadow-sm border border-default
-                hover:shadow-md transition-shadow p-6 {{ extra_classes }}"
+<section class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow {{ extra_classes }}"
          {% if title %}aria-labelledby="card-{{ title|lower|replace(' ', '-') }}"{% endif %}>
-    {% if title %}
-    <header class="mb-4">
-        <h3 id="card-{{ title|lower|replace(' ', '-') }}"
-            class="text-lg font-semibold text-primary-theme">{{ title }}</h3>
-        {% if subtitle %}
-        <p class="text-sm text-secondary-theme mt-1">{{ subtitle }}</p>
+    <div class="card-body">
+        {% if title %}
+        <header class="mb-2">
+            <h3 id="card-{{ title|lower|replace(' ', '-') }}"
+                class="card-title text-lg font-semibold">{{ title }}</h3>
+            {% if subtitle %}
+            <p class="text-sm text-base-content/70 mt-1">{{ subtitle }}</p>
+            {% endif %}
+        </header>
         {% endif %}
-    </header>
-    {% endif %}
-    {{ caller() }}
+        {{ caller() }}
+    </div>
 </section>
 {% endmacro %}
 
@@ -68,7 +75,7 @@
 #}
 {% macro ds_stat_card(label, value, icon_svg="",
                       icon_bg="bg-brand-primary-5 dark:bg-brand-primary-50",
-                      icon_color="text-brand-primary dark:text-brand-secondary",
+                      icon_color="text-primary dark:text-brand-secondary",
                       trend=None, caption=None, caption_html=False,
                       footer=None, border_accent=None,
                       value_id=None, caption_id=None) %}
@@ -168,17 +175,21 @@
 
    Variants: primary | accent | success | warning | danger | info | neutral
 ─────────────────────────────────────────────────────────────────────────── #}
+{# Phase C: now uses DaisyUI's `badge` component so palette automatically
+   tracks the active brand theme (httbrands / bishops / lashlounge /
+   frenchies / deltacrown) without per-call hex overrides. Public API
+   (text, variant, extra_classes) is unchanged. See ct-g93. #}
 {% macro ds_badge(text, variant="primary", extra_classes="") %}
 {% set variants = {
-  "primary": "badge-brand",
-  "accent":  "badge-brand-accent",
-  "success": "bg-brand-success-5 text-success",
-  "warning": "bg-brand-warning-5 text-warning",
-  "danger":  "bg-brand-error-5 text-danger",
-  "info":    "bg-brand-primary-5 text-brand-primary",
-  "neutral": "bg-surface-secondary text-secondary-theme",
+  "primary": "badge-primary",
+  "accent":  "badge-accent",
+  "success": "badge-success",
+  "warning": "badge-warning",
+  "danger":  "badge-error",
+  "info":    "badge-info",
+  "neutral": "badge-neutral",
 } %}
-<span class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full {{ variants.get(variant, variants['primary']) }} {{ extra_classes }}" role="status">{{ text }}</span>
+<span class="badge badge-sm {{ variants.get(variant, variants['primary']) }} {{ extra_classes }}" role="status">{{ text }}</span>
 {% endmacro %}
 
 {# ── Data Table ────────────────────────────────────────────────────────────────

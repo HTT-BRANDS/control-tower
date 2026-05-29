@@ -14,7 +14,7 @@
    - requirements_by_status: dict of status counts
 #}
 {% from "macros/ds.html" import ds_static_table %}
-<div id="riverside-requirements-list" class="bg-white rounded-lg shadow">
+<div id="riverside-requirements-list" class="bg-base-100 rounded-lg shadow">
     {# Header with Filters #}
     <div class="p-6 border-b border-brand-gray-50">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -32,7 +32,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Categories</option>
                     <option value="IAM">Identity & Access (IAM)</option>
                     <option value="GS">Governance & Security (GS)</option>
@@ -45,7 +45,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Priorities</option>
                     <option value="P0">P0 - Critical</option>
                     <option value="P1">P1 - High</option>
@@ -58,7 +58,7 @@
                     hx-target="#riverside-requirements-list"
                     hx-swap="outerHTML"
                     hx-include="[name='category'],[name='priority'],[name='status']"
-                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-white">
+                    class="border border-brand-gray-50 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-brand-primary-100 focus-visible:border-brand-primary-100 bg-base-100">
                     <option value="">All Statuses</option>
                     <option value="completed">Completed</option>
                     <option value="in_progress">In Progress</option>
@@ -75,16 +75,17 @@
         columns=["ID", "Requirement", "Category", "Priority", "Status", "Due Date"],
         caption="Riverside requirements — filter, sort, and track compliance status"
     ) %}
+                {# DaisyUI badge variants — theme-aware. See bd ct-ofx for regression guard. #}
                 {% set status_colors = {
-                    'completed': 'bg-brand-success-10 text-brand-success-100',
-                    'in_progress': 'bg-brand-primary-10 text-brand-primary-100',
-                    'not_started': 'bg-brand-gray-10 text-brand-gray-130',
-                    'blocked': 'bg-brand-error-10 text-brand-error-100'
+                    'completed':   'badge-success badge-soft',
+                    'in_progress': 'badge-primary badge-soft',
+                    'not_started': 'badge-ghost',
+                    'blocked':     'badge-error badge-soft'
                 } %}
                 {% set priority_colors = {
-                    'P0': 'bg-brand-error-100 text-white',
-                    'P1': 'bg-brand-warning-100 text-primary-theme',
-                    'P2': 'bg-brand-primary-100 text-white'
+                    'P0': 'badge-error',
+                    'P1': 'badge-warning',
+                    'P2': 'badge-primary'
                 } %}
                 {% for req in requirements %}
                 <tr class="hover:bg-brand-gray-5 transition-colors">
@@ -99,12 +100,12 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">{{ req.category }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        {% set p_color = priority_colors.get(req.priority, 'bg-brand-gray-10 text-brand-gray-130') %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ p_color }}">{{ req.priority }}</span>
+                        {% set p_color = priority_colors.get(req.priority, 'badge-ghost') %}
+                        <span class="badge badge-sm font-semibold {{ p_color }}">{{ req.priority }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        {% set s_color = status_colors.get(req.status, 'bg-brand-gray-10 text-brand-gray-130') %}
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ s_color }}">{{ req.status|replace('_', ' ')|upper }}</span>
+                        {% set s_color = status_colors.get(req.status, 'badge-ghost') %}
+                        <span class="badge badge-sm font-semibold {{ s_color }}">{{ req.status|replace('_', ' ')|upper }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm {{ 'text-brand-error-100 font-bold' if req.is_overdue else 'text-muted-theme' }}">
                         {{ req.due_date if req.due_date else 'N/A' }}

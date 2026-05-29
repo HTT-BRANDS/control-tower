@@ -1,6 +1,8 @@
 {# Sync Status Card Component - Main dashboard status overview #}
-<div id="sync-status-card" data-testid="sync-status-card" class="bg-white rounded-lg shadow-lg p-6 border-l-4 
-    {{ 'border-brand-success-100' if status.status == 'healthy' else ('border-brand-error-100' if status.status == 'critical' else 'border-brand-warning-100') }}">
+{# Phase C: DaisyUI card. Status-accent left-border is layered on top —
+   DaisyUI has no built-in status-accent slot. See ct-dsi. #}
+<div id="sync-status-card" data-testid="sync-status-card" class="card bg-base-100 border border-base-300 shadow-lg border-l-4 {{ 'border-l-success' if status.status == 'healthy' else ('border-l-error' if status.status == 'critical' else 'border-l-warning') }}">
+    <div class="card-body p-6">
     {# Header with Status #}
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -37,10 +39,10 @@
             </div>
             <div class="flex gap-2">
                 {% if status.alerts.critical > 0 %}
-                <span class="px-2.5 py-1 text-xs font-bold bg-brand-error-100 text-white rounded-full">{{ status.alerts.critical }} Critical</span>
+                <span class="badge badge-error badge-sm font-bold">{{ status.alerts.critical }} Critical</span>
                 {% endif %}
                 {% if status.alerts.error > 0 %}
-                <span class="px-2.5 py-1 text-xs font-bold bg-brand-warning-100 text-primary-theme rounded-full">{{ status.alerts.error }} Error</span>
+                <span class="badge badge-warning badge-sm font-bold">{{ status.alerts.error }} Error</span>
                 {% endif %}
             </div>
         </div>
@@ -86,13 +88,13 @@
 
     {# Quick Actions #}
     <div class="flex flex-wrap gap-3 mb-4">
-        <button hx-post="/api/v1/sync/costs" hx-swap="none" class="inline-flex items-center px-4 py-2 bg-brand-primary-100 text-white text-sm font-medium rounded-lg hover:bg-brand-primary-110 transition-colors">
+        <button hx-post="/api/v1/sync/costs" hx-swap="none" class="btn btn-sm btn-primary gap-2">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             Sync Costs
         </button>
-        <button hx-post="/api/v1/sync/compliance" hx-swap="none" class="inline-flex items-center px-4 py-2 bg-brand-success-100 text-white text-sm font-medium rounded-lg hover:bg-brand-success-110 transition-colors">
+        <button hx-post="/api/v1/sync/compliance" hx-swap="none" class="btn btn-sm btn-success gap-2">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -122,4 +124,5 @@
         </span>
         <span>Last updated: {{ last_refresh.strftime('%Y-%m-%d %H:%M:%S UTC') if last_refresh else 'Unknown' }}</span>
     </div>
-</div>
+    </div>{# /card-body #}
+</div>{# /card #}

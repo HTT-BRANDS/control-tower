@@ -120,7 +120,7 @@
                 {{ result.name }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">
-                <span class="px-2 py-1 text-xs rounded bg-surface-secondary">{{ result.category }}</span>
+                <span class="badge badge-ghost badge-sm">{{ result.category }}</span>
             </td>
             <td class="px-6 py-4 text-sm text-primary-theme max-w-md truncate">
                 {{ result.message }}
@@ -131,7 +131,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 {% if result.recommendations and result.status == 'fail' %}
                 <button type="button"
-                        class="text-brand-primary dark:text-brand-secondary hover:underline"
+                        class="text-primary dark:text-brand-secondary hover:underline"
                         data-toggle-rec="{{ result.check_id }}">
                     View Fixes
                 </button>

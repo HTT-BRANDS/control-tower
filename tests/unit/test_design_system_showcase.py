@@ -505,7 +505,13 @@ class TestStaticTableDeclaration:
         assert "<caption" not in html
         # ds_card wrapper still renders, but header row is omitted (title=None)
         assert "<section" in html
-        assert "card-" not in html  # aria-labelledby only emitted when titled
+        # aria-labelledby only emitted when titled — guard against the slug ID
+        # appearing without a title. DaisyUI's own `card-body` class is fine
+        # (post-ct-dsi migration ds_card uses DaisyUI primitives internally).
+        assert 'id="card-' not in html, (
+            'ds_card emitted an `id="card-<slug>"` for aria-labelledby '
+            "despite title=None — header row should be entirely suppressed."
+        )
         # Caller rows flow through the tbody
         assert ">alpha<" in html and ">gamma<" in html
 

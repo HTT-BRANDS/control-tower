@@ -288,14 +288,23 @@ class TestDesignSystem:
         for cls in [".flex", ".rounded", ".shadow", ".text-white", ".bg-white"]:
             assert cls in css, f"Missing utility class: {cls}"
 
-    def test_compiled_css_has_wm_colors(self):
-        """Compiled CSS includes wm-* Riverside brand colors."""
-        css = (
-            Path("app/static/css/tailwind-output.css").read_text()
-            + Path("app/static/css/design-utilities.css").read_text()
-        )
+    def test_design_tokens_define_wm_color_family(self):
+        """Wagman-style wm-* CSS variables are still defined in design-tokens.css.
+
+        Post-ct-uij (Tailwind v4 + DaisyUI migration) we stopped emitting
+        `bg-wm-blue-*` utility classes — no template uses them any more. The
+        raw CSS variables in design-tokens.css remain as the canonical source
+        of brand-color truth (Riverside/Wagman palette). This test guards
+        against accidentally deleting that token block — it does NOT assert
+        anything about the compiled tailwind-output.css, which would force a
+        synthetic template reference solely to keep PurgeCSS happy.
+        """
+        tokens = Path("app/static/css/design-tokens.css").read_text()
         for color_prefix in ["wm-blue", "wm-gray", "wm-green", "wm-red", "wm-spark"]:
-            assert color_prefix in css, f"Missing color family: {color_prefix}"
+            assert f"--color-{color_prefix}" in tokens, (
+                f"design-tokens.css missing CSS variable family --color-{color_prefix}-* "
+                "(Riverside/Wagman brand palette removed?)"
+            )
 
     def test_compiled_css_has_brand_utilities(self):
         """Compiled CSS includes brand-specific utility classes."""
@@ -504,11 +513,24 @@ class TestTailwindBuild:
         )
 
     def test_source_css_has_tailwind_directives(self):
-        """`input.css` is a Tailwind v3 source with the three @tailwind directives."""
+        """`input.css` is a Tailwind v4 source — uses ``@import "tailwindcss"``.
+
+        Tailwind v4 (post-ct-uij migration) replaced the v3 three-directive
+        pattern (``@tailwind base/components/utilities``) with a single
+        ``@import "tailwindcss"`` plus ``@plugin "daisyui"`` for the DaisyUI
+        component layer. This test enforces the v4 contract.
+        """
         css = Path("app/static/css/input.css").read_text()
-        assert "@tailwind base" in css, "input.css missing `@tailwind base`"
-        assert "@tailwind components" in css, "input.css missing `@tailwind components`"
-        assert "@tailwind utilities" in css, "input.css missing `@tailwind utilities`"
+        assert '@import "tailwindcss"' in css, (
+            'input.css missing v4 import — expected `@import "tailwindcss"`. '
+            "If you're seeing this after a downgrade, restore the v4 syntax "
+            "(see ct-uij + ADR for migration plan)."
+        )
+        assert '@plugin "daisyui"' in css, (
+            "input.css missing DaisyUI v5 plugin directive — expected "
+            '`@plugin "daisyui"` block. Without it, no component classes '
+            "(btn, card, badge, ...) get emitted."
+        )
 
 
 # ============================================================================

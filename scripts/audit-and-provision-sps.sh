@@ -46,7 +46,8 @@ NC='\033[0m' BOLD='\033[1m' DIM='\033[2m'
 TENANT_CODES=(HTT BCC FN TLL DCE)
 TENANT_NAMES=("Head to Toe Brands" "Bishops Cuts/Color" "Frenchies Nails" "The Lash Lounge" "Delta Crown Extensions")
 TENANT_IDS=("0c0e35dc-188a-4eb3-b8ba-61752154b407" "b5380912-79ec-452d-a6ca-6d897b19b294" "98723287-044b-4bbb-9294-19857d4128a0" "3c7d2bf3-b597-4766-b5cb-2b489c2904d6" "ce62e17d-2feb-4e67-a115-8ea4af68da30")
-APP_IDS=("1e3e8417-49f1-4d08-b7be-47045d8a12e9" "4861906b-2079-4335-923f-a55cc0e44d64" "7648d04d-ccc4-43ac-bace-da1b68bf11b4" "52531a02-78fd-44ba-9ab9-b29675767955" "79c22a10-3f2d-4e6a-bddc-ee65c9a46cb0")
+# 2026-05-29: DCE corrected from stale 79c22a10 → Riverside multi-tenant app (ADR-0014)
+APP_IDS=("1e3e8417-49f1-4d08-b7be-47045d8a12e9" "4861906b-2079-4335-923f-a55cc0e44d64" "7648d04d-ccc4-43ac-bace-da1b68bf11b4" "52531a02-78fd-44ba-9ab9-b29675767955" "1e3e8417-49f1-4d08-b7be-47045d8a12e9")
 ADMIN_UPNS=("tyler.granlund-admin@httbrands.com" "tyler.granlund-Admin@bishopsbs.onmicrosoft.com" "tyler.granlund-Admin@ftgfrenchiesoutlook.onmicrosoft.com" "tyler.granlund-Admin@LashLoungeFranchise.onmicrosoft.com" "tyler.granlund-admin_httbrands.com#EXT#@deltacrown.onmicrosoft.com")
 
 # Microsoft Graph API permissions (Application / Role type)

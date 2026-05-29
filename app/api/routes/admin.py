@@ -126,6 +126,12 @@ _ROLE_DESCRIPTIONS: dict[str, tuple[str, str]] = {
         "Manages tenant config, users, compliance, and data. "
         "Cannot create tenants or access system settings.",
     ),
+    Role.MANAGER: (
+        "Manager",
+        "Franchise-leadership tier: cross-brand insight access plus exports, "
+        "but no write/manage capability. Equips franchise executives to have "
+        "data-driven conversations with brand operators. See ADR-0012.",
+    ),
     Role.ANALYST: (
         "Analyst",
         "Read and export data across accessible modules. Cannot modify configuration.",
@@ -135,6 +141,22 @@ _ROLE_DESCRIPTIONS: dict[str, tuple[str, str]] = {
         "Read-only dashboard access. No exports, no writes.",
     ),
 }
+
+# ---------------------------------------------------------------------------
+# Structural invariant: every Role enum member MUST have a description.
+# This is a fail-fast guard against the ADR-0012 regression where MANAGER
+# was added to the enum but _ROLE_DESCRIPTIONS was not updated — that
+# caused a KeyError at runtime on GET /api/v1/admin/roles (ct-2vx).
+# ---------------------------------------------------------------------------
+if set(Role) != set(_ROLE_DESCRIPTIONS):
+    _missing = sorted(set(Role) - set(_ROLE_DESCRIPTIONS))
+    _extra = sorted(set(_ROLE_DESCRIPTIONS) - set(Role))
+    raise RuntimeError(
+        f"Role enum / _ROLE_DESCRIPTIONS lockstep invariant violated. "
+        f"Missing in _ROLE_DESCRIPTIONS: {_missing}. "
+        f"Extra in _ROLE_DESCRIPTIONS (not in enum): {_extra}. "
+        f"Fix the dict to match the enum exactly (see ct-2vx)."
+    )
 
 
 def _role_to_detail(role: Role) -> RoleDetailResponse:

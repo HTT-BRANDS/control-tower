@@ -1,5 +1,5 @@
 {# Sync History Table Component #}
-<div id="sync-history-table" data-testid="sync-history-table" class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div id="sync-history-table" data-testid="sync-history-table" class="bg-base-100 rounded-lg shadow-lg overflow-hidden">
     <div class="px-6 py-4 border-b border-brand-gray-50 flex items-center justify-between">
         <div>
             <h3 class="text-lg font-bold text-primary-theme">Recent Sync Jobs</h3>
@@ -25,7 +25,7 @@
                     <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-brand-gray-130 uppercase tracking-wider">Started</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-brand-gray-50">
+            <tbody class="bg-base-100 divide-y divide-brand-gray-50">
                 {% for log in logs %}
                 <tr class="hover:bg-brand-gray-5 transition-colors {% if log.status == 'running' %}bg-brand-primary-5{% endif %}">
                     {# Job Type & Tenant #}
@@ -79,7 +79,8 @@
                     {# Errors #}
                     <td class="px-6 py-4 whitespace-nowrap text-right">
                         {% if log.errors_count and log.errors_count > 0 %}
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-error-10 text-brand-error-100">
+                        {# Phase C: DaisyUI badge — ct-g93 #}
+                        <span class="badge badge-error badge-sm badge-soft">
                             {{ log.errors_count }}
                         </span>
                         {% else %}

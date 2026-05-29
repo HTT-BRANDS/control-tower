@@ -1,14 +1,165 @@
 /**
- * Tailwind v3 input file.
- * Built to app/static/css/tailwind-output.css by scripts/build-css.sh.
+ * Tailwind v4 + DaisyUI v5 input file.
+ * Built to app/static/css/tailwind-output.css via `npm run build:css`
+ * (see package.json) which the legacy ./scripts/build-css.sh now wraps.
  *
- * This file is intentionally minimal — token definitions live in
- * design-tokens.css (loaded BEFORE this file in base.html), and custom
- * utility helpers live in design-utilities.css.
+ * Architecture:
+ *   Layer 1 — design-tokens.css       (raw CSS vars: --htt-primary, --bg-*, etc.)
+ *   Layer 2 — THIS FILE → output.css  (Tailwind utilities + DaisyUI components + brand themes)
+ *   Layer 3 — design-utilities.css    (brand-specific helpers that compose Layer 1+2)
  *
- * See: docs/decisions/adr-0005-design-system-overhaul.md
+ * Per-tenant theming switched from custom [data-brand="..."] CSS-var overrides
+ * to DaisyUI's first-class theme system: ``data-theme="..."`` on <body>. The
+ * Python ``css_generator.py`` writes the SAME data attribute it always has, so
+ * server-side rendering keeps working; we just renamed the contract from
+ * ``data-brand`` to ``data-theme`` at the template level.
+ *
+ * Refs:
+ *   - docs/decisions/adr-0005-design-system-overhaul.md (original v3 stack)
+ *   - research/design-systems-2026/recommendations.md   (v4 migration plan)
+ *   - ct-uij                                            (this migration)
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* ── Source paths ──────────────────────────────────────────────────────────
+   In v4, `@source` replaces the v3 `content:` config. Tell Tailwind where to
+   find class usages so the JIT compiler purges correctly. */
+@source "../../../app/templates/**/*.html";
+@source "../../../app/**/*.py";
+
+/* ── DaisyUI plugin + theme roster ──────────────────────────────────────────
+   ``light`` and ``dark`` are the system defaults (matches prefers-color-scheme
+   when no explicit data-theme is set). The 5 brand themes below override
+   ``--color-primary`` and friends per franchise — single source of truth. */
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark,
+    httbrands,
+    bishops,
+    lashlounge,
+    frenchies,
+    deltacrown;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Per-brand DaisyUI themes — palette canon ratified by ct-yb1.
+
+   The colour values here are deliberately the SAME hex codes already used by
+   the legacy ``--brand-primary`` CSS vars in design-tokens.css, so swapping a
+   template from ``bg-brand-primary`` → ``bg-primary`` is purely a class rename
+   with zero visual diff. (Verified by the Playwright Manager test suite.)
+   ────────────────────────────────────────────────────────────────────────── */
+
+@plugin "daisyui/theme" {
+  name: "httbrands";
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+  --color-primary: #500711;          /* burgundy */
+  --color-primary-content: #ffffff;
+  --color-secondary: #BB86FC;
+  --color-secondary-content: #111827;
+  --color-accent: #FFC957;
+  --color-accent-content: #111827;
+  --color-neutral: #374151;
+  --color-neutral-content: #F9FAFB;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #F9FAFB;
+  --color-base-300: #F3F4F6;
+  --color-base-content: #111827;
+  --color-info: #3B82F6;
+  --color-info-content: #FFFFFF;
+  --color-success: #0369A1;          /* colourblind-safe blue, not green */
+  --color-success-content: #FFFFFF;
+  --color-warning: #D97706;
+  --color-warning-content: #FFFFFF;
+  --color-error: #C2410C;            /* red-orange, not pure red */
+  --color-error-content: #FFFFFF;
+}
+
+@plugin "daisyui/theme" {
+  name: "bishops";
+  color-scheme: light;
+  --color-primary: #c2410c;          /* orange */
+  --color-primary-content: #ffffff;
+  --color-secondary: #fdba74;
+  --color-secondary-content: #431407;
+  --color-accent: #fde047;
+  --color-accent-content: #431407;
+  --color-neutral: #374151;
+  --color-neutral-content: #F9FAFB;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #FFF7ED;
+  --color-base-300: #FFEDD5;
+  --color-base-content: #1c1917;
+  --color-info: #3B82F6;
+  --color-success: #0369A1;
+  --color-warning: #D97706;
+  --color-error: #b91c1c;
+}
+
+@plugin "daisyui/theme" {
+  name: "lashlounge";
+  color-scheme: light;
+  --color-primary: #7c3aed;          /* purple */
+  --color-primary-content: #ffffff;
+  --color-secondary: #c4b5fd;
+  --color-secondary-content: #2e1065;
+  --color-accent: #f0abfc;
+  --color-accent-content: #2e1065;
+  --color-neutral: #374151;
+  --color-neutral-content: #F9FAFB;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #FAF5FF;
+  --color-base-300: #F3E8FF;
+  --color-base-content: #1e1b4b;
+  --color-info: #3B82F6;
+  --color-success: #0369A1;
+  --color-warning: #D97706;
+  --color-error: #b91c1c;
+}
+
+@plugin "daisyui/theme" {
+  name: "frenchies";
+  color-scheme: light;
+  --color-primary: #2563eb;          /* blue */
+  --color-primary-content: #ffffff;
+  --color-secondary: #93c5fd;
+  --color-secondary-content: #1e3a8a;
+  --color-accent: #fbbf24;
+  --color-accent-content: #1e3a8a;
+  --color-neutral: #374151;
+  --color-neutral-content: #F9FAFB;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #EFF6FF;
+  --color-base-300: #DBEAFE;
+  --color-base-content: #1e3a8a;
+  --color-info: #3B82F6;
+  --color-success: #0369A1;
+  --color-warning: #D97706;
+  --color-error: #b91c1c;
+}
+
+@plugin "daisyui/theme" {
+  name: "deltacrown";
+  color-scheme: light;
+  --color-primary: #004538;          /* dark green */
+  --color-primary-content: #ffffff;
+  --color-secondary: #6ee7b7;
+  --color-secondary-content: #003524;
+  --color-accent: #facc15;
+  --color-accent-content: #003524;
+  --color-neutral: #374151;
+  --color-neutral-content: #F9FAFB;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #F0FDF4;
+  --color-base-300: #DCFCE7;
+  --color-base-content: #052e16;
+  --color-info: #3B82F6;
+  --color-success: #0369A1;
+  --color-warning: #D97706;
+  --color-error: #b91c1c;
+}
+
