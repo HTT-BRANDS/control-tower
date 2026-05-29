@@ -4,10 +4,11 @@
 > Evaluated by `scripts/judge.py` — objective criteria, no hand-waving.
 > Last updated: 2026-05-28
 >
-> **Judge coverage:** 17 of 62 criteria (~27%) are evaluated automatically by
+> **Judge coverage:** 18 of 50 criteria (36%) are evaluated automatically by
 > `scripts/judge.py`. The rest are CI-only (test suite, deploy status, Azure
 > spend) or manual (UX polish, runbook drills). See `scripts/judge.py` for
-> the authoritative list. ct-fz0 tracks further expansion.
+> the authoritative check registry. `GOALS_WIGGUM_WORKBOOK.md` tracks the
+> sprint to push this to ≥ 27/50 (54%).
 
 ---
 
@@ -120,3 +121,29 @@
 Run `python scripts/judge.py` for live evaluation.
 
 **Last manual evaluation:** 2026-05-28 — see `SESSION_HANDOFF.md` for context.
+
+**2026-05-29 update (Richard, code-puppy-5deed9):**
+- Judge: **17/18 passed (94%)** — only P1.3 blocked (DCE stale)
+- GOALS.md criteria: 50 defined; judge covers 18/50 (36%)
+- See `GOALS_WIGGUM_WORKBOOK.md` for the sprint to push to ≥ 27/50 (54%)
+
+---
+
+## Issue ↔ Goal Mapping
+
+> Ported from `STATE.md` for at-a-glance traceability between `bd` issues and
+> GOALS.md criteria.
+
+| bd Issue | Priority | Goal Criterion(s) | Status | Action |
+|---|---|---|---|---|
+| ct-1m0 | P0 | P1.3, P3.1 | in_progress | Tyler: Azure portal RBAC subscription-scope fix |
+| azure-governance-platform-9lfn | P1 | P7.3 | open | Tyler: author SECRETS_OF_RECORD.md |
+| ct-lw2 | P2 | P7.1, P7.4 | open | Richard: design-system arch diagram split |
+| ct-2vx | P2 | P5.x | open | Richard: Role enum lockstep guard |
+| ct-f9p | P2 | infra long-term | open | Deferred — own workbook |
+| ct-a2t | P3 | cleanup | open | Richard: remove stale app_id refs |
+| ct-l4v | P3 | P3.1 | open | Richard: sparse riverside diagnostic |
+| ct-2eo | P3 | cleanup | open | Tyler: remove legacy JWT issuer |
+| ct-8tg | P3 | P8.1 | open | Tyler: re-check PG pause |
+| azure-governance-platform-m4xw | P4 | P8.x | open | Tyler: automate audit-log archive |
+| azure-governance-platform-uchp | P2 | P8.x | open | Tyler: Q3 DR test cycle |

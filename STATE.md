@@ -12,7 +12,7 @@
 
 | Environment | URL | Score | Status | Sole blocker |
 |-------------|-----|-------|--------|--------------|
-| **Production** | `app-governance-prod.azurewebsites.net` | **11/12 (92%)** (judge re-run 2026-05-28 23:04 UTC) | 🟡 Still blocked | DCE freshness still stale — RBAC shipped but sync hasn't refreshed DCE yet |
+| **Production** | `app-governance-prod.azurewebsites.net` | **17/18 (94%)** (judge re-run 2026-05-29 00:35 UTC) | 🟡 Still blocked | DCE freshness still stale — RBAC granted but subscription-scope propagation needs Azure portal fix (see ct-1m0 action items) |
 | **Staging** | `app-governance-staging-xnczpwyv.azurewebsites.net` | 9/11 (82%) | 🟡 Expected | No Azure creds + mock data (by design) |
 | **Dev** | n/a | n/a | ⚫ Not deployed | App Service doesn't exist |
 
@@ -20,10 +20,12 @@
 
 | Pillar | Result | P0 status |
 |--------|--------|-----------|
-| 🟢 Security | 6/6 | All green (rate limit headers, auth gating, CSP, HSTS, server header, security headers) |
+| 🟢 Security | 7/7 | All green (all auth gating, CSP, HSTS, server header, security headers, rate limits) |
 | 🟢 Design | 1/1 | All green |
-| 🟢 Infra | 1/1 | GitHub Pages live |
-| 🟡 Health | 3/4 → 4/4 imminent | DCE freshness fails P1.3 — RBAC fix shipped, awaiting next sync |
+| 🟢 Sync | 2/2 | Scheduler running, Alembic current |
+| 🟢 Infra | 3/3 | GitHub Pages live, Dockerfile non-root, Bicep drift = 0 |
+| 🟢 Process | 1/1 | bd open issues = 10 (threshold 10) |
+| 🟡 Health | 3/4 | DCE freshness fails P1.3 — RBAC fix shipped, awaiting Azure portal subscription-scope propagation + next sync |
 
 ---
 
