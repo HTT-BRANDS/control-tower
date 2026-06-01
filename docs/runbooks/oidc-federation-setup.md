@@ -1,11 +1,35 @@
-# OIDC Workload Identity Federation — Cross-Tenant Setup
+# OIDC Workload Identity Federation — Cross-Tenant Setup (Phase A)
+
+## ⚠️ Status: Phase A (per-tenant app registrations)
+
+This runbook documents the **Phase A** OIDC pattern — one app registration per
+foreign tenant, each with its own federated identity credential trusting the
+App Service's system-assigned managed identity. It is **not** the long-term
+destination.
+
+**Migration path → UAMI + multi-tenant app (zero-secret):**
+
+| Phase | Pattern | Secrets in KV | Runbook |
+|-------|---------|---------------|---------|
+| **A** *(this doc)* | 5 per-tenant apps + 5 FICs on the system MI | 5 (fallback path) | this file |
+| **B** | 1 multi-tenant app + 1 client secret + admin-consent per foreign tenant | 1 | [`phase-b-multi-tenant-app.md`](./phase-b-multi-tenant-app.md) |
+| **C** | 1 multi-tenant app + UAMI + FIC (UAMI as subject) — `ClientAssertionCredential` | **0** | [`phase-c-zero-secrets.md`](./phase-c-zero-secrets.md) |
+
+If you are starting a fresh deploy, **go directly to Phase C** — there is no
+benefit to re-walking Phases A or B. This Phase A doc is retained because the
+current (2026-Q2) production runtime is on Phase A + Key Vault secret fallback
+(`USE_OIDC_FEDERATION=false`, see [`enable-secret-fallback.md`](./enable-secret-fallback.md)).
+
+The UAMI cutover is tracked in **bd `ct-f9p`**. Research lives in
+[`research/aadsts700236-cross-tenant-federation/recommendations.md`](../../research/aadsts700236-cross-tenant-federation/recommendations.md)
+and summarized in ADR-0011 (cross-tenant auth pattern).
 
 ## Overview
 
 The Azure Governance Platform uses OIDC Workload Identity Federation (no secrets)
 to authenticate from the production App Service into each Riverside tenant's
-Azure AD. This requires configuring **federated identity credentials** on each
-tenant's app registration.
+Azure AD. In Phase A, this requires configuring **federated identity credentials**
+on each tenant's app registration.
 
 ## Current Error
 
@@ -126,3 +150,11 @@ Graph API permissions not granted or admin consent not given. Run Step 3 above.
 ### Circuit Breaker Tripping
 After fixing, restart the App Service to reset the circuit breaker state.
 The breaker opens after 5 failures and stays open for 60 seconds.
+
+## Related Runbooks
+
+- [`phase-b-multi-tenant-app.md`](./phase-b-multi-tenant-app.md) — collapse 5 apps → 1 multi-tenant app (still uses one client secret)
+- [`phase-c-zero-secrets.md`](./phase-c-zero-secrets.md) — **destination state**: UAMI + FIC + `ClientAssertionCredential`, zero secrets in KV
+- [`enable-secret-fallback.md`](./enable-secret-fallback.md) — current prod runtime path (`USE_OIDC_FEDERATION=false`)
+- [`migrate-to-oidc-federation.md`](./migrate-to-oidc-federation.md) — operator playbook for the original A→federated cutover
+- bd `ct-f9p` — long-term UAMI migration tracking issue
