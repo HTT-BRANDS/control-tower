@@ -59,7 +59,7 @@ def _make_token(
     """Helper to create a minimal JWT for testing."""
     payload: dict = {
         "sub": "user-1",
-        "iss": "azure-governance-platform",
+        "iss": "control-tower",  # ct-2eo: legacy 'azure-governance-platform' removed
         "aud": "azure-governance-api",
         "type": "access",
         "iat": datetime.now(UTC),
@@ -265,7 +265,7 @@ class TestModuleLevelFunctions:
         """blacklist_token() uses 24h default when token has no exp claim."""
         payload = {
             "sub": "user-no-exp",
-            "iss": "azure-governance-platform",
+            "iss": "control-tower",  # ct-2eo: legacy 'azure-governance-platform' removed
             "aud": "azure-governance-api",
             "type": "access",
         }

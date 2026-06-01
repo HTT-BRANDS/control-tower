@@ -13,13 +13,18 @@ from fastapi import HTTPException
 
 from app.core.auth import (
     INTERNAL_JWT_ISSUER,
-    LEGACY_INTERNAL_JWT_ISSUER,
     AzureADTokenValidator,
     JWTTokenManager,
     TokenData,
     User,
     require_roles,
 )
+
+# Legacy issuer string, retained as a fixture-only constant for the rejection
+# test below. Importing LEGACY_INTERNAL_JWT_ISSUER from app.core.auth was the
+# old contract; ct-2eo removed that symbol along with the dual-issuer
+# acceptance window.
+LEGACY_JWT_ISSUER = "azure-governance-platform"
 
 
 @pytest.fixture
@@ -340,15 +345,21 @@ class TestJWTTokenManager:
         assert payload["type"] == "access"
 
     @patch("app.core.auth.get_settings")
-    def test_decode_token_accepts_legacy_internal_issuer(self, mock_get_settings, mock_settings):
-        """Rotation keeps old azure-governance-platform tokens valid."""
+    def test_decode_token_rejects_legacy_internal_issuer(self, mock_get_settings, mock_settings):
+        """ct-2eo: legacy 'azure-governance-platform' tokens are now rejected.
+
+        Phase 2 of the rebrand (d8284bc, 2026-05-18) started emitting
+        control-tower tokens; max refresh TTL (7d) has elapsed. ct-2eo
+        removed the dual-issuer acceptance window — anything still
+        carrying the legacy issuer should now 401.
+        """
         mock_get_settings.return_value = mock_settings
         manager = JWTTokenManager()
         payload = {
             "sub": "legacy-user",
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
-            "iss": LEGACY_INTERNAL_JWT_ISSUER,
+            "iss": LEGACY_JWT_ISSUER,
             "aud": "azure-governance-api",
             "type": "access",
         }
@@ -358,10 +369,12 @@ class TestJWTTokenManager:
             algorithm=mock_settings.jwt_algorithm,
         )
 
-        decoded = manager.decode_token(token)
-
-        assert decoded["sub"] == "legacy-user"
-        assert decoded["iss"] == LEGACY_INTERNAL_JWT_ISSUER
+        with pytest.raises(HTTPException) as exc_info:
+            manager.decode_token(token)
+        assert exc_info.value.status_code == 401
+        assert "Invalid issuer" in str(exc_info.value.detail) or "Invalid token" in str(
+            exc_info.value.detail
+        )
 
     @patch("app.core.auth.get_settings")
     def test_decode_token_accepts_control_tower_internal_issuer(
@@ -458,7 +471,7 @@ class TestJWTTokenManager:
             "sub": "user-808",
             "exp": datetime.now(UTC) + timedelta(hours=1),
             "iat": datetime.now(UTC),
-            "iss": LEGACY_INTERNAL_JWT_ISSUER,
+            "iss": INTERNAL_JWT_ISSUER,
             "aud": "wrong-audience",  # Wrong audience
             "type": "access",
         }
