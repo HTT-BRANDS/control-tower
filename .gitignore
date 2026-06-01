@@ -92,6 +92,8 @@ config/tenants.yaml
 config/personas.yaml
 !config/personas.yaml.example
 APRIL-3rd-Log*
+# Code-Puppy session transcripts (large local logs, not for repo)
+CONTROL-TOWER-LOG-*.txt
 
 # Raw pricing query dumps - large JSON files from Azure Retail Prices API research.
 # We commit the summary markdown files (analysis.md, recommendations.md, sources.md)
