@@ -60,9 +60,10 @@ function scoreColor(score) {
 }
 
 function scoreBadge(score) {
-    if (score >= 90) return 'bg-brand-success-5 text-success';
-    if (score >= 70) return 'bg-brand-warning-5 text-warning';
-    return 'bg-brand-error-5 text-danger';
+    // Returns DaisyUI badge variant classes; wrapper adds `badge badge-sm`.
+    if (score >= 90) return 'badge-success badge-soft';
+    if (score >= 70) return 'badge-warning badge-soft';
+    return 'badge-error badge-soft';
 }
 
 async function loadAllData() {
@@ -88,7 +89,7 @@ async function loadAllData() {
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${s.tenant_name || s.tenant_id}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${scoreBadge(s.overall_compliance_percent ?? 0)}">
+                    <span class="badge badge-sm font-semibold ${scoreBadge(s.overall_compliance_percent ?? 0)}">
                         ${(s.overall_compliance_percent ?? 0).toFixed(1)}%
                     </span>
                 </td>
@@ -107,7 +108,7 @@ async function loadAllData() {
                 <td class="px-6 py-4 text-sm text-primary-theme">${r.policy_name || r.policy_definition_id || '--'}</td>
                 <td class="px-6 py-4 text-sm text-secondary-theme max-w-xs truncate">${r.resource_id || '--'}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-brand-error-5 text-danger">
+                    <span class="badge badge-error badge-soft badge-sm font-semibold">
                         ${r.compliance_state || 'NonCompliant'}
                     </span>
                 </td>

@@ -325,12 +325,10 @@ def check_no_handrolled_badges() -> tuple[bool, str]:
                 continue  # bigger pills aren't badges
             if not re.search(r"\bpx-\d", classes):
                 continue  # need explicit padding to qualify
-            # Skip JS template literals — separately tracked (follow-up bd issue).
-            # Look at the line + 2 lines on each side to catch multi-line `${...}`
-            # interpolations split across the span tag.
-            window = "\n".join(lines[max(0, n - 3) : n + 2])
-            if "${" in window:
-                continue
+            # Note: ct-9pv (2026-06) removed the previous `${` escape hatch.
+            # JS template-literal badges are now expected to use DaisyUI too
+            # (badge / badge-{variant} / badge-sm) — see
+            # app/templates/pages/{costs,compliance,riverside_dashboard,dmarc_dashboard}.html.
             rel = path.relative_to(REPO_ROOT)
             bad.append(f"{rel}:{n}")
     if bad:
