@@ -398,17 +398,17 @@
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.mfa_coverage >= 90 ? 'bg-brand-success-5 text-success' : t.mfa_coverage >= 50 ? 'bg-brand-warning-5 text-warning' : 'bg-brand-error-5 text-danger'}">${t.mfa_coverage.toFixed(1)}%</span>
+                    <span class="badge badge-sm font-semibold ${t.mfa_coverage >= 90 ? 'badge-success badge-soft' : t.mfa_coverage >= 50 ? 'badge-warning badge-soft' : 'badge-error badge-soft'}">${t.mfa_coverage.toFixed(1)}%</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.admin_mfa_pct >= 90 ? 'bg-brand-success-5 text-success' : 'bg-brand-error-5 text-danger'}">${t.admin_mfa_pct.toFixed(1)}%</span>
+                    <span class="badge badge-sm font-semibold ${t.admin_mfa_pct >= 90 ? 'badge-success badge-soft' : 'badge-error badge-soft'}">${t.admin_mfa_pct.toFixed(1)}%</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.device_compliance >= 90 ? 'bg-brand-success-5 text-success' : t.device_compliance >= 70 ? 'bg-brand-warning-5 text-warning' : 'bg-brand-error-5 text-danger'}">${t.device_compliance.toFixed(1)}%</span>
+                    <span class="badge badge-sm font-semibold ${t.device_compliance >= 90 ? 'badge-success badge-soft' : t.device_compliance >= 70 ? 'badge-warning badge-soft' : 'badge-error badge-soft'}">${t.device_compliance.toFixed(1)}%</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${t.requirements_completed}/${t.requirements_total}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.critical_gaps === 0 ? 'bg-brand-success-5 text-success' : 'bg-brand-error-5 text-danger'}">${t.critical_gaps}</span>
+                    <span class="badge badge-sm font-semibold ${t.critical_gaps === 0 ? 'badge-success badge-soft' : 'badge-error badge-soft'}">${t.critical_gaps}</span>
                 </td>
             </tr>
         `).join('');
@@ -451,12 +451,12 @@
                 <td class="px-6 py-4 text-sm text-muted-theme">${gap.title}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${gap.category}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${gap.priority === 'P0' ? 'bg-brand-error-5 text-danger' : 'bg-brand-warning-5 text-warning'}">${gap.priority}</span>
+                    <span class="badge badge-sm font-semibold ${gap.priority === 'P0' ? 'badge-error badge-soft' : 'badge-warning badge-soft'}">${gap.priority}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${gap.status}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm ${gap.is_overdue ? 'text-danger font-bold' : 'text-muted-theme'}">${gap.due_date || 'N/A'}${gap.is_overdue ? ' (Overdue)' : ''}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${gap.risk_level === 'Critical' ? 'bg-brand-error-5 text-danger' : 'bg-brand-warning-5 text-warning'}">${gap.risk_level}</span>
+                    <span class="badge badge-sm font-semibold ${gap.risk_level === 'Critical' ? 'badge-error badge-soft' : 'badge-warning badge-soft'}">${gap.risk_level}</span>
                 </td>
             </tr>
         `).join('');

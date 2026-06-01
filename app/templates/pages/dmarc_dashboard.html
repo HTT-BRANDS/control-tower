@@ -133,21 +133,22 @@
 
     // Compliance tier: used for DMARC policy + DKIM rollups in the tenant table.
     // protect (reject / aligned) > partial (quarantine / enabled-only) > none.
+    // Values are DaisyUI badge variant classes; wrapper supplies `badge badge-sm`.
     const COMPLIANCE_STYLES = {
-        protect: 'bg-brand-success-5 text-success',
-        partial: 'bg-brand-warning-5 text-warning',
-        none:    'bg-brand-error-5 text-danger',
+        protect: 'badge-success badge-soft',
+        partial: 'badge-warning badge-soft',
+        none:    'badge-error badge-soft',
     };
 
-    // Alert severity → badge classes. 'low' uses the brand-primary tint to
+    // Alert severity → DaisyUI badge variant classes. 'low' uses badge-info to
     // match ds_badge(variant="info") without pulling a full macro into JS.
     const SEVERITY_STYLES = {
-        critical: 'bg-brand-error-5 text-danger',
-        high:     'bg-brand-warning-5 text-warning',
-        medium:   'bg-brand-warning-5 text-warning',
-        low:      'bg-brand-primary-5 text-primary',
+        critical: 'badge-error badge-soft',
+        high:     'badge-warning badge-soft',
+        medium:   'badge-warning badge-soft',
+        low:      'badge-info badge-soft',
     };
-    const SEVERITY_FALLBACK = 'bg-surface-tertiary text-primary-theme';
+    const SEVERITY_FALLBACK = 'badge-ghost';
 
     // Per-row descriptors for the DMARC/DKIM breakdown progress bars.
     // Driving render loops off a data array kills 3× duplicated <div>
@@ -321,10 +322,10 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${policyBadge}">${policyText}</span>
+                        <span class="badge badge-sm font-semibold ${policyBadge}">${policyText}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${dkimBadge}">${dkimText}</span>
+                        <span class="badge badge-sm font-semibold ${dkimBadge}">${dkimText}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${dmarcCount}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">Just now</td>
@@ -381,7 +382,7 @@
         table.innerHTML = alerts.slice(0, 10).map(alert => `
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${SEVERITY_STYLES[alert.severity] || SEVERITY_FALLBACK}">${alert.severity}</span>
+                    <span class="badge badge-sm font-semibold ${SEVERITY_STYLES[alert.severity] || SEVERITY_FALLBACK}">${alert.severity}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-theme">${alert.alert_type.replace(/_/g, ' ')}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${alert.domain || 'N/A'}</td>
@@ -410,7 +411,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-danger font-bold">${f.failed}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${f.total}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${rateBadge}">${f.failure_rate.toFixed(2)}%</span>
+                        <span class="badge badge-sm font-semibold ${rateBadge}">${f.failure_rate.toFixed(2)}%</span>
                     </td>
                 </tr>
             `;

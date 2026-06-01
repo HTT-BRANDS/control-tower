@@ -191,16 +191,40 @@ class TestFailureDetailFormat:
         ok, _ = mod.check_no_handrolled_badges()
         assert ok is True
 
-    def test_handrolled_badge_js_template_literal_skipped(self, tmp_path, monkeypatch):
+    def test_handrolled_badge_js_template_literal_now_flagged(self, tmp_path, monkeypatch):
+        """After ct-9pv (2026-06) the JS template-literal escape hatch is gone.
+
+        Previously the check skipped any window containing `${`. We now require
+        DaisyUI badges inside JS template literals too, so the same offending
+        markup must trip the check.
+        """
         from scripts import judge_repo_checks as mod
 
         templates = tmp_path / "app" / "templates"
         templates.mkdir(parents=True)
-        # JS template literal context — tracked separately (ct-ofx follow-up)
         (templates / "js.html").write_text(
             "<script>\n"
             "const html = `\n"
             '<span class="px-2 py-1 text-xs rounded bg-red-500 text-white">${name}</span>\n'
+            "`;\n"
+            "</script>\n"
+        )
+        monkeypatch.setattr(mod, "REPO_ROOT", tmp_path)
+        ok, detail = mod.check_no_handrolled_badges()
+        assert ok is False
+        assert "hand-rolled" in detail
+
+    def test_handrolled_badge_js_template_literal_with_daisyui_passes(self, tmp_path, monkeypatch):
+        """DaisyUI badge inside a JS template literal is fine — the rule
+        targets the pill anti-pattern, not the interpolation syntax."""
+        from scripts import judge_repo_checks as mod
+
+        templates = tmp_path / "app" / "templates"
+        templates.mkdir(parents=True)
+        (templates / "js.html").write_text(
+            "<script>\n"
+            "const html = `\n"
+            '<span class="badge badge-error badge-sm">${name}</span>\n'
             "`;\n"
             "</script>\n"
         )
