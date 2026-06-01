@@ -24,14 +24,14 @@ from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-LEGACY_INTERNAL_JWT_ISSUER = "azure-governance-platform"
 INTERNAL_JWT_ISSUER = "control-tower"
-ACCEPTED_INTERNAL_JWT_ISSUERS = frozenset(
-    {
-        LEGACY_INTERNAL_JWT_ISSUER,
-        INTERNAL_JWT_ISSUER,
-    }
-)
+# Note: ct-2eo (2026-06) removed the dual-issuer acceptance window that
+# allowed legacy "azure-governance-platform" tokens during the rebrand
+# rotation. Phase 2 (commit d8284bc, 2026-05-18) emitted control-tower
+# tokens; max token TTL (refresh = 7d) has well-expired, so any legacy
+# tokens still in the wild are already invalid by exp anyway. Removing
+# the legacy issuer + dropping the frozenset (single accepted value now).
+ACCEPTED_INTERNAL_JWT_ISSUERS = frozenset({INTERNAL_JWT_ISSUER})
 
 
 # OAuth2 scheme for token endpoint
