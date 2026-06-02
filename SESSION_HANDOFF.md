@@ -1,5 +1,30 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 🐶 2026-06-02 continuation — shared-app-id test fix + dependabot bump (`code-puppy-1725d8`)
+
+Picked the two cleanest autonomous wins off `bd ready` (the rest of the queue needs Tyler: Azure ops, DR execution, doc authoring, scope decisions).
+
+### What landed
+
+| PR | bd | Scope |
+|----|----|-------|
+| #79 (fe30a54) | ct-b0n | Fixed `test_no_duplicate_app_ids` so it allows the documented HTT/DCE shared app registration. `app_id` uniqueness now enforced EXCEPT for tenant-code sets in `SHARED_APP_REGISTRATION_GROUPS` (currently `{HTT, DCE}`, ct-1m0 Entra-only carve-out). Detection logic in one `_unexpected_duplicate_app_ids()` helper (DRY), shared by 3 tests including a **regression guard** (`test_undocumented_duplicate_is_flagged`) so the check can't be silently neutered. 115 tests green against BOTH the real (shared) and example (CI) configs. |
+| #78 (ecc1b80) | (dependabot) | minor-patch group bump: python-multipart 0.0.29→0.0.30, aiosmtplib 5.1.0→5.1.1, locust 2.44.0→2.44.1, grpcio 1.80.0→1.81.0, msal 1.36.0→1.37.0. All 13 CI checks green. Touches `requirements*.txt` only. |
+
+### bd state delta
+
+- ✅ Closed **ct-b0n** (PR #79)
+
+### Gotcha logged (kennel)
+
+Merging #78 first moved `main`, which flipped #79 to `BEHIND` (branch protection requires up-to-date). The admin-merge raced with `2 of 2 required status checks are expected`. Fix: rebase the trailing PR onto the new `main`, force-push, wait for CI to re-run, then merge. My pre-delete `state == MERGED` guard (from yesterday's #76 lesson) again prevented stranding the branch.
+
+### Where to start next
+
+Same Tyler-gated queue as yesterday: ct-mmq (threat_data scope decision — one-liner once greenlit), ct-l4v (device_compliance Graph permission grant in Azure portal), ct-mql (domainiq-db-prod auto-restart loop), the P1 SECRETS_OF_RECORD.md authoring, and the P2 DR test cycle. No code-only wins left in `bd ready` without a Tyler decision first.
+
+---
+
 ## 🐶 2026-06-01 continuation — DaisyUI JS-badge migration + legacy-JWT-issuer removal (`code-puppy-1725d8`)
 
 Ready-queue head was **ct-9pv** (P3, design-system follow-up to ct-ofx) and **ct-2eo** (P3, auth rebrand TTL expiry). Both landed.
