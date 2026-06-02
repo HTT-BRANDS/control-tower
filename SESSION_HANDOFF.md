@@ -1,5 +1,31 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 2026-06-02 continuation F — ct-f9p Step A executed (live Azure) (`code-puppy-1725d8`)
+
+Executed **ct-f9p.1 (Step A)** end-to-end on live Azure — the additive UAMI infrastructure. All inert: `USE_UAMI_AUTH` stays unset, app still on Phase A, **zero auth behaviour changed.**
+
+### Provisioned (real IDs in `docs/runbooks/ct-f9p-uami-execution-plan.md`)
+
+| Env | UAMI | clientId | principalId |
+|---|---|---|---|
+| prod | `uami-prod-governance-graph` | `0e973c27-…` | `ae057dfb-…` |
+| staging | `uami-stg-governance-graph` | `29dce39a-…` | `49de1d5c-…` |
+
+- Both assigned to their App Service (now `SystemAssigned, UserAssigned`).
+- Two **UAMI FICs** on app reg `1e3e8417-` (issuer = HTT-CORE tenant, subject = UAMI principalId, audience `api://AzureADTokenExchange`) — matches the proven groups-hub format exactly.
+- Staging UAMI granted `Key Vault Secrets User` on `kv-gov-staging-xnczpwyv` (RBAC). Prod KV access deferred to Step B (prod vault is access-policy mode; grant least-privilege once staging testing reveals what's needed). **ct-f9p.1 CLOSED.**
+
+### Step B (ct-f9p.2) blockers found — needs you
+
+Started prepping the staging cutover and hit real prerequisites (noted on ct-f9p.2):
+1. **Staging is already stale on Phase A** (any_stale=true, last sync ~2026-05-19) — so "staging fresh" can't validate a cutover until staging's own sync is understood.
+2. **On-demand sync is auth-gated + partial** (`POST /api/v1/riverside/sync` only).
+3. **Open consent question** — the 5 secrets are per-tenant; switching to the single multi-tenant app via UAMI needs `1e3e8417-` admin-consented in BCC/FN/TLL/DCE (unverifiable from HTT-CORE).
+
+Step B should be paired (auth to trigger sync + watch `/healthz/data`) after (a) staging-staleness and (b) foreign-tenant consent are confirmed. Step C (prod) stays Tyler-owned.
+
+---
+
 ## 2026-06-02 continuation E — ct-f9p UAMI migration scoped (live Azure) (`code-puppy-1725d8`)
 
 With the remaining queue all Azure-admin/portal-gated, I took the safest high-value work: a current-state-aware execution plan for the ct-f9p UAMI migration (no prod changes — read-only discovery + planning).
