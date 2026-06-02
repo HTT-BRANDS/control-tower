@@ -57,13 +57,33 @@ async def sync_tenant_devices(
         try:
             graph_client = _resolve_package_attr("_get_graph_client")(tenant_id)
 
-            # Get managed devices from Intune via Graph API
-            devices_data = await graph_client._request(
-                "GET",
-                "/deviceManagement/managedDevices",
-                params={"$top": 999},
-            )
-            device_list = devices_data.get("value", [])
+            # Get managed devices from Intune via Graph API.
+            #
+            # ct-l4v: the DeviceManagementManagedDevices.Read.All scope IS granted
+            # and admin-consented (verified live 2026-06-02), so a 403 here does
+            # NOT mean a missing permission — it means the tenant has no Intune
+            # subscription. Treat that as "zero managed devices" and record a
+            # snapshot, rather than rolling back: a rollback leaves the row NULL,
+            # which false-positives the /healthz/data freshness check forever.
+            # This self-heals — if Intune is ever licensed, real devices flow
+            # through the normal path with no code change.
+            try:
+                devices_data = await graph_client._request(
+                    "GET",
+                    "/deviceManagement/managedDevices",
+                    params={"$top": 999},
+                )
+                device_list = devices_data.get("value", [])
+            except HttpResponseError as device_err:
+                if device_err.status_code == 403:
+                    logger.warning(
+                        f"Intune device management unavailable for tenant {tenant_id} "
+                        f"(Graph 403 — no Intune subscription; the scope IS granted). "
+                        f"Recording a zero-device snapshot so freshness stays green."
+                    )
+                    device_list = []
+                else:
+                    raise
             total_devices = len(device_list)
 
             # Calculate compliance metrics
