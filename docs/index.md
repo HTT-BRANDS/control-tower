@@ -22,27 +22,17 @@ unrelated to AWS Control Tower._
 - **Continuity status** — [operations/continuity-status.html](operations/continuity-status.html)
 - **Live single-glance status** — [STATUS.md on GitHub](https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md) · [TEST_PLAYBOOK.md](https://github.com/HTT-BRANDS/control-tower/blob/main/TEST_PLAYBOOK.md)
 
-## Live release-gate state (verified 2026-05-28, end of session)
+## Live release-gate state
 
-> 🟡 → 🟢 **Production at 92%, expected to hit 100% next sync cycle.** Today's session shipped
-> the live DCE RBAC fix (root-cause: stale `app_id` in `config/tenants.yaml`). 4/5 tenants
-> already healthy on all four domains; DCE resources + compliance will populate within the
-> next sync window.
+> **Single source of truth: [`STATE.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md)** — its
+> "Recent" block is refreshed after every major session. This page no longer
+> duplicates a point-in-time snapshot (that's what kept drifting out of date).
 
-| Surface | Status |
-|---|---|
-| Production image | `ghcr.io/htt-brands/control-tower` (PR #63 deployed 2026-05-27, OIDC federation live) |
-| Production `/health` | ✅ 200 — `healthy / 2.5.0 / production` |
-| Production judge score | **11/12 (92%)** — only P1.3 DCE freshness gating full pass; fix shipped, awaiting sync verify |
-| Production data freshness | ✅ HTT / BCC / FN / TLL fresh on all 4 domains. ⏳ DCE: costs+identity ✅, resources+compliance pending next sync |
-| Staging `/health` | ✅ 200 — `healthy / 2.5.0 / staging` |
-| Auto-rollback | ✅ field-tested 2026-05-27 (USE_OIDC_FEDERATION=false rollback in 172s) |
-| Bus-factor | 2 (Tyler + Dustin Boyd) |
-| Bicep drift reconciliation (`xzt4`) | ✅ **CLOSED 2026-05-28** — all 12 child tasks done. Staging hardened; production apply intentionally deferred. |
-| DCE RBAC fix (`ct-1m0`) | ✅ **shipped 2026-05-28** — Reader + Security Reader granted at root scope; awaiting sync verification |
-| Manager role (`ct-2nk`) | ✅ **CLOSED 2026-05-28** — end-to-end (RBAC + service layer + dashboard + template) per ADR-0012 |
-| Palette canon (`ct-yb1`) | ✅ **CLOSED 2026-05-28** — burgundy/deep red is canonical |
-| Open P0 / P1 | `ct-1m0` (P0, verify after sync), `9lfn` (P1, SECRETS_OF_RECORD inventory), several P1 sync follow-ups pending sync-cycle verification |
+**As of 2026-06-02 (live-verified):** Production `/health` -> `healthy / 2.5.0 / production`;
+`/healthz/data` `any_stale=true`. Core-domain coverage: HTT / BCC / FN / TLL all 4/4,
+**DCE 2/4** (resources + compliance still absent — the standing freshness gap).
+No open P0/P1 incidents (ct-y47, ct-38g, ct-1m0 all closed). See STATE.md +
+[`STATUS.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md) for detail.
 
 ## What's on this page
 
