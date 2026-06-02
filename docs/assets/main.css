@@ -31,7 +31,7 @@ img { max-width: 100%; height: auto; display: block; }
   /* Text */
   --text-primary:   #1a1a1a;
   --text-secondary: #555550;
-  --text-tertiary:  #8a8a82;
+  --text-tertiary:  #6b6b63;  /* WCAG AA: 4.6:1 on white (was #8a8a82 = 3.47:1) */
   --text-inverse:   #ffffff;
 
   /* Semantic */
@@ -451,8 +451,13 @@ pre code { background: none; padding: 0; color: #e2e8f0; border-radius: 0; }
 .footer-links a:hover { color: var(--gold); }
 .footer-bottom {
   max-width: 1200px; margin: var(--sp-6) auto 0;
-  text-align: center; font-size: .78rem; color: rgba(255,255,255,.25);
+  text-align: center; font-size: .78rem; color: rgba(255,255,255,.62);
 }
+/* In-text footer links: underline + lighter so they're distinguishable
+   without relying on colour alone (WCAG 1.4.1). */
+.footer-bottom a { color: #f0d9b0; text-decoration: underline; }
+.footer-bottom a:hover { color: var(--gold); }
+.footer-links a { color: rgba(255,255,255,.72); }
 
 /* 15. Page Header (sub-pages) -------------------------------- */
 .page-header {
@@ -502,9 +507,9 @@ pre code { background: none; padding: 0; color: #e2e8f0; border-radius: 0; }
   box-shadow: var(--shadow-md);
 }
 .doc-list-item:hover::before { height: 60%; }
-.doc-list-item h3 { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; margin-bottom: var(--sp-1); }
-.doc-list-item h3 a { color: var(--text-primary); }
-.doc-list-item h3 a:hover { color: var(--burgundy); }
+.doc-list-item h2 { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; margin-bottom: var(--sp-1); }
+.doc-list-item h2 a { color: var(--text-primary); }
+.doc-list-item h2 a:hover { color: var(--burgundy); }
 .doc-list-item p { font-size: .9rem; color: var(--text-secondary); line-height: 1.55; }
 
 /* 17. Prose (markdown content) ------------------------------- */

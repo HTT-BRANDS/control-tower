@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Operations — Azure Governance Platform</title>
+  <title>Operations — HTT Control Tower</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,14 @@
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
 
-  <nav class="nav" role="navigation" aria-label="Main">
+  <header>
+  <nav class="nav" aria-label="Main">
     <div class="nav-inner">
       <a href="../" class="nav-logo" aria-label="Home">HT</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
       </button>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         <a href="../architecture/">Architecture</a>
         <a href="../operations/" class="active">Operations</a>
         <a href="../api/">API</a>
@@ -29,6 +30,7 @@
       </div>
     </div>
   </nav>
+  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -42,19 +44,19 @@
     <section class="section">
       <div class="doc-list">
         <div class="doc-list-item">
-          <h3><a href="runbook">Operations Runbook</a></h3>
+          <h2><a href="runbook">Operations Runbook</a></h3>
           <p>Daily health checks, deployment procedures, troubleshooting guides, and SLAs.</p>
         </div>
         <div class="doc-list-item">
-          <h3><a href="playbook">Operations Playbook</a></h3>
+          <h2><a href="playbook">Operations Playbook</a></h3>
           <p>Detailed operational procedures, alert response, incident management, and escalation paths.</p>
         </div>
         <div class="doc-list-item">
-          <h3><a href="cost-analysis">Cost Analysis</a></h3>
+          <h2><a href="cost-analysis">Cost Analysis</a></h3>
           <p>Current cost structure, optimization achievements, scaling projections, and ROI analysis.</p>
         </div>
         <div class="doc-list-item">
-          <h3><a href="continuity-status.html">Continuity Status</a></h3>
+          <h2><a href="continuity-status.html">Continuity Status</a></h3>
           <p>Current DR, backup, bus-factor, and release-readiness state, including Tyler-owned gates and blocked BACPAC validation.</p>
         </div>
       </div>

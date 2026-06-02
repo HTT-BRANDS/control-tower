@@ -38,7 +38,7 @@ No open P0/P1 incidents (ct-y47, ct-38g, ct-1m0 all closed). See STATE.md +
 
 - [Control Tower status](status.md) — current CI/backup/rebrand/continuity notes plus audit output when available.
 - [Continuity status](operations/continuity-status.html) — DR, backup, bus-factor, and blocked validation state.
-- [Riverside timeline](riverside-timeline.md) — countdown to **July 8, 2026** and per-domain maturity.
+- [Riverside timeline](riverside-timeline.html) — countdown to **July 8, 2026** and per-domain maturity.
 - Architecture diagram — embedded below (regenerated from Azure Resource Graph on every push).
 
 ## Architecture
