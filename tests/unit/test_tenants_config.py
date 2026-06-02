@@ -5,6 +5,7 @@ UUIDs, email addresses, Key Vault secret names, and correct lookup behavior.
 """
 
 import uuid
+from dataclasses import replace
 
 import pytest
 
@@ -22,6 +23,42 @@ from app.core.tenants_config import (
 )
 
 EXPECTED_CODES: list[str] = ["HTT", "BCC", "FN", "TLL", "DCE"]
+
+# Documented groups of tenant codes that legitimately SHARE one Azure AD app
+# registration. Each frozenset is a set of tenant codes whose per-tenant
+# ``app_id`` values are expected to be identical by design.
+#
+# - {HTT, DCE}: DCE (Delta Crown Extensions) is an Entra-only carve-out that
+#   rides on HTT's app registration — it has no app reg of its own. See ct-1m0
+#   and docs/operations/oidc-federation-setup.md.
+#
+# CI runs against config/tenants.yaml.example, where every tenant has a unique
+# placeholder app_id, so this allowlist is exercised only when a real
+# config/tenants.yaml (gitignored) reflects the shared production reality.
+# ct-b0n: this stops the false-positive 'Duplicate app IDs detected' failure
+# every local dev used to hit, WITHOUT silencing genuine accidental dupes.
+SHARED_APP_REGISTRATION_GROUPS: list[frozenset[str]] = [
+    frozenset({"HTT", "DCE"}),
+]
+
+
+def _unexpected_duplicate_app_ids(
+    tenants: dict[str, TenantConfig],
+) -> dict[str, set[str]]:
+    """Return app_id -> tenant-code-set for dupes NOT in an allowed group.
+
+    Shared by the positive (real-config) and negative (regression) tests so
+    there's exactly one copy of the detection rule. An empty result means
+    every shared app_id is a documented SHARED_APP_REGISTRATION_GROUPS entry.
+    """
+    codes_by_app_id: dict[str, set[str]] = {}
+    for code, cfg in tenants.items():
+        codes_by_app_id.setdefault(cfg.app_id, set()).add(code)
+    return {
+        app_id: codes
+        for app_id, codes in codes_by_app_id.items()
+        if len(codes) > 1 and frozenset(codes) not in SHARED_APP_REGISTRATION_GROUPS
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -129,8 +166,45 @@ class TestNoDuplicateIDs:
         assert len(ids) == len(set(ids)), "Duplicate tenant IDs detected"
 
     def test_no_duplicate_app_ids(self) -> None:
-        ids = [cfg.app_id for cfg in RIVERSIDE_TENANTS.values()]
-        assert len(ids) == len(set(ids)), "Duplicate app IDs detected"
+        """app_id values are unique EXCEPT for documented shared-app groups.
+
+        Tenants may legitimately share one Azure AD app registration (e.g.
+        the HTT/DCE Entra-only carve-out, ct-1m0). Any app_id shared by a
+        set of tenant codes NOT listed in SHARED_APP_REGISTRATION_GROUPS is
+        treated as an accidental duplicate and fails the test.
+        """
+        unexpected_dupes = _unexpected_duplicate_app_ids(RIVERSIDE_TENANTS)
+        assert not unexpected_dupes, (
+            "Duplicate app IDs detected outside documented shared-app groups: "
+            f"{unexpected_dupes}. If this sharing is intentional, add the tenant-code "
+            "set to SHARED_APP_REGISTRATION_GROUPS with a doc reference."
+        )
+
+    def test_documented_shared_group_is_allowed(self) -> None:
+        """A duplicate matching an allowed group is NOT flagged (HTT/DCE)."""
+        htt = next(iter(RIVERSIDE_TENANTS.values()))
+        shared_id = "shared-app-reg-0001"
+        tenants = {
+            "HTT": replace(htt, code="HTT", app_id=shared_id),
+            "DCE": replace(htt, code="DCE", app_id=shared_id),
+        }
+        assert _unexpected_duplicate_app_ids(tenants) == {}
+
+    def test_undocumented_duplicate_is_flagged(self) -> None:
+        """An accidental dupe outside the allowlist IS flagged (regression guard).
+
+        Prevents a future 'fix' that simply silences the check — BCC and FN
+        do not share an app registration, so a collision between them must
+        always surface.
+        """
+        htt = next(iter(RIVERSIDE_TENANTS.values()))
+        collision_id = "oops-same-app-reg"
+        tenants = {
+            "BCC": replace(htt, code="BCC", app_id=collision_id),
+            "FN": replace(htt, code="FN", app_id=collision_id),
+        }
+        flagged = _unexpected_duplicate_app_ids(tenants)
+        assert flagged == {collision_id: {"BCC", "FN"}}
 
     def test_tenant_ids_and_app_ids_do_not_overlap(self) -> None:
         """A tenant_id should never equal any app_id."""
