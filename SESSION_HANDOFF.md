@@ -1,5 +1,33 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 2026-06-02 continuation B — decision-gated queue cleared (`code-puppy-1725d8`)
+
+Asked Tyler the three decisions blocking the remaining `bd ready` queue, then executed all three in the same session.
+
+### Decisions taken + what shipped
+
+| PR | bd | Decision | Result |
+|----|----|----------|--------|
+| #81 | ct-mmq | Remove from health check now | Dropped `riverside_threat_data` from `/healthz/data` freshness + guarded the scheduler threat check behind `THREAT_PRODUCER_IMPLEMENTED=False`. Clears the false-positive that was release-blocking judge P1.3. Model/schemas/API/scheduler retained for revival. bd ct-mmq CLOSED. |
+| #82 | ct-mql | Option A — delete the resources | Shipped `infra/domain-intelligence/` (Bicep re-creation stash + params + decommission README/checklist). Bicep compiles clean. Destructive deletes are Tyler-side — ct-mql stays in_progress with the runbook attached. |
+| #82 | 9lfn | Yes, scaffold it | File already existed; enriched it (section 3a: every secret-bearing + identity env var from `config.py`, no values). Tyler-only rows remain -> stays in_progress. |
+
+### bd state delta
+
+- CLOSED **ct-mmq** (PR #81)
+- ct-mql: in_progress, Option-A artifact attached. Tyler next: run the `infra/domain-intelligence/README.md` checklist (`az group export` -> inventory incl. the ~$35/mo Cosmos in that RG -> final PG backup -> `az group delete`), then `bd close ct-mql`.
+- 9lfn (P1): in_progress, section 3a added. Tyler next: fill storage/rotation/secondary-reader cells (Azure subs x5, AWS, Pax8, M365, GitHub PAT, + the 3a TODOs).
+
+### New infra/ convention
+
+`infra/domain-intelligence/` is the first thing under `infra/` — Bicep + params + README runbook. If more IaC lands, mirror this layout.
+
+### Where to start next
+
+`bd ready` is now genuinely Tyler-gated end to end: ct-l4v (device_compliance Graph permission grant, Azure portal), ct-f9p (P2 UAMI/Phase-C migration — big), the P2 DR test cycle, plus the two in_progress cards above awaiting your Azure/inventory actions. No code-only wins remain without a Tyler action first.
+
+---
+
 ## 🐶 2026-06-02 continuation — shared-app-id test fix + dependabot bump (`code-puppy-1725d8`)
 
 Picked the two cleanest autonomous wins off `bd ready` (the rest of the queue needs Tyler: Azure ops, DR execution, doc authoring, scope decisions).
