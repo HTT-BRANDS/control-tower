@@ -90,6 +90,43 @@ A credential class is complete when every row has:
 
 ---
 
+## 3a. Application secret-bearing environment variables (code-evidenced)
+
+Enumerated by ct-mmq/ct-b0n session (Richard, `code-puppy-1725d8`, 2026-06-02)
+directly from `app/core/config.py`. These are the env vars the running app
+actually reads — every one is a row Tyler should be able to point at a vault.
+**Names and code locations only; no values.** "Storage location" is left as
+`TODO (Tyler)` where the codebase can't prove where the value lives.
+
+### Secret-bearing (hold a real credential — must live in a vault)
+
+| Env var | Purpose | Code evidence | Consumed by | Storage location | Last rotated | Next due |
+|---|---|---|---|---|---|---|
+| `JWT_SECRET_KEY` | Signs internal control-tower JWTs | `config.py` `jwt_secret_key` + explicit `os.getenv` prod guard | `app/core/auth.py` | TODO (Tyler) — prod requires explicit set | 2026-05-18 (`ct-dp9.3`) | TODO (Tyler) |
+| `AZURE_AD_CLIENT_SECRET` | Entra SSO app client secret | `config.py` `azure_ad_client_secret` (`AZURE_AD_CLIENT_SECRET`) | Azure AD login flow | TODO (Tyler) | 2026-05-18 (`ct-dp9.1`) | TODO (Tyler) |
+| `AZURE_MULTI_TENANT_CLIENT_SECRET` | Phase B shared multi-tenant app secret | `config.py` `azure_multi_tenant_client_secret` | Cross-tenant Graph auth (Phase B) | TODO (Tyler) — should be `@Microsoft.KeyVault(...)` ref | TODO (Tyler) | TODO (Tyler) |
+| `APPLICATIONINSIGHTS_CONNECTION_STRING` | App Insights telemetry (embeds InstrumentationKey) | `config.py` `os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")` | Telemetry/monitoring | TODO (Tyler) | TODO (Tyler) | TODO (Tyler) |
+| `REDIS_URL` | Redis connection (may embed password) | `config.py` `redis_url` (`REDIS_URL`) | Token blacklist / cache backend | TODO (Tyler) — may be unset (in-memory fallback) | TODO (Tyler) | TODO (Tyler) |
+
+### Identity / recovery-critical (not secret values, but needed to recover access)
+
+| Env var | Purpose | Code evidence | Storage / source |
+|---|---|---|---|
+| `KEY_VAULT_URL` | The vault that backs the secrets above | `config.py` `key_vault_url` | TODO (Tyler) — e.g. `kv-gov-prod` URL |
+| `AZURE_AD_CLIENT_ID` / `AZURE_AD_TENANT_ID` | Entra SSO app identity | `config.py` `azure_ad_client_id` / `azure_ad_tenant_id` | App registration (non-secret) |
+| `AZURE_MULTI_TENANT_APP_ID` | Phase B multi-tenant app id | `config.py` `azure_multi_tenant_app_id` | App registration (non-secret) |
+| `AZURE_MANAGED_IDENTITY_CLIENT_ID` | UAMI client id (system vs user-assigned) | `config.py` `azure_managed_identity_client_id` | Managed identity resource |
+| `UAMI_CLIENT_ID` / `UAMI_PRINCIPAL_ID` | Phase C zero-secret UAMI | `config.py` `uami_client_id` / `uami_principal_id` | Managed identity resource |
+| `MANAGED_IDENTITY_OBJECT_ID` | UAMI object id for RBAC | `config.py` `managed_identity_object_id` | Managed identity resource |
+| `FEDERATED_IDENTITY_CREDENTIAL_ID` | FIC linking UAMI to the app (default `github-actions-federation`) | `config.py` `federated_identity_credential_id` | App registration FIC |
+
+> Phase A/B/C context: per-tenant secrets (Phase A) -> single multi-tenant
+> secret (Phase B, `USE_MULTI_TENANT_APP`) -> zero-secret UAMI+FIC (Phase C,
+> `USE_UAMI_AUTH`). The long-term goal (bd `ct-f9p`) is Phase C, which retires
+> the secret-bearing rows above entirely. Until then they're live.
+
+---
+
 ## 4. Microsoft 365 / Entra / Teams
 
 | Credential or role | Purpose | Storage location / admin path | Primary owner | Secondary reader/operator | Last reviewed | Next due | Recovery notes |
