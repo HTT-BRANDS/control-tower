@@ -403,7 +403,6 @@ async def data_freshness_check(
         RiversideCompliance,
         RiversideDeviceCompliance,
         RiversideMFA,
-        RiversideThreatData,
     )
     from app.models.tenant import Tenant
 
@@ -420,6 +419,13 @@ async def data_freshness_check(
     # RiversideRequirement is intentionally OMITTED — it's a config catalog
     # (requirements + status), not a periodic sync target, so freshness on it
     # would generate false-positive staleness alerts.
+    #
+    # ct-mmq (2026-06): RiversideThreatData is also OMITTED. The model +
+    # threat_intel API + scheduler check all exist, but NO producer writes
+    # the table yet (no Defender/Security-Graph sync). With an empty table
+    # the freshness check reported it perpetually stale, false-positive
+    # RELEASE-BLOCKING judge P1.3 across every tenant. Re-add this entry the
+    # moment a producer lands in app/services/riverside_sync/.
     domains: list[tuple[str, Any, str]] = [
         ("resources", Resource, "synced_at"),
         ("costs", CostSnapshot, "synced_at"),
@@ -430,7 +436,6 @@ async def data_freshness_check(
         ("riverside_mfa", RiversideMFA, "created_at"),
         ("riverside_compliance", RiversideCompliance, "updated_at"),
         ("riverside_device_compliance", RiversideDeviceCompliance, "snapshot_date"),
-        ("riverside_threat_data", RiversideThreatData, "snapshot_date"),
     ]
     base_required_domains = {"resources", "costs", "compliance", "identity"}
     optional_domains = {name for name, _, _ in domains} - base_required_domains

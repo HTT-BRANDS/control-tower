@@ -895,8 +895,31 @@ class TestRunScheduledJobs:
     @pytest.mark.asyncio
     @patch("app.core.riverside_scheduler.check_threat_escalations")
     @patch("app.core.riverside_scheduler.send_threat_escalation_alerts")
-    async def test_run_threat_check_success(self, mock_send, mock_check):
-        """Test successful threat escalation check run."""
+    async def test_run_threat_check_dormant_by_default(self, mock_send, mock_check):
+        """ct-mmq: with no producer, the check short-circuits without querying.
+
+        THREAT_PRODUCER_IMPLEMENTED is False by default, so the job must
+        return a benign skipped result and never touch the DB or notifier.
+        """
+        result = await run_threat_escalation_check()
+
+        assert result["success"] is True
+        assert result["skipped"] == "no_producer"
+        assert result["escalations_found"] == 0
+        assert result["notifications_sent"] == 0
+        mock_check.assert_not_called()
+        mock_send.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("app.core.riverside_scheduler.THREAT_PRODUCER_IMPLEMENTED", True)
+    @patch("app.core.riverside_scheduler.check_threat_escalations")
+    @patch("app.core.riverside_scheduler.send_threat_escalation_alerts")
+    async def test_run_threat_check_success_when_producer_enabled(self, mock_send, mock_check):
+        """When a producer exists (flag flipped), escalations are processed.
+
+        Guards the revival path so the dormant short-circuit can't silently
+        swallow real threats once THREAT_PRODUCER_IMPLEMENTED is True.
+        """
         mock_check.return_value = [
             ThreatEscalation(
                 tenant_id="tenant-1",
