@@ -49,6 +49,39 @@ greenfield design.
 | 5 | Client secrets removed from `kv-gov-prod` (or deprecated) | TODO (step 8, last) |
 | 6 | Runbook reflects UAMI pattern | DONE (PR #72) |
 
+## Provisioned in Step A (ct-f9p.1, 2026-06-02 — additive, no cutover)
+
+These are the real IDs Step B/C need for the App Service settings. All created
+live by Richard (`code-puppy-1725d8`); `USE_UAMI_AUTH` remains unset, so the app
+is still on Phase A and nothing's auth behaviour changed.
+
+| Env | UAMI | clientId (`UAMI_CLIENT_ID`) | principalId (`UAMI_PRINCIPAL_ID`) |
+|---|---|---|---|
+| prod | `uami-prod-governance-graph` (rg-governance-production) | `0e973c27-2bf0-4bdf-9ef8-48bca6af5bdc` | `ae057dfb-d9e7-42e7-98bd-58c484295360` |
+| staging | `uami-stg-governance-graph` (rg-governance-staging) | `29dce39a-766f-481a-a7c6-e69f4b7fe35a` | `49de1d5c-5a9b-42c7-8e64-e41ed6c69f53` |
+
+- Both UAMIs **assigned** to their App Service (`app-governance-prod` /
+  `app-governance-staging-xnczpwyv`) — each now `SystemAssigned, UserAssigned`.
+- **UAMI FICs created** on app reg `1e3e8417-` (object id
+  `48bfe2ec-d5ef-4353-a751-5b0bef015a42`): names `uami-prod-governance-graph` /
+  `uami-stg-governance-graph`, issuer
+  `https://login.microsoftonline.com/0c0e35dc-188a-4eb3-b8ba-61752154b407/v2.0`,
+  subject = each UAMI principalId, audience `api://AzureADTokenExchange`. Matches
+  the proven groups-hub FIC format exactly.
+- **KV access:** staging UAMI granted `Key Vault Secrets User` on
+  `kv-gov-staging-xnczpwyv` (RBAC mode — effective). **Prod KV access is
+  deliberately deferred to Step B**: `kv-gov-prod` is access-policy mode
+  (`enableRbacAuthorization=false`), so it needs `az keyvault set-policy`, not an
+  RBAC role — and we grant the *minimum* the app actually needs once staging
+  testing reveals it (least privilege; the app may need zero KV access on the
+  UAMI path).
+
+> **Rollback for Step A** (if ever needed): the whole step is additive and
+> inert. To fully undo: `az ad app federated-credential delete` the two FICs,
+> `az webapp identity remove` the UAMIs from the apps, `az identity delete` the
+> two UAMIs, and remove the staging role assignment. Nothing depends on them
+> until Step B flips `USE_UAMI_AUTH`.
+
 ## Execution sequence
 
 > **Staging first, always.** Prove the whole chain in staging before touching
