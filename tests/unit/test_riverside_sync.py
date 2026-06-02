@@ -344,6 +344,69 @@ class TestSyncTenantDevices:
             assert result["total_devices"] == 0
             assert result["compliance_pct"] == 0.0
 
+    @pytest.mark.asyncio
+    async def test_sync_tenant_devices_403_records_zero_snapshot(self, mock_tenant):
+        """ct-l4v: a 403 (no Intune subscription) records a zero snapshot.
+
+        The DeviceManagementManagedDevices.Read.All scope is granted+consented,
+        so a 403 means the tenant has no Intune. We must write a zero-device
+        snapshot (not roll back) so /healthz/data freshness never goes NULL.
+        """
+        mock_session = MagicMock()
+        mock_query = MagicMock()
+        mock_session.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.first.side_effect = [mock_tenant, None]  # tenant, no existing
+
+        err = HttpResponseError(message="Application is not authorized (no Intune)")
+        err.status_code = 403
+
+        with patch("app.services.riverside_sync._get_graph_client") as mock_get_graph:
+            mock_graph = MagicMock()
+            mock_get_graph.return_value = mock_graph
+            mock_graph._request = AsyncMock(side_effect=err)
+
+            result = await sync_tenant_devices("test-tenant-id", mock_session)
+
+            # Degraded gracefully: a zero snapshot is persisted, NOT rolled back.
+            assert result["status"] == "success"
+            assert result["total_devices"] == 0
+            assert result["compliance_pct"] == 0.0
+            mock_session.add.assert_called_once()
+            mock_session.commit.assert_called_once()
+            mock_session.rollback.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sync_tenant_devices_non_403_still_raises(self, mock_tenant):
+        """A non-403 Graph error still rolls back + raises (unchanged behavior).
+
+        Guards the ct-l4v degradation so it can't swallow genuine failures
+        (throttling, 5xx, auth) — only the no-Intune 403 is tolerated.
+        """
+        mock_session = MagicMock()
+        mock_query = MagicMock()
+        mock_session.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        # The 503 throws before the existing-record lookup, so every retry
+        # attempt only needs the tenant; return_value survives all attempts.
+        mock_query.first.return_value = mock_tenant
+
+        err = HttpResponseError(message="Service unavailable")
+        err.status_code = 503
+
+        with (
+            patch("app.services.riverside_sync._get_graph_client") as mock_get_graph,
+            patch("app.core.retry.asyncio.sleep", new=AsyncMock()),  # no real backoff wait
+        ):
+            mock_graph = MagicMock()
+            mock_get_graph.return_value = mock_graph
+            mock_graph._request = AsyncMock(side_effect=err)
+
+            with pytest.raises(SyncError):
+                await sync_tenant_devices("test-tenant-id", mock_session)
+            mock_session.rollback.assert_called()
+            mock_session.add.assert_not_called()
+
 
 class TestSyncRequirementStatus:
     """Test suite for sync_requirement_status function."""
