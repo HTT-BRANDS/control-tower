@@ -118,6 +118,12 @@
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin></script>
   <script>
     window.onload = function () {
+      // a11y: vendored Swagger UI ships its server <select> without an
+      // accessible name (axe select-name). Label any unlabeled control.
+      function labelSwaggerControls() {
+        document.querySelectorAll('#swagger select:not([aria-label]):not([aria-labelledby])')
+          .forEach(function (s) { s.setAttribute('aria-label', 'Select server'); });
+      }
       window.ui = SwaggerUIBundle({
         url: './openapi.json',                          // bundled, same-origin, no CORS pain
         dom_id: '#swagger',
@@ -130,6 +136,7 @@
         tryItOutEnabled: true,
         // Most endpoints require auth — surface that clearly
         persistAuthorization: true,
+        onComplete: function () { labelSwaggerControls(); setTimeout(labelSwaggerControls, 600); },
       });
     };
 
