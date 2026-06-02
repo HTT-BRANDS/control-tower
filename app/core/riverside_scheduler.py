@@ -365,9 +365,33 @@ async def run_maturity_regression_check() -> dict[str, Any]:
         }
 
 
+# ct-mmq (2026-06): riverside_threat_data has NO producer yet — no sync writes
+# the table. Until a Defender/Security-Graph producer lands in
+# app/services/riverside_sync/, threat alerting is dormant: querying an empty
+# table can only ever yield zero escalations, and keeping the job 'live' just
+# burns a DB round-trip every daily cycle while implying a capability we don't
+# have. Flip this to True (or delete the guard) the moment a producer exists;
+# check_threat_escalations / send_threat_escalation_alerts / the model / the
+# threat_intel API are all retained and ready to light back up.
+THREAT_PRODUCER_IMPLEMENTED = False
+
+
 async def run_threat_escalation_check() -> dict[str, Any]:
     """Run threat escalation check and send alerts."""
     logger.info("Starting scheduled threat escalation check")
+
+    if not THREAT_PRODUCER_IMPLEMENTED:
+        logger.info(
+            "Threat escalation check skipped: no riverside_threat_data producer "
+            "implemented yet (ct-mmq). Re-enable by setting "
+            "THREAT_PRODUCER_IMPLEMENTED=True once a producer lands."
+        )
+        return {
+            "success": True,
+            "skipped": "no_producer",
+            "escalations_found": 0,
+            "notifications_sent": 0,
+        }
 
     try:
         escalations = await check_threat_escalations()
