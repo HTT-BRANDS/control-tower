@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-06-02 session (Richard `code-puppy-1725d8`) — ops cleanup + UAMI Step A
+
+- **ops(ct-mql):** decommissioned the idle `domain-intelligence` Azure resource group (16 resources) after archiving its 11 Key Vault secrets to `kv-gov-prod` (`domainiq-archived-*`); ~$65/mo saved, the recurring 7-day PG auto-restart loop eliminated. Original vault soft-deleted + purge-protected (recoverable to 2026-08-31). Removed the now-dead `scripts/check-domain-intelligence-traffic.sh`.
+- **fix(ct-l4v):** corrected the device-compliance diagnosis (the Graph permission was present + consented; the tenants simply lack Intune -> 403). The device sync now graceful-degrades a 403 to a zero-row snapshot instead of rolling back, ending the perpetual-NULL false-positive. Self-heals if Intune is ever licensed.
+- **fix(ct-mmq):** removed `riverside_threat_data` from `/healthz/data` freshness (no producer exists) and guarded the dormant scheduler threat job behind `THREAT_PRODUCER_IMPLEMENTED`.
+- **test(ct-b0n):** `test_no_duplicate_app_ids` now allows the documented HTT/DCE shared app registration (was failing on every local dev machine).
+- **infra(ct-f9p Step A):** provisioned the UAMI zero-secret migration infrastructure live — two User-Assigned Managed Identities, App Service assignments, Federated Identity Credentials on the multi-tenant app reg, and a staging Key Vault role. Purely additive; `USE_UAMI_AUTH` remains unset (app still on Phase A). Execution plan + Tyler-owned cutover sub-issues filed.
+- **deps:** dependabot minor-patch group (python-multipart, aiosmtplib, locust, grpcio, msal).
+- Net effect: the two judge-P1.3 freshness false-positives (threat_data, device_compliance) are addressed in code; DCE 2/4 remains the standing real freshness gap (ct-1m0 territory, untouched).
+
 _Pre-release state on `main` toward v2.5.1; no release tag yet. As of 2026-05-28 late-evening: production still **11/12 (92%)** — DCE RBAC was granted live in the afternoon but the next sync cycle hasn't yet refreshed DCE resources/compliance, so judge re-run at 23:04 UTC still shows the same P1.3 stale tenant blocker. See [`STATE.md`](./STATE.md) for the canonical current-state snapshot._
 
 ### Design system DaisyUI 5.x migration + Playwright Manager test (May 28, 2026 — evening session)

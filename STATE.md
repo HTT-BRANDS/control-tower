@@ -1,10 +1,31 @@
 # HTT Control Tower — Current State
 
-**Snapshot:** 2026-05-28 (late-evening, post-PR-#68 sweep)
-**Authors:** Tyler + Richard (code-puppy-5deed9)
+**Snapshot:** 2026-06-02 (Richard `code-puppy-1725d8` session)
+**Authors:** Tyler + Richard
 **Refresh with:** `python scripts/judge.py --env production && python scripts/diagnose_sync.py --env production && bd ready && gh pr list`
 
 > This file is the **single canonical "where are we right now" view**. Update it after major sessions. Do not let it drift.
+
+---
+
+## Recent — 2026-06-02 session (live-verified)
+
+**Prod `/health`:** `healthy / 2.5.0 / production`. **`/healthz/data`:** `any_stale=true`.
+Core-domain coverage (live): HTT 4/4, BCC 4/4, FN 4/4, TLL 4/4, **DCE 2/4** (resources + compliance still absent — pre-existing ct-1m0 territory, not touched this session).
+
+**Shipped this session (PRs #73-#88, all merged):**
+- **ct-mql** — deleted the idle `domain-intelligence` Azure RG (16 resources) after archiving its 11 KV secrets to `kv-gov-prod` (`domainiq-archived-*`); ~$65/mo saved, the 7-day auto-restart loop is gone. KV soft-deleted (recoverable to 2026-08-31).
+- **ct-l4v** — corrected diagnosis (Graph permission was fine; tenants lack Intune -> 403 -> NULL). Shipped graceful-degrade: device sync writes a zero-row instead of crashing. Closed (threat_data half done by ct-mmq).
+- **ct-mmq** — removed `riverside_threat_data` from `/healthz/data` freshness (no producer). Closed.
+- **ct-b0n** — `test_no_duplicate_app_ids` now allows the documented HTT/DCE shared app reg. Closed.
+- **ct-f9p Step A (ct-f9p.1)** — provisioned UAMI infra live (2 UAMIs + App Service assignments + FICs on app reg `1e3e8417-` + staging KV role). **Additive only — `USE_UAMI_AUTH` unset, app still Phase A.** Closed.
+- dependabot minor-patch group (#78).
+
+**Net:** the two judge-P1.3 false-positives (threat_data, device_compliance) are addressed in code; freshness for device_compliance catches up on the next prod sync cycle.
+
+**Open (all need Tyler / pairing):** ct-18z (revoke Cloudflare + Cloudways creds at source), ct-f9p.2/.3 (staging+prod UAMI cutover — blocked on confirming staging-staleness + foreign-tenant consent), uchp (Q3 DR test).
+
+> Note: the production judge score below was **not** re-run this session — verify with the refresh command above. DCE 2/4 is the standing freshness gap.
 
 ---
 

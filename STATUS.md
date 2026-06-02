@@ -1,17 +1,18 @@
 # HTT Control Tower — Live Status
 
 > **Read this first.** This is the single-glance "where are we right now" answer.
-> Refreshed **2026-05-28 (end of session)** by Richard (`code-puppy-5deed9`) after
-> the DCE RBAC live-fix, Manager role shipment, and design-system spec import.
+> Banner refreshed **2026-06-02** by Richard (`code-puppy-1725d8`). PR #67 and the
+> design-system branch referenced in older revisions are long merged.
 > If a fact below is older than 24 hours, cross-check against `git log`, `bd ready`,
 > and live `/health`.
 >
-> **Canonical single-glance snapshot is now [`STATE.md`](./STATE.md).** This page
-> keeps operational/deploy detail; `STATE.md` is the always-current truth.
+> **Canonical single-glance snapshot is [`STATE.md`](./STATE.md)** — see its
+> "Recent — 2026-06-02 session" block for the latest. This page keeps
+> operational/deploy detail; `STATE.md` is the always-current truth.
 
-**Latest commit on `richard/issue-66-design-system-spec` (PR #67, the big in-flight branch):** `aa3a162 chore(bd): track ct-1m0 progress + file script cleanup follow-up`
+**Main is clean + in sync** as of 2026-06-02 (PRs #73-#88 merged: ct-mql RG decommission, ct-l4v/ct-mmq freshness fixes, ct-b0n, ct-f9p UAMI Step A).
 **Package version:** `2.5.0` (per `pyproject.toml`)
-**Last successful prod deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge `96611ec`)
+**Last live prod check (2026-06-02):** `/health` -> `healthy / 2.5.0 / production`; `/healthz/data` `any_stale=true` (DCE 2/4 standing gap).
 
 > 🟢 → 🟢 **Production state (2026-05-28 end of session):** 11/12 judge score, **expected 12/12 next sync cycle.**
 > 4/5 tenants (HTT, BCC, FN, TLL) fully healthy on all 4 data domains. DCE was the only remaining
