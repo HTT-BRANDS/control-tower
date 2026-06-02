@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
   <title>API Explorer — HTT Control Tower</title>
   <meta name="description" content="Interactive Swagger UI for the HTT Control Tower API — 191 endpoints, always-fresh from production.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
@@ -62,7 +63,6 @@
       </div>
     </div>
   </nav>
-  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -71,7 +71,9 @@
       <p class="page-subtitle">Interactive Swagger UI · 191 endpoints · always public</p>
     </div>
   </div>
+  </header>
 
+  <main id="main">
   <div class="stale-banner">
     <strong>Snapshot info:</strong> This explorer loads a bundled OpenAPI spec
     refreshed automatically every time GitHub Pages rebuilds. The live spec is
@@ -80,7 +82,8 @@
     Production <code>/docs</code> requires authentication by design — this page is the public-friendly alternative.
   </div>
 
-  <main id="swagger" class="swagger-ui-wrap"></main>
+  <div id="swagger" class="swagger-ui-wrap"></div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin></script>
   <script>
