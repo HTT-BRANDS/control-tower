@@ -1,5 +1,30 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 2026-06-02 continuation D — ct-l4v corrected + fixed (live Azure) (`code-puppy-1725d8`)
+
+Used the live `az` session to actually diagnose ct-l4v instead of trusting the prior write-up — and the prior diagnosis was **wrong**.
+
+### The correction
+
+Previous diagnosis (2026-05-29): device_compliance NULL because the SP lacked `DeviceManagementManagedDevices.Read.All`. **False.** Verified live: that scope is present on the `Riverside-Capital-PE-Governance-Platform` app reg (`1e3e8417-...`) AND admin-consented in HTT-CORE (all 16 app permissions consented on SP `b8e67903-...`).
+
+Real cause: the PE tenants don't license **Intune**, so `/deviceManagement/managedDevices` returns **403**, the sync's `except` did `rollback()` + raise, no row was ever written -> `/healthz/data` saw NULL -> perpetual P1.3 false-positive. Same shape as ct-mmq's threat_data.
+
+### Fix (PR #85, your pick: graceful-degrade)
+
+- `app/services/riverside_sync/devices.py`: a 403 now records a **zero-device snapshot** instead of rolling back. Self-heals if Intune is ever licensed; non-403 errors still roll back + raise. Migration-free.
+- 2 new tests (403 -> zero snapshot; 503 -> still raises). 4 device + 36 sync/health tests pass.
+
+### bd state delta
+
+- CLOSED **ct-l4v** (device half PR #85 + threat half ct-mmq/PR #81). Both judge-P1.3 false-positives eliminated.
+
+### Note on judge P1.3
+
+The device_compliance freshness won't flip green until the **next prod sync cycle** actually runs and writes the zero-row (the code is in; the data catches up on the next scheduled sync). threat_data was removed from the check outright, so that part is already clear.
+
+---
+
 ## 2026-06-02 continuation C — ct-mql executed end-to-end (live Azure) (`code-puppy-1725d8`)
 
 Tyler paired interactively with a **live `az` session** (signed in as `tyler.granlund-admin@httbrands.com`, HTT-CORE), so I drove the ct-mql decommission to completion rather than just prepping it.
