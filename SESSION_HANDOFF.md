@@ -1,5 +1,27 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 2026-06-02 continuation E — ct-f9p UAMI migration scoped (live Azure) (`code-puppy-1725d8`)
+
+With the remaining queue all Azure-admin/portal-gated, I took the safest high-value work: a current-state-aware execution plan for the ct-f9p UAMI migration (no prod changes — read-only discovery + planning).
+
+### Live-verified current state
+
+- Prod `app-governance-prod` is **Phase A**: `USE_OIDC_FEDERATION=false`, SystemAssigned identity only (no UAMI), 5 `{tenant-guid}-client-secret` in `kv-gov-prod`.
+- App reg `1e3e8417-` has 6 GitHub-Actions FICs but **no UAMI FIC**.
+- **`groups-hub` already runs the exact UAMI+FIC pattern** (`uami-prod-groupshub-graph`) — a proven in-org template to mirror, not a greenfield design.
+- Code is ready: `app/core/oidc_credential.py` + the 576-LOC `phase-c-zero-secrets.md` runbook already exist.
+
+### Delivered
+
+- `docs/runbooks/ct-f9p-uami-execution-plan.md` — sequencing layer over the command runbook, with real resource IDs, the groups-hub reference, risk/rollback, and acceptance-criteria mapping.
+- 3 Tyler-owned execution sub-issues: **ct-f9p.1** (create UAMIs+FIC+roles, additive), **ct-f9p.2** (staging cutover+verify, reversible), **ct-f9p.3** (prod cutover + decommission secrets, gated last).
+
+### Why I stopped at planning
+
+The actual steps mutate **production authentication** (create identities/FICs, flip `USE_UAMI_AUTH`, delete secrets). Those are Tyler-owned or explicitly-paired ops — I prepped everything so they're ready to run, but didn't mutate prod auth unprompted. Acceptance #6 was already done (PR #72); #1-5 now have a concrete, current-state-aware path.
+
+---
+
 ## 2026-06-02 continuation D — ct-l4v corrected + fixed (live Azure) (`code-puppy-1725d8`)
 
 Used the live `az` session to actually diagnose ct-l4v instead of trusting the prior write-up — and the prior diagnosis was **wrong**.
