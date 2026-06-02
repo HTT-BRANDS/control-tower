@@ -15,13 +15,14 @@
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
 
-  <nav class="nav" role="navigation" aria-label="Main">
+  <header>
+  <nav class="nav" aria-label="Main">
     <div class="nav-inner">
       <a href="../" class="nav-logo" aria-label="Home">HT</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
       </button>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         <a href="../architecture/">Architecture</a>
         <a href="../operations/" class="active">Operations</a>
         <a href="../api/">API</a>
@@ -30,6 +31,7 @@
       </div>
     </div>
   </nav>
+  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -40,6 +42,15 @@
   </div>
 
   <main id="main">
+
+    <section class="section">
+      <div style="max-width:1100px;margin:0 auto var(--sp-6);padding:1rem 1.25rem;border-left:4px solid #500711;background:#fdf6ec;border-radius:6px">
+        <strong>Point-in-time snapshot (2026-05-04).</strong> This page is not
+        auto-refreshed. For current live status see
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> /
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a>.
+      </div>
+    </section>
 
     <section class="section">
       <div class="grid grid--3">
@@ -65,28 +76,28 @@
       </div>
       <div class="doc-list">
         <div class="doc-list-item">
-          <h3>Tyler-only (P1)</h3>
+          <h2>Tyler-only (P1)</h3>
           <p><code>9lfn</code>: fill <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/SECRETS_OF_RECORD.md">SECRETS_OF_RECORD.md</a> with non-secret pointers, owners, access, and rotation metadata. ~30 min. <strong>The last v2.5.1 gate condition.</strong></p>
         </div>
         <div class="doc-list-item">
-          <h3>Scheduled (P2)</h3>
+          <h2>Scheduled (P2)</h3>
           <p><code>uchp</code>: execute Q3 2026 quarterly DR test cycle (PITR + redeploy + Key Vault recover). Due 2026-07-31. Will absorb Dustin Boyd's first hands-on tabletop.</p>
         </div>
         <div class="doc-list-item">
-          <h3>In progress (P2)</h3>
+          <h2>In progress (P2)</h3>
           <p><code>xzt4</code>: Bicep drift reconciliation. All 12 child tasks closed; staging Bicep recovered + hardened. <strong>Production Bicep apply intentionally deferred</strong> — Tyler-gated.</p>
         </div>
         <div class="doc-list-item">
-          <h3>Coordinated cutover (P3)</h3>
+          <h2>Coordinated cutover (P3)</h3>
           <p><code>l96f</code>: JWT issuer rotation. Phase 1 shipped (<code>88d7cf1</code>, auth accepts both <code>azure-governance-platform</code> and <code>control-tower</code> issuers in transition mode). Phase 2 (drop old issuer) needs coordinated cutover window.</p>
         </div>
         <div class="doc-list-item">
-          <h3>Deferred (re-enters <code>bd ready</code> on trigger date)</h3>
+          <h2>Deferred (re-enters <code>bd ready</code> on trigger date)</h3>
           <p><code>rtwi</code>: stop domain-intelligence App Service / pause PG if zero-traffic at 60-day mark (~2026-05-17).</p>
           <p><code>m4xw</code>: automate quarterly audit-log archive to Azure Blob Archive tier (trigger 2026-07-01).</p>
         </div>
         <div class="doc-list-item">
-          <h3>Recently closed (May 1–3, 2026)</h3>
+          <h2>Recently closed (May 1–3, 2026)</h3>
           <p><code>t88h</code> Azure SQL backup workflow fix · <code>wnyx</code> production-backup environment routing · <code>rxki</code> Bicep drift role definition documented · <code>mp9y</code> stale Bicep parameters removed · <code>k1q7</code> drift label seeding · <code>6vrk</code> Bicep drift RG what-if RBAC unblocked · <code>xzt4.1</code>–<code>xzt4.12</code> all closed · staging Bicep apply recovered (<code>228923d</code> + <code>6b2a8c7</code>).</p>
         </div>
       </div>

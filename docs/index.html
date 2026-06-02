@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
   <title>HTT Control Tower</title>
   <meta name="description" content="HTT Control Tower is HTT's internal multi-brand governance hub for cost, identity, compliance, resources, lifecycle, and evidence workflows.">
   <meta property="og:title" content="HTT Control Tower">
@@ -19,13 +20,14 @@
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
 
-  <nav class="nav" role="navigation" aria-label="Main">
+  <header>
+  <nav class="nav" aria-label="Main">
     <div class="nav-inner">
       <a href="." class="nav-logo" aria-label="Home">HT</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
       </button>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         <a href="architecture/">Architecture</a>
         <a href="operations/">Operations</a>
         <a href="api/">API</a>
@@ -34,6 +36,7 @@
       </div>
     </div>
   </nav>
+  </header>
 
   <main id="main">
     <!-- Hero -->
@@ -66,8 +69,8 @@
           <div class="card-icon">
             <svg viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
-          <h3 class="card-title">Zero-Secrets Auth</h3>
-          <p class="card-description">Azure AD B2C with OIDC, User-Assigned Managed Identity, and zero secrets in code. Defense-in-depth authentication.</p>
+          <h3 class="card-title">Federated Identity Auth</h3>
+          <p class="card-description">Entra ID with OIDC federation and User-Assigned Managed Identity; secrets live in Key Vault, never in code. Defense-in-depth, moving toward fully zero-secret (UAMI rollout in progress).</p>
         </div>
         <div class="card">
           <div class="card-icon">

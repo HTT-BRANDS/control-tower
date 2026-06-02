@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
+  <title>Riverside Compliance Timeline — HTT Control Tower</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>H</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="stylesheet" href="assets/icons.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <header>
+  <nav class="nav" aria-label="Main">
+    <div class="nav-inner">
+      <a href="./" class="nav-logo" aria-label="Home">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+  </header>
+
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div class="breadcrumb"><a href="./">Home</a><span>›</span> Riverside Timeline</div>
+      <h1 class="page-title">Riverside Compliance Timeline</h1>
+      <p class="page-subtitle">Deadline: July 8, 2026</p>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="section">
+      <div class="prose" style="max-width:800px;margin:0 auto">
+        <div id="countdown" style="font-size:1.5rem;font-weight:700;margin:1rem 0" aria-live="polite">
+          Loading countdown…
+        </div>
+
+        <h2>Scope</h2>
+        <p>Head-to-Toe Brands is evaluated against Riverside's Cyber Health Check
+        framework across 7 capability domains. See the authoritative
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/riverside-security-requirements/HEAD-TO-TOE-SECURITY-REQUIREMENTS-OUTLINE.md">requirements outline</a>.</p>
+
+        <h2>Maturity targets</h2>
+        <table>
+          <thead><tr><th>Domain</th><th>Current</th><th>Target</th></tr></thead>
+          <tbody>
+            <tr><td>Governance &amp; Strategy</td><td>2.4</td><td>3.0</td></tr>
+            <tr><td>Network &amp; Infrastructure</td><td>2.5</td><td>3.0</td></tr>
+            <tr><td>Identity &amp; Access Management</td><td>2.3</td><td>3.0</td></tr>
+            <tr><td>Application Security</td><td>2.2</td><td>3.0</td></tr>
+            <tr><td>Data Protection</td><td>—</td><td>3.0</td></tr>
+            <tr><td>Monitoring</td><td>—</td><td>3.0</td></tr>
+            <tr><td>Resilience</td><td>—</td><td>3.0</td></tr>
+          </tbody>
+        </table>
+        <p><em>Scores update from the live platform once sync jobs populate
+        <code>RiversideCompliance</code>. Until then these are the baseline
+        numbers from the January 2026 Riverside health check.</em></p>
+
+        <h2>What's blocking go-live</h2>
+        <p>See <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a>
+        for live status: tenants missing Reader RBAC, tenants missing admin
+        consent on required Graph scopes, and domains with stale sync data.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>HTT Control Tower · v2.5.0 · <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> for live status</p>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    var toggle = document.querySelector('.nav-toggle');
+    var navLinks = document.querySelector('.nav-links');
+    if (toggle && navLinks) {
+      toggle.addEventListener('click', function () {
+        navLinks.classList.toggle('open');
+        this.setAttribute('aria-expanded', navLinks.classList.contains('open'));
+      });
+    }
+    var deadline = new Date('2026-07-08T00:00:00Z').getTime();
+    var el = document.getElementById('countdown');
+    function tick() {
+      var diff = deadline - Date.now();
+      if (diff <= 0) { el.textContent = 'Deadline reached.'; return; }
+      var d = Math.floor(diff / 86400000);
+      var h = Math.floor((diff / 3600000) % 24);
+      var m = Math.floor((diff / 60000) % 60);
+      el.textContent = d + ' days · ' + h + ' hours · ' + m + ' minutes remaining';
+    }
+    tick();
+    setInterval(tick, 60000);
+  })();
+  </script>
+</body>
+</html>

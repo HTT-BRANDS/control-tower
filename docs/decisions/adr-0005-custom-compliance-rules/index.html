@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ADR-0005: Custom Compliance Rules — Azure Governance Platform</title>
+  <title>ADR-0005: Custom Compliance Rules — HTT Control Tower</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,14 @@
 <body>
   <a href="#main" class="skip-link">Skip to content</a>
 
-  <nav class="nav" role="navigation" aria-label="Main">
+  <header>
+  <nav class="nav" aria-label="Main">
     <div class="nav-inner">
       <a href="../../" class="nav-logo" aria-label="Home">HT</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
       </button>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         <a href="../../architecture/">Architecture</a>
         <a href="../../operations/">Operations</a>
         <a href="../../api/">API</a>
@@ -29,6 +30,7 @@
       </div>
     </div>
   </nav>
+  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -490,7 +492,7 @@ relates-to: CM-002</h2>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>Production Certified · Rock Solid · v2.5.0</p>
+      <p>HTT Control Tower · v2.5.0 · <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> for live status</p>
     </div>
   </footer>
 

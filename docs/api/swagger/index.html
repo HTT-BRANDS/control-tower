@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>API Explorer — Azure Governance Platform</title>
-  <meta name="description" content="Interactive Swagger UI for the Azure Governance Platform API — 191 endpoints, always-fresh from production.">
+  <title>API Explorer — HTT Control Tower</title>
+  <meta name="description" content="Interactive Swagger UI for the HTT Control Tower API — 191 endpoints, always-fresh from production.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
 
   <!-- Brand stylesheet (for nav + header consistency) -->
@@ -46,13 +46,14 @@
 <body>
   <a href="#swagger" class="skip-link">Skip to API explorer</a>
 
-  <nav class="nav" role="navigation" aria-label="Main">
+  <header>
+  <nav class="nav" aria-label="Main">
     <div class="nav-inner">
       <a href="../../" class="nav-logo" aria-label="Home">HT</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span></span><span></span><span></span>
       </button>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         <a href="../../architecture/">Architecture</a>
         <a href="../../operations/">Operations</a>
         <a href="../" class="active">API</a>
@@ -61,6 +62,7 @@
       </div>
     </div>
   </nav>
+  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
