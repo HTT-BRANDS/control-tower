@@ -1,7 +1,27 @@
-# domain-intelligence — re-creation stash + decommission checklist (ct-mql)
+# domain-intelligence — re-creation stash + decommission record (ct-mql)
 
-This directory exists so that **Option A (delete the idle resources)** for
-`bd ct-mql` is reversible in intent. `domain-intelligence` has had **zero
+> **STATUS: DECOMMISSIONED 2026-06-02.** The resource group
+> `rg-htt-domain-intelligence` and all 16 resources were deleted
+> (`az group delete`) by Richard (`code-puppy-1725d8`) with Tyler's explicit
+> go-ahead, after confirming zero data-layer activity (0 Cosmos requests/30d,
+> no PG app connections). Secrets were backed up first (see below). This
+> directory is now the **re-creation path** if the project is ever revived,
+> since the live `az group export` could not complete before deletion.
+>
+> **What survived the delete:**
+> - 11 KV secrets copied to `kv-gov-prod` as `domainiq-archived-*` (see
+>   `SECRETS_OF_RECORD.md` section 5a).
+> - The original `kv-domainiq-prod` is soft-deleted + purge-protected,
+>   recoverable until **2026-08-31** via `az keyvault recover`.
+>
+> **Remaining Tyler action (external services, not deletable from Azure):**
+> - Revoke `cloudflare-api-token` at the Cloudflare dashboard.
+> - Rotate/disable `CLOUDWAYS-SSH-PASSWORD` at the Cloudways panel.
+>
+> The recreation Bicep + checklist below are retained for revival.
+
+This directory was created so that **Option A (delete the idle resources)** for
+`bd ct-mql` was reversible in intent. `domain-intelligence` has had **zero
 traffic for 60+ days**, and Azure keeps auto-restarting the paused PostgreSQL
 flexible server every 7 days — so leaving it stopped is not a stable end state.
 The decision was to delete it and keep this Bicep stash for revival.

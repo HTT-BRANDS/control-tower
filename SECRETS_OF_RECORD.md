@@ -160,6 +160,47 @@ not prove the secret exists in GitHub/Azure and do not include secret values.
 
 ---
 
+## 5a. domain-intelligence decommission — archived credentials (ct-mql)
+
+The `domain-intelligence` project (separate codebase, Cloudways-hosted) is being
+decommissioned (Option A, ct-mql — zero traffic 60+ days). Its Key Vault
+`kv-domainiq-prod` (RG `rg-htt-domain-intelligence`, sub HTT-CORE) held **11
+secrets**. Before any deletion these were copied vault-to-vault into
+`kv-gov-prod` under the `domainiq-archived-` prefix on **2026-06-02** by Richard
+(`code-puppy-1725d8`) with zero value exposure (values passed only through a
+shell variable, never printed/written/committed).
+
+**Usage check:** none of these 11 secret names are consumed anywhere in the
+`control-tower` repo (`rg -i` for `cloudflare-api-token`, `CLOUDWAYS`,
+`METRICS-BEARER` all returned 0 files). They belong solely to the
+domain-intelligence app.
+
+| Original secret | Archived copy (in `kv-gov-prod`) | Type | Source-side action when app is killed |
+|---|---|---|---|
+| `API-TOKEN` | `domainiq-archived-API-TOKEN` | app API token | Revoke if issued by a live service |
+| `AZURE-AD-CLIENT-SECRET` | `domainiq-archived-AZURE-AD-CLIENT-SECRET` | Entra app secret | Delete the app-reg credential if app-reg is retired |
+| `AZURE-CLIENT-SECRET` | `domainiq-archived-AZURE-CLIENT-SECRET` | Entra app secret | Delete the app-reg credential if app-reg is retired |
+| `cloudflare-api-token` | `domainiq-archived-cloudflare-api-token` | **EXTERNAL: Cloudflare** | **Revoke at Cloudflare dashboard -> API Tokens.** Deleting the KV copy does NOT revoke Cloudflare access. |
+| `CLOUDWAYS-SSH-PASSWORD` | `domainiq-archived-CLOUDWAYS-SSH-PASSWORD` | **EXTERNAL: Cloudways** | **Rotate/disable at Cloudways panel.** KV deletion does NOT change the Cloudways server credential. |
+| `CSRF-SECRET-KEY` | `domainiq-archived-CSRF-SECRET-KEY` | app signing key | None (dies with app) |
+| `DATABASE-URL` | `domainiq-archived-DATABASE-URL` | PG connection string | Moot once `domainiq-db-prod` is deleted |
+| `e2e-api-token` | `domainiq-archived-e2e-api-token` | test API token | Revoke if issued by a live service |
+| `JWT-PRIVATE-KEY` | `domainiq-archived-JWT-PRIVATE-KEY` | app JWT signing key | None (dies with app) |
+| `METRICS-BEARER-TOKEN` | `domainiq-archived-METRICS-BEARER-TOKEN` | metrics scrape token | None (dies with app) |
+| `SESSION-SIGNING-KEY` | `domainiq-archived-SESSION-SIGNING-KEY` | app session key | None (dies with app) |
+
+> **Two are EXTERNAL-service credentials** (`cloudflare-api-token`,
+> `CLOUDWAYS-SSH-PASSWORD`). Deleting the Azure Key Vault copy does **not**
+> revoke access at Cloudflare/Cloudways — those must be revoked/rotated at the
+> source if the domain-intelligence app is genuinely retired.
+>
+> `kv-domainiq-prod` has **purge protection ON** (90-day soft-delete). The RG
+> was deleted 2026-06-02; the vault is now soft-deleted and recoverable until
+> **2026-08-31** via `az keyvault recover --name kv-domainiq-prod`. The
+> archived copies in `kv-gov-prod` are the durable backstop beyond that window.
+
+---
+
 ## 6. Rotation log
 
 | Date | Credential class | Action | Actor | Evidence pointer |

@@ -1,5 +1,35 @@
 # Session Handoff — 2026-04-30 (with 2026-05-03 + 2026-05-04 + 2026-05-19 + 2026-06-01 continuations)
 
+## 2026-06-02 continuation C — ct-mql executed end-to-end (live Azure) (`code-puppy-1725d8`)
+
+Tyler paired interactively with a **live `az` session** (signed in as `tyler.granlund-admin@httbrands.com`, HTT-CORE), so I drove the ct-mql decommission to completion rather than just prepping it.
+
+### What happened
+
+1. **Discovery** — the RG was bigger than the cost model implied: **16 resources**, including a purge-protected **Key Vault** (`kv-domainiq-prod`, 11 secrets), a **Cosmos DB** (`htt-domain-intel-db`, db `domain-intelligence` with containers findings/domains/brands/settings), PG flex, App Service + slot, App Insights, an action group, and 8 metric alerts.
+2. **Abandonment proof** — 0 Cosmos `TotalRequests`/30d, no PG app connections (one 2026-05-03 blip = auto-restart), App Service stopped, 0 control-tower repo references to its secrets. Tyler's rule ("if we aren't using it, we don't need it") -> delete.
+3. **Backup** — all 11 KV secrets copied vault-to-vault into `kv-gov-prod` as `domainiq-archived-*` (0 value exposure: values only ever passed through a shell var, never printed/written/committed).
+4. **Document** — `SECRETS_OF_RECORD.md` section 5a: full secret table, archived locations, and the external-cred revocation flags.
+5. **Delete** — `az group delete rg-htt-domain-intelligence`. All 16 resources gone; `az group exists` = false. ~$65/mo saved; the 7-day auto-restart loop is permanently dead.
+6. **Cleanup** — removed the now-dead `scripts/check-domain-intelligence-traffic.sh`; marked `infra/domain-intelligence/README.md` DECOMMISSIONED.
+
+### Safety net
+
+- Original `kv-domainiq-prod` is soft-deleted + purge-protected, recoverable until **2026-08-31** (`az keyvault recover`).
+- 11 archived secrets durable in `kv-gov-prod`.
+- Recreation Bicep stash retained at `infra/domain-intelligence/` (the live `az group export` hung on Cosmos, so the reconstructed Bicep is the revival path).
+
+### bd state delta
+
+- CLOSED **ct-mql** (decommission complete).
+- NEW **ct-18z** (P3, Tyler-only): revoke `cloudflare-api-token` (Cloudflare dashboard) + `CLOUDWAYS-SSH-PASSWORD` (Cloudways panel) at their source — deleting the Azure vault does NOT revoke external-service access.
+
+### Tyler's remaining action
+
+- **ct-18z**: revoke the two external creds at Cloudflare + Cloudways. Values are in `kv-gov-prod` (`domainiq-archived-*`) or the soft-deleted vault if you need to identify which token/account.
+
+---
+
 ## 2026-06-02 continuation B — decision-gated queue cleared (`code-puppy-1725d8`)
 
 Asked Tyler the three decisions blocking the remaining `bd ready` queue, then executed all three in the same session.
