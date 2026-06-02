@@ -13,7 +13,7 @@
 #
 # See DEPENDENCY_MANAGEMENT.md for full documentation.
 # =============================================================================
-aiosmtplib==5.1.0
+aiosmtplib==5.1.1
 bidict==0.23.1
     # via python-socketio
 blinker==1.9.0
@@ -71,7 +71,7 @@ jinja2==3.1.6
     # via flask
 librt==0.11.0 ; platform_python_implementation != 'PyPy'
     # via mypy
-locust==2.44.0
+locust==2.44.1
 markupsafe==3.0.3
     # via
     #   flask
