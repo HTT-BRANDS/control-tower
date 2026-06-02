@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
   <title>System Overview — HTT Control Tower</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +31,6 @@
       </div>
     </div>
   </nav>
-  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -42,6 +42,7 @@
       <h1 class="page-title">System Overview</h1>
     </div>
   </div>
+  </header>
 
   <main id="main">
     <section class="section">
@@ -50,12 +51,12 @@
 <p>⚠️ <strong>READ THIS FIRST</strong> — This document describes the <strong>target / aspirational</strong>
 architecture: where we&#39;re heading, not what&#39;s deployed today. For the
 ground-truth view of what actually runs in production right now, see
-<a href="./current.md"><strong><code>current.md</code></strong></a>.</p>
+<a href="https://github.com/HTT-BRANDS/control-tower/blob/main/docs/architecture/current.md"><strong><code>current.md</code></strong></a>.</p>
 <p>Components mentioned here that <strong>do not yet exist</strong> in production include
 Azure Front Door / CDN, Service Bus, a provisioned Redis cache, and a
 separate auth/audit microservice. The current system is a single FastAPI
 monolith on App Service with in-process APScheduler workers — see
-<a href="./current.md#what-is-not-deployed-despite-appearing-in-target-diagrams"><code>current.md</code></a> for the full gap list.</p>
+<a href="https://github.com/HTT-BRANDS/control-tower/blob/main/docs/architecture/current.md#what-is-not-deployed-despite-appearing-in-target-diagrams"><code>current.md</code></a> for the full gap list.</p>
 <p><em>Banner added per bd ct-lw2 to prevent newcomers hunting for nonexistent infra.</em></p>
 </blockquote>
 <hr>
@@ -310,7 +311,7 @@ async def query_database():
 </code></pre>
 <hr>
 <h2>Security Architecture</h2>
-<p>See dedicated <a href="../security">Security Guide</a> for complete details.</p>
+<p>See dedicated <a href="../authentication/">Security Guide</a> for complete details.</p>
 <p><strong>Summary:</strong></p>
 <ul>
 <li>✅ HTTPS-only enforcement</li>

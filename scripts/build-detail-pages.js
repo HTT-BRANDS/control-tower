@@ -60,6 +60,7 @@ function buildPage({ title, section, sectionLabel, breadcrumbSlug, htmlContent }
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
   <title>${escapeHtml(title)} — HTT Control Tower</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +88,6 @@ function buildPage({ title, section, sectionLabel, breadcrumbSlug, htmlContent }
       </div>
     </div>
   </nav>
-  </header>
 
   <div class="page-header">
     <div class="page-header-inner">
@@ -99,6 +99,7 @@ function buildPage({ title, section, sectionLabel, breadcrumbSlug, htmlContent }
       <h1 class="page-title">${escapeHtml(title)}</h1>
     </div>
   </div>
+  </header>
 
   <main id="main">
     <section class="section">
