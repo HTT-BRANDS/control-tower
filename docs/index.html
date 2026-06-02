@@ -39,7 +39,7 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero-inner">
-        <span class="hero-badge">Production deployed · ⚠️ ct-y47 customer-tenant sync incident open</span>
+        <span class="hero-badge">Production deployed · healthy / 2.5.0 / production</span>
         <h1 class="hero-title">HTT Control<br>&nbsp;Tower</h1>
         <p class="hero-subtitle">HTT's internal multi-brand governance hub for portfolio cost, identity, compliance, resources, lifecycle, and evidence workflows. Riverside is one evidence consumer — not the platform identity.</p>
         <div class="hero-metrics">
@@ -111,7 +111,7 @@
     <section class="section">
       <div class="section-header">
         <h2 class="section-title">Platform Architecture</h2>
-        <p class="section-subtitle">5 tenants, 2 environments, zero secrets</p>
+        <p class="section-subtitle">5 tenants, 2 environments, OIDC + Key Vault auth</p>
       </div>
       <div style="max-width:960px;margin:0 auto;overflow-x:auto">
         <img src="diagrams/architecture.svg" alt="Architecture diagram showing Users, Production and Staging environments, 5 managed Azure AD tenants, and CI/CD pipeline" style="width:100%;height:auto" loading="lazy">
@@ -271,7 +271,7 @@ uv run uvicorn app.main:app --reload</code></pre>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>HTT Control Tower · State current as of 2026-05-28 · See <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a> for live blockers (ct-y47, ct-38g)</p>
+      <p>HTT Control Tower · State current as of 2026-06-02 · See <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> / <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a> for live status</p>
     </div>
   </footer>
 
