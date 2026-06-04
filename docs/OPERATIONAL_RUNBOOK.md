@@ -314,6 +314,11 @@ az webapp config container set \
 
 ## Escalation Procedures
 
+> **Authoritative escalation + severity + on-call:** `INCIDENT_RESPONSE.md`
+> (bd `ct-o1w`). The quick version below is a summary; that doc has the
+> severity matrix, contacts, rotation, and comms templates. The freshness
+> alert that pages on a stall is `scripts/setup-freshness-alert.sh` (`ct-vuv`).
+
 ### Severity 1: Production Down
 1. Page on-call engineer immediately
 2. Attempt automatic recovery (restart)
