@@ -1,8 +1,12 @@
-# Azure Governance Platform - Operational Runbook
+# HTT Control Tower - Operational Runbook
 
-**For:** DevOps, SRE, and Operations Teams  
-**Version:** 1.8.1  
-**Last Updated:** 2026-03-31
+**For:** Operations, DevOps, and SRE Teams  
+**Version:** 2.5.0  
+**Last Updated:** 2026-06-04
+
+> New to Control Tower? Read `docs/OPS_ONBOARDING.md` first (what each
+> dashboard means, what "stale" means, who to call). This runbook is the
+> SRE/operational reference; the onboarding guide is the day-one walkthrough.
 
 ---
 
@@ -11,15 +15,23 @@
 ### Production URLs
 - **Application:** https://app-governance-prod.azurewebsites.net
 - **Health Check:** https://app-governance-prod.azurewebsites.net/health
+- **Data freshness:** https://app-governance-prod.azurewebsites.net/healthz/data
 - **Azure Portal:** https://portal.azure.com
 
+### Tenants monitored (5)
+Head-To-Toe (HTT), Bishops (BCC), Frenchies (FN), Lash Lounge (TLL),
+Delta Crown Extensions (DCE).
+
 ### Emergency Contacts
+<!-- TODO(ct-o1w): Tyler to replace the placeholders below with REAL people +
+     an on-call rotation + a severity matrix. The animal-agent names from the
+     old draft were removed because they are not real escalation contacts. -->
 | Role | Contact | Escalation |
 |------|---------|------------|
-| DevOps Lead | Husky | Immediate |
-| Backend Lead | Code-puppy | 15 min |
-| QA Lead | QA-kitten | 30 min |
-| Security | Bloodhound | Immediate |
+| Operations owner | _TODO(ct-o1w): name / channel_ | Immediate |
+| Platform / on-call eng | _TODO(ct-o1w): name + rotation_ | 15 min |
+| Security | _TODO(ct-o1w): name_ | Immediate |
+| Business owner (Tyler) | _TODO(ct-o1w): contact_ | As needed |
 
 ---
 
@@ -30,8 +42,11 @@
 ```bash
 # Quick health verification
 curl -s https://app-governance-prod.azurewebsites.net/health | jq .
+# Expected: {"status": "healthy", "version": "2.5.0", "environment": "production"}
 
-# Expected: {"status": "healthy", "version": "1.8.1"}
+# Data freshness (THE most important daily check — stale data = bad decisions)
+curl -s https://app-governance-prod.azurewebsites.net/healthz/data | jq '.any_stale'
+# Expected: false. If true -> go to "Data Freshness & Sync Recovery" below.
 ```
 
 ### 2. Check Alerts (Morning)
@@ -119,6 +134,45 @@ az consumption usage list \
 ---
 
 ## Troubleshooting Guide
+
+### Issue: Data is STALE (`/healthz/data` -> `any_stale: true`)  [MOST COMMON]
+
+This is the failure that blocked release in June 2026 (bd `ct-cne`). The data
+is usually *complete* but *old* because the in-process scheduler
+(`app/core/scheduler.py`, an `AsyncIOScheduler` started in the app lifespan)
+**silently stops** when the App Service worker is unloaded/recycled or idles
+without "Always On", and it *skips* the runs it missed. Symptom: dashboards
+show data older than 24h; `judge.py` fails P1.3.
+
+**1. Confirm + scope it (which tenants/domains):**
+```bash
+curl -s https://app-governance-prod.azurewebsites.net/healthz/data | jq '{any_stale, tenants}'
+python -m scripts.diagnose_sync --env production   # per-tenant complete-vs-missing
+```
+
+**2. Recover NOW (kick a manual sync):** requires an operator bearer token in
+`MANUAL_SYNC_TOKEN` (see the script header for how it's minted).
+```bash
+export MANUAL_SYNC_TOKEN=...        # operator token (ask Tyler / Key Vault)
+python -m scripts.manual_sync --wait 90
+```
+
+**3. Verify recovery:**
+```bash
+curl -s https://app-governance-prod.azurewebsites.net/healthz/data | jq '.any_stale'   # -> false
+python -m scripts.diagnose_sync --env production
+```
+
+**4. Don't stop at the manual kick — prove the *scheduler* recovered.** A manual
+sync turns dashboards green but hides the real bug. Confirm a **scheduled**
+(unattended) cycle completes within its interval. Permanent fix is tracked in
+bd `ct-ar3` (App Service "Always On" + a freshness watchdog) and the alert that
+makes a future stall page a human is `ct-vuv`. Detailed verification steps:
+`docs/runbooks/sync-recovery-verification.md`.
+
+**5. If a single tenant is *missing* a domain (not just stale)** — e.g. DCE
+missing `resources`/`compliance` — that's an RBAC/consent gap, not a scheduler
+stall. See `scripts/grant-dce-sync-permissions.sh` and bd `ct-4if`.
 
 ### Issue: Application Down (503/500 Errors)
 
@@ -224,11 +278,11 @@ az webapp deployment slot swap \
   --slot production \
   --target-slot staging
 
-# Or restore previous version
+# Or restore a previous version (registry is GHCR per ADR-0008)
 az webapp config container set \
   --name app-governance-prod \
   --resource-group rg-governance-production \
-  --container-image-name acrgovprod.azurecr.io/azure-governance-platform:PREVIOUS_TAG
+  --container-image-name ghcr.io/htt-brands/control-tower:PREVIOUS_TAG
 ```
 
 ---
@@ -325,13 +379,14 @@ make load-test-smoke
 
 ## Contact Information
 
+<!-- TODO(ct-o1w): real team contacts — the addresses below were placeholder
+     animal-agent handles and must be replaced before go-live. -->
 ### Team Contacts
 | Team | Primary | Backup |
 |------|---------|--------|
-| DevOps | husky@httbrands.com | oncall@httbrands.com |
-| Engineering | codepuppy@httbrands.com | backend@httbrands.com |
-| QA | qakitten@httbrands.com | testing@httbrands.com |
-| Security | bloodhound@httbrands.com | security@httbrands.com |
+| Operations | _TODO(ct-o1w)_ | _TODO_ |
+| Platform / Engineering | _TODO(ct-o1w)_ | _TODO_ |
+| Security | _TODO(ct-o1w)_ | _TODO_ |
 
 ### Azure Support
 - Azure Portal: https://portal.azure.com
@@ -340,6 +395,9 @@ make load-test-smoke
 
 ---
 
-**Document Owner:** DevOps Team  
+**Document Owner:** Operations Team (contacts TBD — bd ct-o1w)  
 **Review Cycle:** Monthly  
-**Next Review:** 2026-04-30
+**Last refreshed:** 2026-06-04 (Richard — rebrand to HTT Control Tower, v2.5.0,
+added the Data Freshness & Sync Recovery playbook, GHCR rollback, real-contact
+placeholders).  
+**Next Review:** 2026-07-04
