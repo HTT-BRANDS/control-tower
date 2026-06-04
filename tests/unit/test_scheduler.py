@@ -235,3 +235,85 @@ class TestTriggerManualSync:
 
         assert result is True
         mock_mfa.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# Heartbeat / observability (ct-ar3): _record_job_event + get_scheduler_health
+# ---------------------------------------------------------------------------
+
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, EVENT_JOB_MISSED
+
+
+@pytest.fixture
+def _clean_job_events():
+    """Isolate the module-level heartbeat dict per test."""
+    import app.core.scheduler as sched_mod
+
+    saved = dict(sched_mod._job_events)
+    sched_mod._job_events.clear()
+    yield sched_mod
+    sched_mod._job_events.clear()
+    sched_mod._job_events.update(saved)
+
+
+class TestRecordJobEvent:
+    def test_executed_sets_last_success_and_clears_error(self, _clean_job_events):
+        m = _clean_job_events
+        m._record_job_event(SimpleNamespace(job_id="sync_costs", code=EVENT_JOB_EXECUTED))
+        rec = m._job_events["sync_costs"]
+        assert rec["last_success"] is not None
+        assert rec["last_error"] is None
+
+    def test_error_records_timestamp_and_truncated_exception(self, _clean_job_events):
+        m = _clean_job_events
+        m._record_job_event(
+            SimpleNamespace(
+                job_id="sync_costs", code=EVENT_JOB_ERROR, exception=Exception("boom" * 500)
+            )
+        )
+        rec = m._job_events["sync_costs"]
+        assert rec["last_error"] is not None
+        assert len(rec["last_exception"]) <= 500
+
+    def test_missed_records_timestamp(self, _clean_job_events):
+        m = _clean_job_events
+        m._record_job_event(SimpleNamespace(job_id="sync_costs", code=EVENT_JOB_MISSED))
+        assert m._job_events["sync_costs"]["last_missed"] is not None
+
+
+class TestGetSchedulerHealth:
+    def test_none_scheduler_reports_not_running(self, _clean_job_events):
+        m = _clean_job_events
+        with patch.object(m, "scheduler", None):
+            health = m.get_scheduler_health()
+        assert health["running"] is False
+        assert health["jobs"] == []
+        assert health["any_overdue"] is False
+        assert health["job_count"] == 0
+
+    def test_overdue_job_flagged(self, _clean_job_events):
+        m = _clean_job_events
+        past = datetime.now(UTC) - timedelta(seconds=m._OVERDUE_SECONDS + 60)
+        fake_job = SimpleNamespace(id="sync_costs", name="Sync Cost Data", next_run_time=past)
+        fake_sched = SimpleNamespace(running=True, get_jobs=lambda: [fake_job])
+        with patch.object(m, "scheduler", fake_sched):
+            health = m.get_scheduler_health()
+        assert health["running"] is True
+        assert health["any_overdue"] is True
+        assert health["jobs"][0]["overdue"] is True
+        assert health["jobs"][0]["id"] == "sync_costs"
+
+    def test_future_job_not_overdue_and_surfaces_last_success(self, _clean_job_events):
+        m = _clean_job_events
+        m._record_job_event(SimpleNamespace(job_id="sync_costs", code=EVENT_JOB_EXECUTED))
+        future = datetime.now(UTC) + timedelta(hours=1)
+        fake_job = SimpleNamespace(id="sync_costs", name="Sync Cost Data", next_run_time=future)
+        fake_sched = SimpleNamespace(running=True, get_jobs=lambda: [fake_job])
+        with patch.object(m, "scheduler", fake_sched):
+            health = m.get_scheduler_health()
+        assert health["any_overdue"] is False
+        assert health["jobs"][0]["overdue"] is False
+        assert health["jobs"][0]["last_success"] is not None

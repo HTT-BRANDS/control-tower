@@ -2,8 +2,13 @@
 
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+from apscheduler.events import (
+    EVENT_JOB_ERROR,
+    EVENT_JOB_EXECUTED,
+    EVENT_JOB_MISSED,
+)
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -18,6 +23,72 @@ settings = get_settings()
 
 # Global scheduler instance
 scheduler: AsyncIOScheduler | None = None
+
+# Heartbeat: per-job execution history so a silent stall becomes observable.
+# The in-process AsyncIOScheduler stops firing when the App Service worker is
+# unloaded/recycled (and skips missed runs past misfire_grace_time) without
+# any signal. This dict + the /healthz/scheduler endpoint surface that. (ct-ar3)
+_job_events: dict[str, dict[str, Any]] = {}
+
+# A job whose next_run_time is this many seconds in the past is "overdue" — a
+# strong hint the scheduler isn't firing. Generous vs. misfire_grace_time(300s).
+_OVERDUE_SECONDS = 600
+
+
+def _iso(value: datetime | None) -> str | None:
+    return value.isoformat() if value else None
+
+
+def _record_job_event(event: Any) -> None:
+    """APScheduler listener: track last success/error/missed per job id."""
+    rec = _job_events.setdefault(event.job_id, {})
+    now = datetime.now(UTC)
+    if event.code == EVENT_JOB_EXECUTED:
+        rec["last_success"] = now
+        rec["last_error"] = None
+    elif event.code == EVENT_JOB_ERROR:
+        rec["last_error"] = now
+        rec["last_exception"] = str(getattr(event, "exception", ""))[:500]
+    elif event.code == EVENT_JOB_MISSED:
+        rec["last_missed"] = now
+
+
+def get_scheduler_health() -> dict[str, Any]:
+    """Observable scheduler state for /healthz/scheduler and alerting (ct-ar3).
+
+    Reports whether the scheduler is running and, per job, the next scheduled
+    run, the last successful/errored/missed run, and an ``overdue`` flag when
+    ``next_run_time`` is well in the past (the silent-stall signal).
+    """
+    sch = scheduler
+    now = datetime.now(UTC)
+    jobs: list[dict[str, Any]] = []
+    any_overdue = False
+    if sch is not None:
+        for job in sch.get_jobs():
+            nrt = job.next_run_time
+            overdue = bool(nrt and nrt < now - timedelta(seconds=_OVERDUE_SECONDS))
+            any_overdue = any_overdue or overdue
+            ev = _job_events.get(job.id, {})
+            jobs.append(
+                {
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run_time": _iso(nrt),
+                    "overdue": overdue,
+                    "last_success": _iso(ev.get("last_success")),
+                    "last_error": _iso(ev.get("last_error")),
+                    "last_missed": _iso(ev.get("last_missed")),
+                    "last_exception": ev.get("last_exception"),
+                }
+            )
+    return {
+        "running": bool(sch is not None and getattr(sch, "running", False)),
+        "any_overdue": any_overdue,
+        "job_count": len(jobs),
+        "jobs": jobs,
+        "checked_at": now.isoformat(),
+    }
 
 
 def _get_sync_functions() -> dict:
@@ -49,6 +120,13 @@ def init_scheduler() -> AsyncIOScheduler:
     global scheduler
 
     scheduler = AsyncIOScheduler()
+
+    # Heartbeat listener: record success/error/missed so a silent stall is
+    # observable via /healthz/scheduler (ct-ar3).
+    scheduler.add_listener(
+        _record_job_event,
+        EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_MISSED,
+    )
 
     # Lazy-import sync functions to break circular import chain
     sync_fns = _get_sync_functions()
