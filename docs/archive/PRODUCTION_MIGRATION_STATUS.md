@@ -8,11 +8,11 @@
 > [26535827775](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) on 2026-05-27).
 >
 > **For current state, read these instead:**
-> - [`STATUS.md`](../STATUS.md) — live single-glance dashboard (refreshed 2026-05-28)
-> - [`CHANGELOG.md`](../CHANGELOG.md) `[Unreleased]` section — what shipped this week
-> - [`SESSION_HANDOFF.md`](../SESSION_HANDOFF.md) — narrative of recent sessions
+> - [`STATUS.md`](../../STATUS.md) — live single-glance dashboard (refreshed 2026-05-28)
+> - [`CHANGELOG.md`](../../CHANGELOG.md) `[Unreleased]` section — what shipped this week
+> - [`SESSION_HANDOFF.md`](../../SESSION_HANDOFF.md) — narrative of recent sessions
 > - `bd ready` / `bd show ct-y47` — the current open production incident (customer-tenant sync)
-> - [`docs/runbooks/enable-secret-fallback.md`](./runbooks/enable-secret-fallback.md) — the relevant
+> - [`docs/runbooks/enable-secret-fallback.md`](../runbooks/enable-secret-fallback.md) — the relevant
 >   runbook for the **current** production-readiness blocker (`USE_OIDC_FEDERATION=false` switchover)
 >
 > The narrative below is preserved verbatim as historical context for the March 2026
@@ -222,10 +222,10 @@ curl -s https://app-governance-prod.azurewebsites.net/api/v1/health
 
 ## Related Documents
 
-- [PRODUCTION_MIGRATION_PLAN.md](./PRODUCTION_MIGRATION_PLAN.md) - Full migration plan
-- [STAGING_DEPLOYMENT.md](../STAGING_DEPLOYMENT.md) - Staging environment details
-- [runbooks/fix-production-ghcr-auth.md](./runbooks/fix-production-ghcr-auth.md) - GHCR auth runbook
-- [GHCR_SETUP.md](./GHCR_SETUP.md) - Container registry setup guide
+- [PRODUCTION_MIGRATION_PLAN.md](../PRODUCTION_MIGRATION_PLAN.md) - Full migration plan
+- [STAGING_DEPLOYMENT.md](../../STAGING_DEPLOYMENT.md) - Staging environment details
+- [runbooks/fix-production-ghcr-auth.md](../runbooks/fix-production-ghcr-auth.md) - GHCR auth runbook
+- [GHCR_SETUP.md](../GHCR_SETUP.md) - Container registry setup guide
 
 ---
 
