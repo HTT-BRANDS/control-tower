@@ -1,7 +1,7 @@
 # Full Send Criteria - Go/No-Go Decision Matrix
 
 **Purpose:** Define the exact criteria for approving production operations  
-**Status:** Ready for test execution results  
+**Status:** Operational/Team readiness criteria are now traceable to staged artifacts + bd issues (see checklists below); awaiting Tyler's execution + sign-off (`ct-71r`)  
 **Date:** March 31, 2026
 
 ---
@@ -152,12 +152,15 @@ Total Score = (Smoke × 0.20) +
 
 ### Operational Readiness
 
-- [ ] Operational runbook reviewed by team
-- [ ] Monitoring dashboards accessible
-- [ ] Alert thresholds configured
-- [ ] Escalation contacts confirmed
-- [ ] Incident response plan documented
-- [ ] Rollback procedure tested
+_Each item is wired to the artifact that satisfies it + the bd issue + who executes. "Staged" = artifact merged to main; the checkbox is Tyler's to tick once executed._
+
+- [ ] **Data freshness fixed + monitored** — `--always-on true` on prod+staging + restart, then `/healthz/data` `any_stale:false` (`ct-cne`/`ct-ar3`; observability staged: `/healthz/scheduler`). _Tyler (Azure)._
+- [ ] **Operational runbook reviewed by team** — `OPERATIONAL_RUNBOOK.md` incl. sync-recovery (`ct-6su`, staged). _Tyler review._
+- [ ] **Monitoring dashboards accessible** — App Insights/Log Analytics access grant (`ct-8by`). _Tyler (RBAC)._
+- [ ] **Alert thresholds configured** — `scripts/setup-freshness-alert.sh` (`ct-vuv`) + `scripts/setup-ops-alerts.sh` (`ct-8jt`); both staged. _Tyler runs + test-fires._
+- [ ] **Escalation contacts confirmed** — fill `_TODO_` slots in `INCIDENT_RESPONSE.md` (`ct-o1w`, staged). _Tyler._
+- [ ] **Incident response plan documented** — `docs/INCIDENT_RESPONSE.md` (`ct-o1w`, staged). ✅ drafted.
+- [ ] **Rollback procedure tested** — run `docs/runbooks/staging-rollback-drill.md` (`ct-c60`, staged). _Tyler (staging)._
 
 ### Documentation Completeness
 
@@ -169,10 +172,11 @@ Total Score = (Smoke × 0.20) +
 
 ### Team Readiness
 
-- [ ] DevOps team trained on procedures
-- [ ] On-call rotation defined
-- [ ] Monitoring tools access granted
-- [ ] Emergency contacts confirmed
+- [ ] **Ops users provisioned** at correct tiers — `scripts/setup_admin.py` per `docs/runbooks/provision-ops-users.md` (`ct-hvv`, staged; Manager now provisionable). _Tyler (DB/identity)._
+- [ ] **DevOps team trained** — onboarding guide `OPS_ONBOARDING.md` (`ct-bmq`, staged) + session (`ct-dxb`). _Tyler delivers._
+- [ ] **On-call rotation defined** — fill rotation in `INCIDENT_RESPONSE.md` (`ct-o1w`). _Tyler._
+- [ ] **Monitoring tools access granted** — `ct-8by`. _Tyler (RBAC)._
+- [ ] **Emergency contacts confirmed** — `INCIDENT_RESPONSE.md` contacts table. _Tyler._
 
 ---
 
