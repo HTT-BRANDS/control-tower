@@ -9,13 +9,15 @@ The authoritative docs. If something here disagrees with a file in
 |-------------------|------|
 | Know where the project is **right now** | [`../STATE.md`](../STATE.md) |
 | See the plan to **ops go-live** | [`PRODUCTION_READINESS_PLAN.md`](PRODUCTION_READINESS_PLAN.md) |
-| **Operate** Control Tower (incidents, recovery) | [`OPERATIONAL_RUNBOOK.md`](OPERATIONAL_RUNBOOK.md) |
+| **Operate** Control Tower (recovery how-to) | [`OPERATIONAL_RUNBOOK.md`](OPERATIONAL_RUNBOOK.md) |
+| Know **who to call / how urgent** | [`INCIDENT_RESPONSE.md`](INCIDENT_RESPONSE.md) |
 | **Use** Control Tower as an ops person (day one) | [`OPS_ONBOARDING.md`](OPS_ONBOARDING.md) |
 | Understand a past **decision** | [`decisions/`](decisions/) (ADRs) |
 
 ## Operating & ops
 
 - [`OPERATIONAL_RUNBOOK.md`](OPERATIONAL_RUNBOOK.md) — SRE/operational reference (incl. data-freshness & sync recovery)
+- [`INCIDENT_RESPONSE.md`](INCIDENT_RESPONSE.md) — severity matrix, escalation, on-call, comms templates
 - [`OPS_ONBOARDING.md`](OPS_ONBOARDING.md) — day-one walkthrough for the operations team
 - [`runbooks/`](runbooks/) — task-specific runbooks (sync recovery, secret fallback, GHCR auth, UAMI, …)
 - [`FULL_SEND_CRITERIA.md`](FULL_SEND_CRITERIA.md) — go/no-go decision matrix
