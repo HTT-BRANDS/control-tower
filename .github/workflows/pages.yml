@@ -51,6 +51,24 @@ jobs:
             echo "WARN: openapi.json refresh failed; using committed snapshot"
           fi
 
+      - name: Strip YAML front-matter from raw-served markdown
+        # docs/.nojekyll means Pages serves .md verbatim, so a leading
+        # --- front-matter block would show as literal text to anyone who
+        # opens a .md link directly. Strip it from the DEPLOYED copy only —
+        # this CI checkout is ephemeral, so repo sources keep their
+        # front-matter for tooling/the page generator.
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          n = 0
+          for p in pathlib.Path('docs').rglob('*.md'):
+              s = p.read_text(encoding='utf-8')
+              s2 = re.sub(r'^---\r?\n.*?\r?\n---\r?\n\s*', '', s, count=1, flags=re.S)
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8'); n += 1
+          print(f'Stripped front-matter from {n} markdown file(s)')
+          PY
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
