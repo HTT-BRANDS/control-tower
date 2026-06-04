@@ -35,6 +35,20 @@ def register_health_and_status_routes(
 
         return await data_freshness_check(db=db)
 
+    @app.get("/healthz/scheduler")
+    async def healthz_scheduler():
+        """Background-scheduler heartbeat (ct-ar3).
+
+        Surfaces whether the in-process scheduler is running and, per job, the
+        next run + last success/error/missed + an ``overdue`` flag. This makes
+        the silent-stall failure mode (ct-cne) observable and gives the
+        freshness alert (ct-vuv) a scheduler-level signal to complement the
+        data-age check in /healthz/data.
+        """
+        from app.core.scheduler import get_scheduler_health
+
+        return get_scheduler_health()
+
     @app.get("/health/detailed")
     async def detailed_health_check():
         """Detailed health check with component status and pool statistics.

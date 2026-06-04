@@ -148,6 +148,10 @@ show data older than 24h; `judge.py` fails P1.3.
 ```bash
 curl -s https://app-governance-prod.azurewebsites.net/healthz/data | jq '{any_stale, tenants}'
 python -m scripts.diagnose_sync --env production   # per-tenant complete-vs-missing
+
+# Is the SCHEDULER itself alive, or has a job stalled? (ct-ar3 heartbeat)
+curl -s https://app-governance-prod.azurewebsites.net/healthz/scheduler | jq '{running, any_overdue, jobs: [.jobs[] | {id, next_run_time, overdue, last_success}]}'
+# running:false or any_overdue:true => scheduler stalled (the ct-cne mechanism).
 ```
 
 **2. Recover NOW (kick a manual sync):** requires an operator bearer token in
