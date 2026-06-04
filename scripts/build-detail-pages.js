@@ -41,6 +41,8 @@ const PAGES = [
   { section: 'decisions', slug: 'adr-0007-auth-evolution', md: 'adr-0007-auth-evolution.md', title: 'ADR-0007: Auth Evolution' },
   { section: 'decisions', slug: 'adr-0008-container-registry', md: 'adr-0008-container-registry.md', title: 'ADR-0008: Container Registry' },
   { section: 'decisions', slug: 'adr-0009-database-tier', md: 'adr-0009-database-tier.md', title: 'ADR-0009: Database Tier' },
+  { section: 'decisions', slug: 'adr-0010-sync-reliability', md: 'adr-0010-sync-reliability.md', title: 'ADR-0010: Sync Reliability' },
+  { section: 'decisions', slug: 'adr-0011-granular-rbac', md: 'adr-0011-granular-rbac.md', title: 'ADR-0011: Granular RBAC' },
 ];
 
 const SECTION_LABELS = {
@@ -153,7 +155,10 @@ marked.setOptions({
 });
 
 // ─── Build ───────────────────────────────────────────────────────────
-function build() {
+// check=true  -> regenerate in memory and compare against the committed
+//               files instead of writing. Used by CI to fail on drift
+//               (hand-edited generated pages, or pages added without a rebuild).
+function build(check = false) {
   let built = 0;
   let errors = 0;
 
@@ -173,8 +178,6 @@ function build() {
     const htmlContent = marked.parse(mdWithoutH1);
 
     const outDir = path.join(DOCS_DIR, page.section, page.slug);
-    fs.mkdirSync(outDir, { recursive: true });
-
     const outPath = path.join(outDir, 'index.html');
     const html = buildPage({
       title: page.title,
@@ -184,13 +187,33 @@ function build() {
       htmlContent,
     });
 
-    fs.writeFileSync(outPath, html, 'utf-8');
-    built++;
-    console.log(`✅ ${page.section}/${page.slug}/index.html`);
+    if (check) {
+      const existing = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf-8') : null;
+      if (existing !== html) {
+        console.error(`⚠️  DRIFT: ${page.section}/${page.slug}/index.html is not in sync with the generator`);
+        errors++;
+      } else {
+        console.log(`✅ ${page.section}/${page.slug}/index.html (in sync)`);
+      }
+    } else {
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(outPath, html, 'utf-8');
+      built++;
+      console.log(`✅ ${page.section}/${page.slug}/index.html`);
+    }
   }
 
-  console.log(`\nDone: ${built} built, ${errors} errors`);
+  if (check) {
+    console.log(
+      errors === 0
+        ? `\nDrift check PASS — all ${PAGES.length} generated pages are in sync.`
+        : `\nDrift check FAIL — ${errors} page(s) out of sync or missing a source.\n` +
+          `Fix: run \`node scripts/build-detail-pages.js\` and commit the result.`
+    );
+  } else {
+    console.log(`\nDone: ${built} built, ${errors} errors`);
+  }
   return errors === 0 ? 0 : 1;
 }
 
-process.exit(build());
+process.exit(build(process.argv.includes('--check')));
