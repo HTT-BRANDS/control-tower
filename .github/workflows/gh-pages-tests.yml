@@ -27,6 +27,27 @@ on:
         default: ''
 
 jobs:
+  pages-drift-check:
+    name: Pages generator drift check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install marked (pinned, matches generator)
+        run: npm install marked@18.0.5 --no-save
+
+      - name: Verify generated detail pages are in sync with the manifest
+        # Fails if any docs/<section>/<slug>/index.html was hand-edited or a
+        # manifest page was added without rebuilding. Fix: npm run build:pages
+        run: node scripts/build-detail-pages.js --check
+
   cross-browser-tests:
     name: Cross-Browser Testing
     runs-on: ubuntu-latest

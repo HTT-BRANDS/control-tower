@@ -42,110 +42,113 @@
       <h1 class="page-title">ADR-0011: Granular RBAC</h1>
     </div>
   </div>
-
   </header>
-<main id="main">
+
+  <main id="main">
     <section class="section">
       <div class="prose" style="max-width:800px;margin:0 auto">
-<h1>ADR-0011: Granular RBAC with Permission Strings</h1>
+<hr>
+<h2>status: proposed
+date: 2025-07-11
+decision-makers: Solutions Architect 🏛️, Security Auditor 🛡️
+consulted: Pack Leader 🐺 (delivery tracking), Experience Architect 🎨 (UI persona interaction)
+informed: All engineering, MSP tenant administrators
+relates-to: ADR-0007 (Auth Evolution)</h2>
 <h2>Context and Problem Statement</h2>
-<p>The Azure Governance Platform currently uses a flat <code>User.roles: list[str]</code> model where <code>"admin"</code> is the only meaningful elevated role. All authorization checks follow the pattern <code>"admin" in user.roles</code> — effectively binary (admin or not-admin). Meanwhile, the <code>UserTenant</code> model has ad-hoc boolean flags (<code>can_manage_resources</code>, <code>can_view_costs</code>, <code>can_manage_compliance</code>) that duplicate authorization logic in the data layer.</p>
-<p>As we onboard 5 MSP tenants (HTT, BCC, FN, TLL, DCE) with different staff accessing different modules, we need roles between "god mode admin" and "default user." A customer's finance analyst should see cost data but not trigger sync jobs. A tenant admin should manage their tenant's compliance rules but not create new tenants.</p>
+<p>The Azure Governance Platform currently uses a flat <code>User.roles: list[str]</code> model where <code>&quot;admin&quot;</code> is the only meaningful elevated role. All authorization checks follow the pattern <code>&quot;admin&quot; in user.roles</code> — effectively binary (admin or not-admin). Meanwhile, the <code>UserTenant</code> model has ad-hoc boolean flags (<code>can_manage_resources</code>, <code>can_view_costs</code>, <code>can_manage_compliance</code>) that duplicate authorization logic in the data layer.</p>
+<p>As we onboard 5 MSP tenants (HTT, BCC, FN, TLL, DCE) with different staff accessing different modules, we need roles between &quot;god mode admin&quot; and &quot;default user.&quot; A customer&#39;s finance analyst should see cost data but not trigger sync jobs. A tenant admin should manage their tenant&#39;s compliance rules but not create new tenants.</p>
 <p>How do we add granular, module-level authorization without breaking the existing auth stack?</p>
 <h2>Decision Drivers</h2>
 <ul>
-<li><strong>Backward compatibility (K.O.)</strong>: Existing <code>"admin" in user.roles</code> checks must keep working with zero changes</li>
+<li><strong>Backward compatibility (K.O.)</strong>: Existing <code>&quot;admin&quot; in user.roles</code> checks must keep working with zero changes</li>
 <li><strong>Tenant isolation preserved</strong>: Must layer on top of <code>TenantAuthorization</code>, not replace it</li>
 <li><strong>Minimal complexity</strong>: 4 roles × 5 tenants — this is not an enterprise ABAC engine</li>
 <li><strong>Azure AD alignment</strong>: Roles should map cleanly to Entra ID App Roles (JWT <code>roles</code> claim)</li>
 <li><strong>Testability</strong>: Permission sets must be unit-testable without database or HTTP calls</li>
 <li><strong>Incremental migration</strong>: Routes migrate one-at-a-time, not big-bang</li>
-<h2>Considered Options</h2>
 </ul>
-<p>2. <strong>PyCasbin policy engine</strong> — Externalized RBAC/ABAC policies with Casbin DSL</p>
-<p>3. <strong>Database-driven role/permission tables</strong> — Full DB schema for roles, permissions, and role-permission join table</p>
+<h2>Considered Options</h2>
+<ol>
+<li><strong>Code-defined roles with <code>resource:action</code> permission strings</strong> — Permission enum + frozen set mappings, custom FastAPI dependency</li>
+<li><strong>PyCasbin policy engine</strong> — Externalized RBAC/ABAC policies with Casbin DSL</li>
+<li><strong>Database-driven role/permission tables</strong> — Full DB schema for roles, permissions, and role-permission join table</li>
+</ol>
 <h2>Decision Outcome</h2>
-<p>Chosen option: <strong>"Code-defined roles with permission strings"</strong>, because it's the only option that requires zero new dependencies, zero database migrations, and can be shipped incrementally alongside existing <code>require_roles()</code> checks. For 4 predefined roles serving 5 tenants, code-defined permission sets are simpler, safer, and more testable than a policy engine or database-driven system.</p>
+<p>Chosen option: <strong>&quot;Code-defined roles with permission strings&quot;</strong>, because it&#39;s the only option that requires zero new dependencies, zero database migrations, and can be shipped incrementally alongside existing <code>require_roles()</code> checks. For 4 predefined roles serving 5 tenants, code-defined permission sets are simpler, safer, and more testable than a policy engine or database-driven system.</p>
 <h3>Architecture: How It Layers</h3>
-<pre><code>
-Request → Authentication (JWT/Azure AD) → unchanged
+<pre><code>Request → Authentication (JWT/Azure AD) → unchanged
         → Tenant Isolation (TenantAuthorization) → unchanged  
         → Permission Check (NEW: require_permissions) → this ADR
         → Persona UI Gating (personas.py) → unchanged
 </code></pre>
 <p>The four authorization concerns remain orthogonal:</p>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Concern</th>
 <th>Question Answered</th>
 <th>Mechanism</th>
 </tr>
-</tr></thead><tbody>
-<tr>
+</thead>
+<tbody><tr>
 <td><strong>Authentication</strong></td>
 <td>Who are you?</td>
 <td>JWT token validation</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Tenant access</strong></td>
-<td>Which tenants' data can you see?</td>
-<td>`TenantAuthorization` + `UserTenant`</td>
+<td>Which tenants&#39; data can you see?</td>
+<td><code>TenantAuthorization</code> + <code>UserTenant</code></td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Permissions</strong></td>
 <td>What actions can you perform?</td>
 <td>Role → permission set resolution (this ADR)</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Personas</strong></td>
 <td>Which UI sections do you see?</td>
-<td>Entra ID groups → `personas.yaml`</td>
+<td>Entra ID groups → <code>personas.yaml</code></td>
 </tr>
 </tbody></table>
 <h3>Predefined Roles</h3>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Role</th>
 <th>Slug</th>
 <th>Description</th>
 <th>Key Permissions</th>
 </tr>
-</tr></thead><tbody>
-<tr>
+</thead>
+<tbody><tr>
 <td><strong>Admin</strong></td>
-<td>`admin`</td>
-<td>Full system access. Wildcard `*`.</td>
+<td><code>admin</code></td>
+<td>Full system access. Wildcard <code>*</code>.</td>
 <td>Everything</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Tenant Admin</strong></td>
-<td>`tenant_admin`</td>
-<td>Manages a tenant's config, users, compliance, and data. Cannot create tenants or access system settings.</td>
-<td>`costs:manage`, `compliance:manage`, `resources:manage`, `identity:manage`, `users:manage`, `sync:trigger`</td>
+<td><code>tenant_admin</code></td>
+<td>Manages a tenant&#39;s config, users, compliance, and data. Cannot create tenants or access system settings.</td>
+<td><code>costs:manage</code>, <code>compliance:manage</code>, <code>resources:manage</code>, <code>identity:manage</code>, <code>users:manage</code>, <code>sync:trigger</code></td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Analyst</strong></td>
-<td>`analyst`</td>
+<td><code>analyst</code></td>
 <td>Read and export data across accessible modules. Cannot modify configuration.</td>
-<td>`costs:read`, `costs:export`, `compliance:read`, `resources:read`, `resources:export`, `identity:read`, `identity:export`</td>
+<td><code>costs:read</code>, <code>costs:export</code>, <code>compliance:read</code>, <code>resources:read</code>, <code>resources:export</code>, <code>identity:read</code>, <code>identity:export</code></td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Viewer</strong></td>
-<td>`viewer`</td>
+<td><code>viewer</code></td>
 <td>Read-only dashboard access. No exports, no writes.</td>
-<td>`dashboard:read`, `costs:read`, `compliance:read`, `resources:read`, `identity:read`</td>
+<td><code>dashboard:read</code>, <code>costs:read</code>, <code>compliance:read</code>, <code>resources:read</code>, <code>identity:read</code></td>
 </tr>
 </tbody></table>
 <h3>Permission String Registry</h3>
 <p>Format: <code>resource:action</code> (OAuth2 scope convention).</p>
-<pre><code>
-dashboard:read
+<pre><code>dashboard:read
 costs:read        costs:export       costs:manage
 compliance:read   compliance:write   compliance:manage
 resources:read    resources:export   resources:manage
@@ -163,132 +166,125 @@ recommendations:read
 monitoring:read   monitoring:manage
 </code></pre>
 <h3>Role → Permission Mapping (Containment Hierarchy)</h3>
-<pre><code>
-Viewer ⊂ Analyst ⊂ TenantAdmin ⊂ Admin (wildcard)
+<pre><code>Viewer ⊂ Analyst ⊂ TenantAdmin ⊂ Admin (wildcard)
 </code></pre>
 <ul>
 <li><strong>Viewer</strong> gets all <code>*:read</code> permissions (no exports, no writes)</li>
 <li><strong>Analyst</strong> gets Viewer + all <code>*:export</code> permissions</li>
 <li><strong>TenantAdmin</strong> gets Analyst + all <code>*:manage</code>, <code>*:write</code>, <code>*:trigger</code>, <code>*:run</code> permissions (except <code>system:admin</code>, <code>tenants:manage</code>)</li>
 <li><strong>Admin</strong> gets wildcard <code>*</code> (all permissions, including <code>system:admin</code> and <code>tenants:manage</code>)</li>
-<h3>Legacy Role Mapping</h3>
 </ul>
+<h3>Legacy Role Mapping</h3>
+<p>Existing role strings continue to work through a mapping table:</p>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Legacy Role</th>
 <th>Maps To</th>
 <th>Rationale</th>
 </tr>
-</tr></thead><tbody>
-<tr>
-<td>`"admin"`</td>
-<td>`admin`</td>
+</thead>
+<tbody><tr>
+<td><code>&quot;admin&quot;</code></td>
+<td><code>admin</code></td>
 <td>Unchanged — wildcard</td>
 </tr>
-</tr></thead><tbody>
 <tr>
-<td>`"operator"`</td>
-<td>`tenant_admin`</td>
+<td><code>&quot;operator&quot;</code></td>
+<td><code>tenant_admin</code></td>
 <td>Closest equivalent</td>
 </tr>
-</tr></thead><tbody>
 <tr>
-<td>`"reader"`</td>
-<td>`viewer`</td>
+<td><code>&quot;reader&quot;</code></td>
+<td><code>viewer</code></td>
 <td>Closest equivalent</td>
 </tr>
-</tr></thead><tbody>
 <tr>
-<td>`"user"`</td>
-<td>`viewer`</td>
+<td><code>&quot;user&quot;</code></td>
+<td><code>viewer</code></td>
 <td>Default role</td>
 </tr>
 </tbody></table>
 <h3>Key Implementation Components</h3>
 <p><strong><code>app/core/permissions.py</code></strong> — Permission enum, Role enum, <code>ROLE_PERMISSIONS</code> frozen set mappings, <code>LEGACY_ROLE_MAP</code>, and resolution functions (<code>resolve_user_permissions</code>, <code>has_permission</code>).</p>
-<p><strong><code>app/core/rbac.py</code></strong> — FastAPI dependency <code>require_permissions(["costs:read"])</code> that resolves permissions from <code>user.roles</code> and checks against required permissions. Validates permission strings at import time (fail-fast on typos).</p>
+<p><strong><code>app/core/rbac.py</code></strong> — FastAPI dependency <code>require_permissions([&quot;costs:read&quot;])</code> that resolves permissions from <code>user.roles</code> and checks against required permissions. Validates permission strings at import time (fail-fast on typos).</p>
 <p><strong><code>User.permissions</code> property</strong> — Computed property on the existing <code>User</code> model that resolves the full permission set from <code>user.roles</code>. Cached per request instance.</p>
 <h3>Route Migration Pattern</h3>
 <p>Routes migrate incrementally from <code>require_roles()</code> to <code>require_permissions()</code>:</p>
-<pre><code class="language-python">
-# Before (still works — backward compatible)
-@router.get("/costs")
-async def get_costs(user: User = Depends(require_roles(["admin", "operator"]))):
+<pre><code class="language-python"># Before (still works — backward compatible)
+@router.get(&quot;/costs&quot;)
+async def get_costs(user: User = Depends(require_roles([&quot;admin&quot;, &quot;operator&quot;]))):
     ...
 
 # After (granular)
-@router.get("/costs")  
-async def get_costs(user: User = Depends(require_permissions(["costs:read"]))):
+@router.get(&quot;/costs&quot;)  
+async def get_costs(user: User = Depends(require_permissions([&quot;costs:read&quot;]))):
     ...
 </code></pre>
 <p>Both patterns coexist during migration. <code>require_roles()</code> is never removed — it stays as a convenience wrapper.</p>
 <h3>Azure AD App Roles Integration</h3>
 <p>Define 4 App Roles in the Entra ID App Registration manifest:</p>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Display Name</th>
 <th>Value</th>
 <th>Allowed Member Types</th>
 </tr>
-</tr></thead><tbody>
-<tr>
+</thead>
+<tbody><tr>
 <td>Admin</td>
-<td>`admin`</td>
+<td><code>admin</code></td>
 <td>Users/Groups</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td>Tenant Admin</td>
-<td>`tenant_admin`</td>
+<td><code>tenant_admin</code></td>
 <td>Users/Groups</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td>Analyst</td>
-<td>`analyst`</td>
+<td><code>analyst</code></td>
 <td>Users/Groups</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td>Viewer</td>
-<td>`viewer`</td>
+<td><code>viewer</code></td>
 <td>Users/Groups</td>
 </tr>
 </tbody></table>
 <p>The JWT <code>roles</code> claim from Entra ID maps directly to the <code>Role</code> enum — replacing the brittle keyword-matching in <code>_map_groups_to_roles()</code>. Group-based mapping remains as a fallback during transition.</p>
 <h3>Migration Strategy</h3>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Phase</th>
 <th>Scope</th>
 <th>Breaking Changes</th>
 <th>Effort</th>
 </tr>
-</tr></thead><tbody>
-<tr>
+</thead>
+<tbody><tr>
 <td><strong>1: Foundation</strong></td>
-<td>Create `permissions.py`, `rbac.py`, tests. Add `permissions` property to `User`.</td>
+<td>Create <code>permissions.py</code>, <code>rbac.py</code>, tests. Add <code>permissions</code> property to <code>User</code>.</td>
 <td>None</td>
 <td>6 hours</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>2: Route migration</strong></td>
-<td>Replace `require_roles()` calls with `require_permissions()` one route file at a time.</td>
+<td>Replace <code>require_roles()</code> calls with <code>require_permissions()</code> one route file at a time.</td>
 <td>None — both coexist</td>
 <td>8 hours</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>3: Entra ID</strong></td>
-<td>Define App Roles in manifest. Update `validate_token()` to prefer `roles` claim over group matching.</td>
+<td>Define App Roles in manifest. Update <code>validate_token()</code> to prefer <code>roles</code> claim over group matching.</td>
 <td>None — fallback preserved</td>
 <td>4 hours</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>4: Cleanup</strong></td>
-<td>Deprecate `UserTenant.can_*` boolean flags. Update `UserTenant.role` values to new role slugs.</td>
+<td>Deprecate <code>UserTenant.can_*</code> boolean flags. Update <code>UserTenant.role</code> values to new role slugs.</td>
 <td>DB migration (additive)</td>
 <td>4 hours</td>
 </tr>
@@ -296,69 +292,70 @@ async def get_costs(user: User = Depends(require_permissions(["costs:read"]))):
 <h3>Consequences</h3>
 <p><strong>Good:</strong></p>
 <ul>
-<li>Least-privilege enforcement — viewers can't trigger syncs, analysts can't manage compliance</li>
+<li>Least-privilege enforcement — viewers can&#39;t trigger syncs, analysts can&#39;t manage compliance</li>
 <li>Zero new dependencies — pure Python, standard FastAPI patterns</li>
-<li>Fully backward compatible — existing <code>"admin" in user.roles</code> checks unchanged</li>
+<li>Fully backward compatible — existing <code>&quot;admin&quot; in user.roles</code> checks unchanged</li>
 <li>Testable — permission sets are frozen sets, role containment hierarchy is assertable</li>
 <li>Azure AD native — App Roles map 1:1 to our Role enum</li>
 </ul>
+<p><strong>Bad:</strong></p>
 <ul>
 <li>Role changes require code deployment (acceptable for 4 predefined roles)</li>
 <li>Two authorization patterns coexist during migration (<code>require_roles</code> + <code>require_permissions</code>)</li>
 <li>No per-tenant role customization in Phase 1 (e.g., user is Analyst in tenant A but Viewer in tenant B) — requires Phase 4</li>
 </ul>
+<p><strong>Neutral:</strong></p>
 <ul>
 <li>Token size unchanged — roles stay in JWT, permissions resolved server-side</li>
 <li>Persona system unaffected — personas gate UI visibility, permissions gate actions</li>
+</ul>
 <h3>Confirmation</h3>
+<ul>
 <li><code>tests/architecture/test_rbac_permissions.py</code> — validates permission string format, role hierarchy containment, legacy mapping</li>
 <li><code>tests/unit/test_permissions.py</code> — unit tests for <code>has_permission</code>, <code>resolve_user_permissions</code></li>
-<li>Manual: verify <code>require_roles(["admin"])</code> still works after Phase 1</li>
+<li>Manual: verify <code>require_roles([&quot;admin&quot;])</code> still works after Phase 1</li>
+</ul>
 <h2>STRIDE Security Analysis</h2>
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Threat Category</th>
 <th>Risk Level</th>
 <th>Mitigation</th>
 </tr>
-</tr></thead><tbody>
-<tr>
+</thead>
+<tbody><tr>
 <td><strong>Spoofing</strong></td>
 <td>Low</td>
-<td>Permissions resolved server-side from authenticated `user.roles`. Cannot be forged — role claim is signed in JWT by Azure AD or internal key.</td>
+<td>Permissions resolved server-side from authenticated <code>user.roles</code>. Cannot be forged — role claim is signed in JWT by Azure AD or internal key.</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Tampering</strong></td>
 <td>Low</td>
-<td>Permission sets are `frozenset` in code — immutable at runtime. No database-stored permissions to tamper with. Role-permission mappings are version-controlled.</td>
+<td>Permission sets are <code>frozenset</code> in code — immutable at runtime. No database-stored permissions to tamper with. Role-permission mappings are version-controlled.</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Repudiation</strong></td>
 <td>Medium</td>
-<td>`require_permissions()` logs denied attempts with user ID, required permission, and granted permissions. Recommend adding audit log entries for write/manage actions in Phase 2.</td>
+<td><code>require_permissions()</code> logs denied attempts with user ID, required permission, and granted permissions. Recommend adding audit log entries for write/manage actions in Phase 2.</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Information Disclosure</strong></td>
 <td>Low</td>
-<td>403 response includes required permission name (acceptable — it's not sensitive). Permission sets themselves are in source code, not exposed via API.</td>
+<td>403 response includes required permission name (acceptable — it&#39;s not sensitive). Permission sets themselves are in source code, not exposed via API.</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Denial of Service</strong></td>
 <td>Low</td>
-<td>Permission resolution is a `set` lookup — O(1). No database queries, no external calls. No cache invalidation needed.</td>
+<td>Permission resolution is a <code>set</code> lookup — O(1). No database queries, no external calls. No cache invalidation needed.</td>
 </tr>
-</tr></thead><tbody>
 <tr>
 <td><strong>Elevation of Privilege</strong></td>
 <td>Medium</td>
-<td>Wildcard `*` only assigned to `admin` role. Legacy role mapping is explicit (`LEGACY_ROLE_MAP`). Fail-closed: unknown roles get zero permissions. Risk: if `UserTenant.role` column contains unexpected values, they'll map to zero permissions (safe default).</td>
+<td>Wildcard <code>*</code> only assigned to <code>admin</code> role. Legacy role mapping is explicit (<code>LEGACY_ROLE_MAP</code>). Fail-closed: unknown roles get zero permissions. Risk: if <code>UserTenant.role</code> column contains unexpected values, they&#39;ll map to zero permissions (safe default).</td>
 </tr>
 </tbody></table>
-</ul>
+<p><strong>Overall Security Posture:</strong> Improves the platform from binary (admin/not-admin) to least-privilege authorization. The code-defined approach eliminates an entire class of misconfiguration risks (database-stored permissions being modified). The main residual risk is the transition period where some routes use <code>require_roles()</code> (coarse) while others use <code>require_permissions()</code> (granular).</p>
 <h2>Pros and Cons of the Options</h2>
 <h3>Option 1: Code-Defined Roles with Permission Strings (Chosen)</h3>
 <ul>
@@ -370,15 +367,19 @@ async def get_costs(user: User = Depends(require_permissions(["costs:read"]))):
 <li>Neutral, because role changes require code deployment (acceptable for 4 roles)</li>
 <li>Bad, because no runtime role customization without deployment</li>
 <li>Bad, because no per-tenant role overrides until Phase 4</li>
+</ul>
 <h3>Option 2: PyCasbin Policy Engine</h3>
+<ul>
 <li>Good, because supports complex policies (RBAC, ABAC, multi-tenancy) via declarative DSL</li>
 <li>Good, because well-maintained open source (Apache 2.0)</li>
 <li>Neutral, because supports policy hot-reload without deployment</li>
 <li>Bad, because massive overkill for 4 roles × 5 tenants — learning curve unjustified</li>
 <li>Bad, because adds dependency and operational complexity (policy files, adapters)</li>
 <li>Bad, because team unfamiliar with Casbin DSL — higher onboarding cost</li>
-<li>Bad, because doesn't integrate with Entra ID App Roles without custom adapter</li>
+<li>Bad, because doesn&#39;t integrate with Entra ID App Roles without custom adapter</li>
+</ul>
 <h3>Option 3: Database-Driven Role/Permission Tables</h3>
+<ul>
 <li>Good, because runtime-modifiable roles via admin UI</li>
 <li>Good, because supports per-tenant role customization natively</li>
 <li>Neutral, because familiar RDBMS pattern</li>
@@ -387,17 +388,19 @@ async def get_costs(user: User = Depends(require_permissions(["costs:read"]))):
 <li>Bad, because misconfiguration risk — wrong DB entry could grant unintended access</li>
 <li>Bad, because harder to test — needs database fixtures, not just frozen sets</li>
 <li>Bad, because overkill for 4 predefined roles that rarely change</li>
+</ul>
 <h2>More Information</h2>
+<ul>
 <li><strong>Research</strong>: <code>research/rbac-fastapi/</code> — full analysis, source evaluation, implementation guide</li>
 <li><strong>Related ADR</strong>: ADR-0007 (Auth Evolution) — covers authentication layer this builds on</li>
 <li><strong>Personas</strong>: <code>app/core/personas.py</code> — separate UI-gating concern, unaffected by this ADR</li>
 <li><strong>Tenant auth</strong>: <code>app/core/authorization.py</code> — <code>TenantAuthorization</code> class, unaffected by this ADR</li>
 <li><strong>Current roles code</strong>: <code>app/core/auth.py</code> — <code>User.has_role()</code>, <code>require_roles()</code>, <code>_map_groups_to_roles()</code></li>
 </ul>
-<p><strong>Template Version:</strong> MADR 4.0 (September 2024) with STRIDE Security Analysis  </p>
-<p><strong>Last Updated:</strong> 2025-07-11  </p>
-<p><strong>Maintained By:</strong> Solutions Architect 🏛️</p>
-</div>
+<hr>
+<p><strong>Template Version:</strong> MADR 4.0 (September 2024) with STRIDE Security Analysis<br><strong>Last Updated:</strong> 2025-07-11<br><strong>Maintained By:</strong> Solutions Architect 🏛️</p>
+
+      </div>
     </section>
   </main>
 
@@ -413,7 +416,7 @@ async def get_costs(user: User = Depends(require_permissions(["costs:read"]))):
       </div>
     </div>
     <div class="footer-bottom">
-      <p>Production Certified · Rock Solid · v2.5.0</p>
+      <p>HTT Control Tower · v2.5.0 · <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> for live status</p>
     </div>
   </footer>
 

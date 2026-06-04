@@ -2,14 +2,19 @@
   "name": "control-tower-design-system",
   "version": "1.0.0",
   "private": true,
-  "description": "Build-time devDependencies for the HTT Control Tower CSS pipeline (Tailwind v4 + DaisyUI v5). Not consumed at runtime — the Python app serves pre-built CSS from app/static/css/.",
+  "description": "Build-time devDependencies for the HTT Control Tower CSS pipeline (Tailwind v4 + DaisyUI v5). Not consumed at runtime \u2014 the Python app serves pre-built CSS from app/static/css/.",
   "scripts": {
     "build:css": "tailwindcss -i app/static/css/input.css -o app/static/css/tailwind-output.css --minify",
-    "watch:css": "tailwindcss -i app/static/css/input.css -o app/static/css/tailwind-output.css --watch"
+    "watch:css": "tailwindcss -i app/static/css/input.css -o app/static/css/tailwind-output.css --watch",
+    "build:pages": "node scripts/build-detail-pages.js",
+    "check:pages": "node scripts/build-detail-pages.js --check"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
     "daisyui": "^5.0.0",
     "tailwindcss": "^4.1.0"
+  },
+  "dependencies": {
+    "marked": "18.0.5"
   }
 }
