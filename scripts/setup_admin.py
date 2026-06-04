@@ -14,6 +14,15 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# Provisionable role names, derived from the canonical Role enum + the legacy
+# aliases — so this list stays in lockstep with app/core/permissions.py instead
+# of drifting (the old hardcoded [admin, viewer, operator] couldn't provision a
+# Manager, which ct-hvv needs). Spec tier -> role: Admin=admin, Manager=manager,
+# Operator=operator (alias of tenant_admin), Viewer=viewer.
+from app.core.permissions import LEGACY_ROLE_MAP, Role
+
+ROLE_CHOICES = sorted({r.value for r in Role} | set(LEGACY_ROLE_MAP))
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -34,8 +43,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--role",
         default="admin",
-        choices=["admin", "viewer", "operator"],
-        help="Role to assign (default: admin)",
+        choices=ROLE_CHOICES,
+        help=(
+            "Role to assign (default: admin). Spec tiers map as "
+            "Admin=admin, Manager=manager, Operator=operator, Viewer=viewer."
+        ),
     )
     parser.add_argument(
         "--dry-run",

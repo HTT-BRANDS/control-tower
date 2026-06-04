@@ -20,6 +20,8 @@ The authoritative docs. If something here disagrees with a file in
 - [`INCIDENT_RESPONSE.md`](INCIDENT_RESPONSE.md) — severity matrix, escalation, on-call, comms templates
 - [`OPS_ONBOARDING.md`](OPS_ONBOARDING.md) — day-one walkthrough for the operations team
 - [`runbooks/`](runbooks/) — task-specific runbooks (sync recovery, secret fallback, GHCR auth, UAMI, …)
+  - [`runbooks/provision-ops-users.md`](runbooks/provision-ops-users.md) — add ops users at the right tier (ct-hvv)
+  - [`runbooks/staging-rollback-drill.md`](runbooks/staging-rollback-drill.md) — rehearse rollback on staging (ct-c60)
 - [`FULL_SEND_CRITERIA.md`](FULL_SEND_CRITERIA.md) — go/no-go decision matrix
 
 ## Architecture & platform
