@@ -8,6 +8,33 @@
 
 ---
 
+## 🔎 2026-06-04 audit — current ground truth (Richard `code-puppy-1725d8`)
+
+Re-grounded **live** this session (judge + `/healthz/data` + `diagnose_sync`).
+**This supersedes the 05-28 / 06-02 snapshots below wherever they conflict.**
+
+- **Prod health:** `healthy / 2.5.0 / production` (live).
+- **Judge (live):** **25/27 — RELEASE BLOCKED on P1.3 freshness.** (The other
+  "fail", P5.7 role-enum, is a local-env false negative — `fastapi` wasn't
+  installed in the audit shell; it passes in CI.)
+- **🚨 Freshness regression → `ct-cne` (P1, NEW):** the **4 CORE tenants — HTT,
+  BCC, FN, TLL — are now `stale=true`** (data >24h old). `diagnose_sync` shows
+  them complete (all domains present) but the **scheduler hasn't completed a
+  recent cycle** → complete-but-stale. This is the OPPOSITE of the 06-02
+  snapshot and is the **#1 blocker to ops-team usage** (dashboards show
+  >24h-old data).
+- **DCE:** the 2026-05-28 root-scope RBAC fix **landed** — DCE is now
+  `stale=false` for present domains, but still **missing `resources` +
+  `compliance`** entirely (2/4 — costs+identity only; ct-1m0 territory).
+- **Real remaining backlog = 9 bd issues** (refreshed list below; the 05-28
+  "19 alive" block has been replaced — most of it is long since closed).
+- **Docs drift:** the dated sections below are historical. The **bd DB is the
+  source of truth** for open work. `docs/` also carries heavy legacy sprawl
+  (many `PHASE_*` / `FINAL_*` / `IMPLEMENTATION_*` / duplicate `*ROADMAP*`
+  files) — archival is a tracked step in the to-100% plan.
+
+---
+
 ## Recent — 2026-06-02 session (live-verified)
 
 **Prod `/health`:** `healthy / 2.5.0 / production`. **`/healthz/data`:** `any_stale=true`.
@@ -105,47 +132,28 @@ Detailed analysis: `docs/design-system/gap-analysis-v1.md`.
 
 ---
 
-## 📋 Open bd issues (live as of 2026-05-28 late-evening)
+## 📋 Open bd issues — refreshed 2026-06-04 (9 non-closed; bd DB = source of truth)
 
-**Counts:** 7 in_progress (claimed P1 cluster) + 12 open (available to pick up) = **19 alive** | 0 P0 open | 1 P1 open | 3 P2 open | 7 P3 open | 1 P4 open
+> The previous "19 alive (as of 2026-05-28)" table was stale — nearly all of
+> that cluster (ct-1m0, ct-4iq, ct-4uu, ct-7oe, ct-las, ct-t5e, ct-y47, the
+> design-system Phase-C set, ct-2eo/8tg/a2t/lw2) has since been **closed**.
+> Live `bd list` now shows just these 9:
 
-### P0/P1 in_progress (claimed cluster — needs verification sweep)
+| ID | Pri | Status | Type | Title |
+|----|-----|--------|------|-------|
+| **ct-cne** | P1 | open | bug | ops(sync): prod data >24h stale for HTT/BCC/FN/TLL — judge P1.3 release-blocked **(the production blocker)** |
+| azure-governance-platform-9lfn | P1 | in_progress | docs | Tyler authors `SECRETS_OF_RECORD.md` — **human-only** (DR/legal provenance) |
+| azure-governance-platform-uchp | P2 | open | task | infra(dr): execute Q3 2026 quarterly DR test cycle (PITR + redeploy + KV recover) |
+| ct-f9p | P2 | open | task | infra: migrate App Service to UAMI for zero-secret cross-tenant auth (Step A done) |
+| └ ct-f9p.2 | P2 | open | task | Step B: staging cutover to UAMI + verify |
+| └ ct-f9p.3 | P2 | open | task | Step C: prod cutover + decommission client secrets |
+| ct-18z | P3 | open | task | ops(security): revoke domain-intelligence external creds at source (Cloudflare + Cloudways) |
+| ct-8zr | P3 | open | task | a11y: Swagger UI `nested-interactive` — **accepted vendored limitation (tracking only)** |
+| azure-governance-platform-m4xw | P4 | open | task | ops: automate quarterly audit-log archive to Blob Archive tier |
 
-| ID | Pri | Status | Title | Verification needed |
-|----|-----|--------|-------|---------------------|
-| **ct-1m0** | P0 | in_progress | DCE partial sync (resources + compliance failing) | Judge re-run 2026-05-28 23:04 still shows DCE stale — sync hasn't picked up the RBAC grant yet. **Re-run `diagnose_sync.py` after next hourly cycle, then close if green.** |
-| ct-4iq | P1 | in_progress | Treat zero-cost Azure tenants as fresh syncs | PR #63 should have addressed; verify against current `/healthz/data` payload |
-| ct-4uu | P1 | in_progress | Comprehensive E2E UAT endpoint/design-system health gate | Partially shipped via Playwright Manager test (PR #68); check remaining gaps |
-| ct-7oe | P1 | in_progress | Remaining tenant consent/RBAC gaps after sync recovery | DCE now has Reader+Security Reader; verify no other tenants missing |
-| ct-las | P1 | in_progress | Stabilize staging tenant credential source of truth | Staging hygiene — check whether KV-mode migration completed |
-| ct-t5e | P1 | in_progress | Production Riverside batch sync failures + ghost jobs | PR #63 should resolve — verify no ghost rows in `sync_logs` |
-| ct-y47 | P1 | in_progress | Restore production tenant credential resolution | PR #63 merged 2026-05-27 — should be closeable |
-
-**🔔 Action needed:** Run a **P1 verification sweep** — for each of the 6 P1s above, run the validation command and close-or-update.
-
-### P1 open (no verification — needs net-new work)
-
-| ID | Pri | Status | Title | Notes |
-|----|-----|--------|-------|-------|
-| azure-governance-platform-9lfn | P1 | open | Tyler authors SECRETS_OF_RECORD.md | **Tyler-only** (must be human-authored for legal/DR provenance) |
-
-### P2/P3/P4 — picked up by ralph loop
-
-| ID | Pri | Type | Title |
-|----|-----|------|-------|
-| azure-governance-platform-uchp | P2 | task | infra(dr): execute Q3 2026 quarterly DR test cycle |
-| ct-f9p | P2 | task | infra: long-term UAMI migration plan (App Service zero-secret) |
-| ct-lw2 | P2 | task | design-system: label arch diagram 'target' + add 'current' companion |
-| **ct-g93** | P3 | feature | design-system Phase C — custom badges → DaisyUI `badge` *(filed 2026-05-28)* |
-| **ct-2cr** | P3 | feature | design-system Phase C — custom buttons → DaisyUI `btn` *(filed 2026-05-28)* |
-| **ct-dsi** | P3 | feature | design-system Phase C — hand-rolled cards → DaisyUI `card` *(filed 2026-05-28)* |
-| **ct-kc7** | P3 | chore | design-system: remove backward-compat `@utility` shims (post-Phase-C) *(filed 2026-05-28)* |
-| ct-2eo | P3 | task | ops(rebrand): remove legacy azure-governance-platform JWT issuer after TTL |
-| ct-8tg | P3 | task | ops: re-check domain-intelligence PG pause after auto-start window |
-| ct-a2t | P3 | bug | ops: remove stale `79c22a10` app_id refs from other scripts |
-| azure-governance-platform-m4xw | P4 | task | ops: automate quarterly audit-log archive to Blob Archive tier |
-
-**Recently closed this session (2026-05-28 evening):** ct-uij (DaisyUI 5.x Phases A+B), ct-buo (Playwright Manager RBAC test) → see PR #68.
+**The to-100%-production plan lives in `docs/PRODUCTION_READINESS_PLAN.md`** —
+it sequences all of the above plus the operational/team-readiness gates the
+bd backlog doesn't capture (ops onboarding, alerting, on-call, runbook review).
 
 ---
 
