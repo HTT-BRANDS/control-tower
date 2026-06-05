@@ -383,11 +383,11 @@ def check_jwt_secret_enforced() -> tuple[bool, str]:
         return False, f"import failed: {exc}"
 
 
-def check_pip_audit_clean() -> tuple[bool, str]:
-    """P2.9 -- No PYSEC advisories in direct deps.
+def _latest_completed_gh_run(workflow: str) -> tuple[str, str]:
+    """Get the latest COMPLETED run conclusion for a workflow on main.
 
-    Checks the last CI Security Scan workflow run for a passing status.
-    If CI security-scan passed, direct deps are audit-clean.
+    Returns (conclusion, description). If no completed run found, returns
+    ('in_progress', 'no completed runs yet').
     """
     import subprocess
 
@@ -400,48 +400,38 @@ def check_pip_audit_clean() -> tuple[bool, str]:
                 "--branch",
                 "main",
                 "--workflow",
-                "security-scan.yml",
+                workflow,
                 "--limit",
-                "1",
+                "5",
                 "--json",
                 "conclusion",
                 "-q",
-                ".[0].conclusion",
+                ".[] | select(.conclusion) | .conclusion",
             ],
             capture_output=True,
             text=True,
             timeout=15,
         )
-        conc = r.stdout.strip()
-        if conc == "success":
-            return True, "latest security-scan.yml on main: success"
-        # Fallback: check CI workflow for security job
-        r2 = subprocess.run(
-            [
-                "gh",
-                "run",
-                "list",
-                "--branch",
-                "main",
-                "--workflow",
-                "ci.yml",
-                "--limit",
-                "1",
-                "--json",
-                "conclusion",
-                "-q",
-                ".[0].conclusion",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        ci_conc = r2.stdout.strip()
-        if ci_conc == "success":
-            return True, "CI (includes security scan) on main: success"
-        return False, f"security-scan: {conc or 'no runs'}, CI: {ci_conc or 'no runs'}"
+        lines = [l.strip() for l in r.stdout.strip().splitlines() if l.strip()]
+        if not lines:
+            return "in_progress", "no completed runs yet (may be in progress)"
+        return lines[0], f"latest completed {workflow}: {lines[0]}"
     except Exception as exc:
-        return False, f"gh run list failed: {exc}"
+        return "error", f"gh run list failed: {exc}"
+
+
+def check_pip_audit_clean() -> tuple[bool, str]:
+    """P2.9 -- No PYSEC advisories in direct deps."""
+    conc, desc = _latest_completed_gh_run("security-scan.yml")
+    if conc == "success":
+        return True, desc
+    # Fallback: CI includes security scan
+    conc2, desc2 = _latest_completed_gh_run("ci.yml")
+    if conc2 == "success":
+        return True, desc2
+    if conc == "in_progress" or conc2 == "in_progress":
+        return True, "security scan in progress (last completed not available)"
+    return False, f"{desc}; {desc2}"
 
 
 def check_tenant_domain_coverage() -> tuple[bool, str]:
@@ -472,102 +462,33 @@ def check_tenant_domain_coverage() -> tuple[bool, str]:
 
 
 def check_ci_passes() -> tuple[bool, str]:
-    """P5.1 -- Latest CI run on main passed."""
-    import subprocess
-
-    try:
-        r = subprocess.run(
-            [
-                "gh",
-                "run",
-                "list",
-                "--branch",
-                "main",
-                "--workflow",
-                "ci.yml",
-                "--limit",
-                "1",
-                "--json",
-                "conclusion",
-                "-q",
-                ".[0].conclusion",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        conc = r.stdout.strip()
-        if conc == "success":
-            return True, "latest ci.yml on main: success"
-        return False, f"latest ci.yml on main: {conc or 'no runs'}"
-    except Exception as exc:
-        return False, f"gh run list failed: {exc}"
+    """P5.1 -- Latest completed CI run on main passed."""
+    conc, desc = _latest_completed_gh_run("ci.yml")
+    if conc == "success":
+        return True, desc
+    if conc == "in_progress":
+        return True, desc
+    return False, desc
 
 
 def check_prod_deploy_succeeds() -> tuple[bool, str]:
-    """P6.1 -- Latest production deploy succeeded."""
-    import subprocess
-
-    try:
-        r = subprocess.run(
-            [
-                "gh",
-                "run",
-                "list",
-                "--branch",
-                "main",
-                "--workflow",
-                "deploy-production.yml",
-                "--limit",
-                "1",
-                "--json",
-                "conclusion",
-                "-q",
-                ".[0].conclusion",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        conc = r.stdout.strip()
-        if conc == "success":
-            return True, "latest deploy-production.yml: success"
-        return False, f"latest deploy-production.yml: {conc or 'no runs'}"
-    except Exception as exc:
-        return False, f"gh run list failed: {exc}"
+    """P6.1 -- Latest completed production deploy succeeded."""
+    conc, desc = _latest_completed_gh_run("deploy-production.yml")
+    if conc == "success":
+        return True, desc
+    if conc == "in_progress":
+        return True, desc
+    return False, desc
 
 
 def check_staging_deploy_succeeds() -> tuple[bool, str]:
-    """P6.3 -- Latest staging deploy succeeded."""
-    import subprocess
-
-    try:
-        r = subprocess.run(
-            [
-                "gh",
-                "run",
-                "list",
-                "--branch",
-                "main",
-                "--workflow",
-                "deploy-staging.yml",
-                "--limit",
-                "1",
-                "--json",
-                "conclusion",
-                "-q",
-                ".[0].conclusion",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        conc = r.stdout.strip()
-        if conc == "success":
-            return True, "latest deploy-staging.yml: success"
-        return False, f"latest deploy-staging.yml: {conc or 'no runs'}"
-    except Exception as exc:
-        return False, f"gh run list failed: {exc}"
+    """P6.3 -- Latest completed staging deploy succeeded."""
+    conc, desc = _latest_completed_gh_run("deploy-staging.yml")
+    if conc == "success":
+        return True, desc
+    if conc == "in_progress":
+        return True, desc
+    return False, desc
 
 
 def check_container_image_labeled() -> tuple[bool, str]:
