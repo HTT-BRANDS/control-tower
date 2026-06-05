@@ -163,52 +163,53 @@ def _html_wrapper(body_md: str) -> str:
     """Wrap markdown content in a proper HTML page for GitHub Pages."""
     # Convert basic markdown to HTML (tables, headers, code, links)
     import re
+
     html = body_md
     # Headers
-    html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.M)
-    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.M)
-    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.M)
+    html = re.sub(r"^### (.+)$", r"<h3>\1</h3>", html, flags=re.M)
+    html = re.sub(r"^## (.+)$", r"<h2>\1</h2>", html, flags=re.M)
+    html = re.sub(r"^# (.+)$", r"<h1>\1</h1>", html, flags=re.M)
     # Bold/italic
-    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-    html = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html)
+    html = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html)
+    html = re.sub(r"\*(.+?)\*", r"<em>\1</em>", html)
     # Inline code (not already in <pre>)
-    html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
+    html = re.sub(r"`([^`]+)`", r"<code>\1</code>", html)
     # Links
-    html = re.sub(r'\[(.+?)\]\((.+?)\)', r'<a href="\2">\1</a>', html)
+    html = re.sub(r"\[(.+?)\]\((.+?)\)", r'<a href="\2">\1</a>', html)
     # Tables (simple pipe tables)
-    lines = html.split('\n')
+    lines = html.split("\n")
     in_table = False
     result = []
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith('|') and stripped.endswith('|'):
+        if stripped.startswith("|") and stripped.endswith("|"):
             if not in_table:
-                result.append('<table>')
+                result.append("<table>")
                 in_table = True
-                cells = [c.strip() for c in stripped.split('|')[1:-1]]
-                result.append('<thead><tr>')
+                cells = [c.strip() for c in stripped.split("|")[1:-1]]
+                result.append("<thead><tr>")
                 for c in cells:
-                    result.append(f'<th>{c}</th>')
-                result.append('</tr></thead><tbody>')
-            elif all(set(c.strip()) <= {'-', ':', ' '} for c in stripped.split('|')[1:-1]):
+                    result.append(f"<th>{c}</th>")
+                result.append("</tr></thead><tbody>")
+            elif all(set(c.strip()) <= {"-", ":", " "} for c in stripped.split("|")[1:-1]):
                 # separator row, skip
                 continue
             else:
-                cells = [c.strip() for c in stripped.split('|')[1:-1]]
-                result.append('<tr>')
+                cells = [c.strip() for c in stripped.split("|")[1:-1]]
+                result.append("<tr>")
                 for c in cells:
-                    result.append(f'<td>{c}</td>')
-                result.append('</tr>')
+                    result.append(f"<td>{c}</td>")
+                result.append("</tr>")
         else:
             if in_table:
-                result.append('</tbody></table>')
+                result.append("</tbody></table>")
                 in_table = False
             result.append(line)
     if in_table:
-        result.append('</tbody></table>')
-    html = '\n'.join(result)
+        result.append("</tbody></table>")
+    html = "\n".join(result)
     # Paragraphs (loose lines not in tags)
-    html = re.sub(r'^([^<\n].+)$', r'<p>\1</p>', html, flags=re.M)
+    html = re.sub(r"^([^<\n].+)$", r"<p>\1</p>", html, flags=re.M)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -304,7 +305,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # Strip YAML front-matter for HTML conversion
     import re
-    md_body = re.sub(r'^---\r?\n.*?\r?\n---\r?\n\s*', '', md_text, count=1, flags=re.S)
+
+    md_body = re.sub(r"^---\r?\n.*?\r?\n---\r?\n\s*", "", md_text, count=1, flags=re.S)
     Path(args.html).write_text(_html_wrapper(md_body), encoding="utf-8")
     print(f"wrote {args.html}")
     return 0

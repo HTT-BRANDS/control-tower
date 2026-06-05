@@ -31,11 +31,14 @@ PROD_PAGES = [
 ]
 
 AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js"
-AXE_INJECT_SCRIPT = """
+AXE_INJECT_SCRIPT = (
+    """
 async () => {
     // Inject axe-core
     const s = document.createElement('script');
-    s.src = '""" + AXE_CDN + """';
+    s.src = '"""
+    + AXE_CDN
+    + """';
     document.head.appendChild(s);
     await new Promise(r => s.onload = r);
     // Run axe
@@ -60,6 +63,7 @@ async () => {
     };
 }
 """
+)
 
 
 def _fetch_json(url: str) -> dict | None:
@@ -152,7 +156,9 @@ def main() -> int:
             if r.get("error"):
                 print(f"    ERROR: {r['error']}")
             else:
-                print(f"    {v_count} violations, {i_count} incomplete, {r.get('passes',0)} rules passed")
+                print(
+                    f"    {v_count} violations, {i_count} incomplete, {r.get('passes', 0)} rules passed"
+                )
 
         # Scan prod API endpoints (these return JSON, not HTML)
         for name, url in PROD_PAGES:
@@ -161,13 +167,17 @@ def main() -> int:
             if data:
                 print("    OK - JSON response received")
                 results["pages"][name] = {
-                    "url": url, "type": "api", "status": "ok",
+                    "url": url,
+                    "type": "api",
+                    "status": "ok",
                     "keys": list(data.keys())[:10],
                 }
             else:
                 print("    FAIL - no response")
                 results["pages"][name] = {
-                    "url": url, "type": "api", "status": "fail",
+                    "url": url,
+                    "type": "api",
+                    "status": "fail",
                 }
 
         # Also scan mobile viewport
@@ -182,7 +192,9 @@ def main() -> int:
             "incomplete": r.get("incomplete", []),
             "passes": r.get("passes", 0),
         }
-        print(f"    {len(r.get('violations',[]))} violations, {len(r.get('incomplete',[]))} incomplete")
+        print(
+            f"    {len(r.get('violations', []))} violations, {len(r.get('incomplete', []))} incomplete"
+        )
 
         mobile_ctx.close()
         browser.close()
@@ -211,7 +223,8 @@ def main() -> int:
             icon = "PASS" if ok else "WARN"
             print(f"  [{icon}] {name} load time: {elapsed:.2f}s (threshold: 3s)")
             results.setdefault("ux", {})[f"{name}_load"] = {
-                "seconds": round(elapsed, 2), "ok": ok,
+                "seconds": round(elapsed, 2),
+                "ok": ok,
             }
 
         # Check responsive nav works
@@ -227,7 +240,9 @@ def main() -> int:
             results.setdefault("ux", {})["mobile_nav"] = visible
             # Check aria-expanded was toggled
             expanded = toggle.get_attribute("aria-expanded")
-            print(f"  [{'PASS' if expanded == 'true' else 'FAIL'}] aria-expanded toggled: {expanded}")
+            print(
+                f"  [{'PASS' if expanded == 'true' else 'FAIL'}] aria-expanded toggled: {expanded}"
+            )
             results.setdefault("ux", {})["aria_toggle"] = expanded == "true"
         else:
             print("  [WARN] Nav toggle or nav-links not found")
@@ -241,7 +256,9 @@ def main() -> int:
         page.set_viewport_size({"width": 1280, "height": 900})
         page.goto("http://localhost:8099/", wait_until="networkidle")
         page.keyboard.press("Tab")
-        focused = page.evaluate("() => document.activeElement?.classList?.contains('skip-link') || document.activeElement?.tagName === 'A'")
+        focused = page.evaluate(
+            "() => document.activeElement?.classList?.contains('skip-link') || document.activeElement?.tagName === 'A'"
+        )
         print(f"  [{'PASS' if focused else 'FAIL'}] Keyboard focus reaches interactive element")
         results.setdefault("ux", {})["keyboard_focus"] = bool(focused)
 
@@ -281,11 +298,13 @@ def main() -> int:
     print("=" * 72)
 
     total_violations = sum(
-        len(p.get("violations", [])) for p in results["pages"].values()
+        len(p.get("violations", []))
+        for p in results["pages"].values()
         if p.get("type", "").startswith("static")
     )
     total_incomplete = sum(
-        len(p.get("incomplete", [])) for p in results["pages"].values()
+        len(p.get("incomplete", []))
+        for p in results["pages"].values()
         if p.get("type", "").startswith("static")
     )
     content_passes = sum(1 for v in results["content"].values() if v)
@@ -301,7 +320,9 @@ def main() -> int:
         print("\n  VIOLATION DETAILS:")
         for page_name, page_data in results["pages"].items():
             for v in page_data.get("violations", []):
-                print(f"    [{page_name}] {v['id']} ({v['impact']}) - {v['description']} [{v['nodes']} nodes]")
+                print(
+                    f"    [{page_name}] {v['id']} ({v['impact']}) - {v['description']} [{v['nodes']} nodes]"
+                )
 
     if total_incomplete > 0:
         print("\n  INCOMPLETE (needs manual review):")
