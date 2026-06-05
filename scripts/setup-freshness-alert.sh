@@ -27,9 +27,12 @@
 #   ./scripts/setup-freshness-alert.sh                # uses defaults below
 #   APP_INSIGHTS=my-ai ./scripts/setup-freshness-alert.sh
 #
-# NOTE: `az monitor app-insights web-test` flags vary slightly across CLI
-# versions. If a flag is rejected, see the PORTAL FALLBACK block printed at the
-# end — the same test is 4 clicks in the portal.
+# STATUS: The metric-alert half (az monitor metrics alert create) is live and
+# working. The web-test half (az monitor app-insights web-test create) fails
+# because this az CLI version doesn't support --content-match for standard
+# tests. The webtests need to be created in the portal (see PORTAL FALLBACK
+# below) — it's 4 clicks each. This is a known Azure CLI limitation, not a
+# script bug.
 # =============================================================================
 
 set -euo pipefail
@@ -109,22 +112,26 @@ make_test "data-freshness" "/healthz/data" '"any_stale":false' 1
 make_test "scheduler-live" "/healthz/scheduler" '"running":true' 2
 
 echo ""
-echo -e "${GREEN}+ Freshness alerting wired (or scaffolded).${NC}"
+echo -e "${GREEN}+ Metric alerts wired.${NC}"
+echo -e "${YELLOW}! Webtests require the portal (CLI doesn't support --content-match).${NC}"
 echo ""
-echo "Verify in portal (Availability):"
-echo "  https://portal.azure.com/#@/resource${AI_ID}/availability"
+echo "═════════════════════ PORTAL STEPS (required for content-match) ════════════════"
 echo ""
-echo "Test-fire the action group (confirms ops actually gets paged):"
-echo "  az monitor action-group test-notifications create \\"
-echo "    --action-group $ACTION_GROUP --resource-group $RESOURCE_GROUP \\"
-echo "    --notification-type Webhook --alert-type budget"
+echo "  1. Open: https://portal.azure.com/#resource${AI_ID}/availability"
+echo "  2. Click 'Add Standard test'"
+echo "  3. Fill in:"
+echo "     Test name:    data-freshness"
+echo "     URL:          ${BASE_URL}/healthz/data"
+echo "     Content match: \"any_stale\":false   (THIS IS THE KEY — what makes it a freshness test, not just a ping)"
+echo "     Frequency:    5 min, 3+ locations (us-tx, us-il, us-ca)"
+echo "     Alerts:       enable, severity 1 (critical), action group = $ACTION_GROUP"
+echo "  4. Create."
 echo ""
-echo "----------------------------- PORTAL FALLBACK -------------------------------"
-echo "If the CLI rejected a flag, the same test is quick in the portal:"
-echo "  App Insights ($APP_INSIGHTS) -> Availability -> Add Standard test"
-echo "    URL:           ${BASE_URL}/healthz/data"
-echo "    Success when:  Content match  ->  \"any_stale\":false"
-echo "    Frequency:     5 min, 3+ locations"
-echo "    Alerts:        enable, severity 1, action group = $ACTION_GROUP"
-echo "  Repeat for ${BASE_URL}/healthz/scheduler  with match  \"running\":true"
-echo "-----------------------------------------------------------------------------"
+echo "  Repeat for the scheduler-liveness test:"
+echo "     Test name:    scheduler-live"
+echo "     URL:          ${BASE_URL}/healthz/scheduler"
+echo "     Content match: \"running\":true"
+echo "     (Leave DISABLED until PR #102 is deployed and /healthz/scheduler returns 200)"
+echo ""
+echo "  That's it — 2 tests, ~2 minutes total."
+echo "══════════════════════════════════════════════════════════════════════════════"
