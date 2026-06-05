@@ -6,6 +6,7 @@ az CLI doesn't support --content-match for standard webtests.
 
 Requires: azure-identity, azure-mgmt-applicationinsights, azure-mgmt-monitor
 """
+
 import argparse
 
 from azure.identity import AzureCliCredential
@@ -175,7 +176,9 @@ def main() -> None:
     # 1. Data-freshness webtest (severity 1 = error-level)
     print(f"\n  [1/2] data-freshness  ({args.base_url}/healthz/data)")
     create_webtest(
-        ai_client, args.resource_group, args.app_insights_id,
+        ai_client,
+        args.resource_group,
+        args.app_insights_id,
         name="data-freshness",
         url=f"{args.base_url}/healthz/data",
         content_match='"any_stale":false',
@@ -188,7 +191,10 @@ def main() -> None:
         ),
     )
     create_metric_alert(
-        mon_client, args.resource_group, args.app_insights_id, args.action_group_id,
+        mon_client,
+        args.resource_group,
+        args.app_insights_id,
+        args.action_group_id,
         test_name="data-freshness",
         severity=1,
         description=(
@@ -201,7 +207,9 @@ def main() -> None:
     sched_label = "ENABLED" if enable_scheduler else "DISABLED (until PR #102 deploys)"
     print(f"\n  [2/2] scheduler-live  ({args.base_url}/healthz/scheduler)  [{sched_label}]")
     create_webtest(
-        ai_client, args.resource_group, args.app_insights_id,
+        ai_client,
+        args.resource_group,
+        args.app_insights_id,
         name="scheduler-live",
         url=f"{args.base_url}/healthz/scheduler",
         content_match='"running":true',
@@ -215,7 +223,10 @@ def main() -> None:
     )
     if enable_scheduler:
         create_metric_alert(
-            mon_client, args.resource_group, args.app_insights_id, args.action_group_id,
+            mon_client,
+            args.resource_group,
+            args.app_insights_id,
+            args.action_group_id,
             test_name="scheduler-live",
             severity=2,
             description=(
