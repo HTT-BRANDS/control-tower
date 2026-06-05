@@ -42,7 +42,7 @@
     <!-- Hero -->
     <section class="hero">
       <div class="hero-inner">
-        <span class="hero-badge">Production deployed · healthy / 2.5.0 / production</span>
+        <span class="hero-badge">Production live · all 5 tenants fresh · scheduler running · 11 alerts · 4 webtests</span>
         <h1 class="hero-title">HTT Control<br>&nbsp;Tower</h1>
         <p class="hero-subtitle">HTT's internal multi-brand governance hub for portfolio cost, identity, compliance, resources, lifecycle, and evidence workflows. Riverside is one evidence consumer — not the platform identity.</p>
         <div class="hero-metrics">
@@ -105,7 +105,7 @@
             <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
           </div>
           <h3 class="card-title">Alerting &amp; Monitoring</h3>
-          <p class="card-description">Real-time anomaly detection with Application Insights and OpenTelemetry. <code>/api/v1/health/data</code> monitors 10 sync domains; alerts escalate to the governance-alerts action group.</p>
+          <p class="card-description">Real-time anomaly detection with Application Insights and OpenTelemetry. <code>/healthz/data</code> monitors 5-tenant freshness; <code>/healthz/scheduler</code> tracks 10 cron jobs. 4 App Insights webtests (2 content-match + 2 ping) and 11 metric alerts route to the governance-alerts action group.</p>
         </div>
       </div>
     </section>
@@ -116,7 +116,7 @@
         <h2 class="section-title">Platform Architecture</h2>
         <p class="section-subtitle">5 tenants, 2 environments, OIDC + Key Vault auth</p>
       </div>
-      <div style="max-width:1400px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <div style="max-width:1400px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch" tabindex="0" role="region" aria-label="Architecture diagram">
         <img src="diagrams/architecture.svg" alt="Architecture diagram showing Users, Production and Staging environments, 5 managed Azure AD tenants, and CI/CD pipeline" style="min-width:1100px;width:100%;height:auto;display:block" loading="lazy">
       </div>
       <p style="text-align:center;margin-top:var(--sp-3);font-size:.9rem">
@@ -200,7 +200,7 @@
         <p class="section-subtitle">How it all fits together</p>
       </div>
       <div class="architecture-block">
-        <pre class="architecture-pre">
+        <pre class="architecture-pre" tabindex="0">
 ┌─────────────────────────────────────────────────────────────────┐
 │                          CLIENTS                                │
 │     Web UI · Mobile · API Consumers · Admin Portal              │
@@ -241,7 +241,7 @@
         <p class="section-subtitle">Get up and running in minutes</p>
       </div>
       <div class="quick-start">
-        <pre><code>git clone https://github.com/HTT-BRANDS/control-tower.git
+        <pre tabindex="0"><code>git clone https://github.com/HTT-BRANDS/control-tower.git
 cd control-tower
 pip install uv
 uv sync --dev
@@ -249,11 +249,11 @@ uv run uvicorn app.main:app --reload</code></pre>
       </div>
       <div class="link-list">
         <a href="https://app-governance-prod.azurewebsites.net" class="link-item" target="_blank" rel="noopener">Production App ↗</a>
-        <a href="https://app-governance-prod.azurewebsites.net/health" class="link-item" target="_blank" rel="noopener">Health Check ↗</a>
+        <a href="https://app-governance-prod.azurewebsites.net/healthz/data" class="link-item" target="_blank" rel="noopener">Data Freshness ↗</a>
+        <a href="https://app-governance-prod.azurewebsites.net/healthz/scheduler" class="link-item" target="_blank" rel="noopener">Scheduler Health ↗</a>
         <a href="api/swagger/" class="link-item">API Explorer →</a>
         <a href="https://github.com/HTT-BRANDS/control-tower" class="link-item" target="_blank" rel="noopener">GitHub ↗</a>
         <a href="operations/continuity-status.html" class="link-item">Continuity Status →</a>
-        <a href="https://portal.azure.com" class="link-item" target="_blank" rel="noopener">Azure Portal ↗</a>
       </div>
     </section>
 
@@ -266,9 +266,11 @@ uv run uvicorn app.main:app --reload</code></pre>
       <div class="status-grid">
         <div class="status-item"><span class="status-dot"></span><span class="status-label">Main CI</span><span class="status-value">Green</span></div>
         <div class="status-item"><span class="status-dot"></span><span class="status-label">Staging Deploy</span><span class="status-value">Green</span></div>
-        <div class="status-item"><span class="status-dot"></span><span class="status-label">Pages Deploy</span><span class="status-value">Green</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Data Freshness</span><span class="status-value">All 5 OK</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Scheduler</span><span class="status-value">Running</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Alerting</span><span class="status-value">11 + 4</span></div>
         <div class="status-item"><span class="status-dot"></span><span class="status-label">Monthly Cost</span><span class="status-value">~$53</span></div>
-        <div class="status-item"><span class="status-dot"></span><span class="status-label">Pages Browser</span><span class="status-value">Green</span></div>
+        <div class="status-item"><span class="status-dot"></span><span class="status-label">Pages Deploy</span><span class="status-value">Green</span></div>
         <div class="status-item"><span class="status-dot"></span><span class="status-label">Backup/RPO</span><span class="status-value">Green</span></div>
       </div>
     </section>
@@ -282,11 +284,12 @@ uv run uvicorn app.main:app --reload</code></pre>
         <a href="operations/">Operations</a>
         <a href="api/">API</a>
         <a href="decisions/">Decisions</a>
+        <a href="status.html">Status</a>
         <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>HTT Control Tower · State current as of 2026-06-02 · See <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> / <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a> for live status</p>
+      <p>HTT Control Tower &middot; State current as of 2026-06-05 &middot; See <a href="status.html">System Status</a> or <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a> for live status</p>
     </div>
   </footer>
 

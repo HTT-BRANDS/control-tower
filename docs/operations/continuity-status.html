@@ -37,7 +37,7 @@
     <div class="page-header-inner">
       <div class="breadcrumb"><a href="../">Home</a><span>›</span><a href="./">Operations</a><span>›</span> Continuity Status</div>
       <h1 class="page-title">Continuity Status</h1>
-      <p class="page-subtitle">Current DR, backup, deploy, bus-factor, and release-gate state as of 2026-05-04 20:33 UTC.</p>
+      <p class="page-subtitle">Current DR, backup, deploy, bus-factor, and release-gate state as of 2026-06-05.</p>
     </div>
   </div>
 
@@ -46,26 +46,26 @@
 
     <section class="section">
       <div style="max-width:1100px;margin:0 auto var(--sp-6);padding:1rem 1.25rem;border-left:4px solid #500711;background:#fdf6ec;border-radius:6px">
-        <strong>Point-in-time snapshot (2026-05-04).</strong> This page is not
+        <strong>Point-in-time snapshot (2026-06-05).</strong> This page is not
         auto-refreshed. For current live status see
-        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATE.md">STATE.md</a> /
-        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md">STATUS.md</a>.
+        <a href="../status.html" style="text-decoration:underline;color:#500711">System Status</a> or
+        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md" style="text-decoration:underline;color:#500711">STATUS.md</a>.
       </div>
     </section>
 
     <section class="section">
       <div class="grid grid--3">
         <div class="card">
-          <h2 class="card-title">Production live ✅</h2>
-          <p class="card-description"><code>/health</code> 200, version <code>2.5.0</code>. Image refreshed 2026-04-30 22:54 UTC to <code>ghcr.io/htt-brands/control-tower@sha256:f762c98a…</code> via run <a href="https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385">25193020385</a>.</p>
+          <h2 class="card-title">Production live </h2>
+          <p class="card-description"><code>/health</code> 200, version <code>2.5.0</code>. PRs #100–#110 deployed 2026-06-05. All 5 tenants fresh (<code>any_stale:false</code>). Scheduler running (<code>any_overdue:false</code>, 10 jobs). 11 metric alerts + 4 App Insights webtests (2 content-match) route to <code>governance-alerts</code>.</p>
         </div>
         <div class="card">
-          <h2 class="card-title">v2.5.1 release-gate</h2>
-          <p class="card-description">Internal rehearsal verdict moved <code>CONDITIONAL_PASS</code> → <code>PASS-pending-9lfn</code>. Only Tyler-only <code>9lfn</code> (<code>SECRETS_OF_RECORD.md</code>) remains. Pillar 4 Infrastructure cleared; Pillar 8 Rollback now field-tested.</p>
+          <h2 class="card-title">Observability closed </h2>
+          <p class="card-description">Stale-data blind spot resolved: <code>/healthz/data</code> (5-tenant freshness) + <code>/healthz/scheduler</code> (10-job heartbeat) deployed. Content-match webtests (<code>data-freshness</code> + <code>scheduler-live</code>) page ops before data goes stale again. Issues <code>ct-ar3</code>, <code>ct-vuv</code>, <code>ct-cne</code> closed.</p>
         </div>
         <div class="card">
           <h2 class="card-title">Auto-rollback field-tested</h2>
-          <p class="card-description">First real-world auto-rollback execution surfaced bd <code>1vui</code> (GNU <code>base64</code> line-wrap broke <code>$GITHUB_OUTPUT</code>); fix landed in <code>9ccd870</code>; redeploy clean. Fail-closed safety property held throughout — prod was never mutated by the failed run.</p>
+          <p class="card-description">First real-world auto-rollback execution surfaced bd <code>1vui</code> (GNU <code>base64</code> line-wrap broke <code>$GITHUB_OUTPUT</code>); fix landed in <code>9ccd870</code>. Fail-closed safety property held throughout — prod was never mutated by the failed run.</p>
         </div>
       </div>
     </section>
@@ -77,29 +77,23 @@
       </div>
       <div class="doc-list">
         <div class="doc-list-item">
-          <h2>Tyler-only (P1)</h3>
-          <p><code>9lfn</code>: fill <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/SECRETS_OF_RECORD.md">SECRETS_OF_RECORD.md</a> with non-secret pointers, owners, access, and rotation metadata. ~30 min. <strong>The last v2.5.1 gate condition.</strong></p>
+          <h2>Tyler-only (P1/P2)</h2>
+          <p><code>4if</code>: complete DCE resources + compliance domains (2/4 to 4/4).</p>
+          <p><code>hvv</code>: provision ops users via <code>setup_admin.py</code>.</p>
+          <p><code>c60</code>: run staging rollback drill per <code>staging-rollback-drill.md</code>.</p>
+          <p><code>8by</code>: grant ops team monitoring RBAC (App Insights / Log Analytics).</p>
         </div>
         <div class="doc-list-item">
-          <h2>Scheduled (P2)</h3>
-          <p><code>uchp</code>: execute Q3 2026 quarterly DR test cycle (PITR + redeploy + Key Vault recover). Due 2026-07-31. Will absorb Dustin Boyd's first hands-on tabletop.</p>
+          <h2>Coordinated cutover (P2)</h2>
+          <p><code>f9p</code>: UAMI migration — long-term plan to zero-secret cross-tenant auth. Stages B (staging) and C (prod cutover) pending.</p>
         </div>
         <div class="doc-list-item">
-          <h2>In progress (P2)</h3>
-          <p><code>xzt4</code>: Bicep drift reconciliation. All 12 child tasks closed; staging Bicep recovered + hardened. <strong>Production Bicep apply intentionally deferred</strong> — Tyler-gated.</p>
+          <h2>Scheduled (P2)</h2>
+          <p><code>uchp</code>: execute Q3 2026 quarterly DR test cycle (PITR + redeploy + Key Vault recover). Due 2026-07-31.</p>
         </div>
         <div class="doc-list-item">
-          <h2>Coordinated cutover (P3)</h3>
-          <p><code>l96f</code>: JWT issuer rotation. Phase 1 shipped (<code>88d7cf1</code>, auth accepts both <code>azure-governance-platform</code> and <code>control-tower</code> issuers in transition mode). Phase 2 (drop old issuer) needs coordinated cutover window.</p>
-        </div>
-        <div class="doc-list-item">
-          <h2>Deferred (re-enters <code>bd ready</code> on trigger date)</h3>
-          <p><code>rtwi</code>: stop domain-intelligence App Service / pause PG if zero-traffic at 60-day mark (~2026-05-17).</p>
-          <p><code>m4xw</code>: automate quarterly audit-log archive to Azure Blob Archive tier (trigger 2026-07-01).</p>
-        </div>
-        <div class="doc-list-item">
-          <h2>Recently closed (May 1–3, 2026)</h3>
-          <p><code>t88h</code> Azure SQL backup workflow fix · <code>wnyx</code> production-backup environment routing · <code>rxki</code> Bicep drift role definition documented · <code>mp9y</code> stale Bicep parameters removed · <code>k1q7</code> drift label seeding · <code>6vrk</code> Bicep drift RG what-if RBAC unblocked · <code>xzt4.1</code>–<code>xzt4.12</code> all closed · staging Bicep apply recovered (<code>228923d</code> + <code>6b2a8c7</code>).</p>
+          <h2>Recently closed (June 2026)</h2>
+          <p><code>ct-ar3</code> scheduler Always On + freshness watchdog deployed. <code>ct-vuv</code> data-freshness + scheduler-live content-match webtests live. <code>ct-cne</code> production stale-data bug resolved. <code>ct-8jt</code> Http5xx + latency metric alerts live. <code>ct-hvv</code> role provisioning fix (Manager now works). <code>ct-6su</code> runbook + sync-recovery. <code>ct-bmq</code> ops onboarding. <code>ct-71r</code> Full Send criteria traceable.</p>
         </div>
       </div>
     </section>
@@ -145,10 +139,10 @@
         <p class="section-subtitle">Canonical places to update — no treasure maps hidden under the carpet</p>
       </div>
       <div class="grid grid--2">
-        <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md" class="doc-card">
-          <div class="doc-card-title">STATUS.md</div>
-          <div class="doc-card-description">Single-glance "where are we right now" doc. Live URLs, deployed image, cost picture, recent commits, open work.</div>
-          <div class="doc-card-link">Open →</div>
+        <a href="../status.html" class="doc-card">
+          <div class="doc-card-title">System Status</div>
+          <div class="doc-card-description">Single-glance \"where are we right now\" page. Live URLs, deployed image, freshness state, recent commits, open work.</div>
+          <div class="doc-card-link">View</div>
         </a>
         <a href="https://github.com/HTT-BRANDS/control-tower/blob/main/TEST_PLAYBOOK.md" class="doc-card">
           <div class="doc-card-title">TEST_PLAYBOOK.md</div>
@@ -201,7 +195,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>HTT Control Tower · Continuity state current as of 2026-05-04 20:33 UTC</p>
+      <p>HTT Control Tower · Continuity state current as of 2026-06-05</p>
     </div>
   </footer>
 
