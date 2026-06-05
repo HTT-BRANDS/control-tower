@@ -649,3 +649,72 @@ def check_wcag_contrast_tests() -> tuple[bool, str]:
     if has_contrast:
         return True, "WCAG contrast test file present"
     return False, "test file exists but no contrast/wcag content"
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 extension: more auto-judgeable criteria
+# ---------------------------------------------------------------------------
+
+
+def check_core_smoke_tests_pass() -> tuple[bool, str]:
+    """P5.2 -- Core smoke tests (test_main_app + test_config + test_security_headers) exist."""
+    required = [
+        REPO_ROOT / "tests" / "unit" / "test_main_app.py",
+        REPO_ROOT / "tests" / "unit" / "test_config.py",
+        REPO_ROOT / "tests" / "unit" / "test_security_headers.py",
+    ]
+    missing = [str(p.relative_to(REPO_ROOT)) for p in required if not p.exists()]
+    if missing:
+        return False, f"missing test files: {', '.join(missing)}"
+    return True, f"{len(required)} core smoke test files present"
+
+
+def check_integration_tests_exist() -> tuple[bool, str]:
+    """P5.3 -- Integration test suite directory exists with test files."""
+    int_dir = REPO_ROOT / "tests" / "integration"
+    if not int_dir.exists():
+        return False, "tests/integration/ directory not found"
+    test_files = list(int_dir.glob("**/test_*.py"))
+    if not test_files:
+        return False, "no test_*.py files in tests/integration/"
+    return True, f"{len(test_files)} integration test files found"
+
+
+def check_e2e_tests_exist() -> tuple[bool, str]:
+    """P5.4 -- E2E smoke test file exists."""
+    e2e_file = REPO_ROOT / "tests" / "e2e" / "test_smoke.py"
+    if not e2e_file.exists():
+        return False, "tests/e2e/test_smoke.py not found"
+    content = e2e_file.read_text(encoding="utf-8")
+    has_tests = "def test_" in content
+    if has_tests:
+        return True, "e2e/test_smoke.py exists with test functions"
+    return False, "e2e/test_smoke.py exists but no test functions"
+
+
+def check_secrets_of_record_exists() -> tuple[bool, str]:
+    """P7.3 -- SECRETS_OF_RECORD.md exists."""
+    sor = REPO_ROOT / "docs" / "SECRETS_OF_RECORD.md"
+    if not sor.exists():
+        return False, "docs/SECRETS_OF_RECORD.md not found"
+    content = sor.read_text(encoding="utf-8")
+    has_todos = "_TODO_" in content or "TODO" in content
+    if has_todos:
+        return False, "SECRETS_OF_RECORD.md exists but has TODO placeholders"
+    return True, "SECRETS_OF_RECORD.md exists (no TODOs)"
+
+
+def check_runbook_exists() -> tuple[bool, str]:
+    """P7.4 -- OPERATIONAL_RUNBOOK.md exists and is current."""
+    runbook = REPO_ROOT / "docs" / "OPERATIONAL_RUNBOOK.md"
+    if not runbook.exists():
+        return False, "docs/OPERATIONAL_RUNBOOK.md not found"
+    import os
+
+    mtime = os.path.getmtime(runbook)
+    import time
+
+    age_days = (time.time() - mtime) / 86400
+    if age_days > 90:
+        return False, f"runbook age {age_days:.0f}d (>90d threshold)"
+    return True, f"runbook present, age {age_days:.0f}d"
