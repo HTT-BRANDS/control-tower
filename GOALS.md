@@ -4,8 +4,8 @@
 > Evaluated by `scripts/judge.py` -- objective criteria, no hand-waving.
 > Last updated: 2026-06-05
 >
-> **Judge coverage:** 36 of 52 criteria (69%) are evaluated automatically by
-> `scripts/judge.py`. 16 criteria remain manual (Azure portal, human judgment,
+> **Judge coverage:** 41 of 52 criteria (79%) are evaluated automatically by
+> `scripts/judge.py`. 11 criteria remain manual (Azure portal, human judgment,
 > quarterly cadence). See `GOALS_WIGGUM_WORKBOOK.md` for the sprint status.
 
 ---
@@ -74,9 +74,9 @@
 | ID | Criterion | Target | How Verified |
 |---|---|---|---|
 | P5.1 | Unit test suite passes | `pytest tests/unit/` -- all green | `judge.py` (P5.1) |
-| P5.2 | Core smoke tests pass | `tests/unit/test_main_app.py` + `test_config.py` + `test_security_headers.py` | CI QA Gate |
-| P5.3 | Integration test suite passes | `pytest tests/integration/` — all green | CI QA Gate |
-| P5.4 | E2E smoke tests pass | `pytest tests/e2e/test_smoke.py` — all green | CI QA Gate |
+| P5.2 | Core smoke tests pass | `tests/unit/test_main_app.py` + `test_config.py` + `test_security_headers.py` | `judge.py` (P5.2) |
+| P5.3 | Integration test suite passes | `pytest tests/integration/` -- all green | `judge.py` (P5.3) |
+| P5.4 | E2E smoke tests pass | `pytest tests/e2e/test_smoke.py` -- all green | `judge.py` (P5.4) |
 | P5.5 | No xpass markers | `pytest` reports zero xpassed tests | `judge.py` (P5.5) |
 | P5.6 | Code coverage ≥ 60% | `pytest --cov` overall ≥ 60% | CI QA Gate |
 | P5.7 | Role enum lockstep with description map | `set(Role) == set(_ROLE_DESCRIPTIONS)` — module-import assertion (ct-2vx) | `judge.py` (P5.7) |
@@ -100,8 +100,8 @@
 |---|---|---|---|
 | P7.1 | `STATUS.md` current | mtime within 14 days (workbook DoD threshold) | `judge.py` (P7.1) |
 | P7.2 | `CHANGELOG.md` current | Dated entry within last 90 days | `judge.py` (P7.2) |
-| P7.3 | `SECRETS_OF_RECORD.md` complete | Tyler-only fields filled, rotation dates present | Manual review |
-| P7.4 | `RUNBOOK.md` current | Deploy/rollback/DR procedures match current infra | Manual review |
+| P7.3 | `SECRETS_OF_RECORD.md` complete | Tyler-only fields filled, rotation dates present | `judge.py` (P7.3) |
+| P7.4 | `RUNBOOK.md` current | Deploy/rollback/DR procedures match current infra | `judge.py` (P7.4) |
 | P7.5 | `SESSION_HANDOFF.md` current | mtime within 7 days | `judge.py` (P7.5) |
 | P7.6 | `bd` issues ≤ 10 open | Open issue count ≤ 10 | `bd list --status open` |
 
@@ -123,10 +123,10 @@ Run `python scripts/judge.py` for live evaluation.
 **Last manual evaluation:** 2026-06-05 -- judge.py 27/27 (100%)
 
 **2026-06-05 update (Richard, code-puppy-1725d8):**
-- Judge: **35/36 passed (97%)** -- only P3.1 (DCE domain gap) fails (Tyler-blocked ct-4if)
-- GOALS.md criteria: 52 defined; judge covers 36/52 (69%)
+- Judge: **39/41 passed (95%)** -- P3.1 (DCE gap, ct-4if) + P7.3 (SECRETS_OF_RECORD TODOs, 9lfn)
+- GOALS.md criteria: 52 defined; judge covers 41/52 (79%)
 - All P0 criteria pass; READY FOR RELEASE TAG
-- See `GOALS_WIGGUM_WORKBOOK.md` Phase 2 complete
+- GOALS_WIGGUM_WORKBOOK.md Phase 1+2 complete
 
 ---
 
