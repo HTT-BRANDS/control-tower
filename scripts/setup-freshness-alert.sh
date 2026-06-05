@@ -1,51 +1,50 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# setup-freshness-alert.sh — ct-vuv
+# setup-freshness-alert.sh -- ct-vuv
 # =============================================================================
 #
 # Wires the "data is silently stale" alarm that ct-cne proved we were missing.
 # Two Application Insights *standard availability tests* with content matching,
-# each backed by a metric alert that routes to the `governance-alerts` action
-# group (add Teams via scripts/add-teams-webhook-to-action-group.sh):
+# each backed by a metric alert that routes to the governance-alerts action group.
 #
-#   1. data-freshness   — GET /healthz/data       must contain  "any_stale":false
-#   2. scheduler-live    — GET /healthz/scheduler  must contain  "running":true
-#                                                  must NOT match "any_overdue":true
+#   1. data-freshness -- GET /healthz/data       must contain "any_stale":false
+#   2. scheduler-live  -- GET /healthz/scheduler  must contain "running":true
 #
-# When the core tenants go >24h stale (or the scheduler stalls), the response
-# body flips and the content match fails -> the test goes unhealthy -> the
-# metric alert fires -> ops gets paged. This is the permanent fix for the
-# "invisible stall" half of ct-cne / ct-ar3.
+# When the core tenants go stale (or the scheduler stalls), the response body
+# flips and the content match fails -> test goes unhealthy -> metric alert
+# fires -> ops gets paged. This is the permanent fix for the "invisible stall"
+# half of ct-cne / ct-ar3.
 #
 # PREREQUISITES:
 #   * az CLI authenticated to the HTT-CORE subscription
-#   * The Application Insights resource name (see APP_INSIGHTS below — confirm
-#     it; the runbook calls it `governance-appinsights`)
-#   * The `governance-alerts` action group already exists (it does)
+#   * Python 3.10+ with azure-identity, azure-mgmt-applicationinsights,
+#     and azure-mgmt-monitor installed (the script uses `uv run` to handle this)
+#   * The governance-alerts action group already exists
 #
 # USAGE:
 #   ./scripts/setup-freshness-alert.sh                # uses defaults below
 #   APP_INSIGHTS=my-ai ./scripts/setup-freshness-alert.sh
 #
-# STATUS: The metric-alert half (az monitor metrics alert create) is live and
-# working. The web-test half (az monitor app-insights web-test create) fails
-# because this az CLI version doesn't support --content-match for standard
-# tests. The webtests need to be created in the portal (see PORTAL FALLBACK
-# below) — it's 4 clicks each. This is a known Azure CLI limitation, not a
-# script bug.
+# WHY PYTHON SDK, NOT az CLI?
+#   The az CLI's `az monitor app-insights web-test create` does NOT support
+#   --content-match for standard tests (confirmed across az CLI v2.63+).
+#   The Azure Python SDK (azure-mgmt-applicationinsights) properly supports
+#   WebTestPropertiesRequest + WebTestPropertiesValidationRules with
+#   ContentValidation.ContentMatch -- that's what this script uses.
 # =============================================================================
-
 set -euo pipefail
 
-# ── Config ───────────────────────────────────────────────────────────────────
+# -- Config -------------------------------------------------------------------
 SUBSCRIPTION="${SUBSCRIPTION:-HTT-CORE}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-governance-production}"
 ACTION_GROUP="${ACTION_GROUP:-governance-alerts}"
 APP_INSIGHTS="${APP_INSIGHTS:-governance-appinsights}"
 BASE_URL="${BASE_URL:-https://app-governance-prod.azurewebsites.net}"
-# Multi-region so a single-region blip doesn't page. Adjust to taste.
+# Multi-region so a single-region blip doesn't page.
 TEST_LOCATIONS="${TEST_LOCATIONS:-us-tx-sn1-azr,us-il-ch1-azr,us-ca-sjc-azr}"
 FREQUENCY="${FREQUENCY:-300}"   # seconds between probes (300 = 5 min)
+# scheduler-live is disabled by default until PR #102 deploys /healthz/scheduler
+ENABLE_SCHEDULER_TEST="${ENABLE_SCHEDULER_TEST:-false}"
 
 if [ -t 1 ]; then
     RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; NC=$'\033[0m'
@@ -62,76 +61,32 @@ AI_ID=$(az monitor app-insights component show \
 if [ -z "$AI_ID" ]; then
     echo -e "${RED}x Could not find App Insights '$APP_INSIGHTS' in '$RESOURCE_GROUP'.${NC}"
     echo "  Set the right name:  APP_INSIGHTS=<name> $0"
-    echo "  List candidates:     az monitor app-insights component show --query \"[].name\" -o tsv"
     exit 1
 fi
 AG_ID=$(az monitor action-group show \
     --name "$ACTION_GROUP" --resource-group "$RESOURCE_GROUP" --query id -o tsv)
 
-# ── Helper: create one standard webtest + its metric alert ───────────────────
-# args: <test-name> <url-path> <content-match> <severity>
-make_test() {
-    local name="$1" path="$2" match="$3" sev="$4"
-    echo -e "${YELLOW}->${NC} Creating availability test '$name' (match: $match)..."
-    az monitor app-insights web-test create \
-        --name "$name" \
-        --resource-group "$RESOURCE_GROUP" \
-        --location "$(az monitor app-insights component show --app "$APP_INSIGHTS" -g "$RESOURCE_GROUP" --query location -o tsv)" \
-        --tags "hidden-link:$AI_ID=Resource" \
-        --web-test-kind standard \
-        --request-url "${BASE_URL}${path}" \
-        --http-verb GET \
-        --content-match "$match" \
-        --ssl-check true \
-        --frequency "$FREQUENCY" \
-        --locations Id="$(echo "$TEST_LOCATIONS" | cut -d, -f1)" \
-        --enabled true \
-        --defined-web-test-name "$name" \
-        --web-test-name "$name" 2>&1 || {
-            echo -e "${YELLOW}!  web-test create flags rejected by this az version — use the PORTAL FALLBACK below for '$name'.${NC}"
-        }
+echo -e "${YELLOW}->${NC} Creating webtests + alerts via Azure Python SDK..."
+echo "  (The az CLI doesn't support --content-match for standard tests)"
 
-    echo -e "${YELLOW}->${NC} Creating metric alert 'alert-$name' -> $ACTION_GROUP..."
-    az monitor metrics alert create \
-        --name "alert-$name" \
-        --resource-group "$RESOURCE_GROUP" \
-        --scopes "$AI_ID" \
-        --condition "avg availabilityResults/availabilityPercentage < 100 where availabilityResults/name includes $name" \
-        --window-size 5m \
-        --evaluation-frequency 5m \
-        --severity "$sev" \
-        --action "$AG_ID" \
-        --description "ct-vuv: $name content match failed (stale data / stalled scheduler)." 2>&1 || {
-            echo -e "${YELLOW}!  metric-alert create needs adjustment for this az version (see portal fallback).${NC}"
-        }
-}
-
-# 1. Data freshness — the headline ct-cne alarm (severity 1 = critical)
-make_test "data-freshness" "/healthz/data" '"any_stale":false' 1
-# 2. Scheduler liveness — early-warning before data even goes stale (sev 2)
-make_test "scheduler-live" "/healthz/scheduler" '"running":true' 2
+# -- Generate the Python deploy script and run it with uv ----------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+uv run --quiet python3 "$SCRIPT_DIR/_deploy_webtests.py" \
+    --subscription-id "$(az account show --query id -o tsv)" \
+    --resource-group "$RESOURCE_GROUP" \
+    --app-insights-id "$AI_ID" \
+    --action-group-id "$AG_ID" \
+    --base-url "$BASE_URL" \
+    --locations "$TEST_LOCATIONS" \
+    --frequency "$FREQUENCY" \
+    --enable-scheduler "$ENABLE_SCHEDULER_TEST"
 
 echo ""
-echo -e "${GREEN}+ Metric alerts wired.${NC}"
-echo -e "${YELLOW}! Webtests require the portal (CLI doesn't support --content-match).${NC}"
+echo -e "${GREEN}+ Freshness alerting wired (webtests + metric alerts).${NC}"
 echo ""
-echo "═════════════════════ PORTAL STEPS (required for content-match) ════════════════"
+echo "Verify:  az resource list -g $RESOURCE_GROUP --resource-type Microsoft.Insights/webtests --query '[].name' -o tsv"
+echo "         az monitor metrics alert list -g $RESOURCE_GROUP -o table"
 echo ""
-echo "  1. Open: https://portal.azure.com/#resource${AI_ID}/availability"
-echo "  2. Click 'Add Standard test'"
-echo "  3. Fill in:"
-echo "     Test name:    data-freshness"
-echo "     URL:          ${BASE_URL}/healthz/data"
-echo "     Content match: \"any_stale\":false   (THIS IS THE KEY — what makes it a freshness test, not just a ping)"
-echo "     Frequency:    5 min, 3+ locations (us-tx, us-il, us-ca)"
-echo "     Alerts:       enable, severity 1 (critical), action group = $ACTION_GROUP"
-echo "  4. Create."
-echo ""
-echo "  Repeat for the scheduler-liveness test:"
-echo "     Test name:    scheduler-live"
-echo "     URL:          ${BASE_URL}/healthz/scheduler"
-echo "     Content match: \"running\":true"
-echo "     (Leave DISABLED until PR #102 is deployed and /healthz/scheduler returns 200)"
-echo ""
-echo "  That's it — 2 tests, ~2 minutes total."
-echo "══════════════════════════════════════════════════════════════════════════════"
+echo "Test: wait 5 min then check AI -> Availability in the portal."
+echo "  The data-freshness test should show 'Passed' when any_stale:false."
+echo "  If it shows 'Failed', that means /healthz/data returned any_stale:true."
