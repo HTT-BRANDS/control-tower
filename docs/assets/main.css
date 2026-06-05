@@ -292,6 +292,17 @@ a:hover { color: var(--burgundy-light); }
   font-size: .9rem; color: var(--text-secondary);
   line-height: 1.65;
 }
+/* WCAG 1.4.1: links inside card text must be distinguishable
+   without relying on colour alone. */
+.card-description a {
+  color: var(--burgundy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.card-description a:hover {
+  color: var(--burgundy-light);
+}
 
 /* Doc cards */
 .doc-card {
@@ -360,6 +371,12 @@ a:hover { color: var(--burgundy-light); }
   line-height: 1.3; overflow-x: auto;
   margin: 0; white-space: pre;
   max-width: 100%; -webkit-overflow-scrolling: touch;
+  /* WCAG 2.1.1/2.1.3: scrollable region must be keyboard-reachable */
+  outline: none;
+}
+.architecture-pre:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
 }
 @media (min-width: 480px) { .architecture-pre { padding: var(--sp-5); font-size: .55rem; } }
 @media (min-width: 768px) { .architecture-pre { padding: var(--sp-6); font-size: .7rem; line-height: 1.4; } }
@@ -370,6 +387,12 @@ pre {
   background: #0f0f0f; border-radius: var(--radius-md);
   padding: var(--sp-6); overflow-x: auto; margin: var(--sp-4) 0;
   border: 1px solid rgba(255,255,255,.06);
+  /* WCAG 2.1.1/2.1.3: scrollable pre must be keyboard-reachable */
+  outline: none;
+}
+pre:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
 }
 pre code {
   font-family: var(--font-mono); font-size: .85rem;

@@ -4,74 +4,61 @@ title: Control Tower Status
 
 # Control Tower Status
 
-_Updated: `2026-04-30T23:07:16.367307+00:00`. Source: GitHub Pages build fallback (no committed
-`scripts/audit_output.json`)._
-
-_For the live single-glance status doc, see
-[`STATUS.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/STATUS.md)
-in the repo. For the v2.5.1 release-gate evidence, see
-[`docs/release-gate/evidence-bundle-2026-04-30.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/docs/release-gate/evidence-bundle-2026-04-30.md)._
+_Updated: `2026-06-05`. Source: operational status manual refresh._
 
 ## Live state
 
 | Surface | Status |
 |---|---|
-| Production `/health` | ✅ `healthy`, version `2.5.0`, environment `production` |
-| Production deep `/health/detailed` | ✅ database / scheduler / cache / azure_configured all healthy |
-| Production image | `ghcr.io/htt-brands/control-tower@sha256:f762c98a…` (2026-04-30 22:54 UTC) |
-| Staging `/health` | ✅ `healthy`, version `2.5.0` (allow 30–90s cold-start on first hit) |
-| Public docs | ✅ HTTP 200 |
+| Production `/healthz/data` | `any_stale: false` -- all 5 tenants fresh (BCC, DCE, FN, HTT, TLL) |
+| Production `/healthz/scheduler` | `running: true`, `any_overdue: false`, 10 jobs tracked |
+| Production `/health` | `healthy`, version `2.5.0`, environment `production` |
+| Production image | Deployed 2026-06-05 via [run 27029690617](https://github.com/HTT-BRANDS/control-tower/actions/runs/27029690617) |
+| Staging `/health` | `healthy`, version `2.5.0` (allow 30-90s cold-start) |
+| Always On | `true` on both prod + staging |
+| Public docs | HTTP 200 |
+| App Insights webtests | 4 live (2 standard content-match + 2 ping) |
+| Metric alerts | 11 live (7 pre-existing + 2 ct-8jt + 2 webtest-scoped) |
 
-## Latest release-gate movement
+## What just shipped (June 2026, PRs #100-#111)
 
-**v2.5.1 internal rehearsal verdict:** `PASS-pending-9lfn`
-(was `CONDITIONAL_PASS` until 2026-04-30 22:54 UTC).
-
-| Pillar | Verdict |
-|---|---|
-| 1. Requirements Closure | ✅ PASS |
-| 2. Code Review | ✅ PASS |
-| 3. Security | ✅ PASS |
-| 4. Infrastructure | ✅ PASS *(was CONDITIONAL_PASS, cleared by run [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385))* |
-| 5. Stack Coherence | ✅ PASS |
-| 6. Cost | ✅ PASS |
-| 7. Maintenance & Operability | ✅ PASS *(bus-factor 1→2 via bd `213e`)* |
-| 8. Rollback | ✅ PASS *(++ field-tested via bd `1vui` cycle)* |
-
-## What just shipped (last 24h)
-
-| Commit | What |
-|---|---|
-| `6c75220` | Session handoff: prod-deploy success + bd `1vui` field-test cycle |
-| `8cf67e5` | **Condition 1 of v2.5.1 rehearsal verdict CLEARED** — prod live on `main` |
-| `9ccd870` | `fix(release): use base64 -w0 in auto-rollback prev-image capture (bd 1vui)` |
-| `ec9658f` | Session handoff: 0nup closed, autonomous backlog drained |
-| `910cec0` | Production-readiness evidence bundle + internal release-gate rehearsal verdict (bd `0nup` closed) |
-| `8ad0ed4` | RTM-v2.5.1-DRAFT expanded to 50+ closed bd issues |
-| `f91f4d7` / `64515a5` / `2e51d5a` | bd `213e` CLOSED — Dustin Boyd onboarded as second rollback human |
+| PR | Issue | What |
+|----|-------|------|
+| #111 | housekeeping | Close ct-ar3, ct-vuv, ct-cne after prod deploy |
+| #110 | CVE fix | PyJWT 2.12.1 -> 2.13.0 (4 CVEs: PYSEC-2026-175/177/178/179) |
+| #109 | ct-vuv | Deploy App Insights webtests via Python SDK (content-match) |
+| #108 | ct-vuv | Update alert scripts with portal shortcuts |
+| #107 | ct-71r | Full Send criteria wired to artifacts |
+| #106 | ct-8jt | Error-rate + latency metric alerts live |
+| #105 | ct-hvv/ct-c60 | Role provisioning fix + rollback drill runbook |
+| #104 | ct-bq | DCE cost-domain sync |
+| #103 | ct-vuv/ct-o1w | Freshness alert script + incident response plan |
+| #102 | ct-ar3 | Scheduler heartbeat + /healthz/scheduler endpoint |
+| #101 | ct-bmq/ct-ana | Ops onboarding + docs archive |
+| #100 | ct-6su | Runbook + sync-recovery section |
 
 ## Ready work (`bd ready`)
 
 | bd | Priority | Owner | Note |
 |---|---|---|---|
-| `9lfn` | **P1** | **Tyler-only** | Author `SECRETS_OF_RECORD.md` non-secret inventory. The last v2.5.1 gate condition. |
-| `uchp` | P2 | Tyler / Dustin | Q3 2026 quarterly DR test cycle. Due 2026-07-31. |
-| `l96f` | P3 | next-puppy | Rotate JWT `iss` claim from `azure-governance-platform` → `control-tower`. |
-| `rtwi` | P3 | next-puppy | Stop domain-intelligence App Service / pause PG if zero-traffic at 60-day mark (~2026-05-17). |
-| `m4xw` | P4 | next-puppy | Automate quarterly audit-log archive to Azure Blob Archive tier. |
+| `4if` | P2 | Tyler | Complete DCE resources + compliance domains (2/4 -> 4/4) |
+| `hvv` | P2 | Tyler | Run setup_admin.py per ops user |
+| `c60` | P2 | Tyler | Run staging rollback drill |
+| `8by` | P2 | Tyler | Grant ops team monitoring RBAC |
+| `f9p` | P2 | coordinated | UAMI migration -- zero-secret cross-tenant auth |
+| `uchp` | P2 | Tyler/Dustin | Q3 2026 quarterly DR test cycle. Due 2026-07-31. |
+| `dxb` | P2 | Tyler | Deliver ops team training session |
 
 ## CI/CD signals
 
-| Workflow | Latest expectation |
+| Workflow | Latest |
 |---|---|
-| `ci.yml` | ✅ Green on current `main` HEAD |
-| `security-scan.yml` | ✅ Green on current `main` HEAD |
-| `deploy-staging.yml` | ✅ Green on current `main` HEAD |
-| `deploy-production.yml` | ✅ Last successful: [`25193020385`](https://github.com/HTT-BRANDS/control-tower/actions/runs/25193020385) (2026-04-30 22:54 UTC) |
-| `pages.yml` | ✅ This page is the proof |
-| `gh-pages-tests.yml` | ✅ Cross-browser checks running per push |
-| `backup.yml` | ✅ Schema-only backup green; bd `jzpa` closed |
-| `bicep-drift-detection.yml` | ⏳ Weekly schedule; no drift expected |
+| `ci.yml` | Green on current `main` HEAD |
+| `security-scan.yml` | Green (PyJWT CVEs patched) |
+| `deploy-production.yml` | Success: [27029690617](https://github.com/HTT-BRANDS/control-tower/actions/runs/27029690617) (2026-06-05) |
+| `deploy-staging.yml` | Green on current `main` HEAD |
+| `pages.yml` | This page is the proof |
+| `backup.yml` | Schema-only backup green |
 
 ## Cost picture (Azure only)
 
@@ -79,14 +66,4 @@ in the repo. For the v2.5.1 release-gate evidence, see
 |---|---|
 | Production (B1 App Service + SQL Basic + KV/AI/Logs/alerts/storage) | ~$21 |
 | Staging (B1 App Service + SQL Free + KV/AI/Logs/storage) | ~$23 |
-| **Total** | **~$44–53 / mo** |
-
-B1 vs Container Apps consumption: B1 wins because 17+ background
-schedulers (4 hourly) keep the app continuously warm. See
-[`docs/cost/consumption-vs-reserved-analysis.md`](https://github.com/HTT-BRANDS/control-tower/blob/main/docs/cost/consumption-vs-reserved-analysis.md) (bd `j6tq`).
-
-## Audit output
-
-_No tenant audit JSON is currently committed, so this page uses
-the operational status fallback above instead of rendering tenant
-consent/UI-fixture tables._
+| **Total** | **~$44-53 / mo** |

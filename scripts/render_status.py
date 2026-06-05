@@ -159,15 +159,156 @@ def render(report: dict[str, Any] | None) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _html_wrapper(body_md: str) -> str:
+    """Wrap markdown content in a proper HTML page for GitHub Pages."""
+    # Convert basic markdown to HTML (tables, headers, code, links)
+    import re
+
+    html = body_md
+    # Headers
+    html = re.sub(r"^### (.+)$", r"<h3>\1</h3>", html, flags=re.M)
+    html = re.sub(r"^## (.+)$", r"<h2>\1</h2>", html, flags=re.M)
+    html = re.sub(r"^# (.+)$", r"<h1>\1</h1>", html, flags=re.M)
+    # Bold/italic
+    html = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html)
+    html = re.sub(r"\*(.+?)\*", r"<em>\1</em>", html)
+    # Inline code (not already in <pre>)
+    html = re.sub(r"`([^`]+)`", r"<code>\1</code>", html)
+    # Links
+    html = re.sub(r"\[(.+?)\]\((.+?)\)", r'<a href="\2">\1</a>', html)
+    # Tables (simple pipe tables)
+    lines = html.split("\n")
+    in_table = False
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|"):
+            if not in_table:
+                result.append("<table>")
+                in_table = True
+                cells = [c.strip() for c in stripped.split("|")[1:-1]]
+                result.append("<thead><tr>")
+                for c in cells:
+                    result.append(f"<th>{c}</th>")
+                result.append("</tr></thead><tbody>")
+            elif all(set(c.strip()) <= {"-", ":", " "} for c in stripped.split("|")[1:-1]):
+                # separator row, skip
+                continue
+            else:
+                cells = [c.strip() for c in stripped.split("|")[1:-1]]
+                result.append("<tr>")
+                for c in cells:
+                    result.append(f"<td>{c}</td>")
+                result.append("</tr>")
+        else:
+            if in_table:
+                result.append("</tbody></table>")
+                in_table = False
+            result.append(line)
+    if in_table:
+        result.append("</tbody></table>")
+    html = "\n".join(result)
+    # Paragraphs (loose lines not in tags)
+    html = re.sub(r"^([^<\n].+)$", r"<p>\1</p>", html, flags=re.M)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
+  <title>Control Tower Status</title>
+  <meta name="description" content="Live system status for HTT Control Tower.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="stylesheet" href="assets/icons.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header>
+  <nav class="nav" aria-label="Main">
+    <div class="nav-inner">
+      <a href="." class="nav-logo" aria-label="Home">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+  </header>
+  <main id="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div class="breadcrumb"><a href=".">Home</a><span>\u203a</span> Status</div>
+        <h1 class="page-title">System Status</h1>
+        <p class="page-subtitle">Current operational state of HTT Control Tower</p>
+      </div>
+    </div>
+    <section class="section">
+      <div class="prose" style="max-width:900px;margin:0 auto">
+        {html}
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+  <script>
+  (function() {{
+    var t = document.querySelector('.nav-toggle');
+    var n = document.querySelector('.nav-links');
+    if (t && n) t.addEventListener('click', function() {{
+      n.classList.toggle('open');
+      this.setAttribute('aria-expanded', n.classList.contains('open'));
+    }});
+  }})();
+  </script>
+</body>
+</html>"""
+
+
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Render audit JSON into docs/status.md.")
+    p = argparse.ArgumentParser(description="Render audit JSON into docs/status.html.")
     p.add_argument("--input", default=str(REPO_ROOT / "scripts" / "audit_output.json"))
-    p.add_argument("--output", default=str(REPO_ROOT / "docs" / "status.md"))
+    p.add_argument("--md", default=str(REPO_ROOT / "docs" / "status.md"))
+    p.add_argument("--html", default=str(REPO_ROOT / "docs" / "status.html"))
     args = p.parse_args(argv)
 
     report = _load(Path(args.input))
-    Path(args.output).write_text(render(report), encoding="utf-8")
-    print(f"wrote {args.output}")
+
+    # Generate status.html from the committed status.md (not from audit_output)
+    md_path = Path(args.md)
+    if md_path.exists():
+        md_text = md_path.read_text(encoding="utf-8")
+    else:
+        md_text = render(report)
+        md_path.write_text(md_text, encoding="utf-8")
+        print(f"wrote {args.md}")
+
+    # Strip YAML front-matter for HTML conversion
+    import re
+
+    md_body = re.sub(r"^---\r?\n.*?\r?\n---\r?\n\s*", "", md_text, count=1, flags=re.S)
+    Path(args.html).write_text(_html_wrapper(md_body), encoding="utf-8")
+    print(f"wrote {args.html}")
     return 0
 
 

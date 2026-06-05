@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#500711">
+  <title>Control Tower Status</title>
+  <meta name="description" content="Live system status for HTT Control Tower.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23500711'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23ffc957' text-anchor='middle'>HT</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/main.css">
+  <link rel="stylesheet" href="assets/icons.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header>
+  <nav class="nav" aria-label="Main">
+    <div class="nav-inner">
+      <a href="." class="nav-logo" aria-label="Home">HT</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+  </header>
+  <main id="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div class="breadcrumb"><a href=".">Home</a><span>›</span> Status</div>
+        <h1 class="page-title">System Status</h1>
+        <p class="page-subtitle">Current operational state of HTT Control Tower</p>
+      </div>
+    </div>
+    <section class="section">
+      <div class="prose" style="max-width:900px;margin:0 auto">
+        <h1>Control Tower Status</h1>
+
+<p>_Updated: <code>2026-06-05</code>. Source: operational status manual refresh._</p>
+
+<h2>Live state</h2>
+
+<table>
+<thead><tr>
+<th>Surface</th>
+<th>Status</th>
+</tr></thead><tbody>
+<tr>
+<td>Production <code>/healthz/data</code></td>
+<td><code>any_stale: false</code> -- all 5 tenants fresh (BCC, DCE, FN, HTT, TLL)</td>
+</tr>
+<tr>
+<td>Production <code>/healthz/scheduler</code></td>
+<td><code>running: true</code>, <code>any_overdue: false</code>, 10 jobs tracked</td>
+</tr>
+<tr>
+<td>Production <code>/health</code></td>
+<td><code>healthy</code>, version <code>2.5.0</code>, environment <code>production</code></td>
+</tr>
+<tr>
+<td>Production image</td>
+<td>Deployed 2026-06-05 via <a href="https://github.com/HTT-BRANDS/control-tower/actions/runs/27029690617">run 27029690617</a></td>
+</tr>
+<tr>
+<td>Staging <code>/health</code></td>
+<td><code>healthy</code>, version <code>2.5.0</code> (allow 30-90s cold-start)</td>
+</tr>
+<tr>
+<td>Always On</td>
+<td><code>true</code> on both prod + staging</td>
+</tr>
+<tr>
+<td>Public docs</td>
+<td>HTTP 200</td>
+</tr>
+<tr>
+<td>App Insights webtests</td>
+<td>4 live (2 standard content-match + 2 ping)</td>
+</tr>
+<tr>
+<td>Metric alerts</td>
+<td>11 live (7 pre-existing + 2 ct-8jt + 2 webtest-scoped)</td>
+</tr>
+</tbody></table>
+
+<h2>What just shipped (June 2026, PRs #100-#111)</h2>
+
+<table>
+<thead><tr>
+<th>PR</th>
+<th>Issue</th>
+<th>What</th>
+</tr></thead><tbody>
+<tr>
+<td>#111</td>
+<td>housekeeping</td>
+<td>Close ct-ar3, ct-vuv, ct-cne after prod deploy</td>
+</tr>
+<tr>
+<td>#110</td>
+<td>CVE fix</td>
+<td>PyJWT 2.12.1 -> 2.13.0 (4 CVEs: PYSEC-2026-175/177/178/179)</td>
+</tr>
+<tr>
+<td>#109</td>
+<td>ct-vuv</td>
+<td>Deploy App Insights webtests via Python SDK (content-match)</td>
+</tr>
+<tr>
+<td>#108</td>
+<td>ct-vuv</td>
+<td>Update alert scripts with portal shortcuts</td>
+</tr>
+<tr>
+<td>#107</td>
+<td>ct-71r</td>
+<td>Full Send criteria wired to artifacts</td>
+</tr>
+<tr>
+<td>#106</td>
+<td>ct-8jt</td>
+<td>Error-rate + latency metric alerts live</td>
+</tr>
+<tr>
+<td>#105</td>
+<td>ct-hvv/ct-c60</td>
+<td>Role provisioning fix + rollback drill runbook</td>
+</tr>
+<tr>
+<td>#104</td>
+<td>ct-bq</td>
+<td>DCE cost-domain sync</td>
+</tr>
+<tr>
+<td>#103</td>
+<td>ct-vuv/ct-o1w</td>
+<td>Freshness alert script + incident response plan</td>
+</tr>
+<tr>
+<td>#102</td>
+<td>ct-ar3</td>
+<td>Scheduler heartbeat + /healthz/scheduler endpoint</td>
+</tr>
+<tr>
+<td>#101</td>
+<td>ct-bmq/ct-ana</td>
+<td>Ops onboarding + docs archive</td>
+</tr>
+<tr>
+<td>#100</td>
+<td>ct-6su</td>
+<td>Runbook + sync-recovery section</td>
+</tr>
+</tbody></table>
+
+<h2>Ready work (<code>bd ready</code>)</h2>
+
+<table>
+<thead><tr>
+<th>bd</th>
+<th>Priority</th>
+<th>Owner</th>
+<th>Note</th>
+</tr></thead><tbody>
+<tr>
+<td><code>4if</code></td>
+<td>P2</td>
+<td>Tyler</td>
+<td>Complete DCE resources + compliance domains (2/4 -> 4/4)</td>
+</tr>
+<tr>
+<td><code>hvv</code></td>
+<td>P2</td>
+<td>Tyler</td>
+<td>Run setup_admin.py per ops user</td>
+</tr>
+<tr>
+<td><code>c60</code></td>
+<td>P2</td>
+<td>Tyler</td>
+<td>Run staging rollback drill</td>
+</tr>
+<tr>
+<td><code>8by</code></td>
+<td>P2</td>
+<td>Tyler</td>
+<td>Grant ops team monitoring RBAC</td>
+</tr>
+<tr>
+<td><code>f9p</code></td>
+<td>P2</td>
+<td>coordinated</td>
+<td>UAMI migration -- zero-secret cross-tenant auth</td>
+</tr>
+<tr>
+<td><code>uchp</code></td>
+<td>P2</td>
+<td>Tyler/Dustin</td>
+<td>Q3 2026 quarterly DR test cycle. Due 2026-07-31.</td>
+</tr>
+<tr>
+<td><code>dxb</code></td>
+<td>P2</td>
+<td>Tyler</td>
+<td>Deliver ops team training session</td>
+</tr>
+</tbody></table>
+
+<h2>CI/CD signals</h2>
+
+<table>
+<thead><tr>
+<th>Workflow</th>
+<th>Latest</th>
+</tr></thead><tbody>
+<tr>
+<td><code>ci.yml</code></td>
+<td>Green on current <code>main</code> HEAD</td>
+</tr>
+<tr>
+<td><code>security-scan.yml</code></td>
+<td>Green (PyJWT CVEs patched)</td>
+</tr>
+<tr>
+<td><code>deploy-production.yml</code></td>
+<td>Success: <a href="https://github.com/HTT-BRANDS/control-tower/actions/runs/27029690617">27029690617</a> (2026-06-05)</td>
+</tr>
+<tr>
+<td><code>deploy-staging.yml</code></td>
+<td>Green on current <code>main</code> HEAD</td>
+</tr>
+<tr>
+<td><code>pages.yml</code></td>
+<td>This page is the proof</td>
+</tr>
+<tr>
+<td><code>backup.yml</code></td>
+<td>Schema-only backup green</td>
+</tr>
+</tbody></table>
+
+<h2>Cost picture (Azure only)</h2>
+
+<table>
+<thead><tr>
+<th>Environment</th>
+<th>~Monthly</th>
+</tr></thead><tbody>
+<tr>
+<td>Production (B1 App Service + SQL Basic + KV/AI/Logs/alerts/storage)</td>
+<td>~$21</td>
+</tr>
+<tr>
+<td>Staging (B1 App Service + SQL Free + KV/AI/Logs/storage)</td>
+<td>~$23</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>~$44-53 / mo</strong></td>
+</tr>
+</tbody></table>
+
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">HT</div>
+      <div class="footer-links">
+        <a href="architecture/">Architecture</a>
+        <a href="operations/">Operations</a>
+        <a href="api/">API</a>
+        <a href="decisions/">Decisions</a>
+        <a href="https://github.com/HTT-BRANDS/control-tower" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+  <script>
+  (function() {
+    var t = document.querySelector('.nav-toggle');
+    var n = document.querySelector('.nav-links');
+    if (t && n) t.addEventListener('click', function() {
+      n.classList.toggle('open');
+      this.setAttribute('aria-expanded', n.classList.contains('open'));
+    });
+  })();
+  </script>
+</body>
+</html>
