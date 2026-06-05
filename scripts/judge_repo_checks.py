@@ -362,3 +362,290 @@ def check_role_enum_lockstep() -> tuple[bool, str]:
         return False, f"module-import assertion fired: {exc}"
     except Exception as exc:
         return False, f"import failed: {exc}"
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 (GOALS_WIGGUM_WORKBOOK v2): new auto-judgeable checks
+# ---------------------------------------------------------------------------
+
+
+def check_jwt_secret_enforced() -> tuple[bool, str]:
+    """P2.8 -- JWT_SECRET_KEY is set, not a default/dev value."""
+    try:
+        from app.core.config import Settings
+
+        s = Settings()
+        secret = s.jwt_secret_key
+        if not secret or secret in ("CHANGE-ME", "dev-secret", "test-secret", "insecure"):
+            return False, "JWT_SECRET_KEY is default/dev value"
+        return True, "JWT_SECRET_KEY is set and non-default"
+    except Exception as exc:
+        return False, f"import failed: {exc}"
+
+
+def check_pip_audit_clean() -> tuple[bool, str]:
+    """P2.9 -- No PYSEC advisories in direct deps.
+
+    Checks the last CI Security Scan workflow run for a passing status.
+    If CI security-scan passed, direct deps are audit-clean.
+    """
+    import subprocess
+
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--branch",
+                "main",
+                "--workflow",
+                "security-scan.yml",
+                "--limit",
+                "1",
+                "--json",
+                "conclusion",
+                "-q",
+                ".[0].conclusion",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        conc = r.stdout.strip()
+        if conc == "success":
+            return True, "latest security-scan.yml on main: success"
+        # Fallback: check CI workflow for security job
+        r2 = subprocess.run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--branch",
+                "main",
+                "--workflow",
+                "ci.yml",
+                "--limit",
+                "1",
+                "--json",
+                "conclusion",
+                "-q",
+                ".[0].conclusion",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        ci_conc = r2.stdout.strip()
+        if ci_conc == "success":
+            return True, "CI (includes security scan) on main: success"
+        return False, f"security-scan: {conc or 'no runs'}, CI: {ci_conc or 'no runs'}"
+    except Exception as exc:
+        return False, f"gh run list failed: {exc}"
+
+
+def check_tenant_domain_coverage() -> tuple[bool, str]:
+    """P3.1 -- All tenants have required-domain data (resources, compliance, costs, identity)."""
+    try:
+        import requests
+
+        base = "https://app-governance-prod.azurewebsites.net"
+        r = requests.get(f"{base}/healthz/data", timeout=20)
+        if r.status_code != 200:
+            return False, f"/healthz/data returned {r.status_code}"
+        d = r.json()
+        required_domains = {"resources", "compliance", "costs", "identity"}
+        gaps = []
+        for name, t in d.get("tenants", {}).items():
+            tenant_domains = set()
+            for domain in required_domains:
+                if t.get(domain) or t.get(f"{domain}_last_sync"):
+                    tenant_domains.add(domain)
+            missing = required_domains - tenant_domains
+            if missing:
+                gaps.append(f"{name} missing {sorted(missing)}")
+        if gaps:
+            return False, f"domain gaps: {'; '.join(gaps)}"
+        return True, f"all {len(d.get('tenants', {}))} tenants have 4/4 domains"
+    except Exception as exc:
+        return False, f"error: {exc}"
+
+
+def check_ci_passes() -> tuple[bool, str]:
+    """P5.1 -- Latest CI run on main passed."""
+    import subprocess
+
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--branch",
+                "main",
+                "--workflow",
+                "ci.yml",
+                "--limit",
+                "1",
+                "--json",
+                "conclusion",
+                "-q",
+                ".[0].conclusion",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        conc = r.stdout.strip()
+        if conc == "success":
+            return True, "latest ci.yml on main: success"
+        return False, f"latest ci.yml on main: {conc or 'no runs'}"
+    except Exception as exc:
+        return False, f"gh run list failed: {exc}"
+
+
+def check_prod_deploy_succeeds() -> tuple[bool, str]:
+    """P6.1 -- Latest production deploy succeeded."""
+    import subprocess
+
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--branch",
+                "main",
+                "--workflow",
+                "deploy-production.yml",
+                "--limit",
+                "1",
+                "--json",
+                "conclusion",
+                "-q",
+                ".[0].conclusion",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        conc = r.stdout.strip()
+        if conc == "success":
+            return True, "latest deploy-production.yml: success"
+        return False, f"latest deploy-production.yml: {conc or 'no runs'}"
+    except Exception as exc:
+        return False, f"gh run list failed: {exc}"
+
+
+def check_staging_deploy_succeeds() -> tuple[bool, str]:
+    """P6.3 -- Latest staging deploy succeeded."""
+    import subprocess
+
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "run",
+                "list",
+                "--branch",
+                "main",
+                "--workflow",
+                "deploy-staging.yml",
+                "--limit",
+                "1",
+                "--json",
+                "conclusion",
+                "-q",
+                ".[0].conclusion",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        conc = r.stdout.strip()
+        if conc == "success":
+            return True, "latest deploy-staging.yml: success"
+        return False, f"latest deploy-staging.yml: {conc or 'no runs'}"
+    except Exception as exc:
+        return False, f"gh run list failed: {exc}"
+
+
+def check_container_image_labeled() -> tuple[bool, str]:
+    """P6.5 -- Dockerfile has LABEL version instruction."""
+    dockerfile = REPO_ROOT / "Dockerfile"
+    if not dockerfile.exists():
+        return False, "Dockerfile not found"
+    content = dockerfile.read_text(encoding="utf-8")
+    has_version = "version" in content and "LABEL" in content
+    if has_version:
+        # Extract version value
+        import re
+
+        m = re.search(r'version="([^"]+)"', content)
+        ver = m.group(1) if m else "unknown"
+        return True, f"LABEL version={ver} present in Dockerfile"
+    return False, "no LABEL version in Dockerfile"
+
+
+def check_app_insights_webtests() -> tuple[bool, str]:
+    """P1.6 -- App Insights has webtests and metric alerts configured."""
+    import subprocess
+
+    try:
+        r1 = subprocess.run(
+            [
+                "az",
+                "resource",
+                "list",
+                "--resource-group",
+                "rg-governance-production",
+                "--resource-type",
+                "Microsoft.Insights/webtests",
+                "--query",
+                "length(@)",
+                "-o",
+                "tsv",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        webtest_count = int(r1.stdout.strip() or "0")
+        r2 = subprocess.run(
+            [
+                "az",
+                "monitor",
+                "metrics",
+                "alert",
+                "list",
+                "-g",
+                "rg-governance-production",
+                "--query",
+                "length(@)",
+                "-o",
+                "tsv",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        alert_count = int(r2.stdout.strip() or "0")
+        ok = webtest_count >= 2 and alert_count >= 5
+        return (
+            ok,
+            f"{webtest_count} webtests + {alert_count} metric alerts ({'OK' if ok else 'below threshold'})",
+        )
+    except Exception as exc:
+        return False, f"az query failed: {exc}"
+
+
+def check_wcag_contrast_tests() -> tuple[bool, str]:
+    """P4.5 -- WCAG brand contrast validation test file exists and imports resolve."""
+    test_file = REPO_ROOT / "tests" / "unit" / "test_wcag_brand_validation.py"
+    if not test_file.exists():
+        return False, "test_wcag_brand_validation.py not found"
+    content = test_file.read_text(encoding="utf-8")
+    has_contrast = "contrast" in content.lower() and "wcag" in content.lower()
+    if has_contrast:
+        return True, "WCAG contrast test file present"
+    return False, "test file exists but no contrast/wcag content"

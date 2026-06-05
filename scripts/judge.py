@@ -18,18 +18,27 @@ import requests
 
 from scripts.judge_repo_checks import (
     check_alembic_current,
+    check_app_insights_webtests,
     check_bd_open_count,
     check_bicep_drift,
     check_changelog_current,
+    check_ci_passes,
+    check_container_image_labeled,
     check_dockerfile_non_root,
     check_focus_visible_uses_brand_token,
+    check_jwt_secret_enforced,
     check_no_focus_outline_none,
     check_no_handrolled_badges,
     check_no_invisible_text,
     check_no_xpassed,
+    check_pip_audit_clean,
+    check_prod_deploy_succeeds,
     check_role_enum_lockstep,
     check_session_handoff_fresh,
+    check_staging_deploy_succeeds,
     check_status_md_fresh,
+    check_tenant_domain_coverage,
+    check_wcag_contrast_tests,
 )
 
 # ---------------------------------------------------------------------------
@@ -416,6 +425,70 @@ def run_checks(env: str) -> list[Pillar]:
                 "Role enum lockstep with descriptions",
                 lambda _: check_role_enum_lockstep(),
                 "P0",
+            ),
+            # ---- Phase 2 of GOALS_WIGGUM_WORKBOOK v2 additions ----
+            Check(
+                "P2.8",
+                "Security",
+                "JWT secret enforced",
+                lambda _: check_jwt_secret_enforced(),
+                "P0",
+            ),
+            Check(
+                "P2.9",
+                "Security",
+                "No PYSEC advisories",
+                lambda _: check_pip_audit_clean(),
+                "P1",
+            ),
+            Check(
+                "P3.1",
+                "Sync",
+                "All tenants have required-domain data",
+                lambda _: check_tenant_domain_coverage(),
+                "P1",
+            ),
+            Check(
+                "P5.1",
+                "Tests",
+                "Latest CI run passes",
+                lambda _: check_ci_passes(),
+                "P1",
+            ),
+            Check(
+                "P6.1",
+                "Infra",
+                "Latest production deploy succeeds",
+                lambda _: check_prod_deploy_succeeds(),
+                "P1",
+            ),
+            Check(
+                "P6.3",
+                "Infra",
+                "Latest staging deploy succeeds",
+                lambda _: check_staging_deploy_succeeds(),
+                "P1",
+            ),
+            Check(
+                "P6.5",
+                "Infra",
+                "Container image labeled",
+                lambda _: check_container_image_labeled(),
+                "P1",
+            ),
+            Check(
+                "P1.6",
+                "Health",
+                "Alert rules armed (webtests + metric alerts)",
+                lambda _: check_app_insights_webtests(),
+                "P1",
+            ),
+            Check(
+                "P4.5",
+                "Design",
+                "WCAG contrast test file present",
+                lambda _: check_wcag_contrast_tests(),
+                "P1",
             ),
         ]
     )
