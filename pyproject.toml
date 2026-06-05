@@ -28,7 +28,7 @@ dependencies = [
     "httpx>=0.26.0",
     "apscheduler>=3.10.0",
     # Authentication & Security
-    "PyJWT[crypto]>=2.8.0",
+    "pyjwt[crypto]>=2.13.0",
     "passlib[bcrypt]>=1.7.4",
     "cryptography>=46.0.7",
     # Azure SDKs
@@ -55,6 +55,8 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.62b0",
     "opentelemetry-exporter-otlp>=1.41.0",
     "azure-mgmt-compute>=37.2.0",
+    "idna>=3.18",
+    "urllib3>=2.7.0",
 ]
 
 [project.optional-dependencies]
