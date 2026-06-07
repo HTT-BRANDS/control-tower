@@ -24,7 +24,6 @@ azure-common==1.1.28
     # via
     #   azure-mgmt-authorization
     #   azure-mgmt-costmanagement
-    #   azure-mgmt-policyinsights
     #   azure-mgmt-resource
     #   azure-mgmt-security
     #   azure-mgmt-subscription
@@ -79,7 +78,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
     #   uvicorn
-cryptography==47.0.0
+cryptography==48.0.0
     # via
     #   azure-identity
     #   control-tower
@@ -105,19 +104,19 @@ httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
     # via control-tower
-idna==3.17
+idna==3.18
     # via
     #   anyio
+    #   control-tower
     #   httpx
     #   requests
-importlib-metadata==8.9.0
-    # via opentelemetry-api
 isodate==0.7.2
     # via
     #   azure-keyvault-secrets
     #   azure-mgmt-authorization
     #   azure-mgmt-compute
     #   azure-mgmt-costmanagement
+    #   azure-mgmt-policyinsights
     #   azure-mgmt-resource
     #   azure-mgmt-security
     #   msrest
@@ -140,9 +139,7 @@ msal==1.37.0
 msal-extensions==1.3.1
     # via azure-identity
 msrest==0.7.1
-    # via
-    #   azure-mgmt-policyinsights
-    #   azure-mgmt-subscription
+    # via azure-mgmt-subscription
 oauthlib==3.3.1
     # via requests-oauthlib
 opentelemetry-api==1.42.1
@@ -198,8 +195,6 @@ packaging==26.2
 passlib==1.7.4
     # via control-tower
 prometheus-client==0.25.0
-    # via prometheus-fastapi-instrumentator
-prometheus-fastapi-instrumentator==7.1.0
     # via control-tower
 protobuf==6.33.6
     # via
@@ -212,7 +207,7 @@ pydantic==2.13.4
     #   control-tower
     #   fastapi
     #   pydantic-settings
-pydantic-core==2.47.0
+pydantic-core==2.46.4
     # via pydantic
 pydantic-settings==2.14.1
     # via control-tower
@@ -226,13 +221,13 @@ python-dotenv==1.2.2
     # via
     #   pydantic-settings
     #   uvicorn
-python-multipart==0.0.30
+python-multipart==0.0.32
     # via control-tower
 pyyaml==6.0.3
     # via
     #   control-tower
     #   uvicorn
-redis==7.4.0
+redis==8.0.0
     # via control-tower
 referencing==0.37.0
     # via
@@ -248,7 +243,7 @@ requests==2.34.2
     #   requests-oauthlib
 requests-oauthlib==2.0.0
     # via msrest
-rpds-py==0.30.0
+rpds-py==2026.5.1
     # via
     #   jsonschema
     #   referencing
@@ -258,10 +253,8 @@ sqlalchemy==2.0.50
     # via
     #   alembic
     #   control-tower
-starlette==0.52.1
-    # via
-    #   fastapi
-    #   prometheus-fastapi-instrumentator
+starlette==1.2.1
+    # via fastapi
 typing-extensions==4.15.0
     # via
     #   alembic
@@ -270,6 +263,7 @@ typing-extensions==4.15.0
     #   azure-identity
     #   azure-keyvault-secrets
     #   azure-mgmt-compute
+    #   azure-mgmt-policyinsights
     #   azure-mgmt-resource
     #   fastapi
     #   grpcio
@@ -294,8 +288,10 @@ tzdata==2026.2 ; sys_platform == 'win32'
 tzlocal==5.3.1
     # via apscheduler
 urllib3==2.7.0
-    # via requests
-uvicorn==0.48.0
+    # via
+    #   control-tower
+    #   requests
+uvicorn==0.49.0
     # via control-tower
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
@@ -305,5 +301,3 @@ websockets==16.0
     # via uvicorn
 wrapt==2.2.1
     # via opentelemetry-instrumentation
-zipp==3.23.1
-    # via importlib-metadata

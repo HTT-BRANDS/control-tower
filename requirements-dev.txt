@@ -14,6 +14,8 @@
 # See DEPENDENCY_MANAGEMENT.md for full documentation.
 # =============================================================================
 aiosmtplib==5.1.1
+ast-serialize==0.5.0
+    # via mypy
 bidict==0.23.1
     # via python-socketio
 blinker==1.9.0
@@ -45,7 +47,7 @@ flask==3.1.3
     #   flask-cors
     #   flask-login
     #   locust
-flask-cors==6.0.2
+flask-cors==6.0.4
     # via locust
 flask-login==0.6.3
     # via locust
@@ -61,7 +63,7 @@ greenlet==3.5.1
     #   playwright
 h11==0.16.0
     # via wsproto
-idna==3.17
+idna==3.18
     # via requests
 iniconfig==2.3.0
     # via pytest
@@ -79,7 +81,7 @@ markupsafe==3.0.3
     #   werkzeug
 msgpack==1.1.2
     # via locust
-mypy==1.20.2
+mypy==2.1.0
 mypy-extensions==1.1.0
     # via mypy
 packaging==26.2
@@ -121,7 +123,7 @@ python-slugify==8.0.4
     # via pytest-playwright
 python-socketio==5.16.2
     # via locust
-pywin32==311 ; sys_platform == 'win32'
+pywin32==312 ; sys_platform == 'win32'
     # via locust
 pyzmq==27.1.0
     # via locust
@@ -130,7 +132,7 @@ requests==2.34.2
     #   locust
     #   pytest-base-url
     #   python-socketio
-ruff==0.15.15
+ruff==0.15.16
 simple-websocket==1.1.0
     # via python-engineio
 text-unidecode==1.3
