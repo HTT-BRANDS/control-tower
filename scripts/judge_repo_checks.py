@@ -430,3 +430,99 @@ def check_slsa_signing_in_ci() -> tuple[bool, str]:
     if "cosign" in text.lower():
         return True, "cosign signing step in deploy workflow"
     return False, "no SLSA/cosign signing in deploy-production.yml"
+
+
+def check_pages_render_without_error() -> tuple[bool, str]:
+    """P4.8 — All registered page routes render without template errors.
+
+    Spins up the FastAPI app in-memory (TestClient), mocks auth + DB,
+    and hits every registered page route. Catches Jinja2 UndefinedError,
+    SQLAlchemy query errors inside templates, and 500s before they reach
+    production. This is the automated equivalent of the manual UAT click-
+    through that previously found ``datetime`` undefined and ``is_(True)``
+    SQL crashes.
+    """
+    import sys
+    sys.path.insert(0, str(REPO_ROOT))
+
+    try:
+        from fastapi.testclient import TestClient
+        from unittest.mock import MagicMock
+
+        from app.main import app
+        from app.core.auth import User, get_current_user
+        from app.core.authorization import TenantAuthorization, get_tenant_authorization
+        from app.core.database import get_db, Base
+        from app.models.tenant import Tenant
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.pool import StaticPool
+    except Exception as exc:
+        return False, f"import failed: {exc}"
+
+    # In-memory SQLite DB with a seeded tenant
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    db.add(Tenant(id="test-tenant", tenant_id="test-tenant", name="Test Tenant", is_active=True))
+    db.commit()
+
+    # Mock auth
+    mock_user = User(
+        id="user-123", email="test@example.com", name="Test User",
+        roles=["admin"], tenant_ids=["test-tenant"], is_active=True, auth_provider="internal",
+    )
+    mock_authz = MagicMock(spec=TenantAuthorization)
+    mock_authz.user = mock_user
+    mock_authz.accessible_tenant_ids = {"test-tenant"}
+    mock_authz.ensure_at_least_one_tenant = MagicMock()
+    mock_authz.filter_tenant_ids = MagicMock(return_value={"test-tenant"})
+
+    def override_db():
+        try:
+            yield db
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_tenant_authorization] = lambda: mock_authz
+
+    # Page routes to validate (registered in app/api/routes/pages.py + dashboard.py)
+    page_routes = [
+        "/dashboard", "/costs", "/compliance", "/resources", "/identity",
+        "/riverside", "/dmarc", "/admin", "/franchise-coach",
+        "/topology", "/sync-dashboard", "/design-system", "/privacy",
+    ]
+
+    client = TestClient(app)
+    errors = []
+    for route in page_routes:
+        try:
+            r = client.get(route, follow_redirects=False)
+            # 200 = rendered OK; 307/301 = redirect (e.g. to login) is also OK
+            # for public routes; 401 means auth gate is working
+            if r.status_code not in (200, 301, 307, 401, 403):
+                errors.append(f"{route}: {r.status_code}")
+            elif r.status_code == 200:
+                # Look for common template error signatures in the HTML
+                text = r.text
+                if "UndefinedError" in text or "Traceback" in text:
+                    errors.append(f"{route}: template error in response body")
+                # Verify page has an <h1> (a11y check)
+                if "<h1" not in text and "<H1" not in text:
+                    errors.append(f"{route}: missing <h1>")
+        except Exception as exc:
+            errors.append(f"{route}: exception {type(exc).__name__}: {exc}")
+
+    app.dependency_overrides.clear()
+    db.close()
+
+    if errors:
+        return False, "; ".join(errors[:5])
+    return True, f"{len(page_routes)} pages OK"

@@ -59,6 +59,19 @@ body {
 .dark .border-brand-warning-10 { border-color: #92400e; }
 .dark .border-brand-gray-50    { border-color: var(--border-default); }
 
+/* ── DaisyUI component dark-mode overrides ──────────────────────────────
+   DaisyUI themes are light-mode only for brand themes. When .dark is
+   active, remap DaisyUI component classes to design-system tokens so
+   cards, tables, and other components remain readable. */
+.dark .bg-base-100 { background-color: var(--bg-primary); }
+.dark .bg-base-200 { background-color: var(--bg-secondary); }
+.dark .bg-base-300 { background-color: var(--bg-tertiary); }
+.dark .text-base-content { color: var(--text-primary); }
+.dark .text-base-content/70 { color: var(--text-secondary); }
+.dark .border-base-300 { border-color: var(--border-color); }
+.dark .card-title { color: var(--text-primary); }
+.dark .card { background-color: var(--bg-primary); border-color: var(--border-color); }
+
 /* ==========================================================================
    Brand Color Utilities
    ========================================================================== */
