@@ -7,6 +7,9 @@
 > **Judge coverage:** 44 of 52 criteria (85%) are evaluated automatically by
 > `scripts/judge.py`. 8 criteria remain manual (Azure portal, human judgment,
 > quarterly cadence). See `GOALS_WIGGUM_WORKBOOK.md` for the sprint status.
+>
+> **Judge score:** 43/44 passed (98%). Only P7.3 (SECRETS_OF_RECORD.md TODOs)
+> remains Tyler-only.
 
 ---
 
