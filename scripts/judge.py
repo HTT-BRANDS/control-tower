@@ -16,37 +16,39 @@ from dataclasses import dataclass, field
 
 import requests
 
-from scripts.judge_repo_checks import (
-    check_alembic_current,
+from scripts.judge_infra_checks import (
     check_app_insights_flow,
     check_app_insights_webtests,
-    check_bd_open_count,
-    check_bicep_drift,
-    check_changelog_current,
     check_ci_passes,
     check_container_image_labeled,
     check_core_smoke_tests_pass,
     check_dark_mode_toggle,
-    check_dockerfile_non_root,
     check_e2e_tests_exist,
-    check_focus_visible_uses_brand_token,
     check_integration_tests_exist,
     check_jwt_secret_enforced,
+    check_pip_audit_clean,
+    check_prod_deploy_succeeds,
+    check_rollback_docs_exist,
+    check_runbook_exists,
+    check_secrets_of_record_exists,
+    check_staging_deploy_succeeds,
+    check_tenant_domain_coverage,
+    check_wcag_contrast_tests,
+)
+from scripts.judge_repo_checks import (
+    check_alembic_current,
+    check_bd_open_count,
+    check_bicep_drift,
+    check_changelog_current,
+    check_dockerfile_non_root,
+    check_focus_visible_uses_brand_token,
     check_no_focus_outline_none,
     check_no_handrolled_badges,
     check_no_invisible_text,
     check_no_xpassed,
-    check_pip_audit_clean,
-    check_prod_deploy_succeeds,
     check_role_enum_lockstep,
-    check_rollback_docs_exist,
-    check_runbook_exists,
-    check_secrets_of_record_exists,
     check_session_handoff_fresh,
-    check_staging_deploy_succeeds,
     check_status_md_fresh,
-    check_tenant_domain_coverage,
-    check_wcag_contrast_tests,
 )
 
 # ---------------------------------------------------------------------------
