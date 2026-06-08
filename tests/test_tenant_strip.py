@@ -125,13 +125,46 @@ class TestDashboardRedesign:
         assert "<h1" in r.text
 
 
+class TestDataPageOverhauls:
+    """Data pages have tenant tabs, compact tables, and mission-control cards."""
+
+    def test_costs_tenant_tabs(self, client):
+        r = client.get("/costs")
+        assert r.status_code == 200
+        assert "tenant-tabs" in r.text
+        assert "tenant-tab" in r.text
+        assert "ct-card" in r.text
+        assert "kpi-value" in r.text
+        assert "table-compact" in r.text
+
+    def test_compliance_tenant_tabs(self, client):
+        r = client.get("/compliance")
+        assert r.status_code == 200
+        assert "tenant-tabs" in r.text
+        assert "table-compact" in r.text
+        assert "ct-card" in r.text
+
+    def test_resources_tenant_tabs(self, client):
+        r = client.get("/resources")
+        assert r.status_code == 200
+        assert "tenant-tabs" in r.text
+        assert "table-compact" in r.text
+        assert "ct-card" in r.text
+
+    def test_identity_tenant_tabs(self, client):
+        r = client.get("/identity")
+        assert r.status_code == 200
+        assert "tenant-tabs" in r.text
+        assert "table-compact" in r.text
+        assert "ct-card" in r.text
+
+
 class TestApiContractFixes:
     """API field names match frontend expectations."""
 
     def test_compliance_fields(self, client):
         r = client.get("/compliance")
         assert r.status_code == 200
-        # JS should reference fields that exist in schema
         text = r.text
         assert "average_compliance_percent" in text or "compliance-percent" in text
         assert "total_compliant_resources" in text or "compliant-count" in text

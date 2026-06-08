@@ -18,31 +18,78 @@
      subtitle="Azure Policy compliance across all managed tenants",
      actions=header_actions) %}
 
-    {# ── Summary Cards (values populated client-side) ───────────────── #}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {# Overall Score — dynamic color swap by JS, so uses ds_card w/ caller #}
-        {% call ds_card() %}
-            <div class="text-sm font-medium text-muted-theme">Overall Score</div>
-            <div class="mt-2 text-3xl font-bold" id="overall-score">--</div>
-            <div class="mt-1 text-sm text-muted-theme">Compliance percentage</div>
-        {% endcall %}
-
-        {{ ds_stat_card(label="Total Policies", value="--", value_id="total-policies", caption="Assigned policies") }}
-        {{ ds_stat_card(label="Compliant",      value="--", value_id="compliant-count", caption="Passing policies", border_accent="success") }}
-        {{ ds_stat_card(label="Non-Compliant",  value="--", value_id="non-compliant-count", caption="Failing policies", border_accent="danger") }}
+    {# ── Per-Tenant Filter Tabs ─────────────────────────────────────── #}
+    <div class="flex items-center gap-2 overflow-x-auto pb-2" id="tenant-tabs">
+        <button class="tenant-tab active px-3 py-1.5 rounded-full text-xs font-medium bg-brand-primary-100 text-white"
+                data-tenant="" onclick="filterTenant('')">All Tenants</button>
     </div>
 
-    {{ ds_table(
-         title="Compliance Scores by Tenant",
-         columns=["Tenant", "Score", "Compliant", "Non-Compliant"],
-         body_id="scores-table"
-     ) }}
+    {# ── Summary Cards ──────────────────────────────────────────────── #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="ct-card ct-card-status-healthy p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Overall Score</div>
+            <div class="kpi-value text-success" id="overall-score">--</div>
+            <div class="text-xs text-muted-theme">Compliance %</div>
+        </div>
+        <div class="ct-card p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Resources</div>
+            <div class="kpi-value text-primary-theme" id="total-resources">--</div>
+            <div class="text-xs text-muted-theme">Total tracked</div>
+        </div>
+        <div class="ct-card ct-card-status-healthy p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Compliant</div>
+            <div class="kpi-value text-success" id="compliant-count">--</div>
+            <div class="text-xs text-muted-theme">Passing checks</div>
+        </div>
+        <div class="ct-card ct-card-status-warning p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Non-Compliant</div>
+            <div class="kpi-value text-danger" id="non-compliant-count">--</div>
+            <div class="text-xs text-muted-theme">Need attention</div>
+        </div>
+    </div>
 
-    {{ ds_table(
-         title="Non-Compliant Policies",
-         columns=["Policy", "Category", "Affected Resources", "Severity"],
-         body_id="non-compliant-table"
-     ) }}
+    {# ── Compliance by Tenant (compact with sparklines) ─────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Compliance by Tenant</h3>
+            <span class="text-xs text-muted-theme" id="scores-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                        <th class="text-right py-2 px-3 text-xs font-medium text-muted-theme uppercase">Score</th>
+                        <th class="text-right py-2 px-3 text-xs font-medium text-muted-theme uppercase">Comp</th>
+                        <th class="text-right py-2 px-3 text-xs font-medium text-muted-theme uppercase">Non-Comp</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Bar</th>
+                    </tr>
+                </thead>
+                <tbody id="scores-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ── Non-Compliant Policies (compact) ───────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Non-Compliant Policies</h3>
+            <span class="text-xs text-muted-theme" id="nc-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Policy</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Category</th>
+                        <th class="text-right py-2 px-3 text-xs font-medium text-muted-theme uppercase">Resources</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-muted-theme uppercase">Severity</th>
+                    </tr>
+                </thead>
+                <tbody id="non-compliant-table"></tbody>
+            </table>
+        </div>
+    </div>
 
 {% endcall %}
 
@@ -53,6 +100,10 @@ async function fetchJSON(url) {
     return resp.json();
 }
 
+let allScores = [];
+let allNonCompliant = [];
+let currentTenantFilter = '';
+
 function scoreColor(score) {
     if (score >= 90) return 'text-success';
     if (score >= 70) return 'text-warning';
@@ -60,10 +111,95 @@ function scoreColor(score) {
 }
 
 function scoreBadge(score) {
-    // Returns DaisyUI badge variant classes; wrapper adds `badge badge-sm`.
     if (score >= 90) return 'badge-success badge-soft';
     if (score >= 70) return 'badge-warning badge-soft';
     return 'badge-error badge-soft';
+}
+
+function barColor(score) {
+    if (score >= 90) return 'bg-success';
+    if (score >= 70) return 'bg-warning';
+    return 'bg-danger';
+}
+
+function renderTenantTabs(scores) {
+    const tabs = document.getElementById('tenant-tabs');
+    const existing = tabs.querySelectorAll('.tenant-tab:not([data-tenant=""])');
+    existing.forEach(t => t.remove());
+
+    scores.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'tenant-tab px-3 py-1.5 rounded-full text-xs font-medium bg-surface-secondary text-secondary-theme hover:bg-surface-tertiary transition-colors';
+        btn.dataset.tenant = s.tenant_id || s.tenant_name;
+        btn.textContent = s.tenant_name;
+        btn.onclick = () => filterTenant(s.tenant_id || s.tenant_name);
+        tabs.appendChild(btn);
+    });
+}
+
+function filterTenant(tenantId) {
+    currentTenantFilter = tenantId;
+    document.querySelectorAll('.tenant-tab').forEach(t => {
+        t.classList.toggle('active', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-brand-primary-100', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('text-white', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-surface-secondary', (t.dataset.tenant || '') !== tenantId);
+        t.classList.toggle('text-secondary-theme', (t.dataset.tenant || '') !== tenantId);
+    });
+    renderTables();
+}
+
+function renderTables() {
+    const filteredScores = currentTenantFilter
+        ? allScores.filter(s => (s.tenant_id || s.tenant_name) === currentTenantFilter)
+        : allScores;
+
+    const filteredNC = currentTenantFilter
+        ? allNonCompliant.filter(r => (r.tenant_id || r.tenant_name) === currentTenantFilter)
+        : allNonCompliant;
+
+    // Scores table
+    const scTable = document.getElementById('scores-table');
+    document.getElementById('scores-table-count').textContent = `${filteredScores.length} tenant${filteredScores.length !== 1 ? 's' : ''}`;
+    if (filteredScores.length > 0) {
+        scTable.innerHTML = filteredScores.map(s => {
+            const score = s.overall_compliance_percent ?? 0;
+            return `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${s.tenant_name || s.tenant_id}</td>
+                <td class="py-2 px-3 text-right">
+                    <span class="badge badge-sm ${scoreBadge(score)}">${score.toFixed(1)}%</span>
+                </td>
+                <td class="py-2 px-3 text-right tabular-nums text-success">${s.compliant_resources ?? 0}</td>
+                <td class="py-2 px-3 text-right tabular-nums text-danger">${s.non_compliant_resources ?? 0}</td>
+                <td class="py-2 px-3">
+                    <div class="w-16 bg-surface-tertiary rounded-full h-1.5">
+                        <div class="${barColor(score)} h-1.5 rounded-full" style="width: ${Math.min(score, 100)}%"></div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    } else {
+        scTable.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-muted-theme">No compliance data. Run a sync first.</td></tr>';
+    }
+
+    // Non-compliant table
+    const ncTable = document.getElementById('non-compliant-table');
+    document.getElementById('nc-table-count').textContent = `${filteredNC.length} issues`;
+    if (filteredNC.length > 0) {
+        ncTable.innerHTML = filteredNC.map(r => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 text-primary-theme">${r.policy_name || r.policy_definition_id || 'Unknown'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${r.policy_category || '--'}</td>
+                <td class="py-2 px-3 text-right tabular-nums">
+                    <span class="badge badge-error badge-soft badge-sm">${r.non_compliant_count || r.count || 1} resources</span>
+                </td>
+                <td class="py-2 px-3 text-center text-xs text-muted-theme">${r.severity || 'Medium'}</td>
+            </tr>
+        `).join('');
+    } else {
+        ncTable.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-muted-theme">All policies compliant </td></tr>';
+    }
 }
 
 async function loadAllData() {
@@ -74,62 +210,25 @@ async function loadAllData() {
     ]);
 
     if (summary) {
-        const scoreEl = document.getElementById('overall-score');
         const score = summary.average_compliance_percent ?? 0;
+        const scoreEl = document.getElementById('overall-score');
         scoreEl.textContent = `${score.toFixed(1)}%`;
-        scoreEl.className = `mt-2 text-3xl font-bold ${scoreColor(score)}`;
-        // Use resource counts from the summary; total_policies is not tracked separately
+        scoreEl.className = `kpi-value ${scoreColor(score)}`;
+
         const totalRes = (summary.total_compliant_resources ?? 0) + (summary.total_non_compliant_resources ?? 0) + (summary.total_exempt_resources ?? 0);
-        document.getElementById('total-policies').textContent = totalRes;
+        document.getElementById('total-resources').textContent = totalRes;
         document.getElementById('compliant-count').textContent = summary.total_compliant_resources ?? 0;
         document.getElementById('non-compliant-count').textContent = summary.total_non_compliant_resources ?? 0;
     }
 
-    const scoresTable = document.getElementById('scores-table');
-    if (scores && scores.length > 0) {
-        scoresTable.innerHTML = scores.map(s => `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${s.tenant_name || s.tenant_id}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="badge badge-sm font-semibold ${scoreBadge(s.overall_compliance_percent ?? 0)}">
-                        ${(s.overall_compliance_percent ?? 0).toFixed(1)}%
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-success">${s.compliant_resources ?? 0}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-danger">${s.non_compliant_resources ?? 0}</td>
-            </tr>
-        `).join('');
-    } else {
-        scoresTable.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No compliance data. Run a compliance sync first.</td></tr>';
+    if (scores) {
+        allScores = scores;
+        renderTenantTabs(scores);
     }
-
-    const ncTable = document.getElementById('non-compliant-table');
-    if (nonCompliant && nonCompliant.length > 0) {
-        // Group by policy name to show unique policies with counts, not per-resource rows
-        const grouped = {};
-        nonCompliant.forEach(r => {
-            const key = r.policy_name || r.policy_definition_id || 'Unknown';
-            if (!grouped[key]) {
-                grouped[key] = { name: key, category: r.policy_category || '--', count: 0, severity: r.severity || 'Medium' };
-            }
-            grouped[key].count += (r.non_compliant_count || 1);
-        });
-        const rows = Object.values(grouped).sort((a, b) => b.count - a.count).slice(0, 20);
-        ncTable.innerHTML = rows.map(r => `
-            <tr>
-                <td class="px-6 py-4 text-sm text-primary-theme">${r.name}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme">${r.category}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="badge badge-error badge-soft badge-sm font-semibold">
-                        ${r.count} resources
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${r.severity}</td>
-            </tr>
-        `).join('');
-    } else {
-        ncTable.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No non-compliant policies found</td></tr>';
+    if (nonCompliant) {
+        allNonCompliant = nonCompliant;
     }
+    renderTables();
 }
 
 if (document.readyState === 'loading') {
