@@ -30,6 +30,34 @@
 {% block content %}
 <div class="space-y-6" data-testid="dashboard-shell">
     {# ================================================================
+       Sync Staleness Banner
+       ================================================================ #}
+    {% set now = datetime.now() %}
+    {% set max_sync_age_hours = 48 %}
+    {% set stale_syncs = [] %}
+    {% for sync_type, sync_time in last_synced.items() %}
+        {% if sync_time %}
+            {% set age_hours = ((now - sync_time).total_seconds() / 3600) %}
+            {% if age_hours > max_sync_age_hours %}
+                {% set _ = stale_syncs.append(sync_type) %}
+            {% endif %}
+        {% else %}
+            {% set _ = stale_syncs.append(sync_type + " (never)") %}
+        {% endif %}
+    {% endfor %}
+    {% if stale_syncs %}
+    <div class="bg-brand-warning-10 border border-brand-warning-50 text-brand-warning-110 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
+        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+            <p class="font-medium text-sm">Data may be stale</p>
+            <p class="text-xs">Some data domains haven't synced in over 48 hours: {{ stale_syncs|join(", ") }}. <a href="/sync-dashboard" class="underline hover:text-brand-warning-130">View sync status</a>.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ================================================================
        Page Header + Tenant Scope
        ================================================================ #}
     <div class="flex justify-between items-center flex-wrap gap-4">
