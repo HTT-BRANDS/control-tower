@@ -367,3 +367,66 @@ def check_role_enum_lockstep() -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # Phase 2 (GOALS_WIGGUM_WORKBOOK v2): new auto-judgeable checks
 # ---------------------------------------------------------------------------
+
+
+def check_coverage_gate_in_ci() -> tuple[bool, str]:
+    """P5.6 — CI workflow includes a ``--cov-fail-under`` coverage gate.
+
+    Parses ``.github/workflows/ci.yml`` for a ``--cov-fail-under=N`` flag.
+    The existence of the gate (not the actual %) is what we judge — CI itself
+    enforces the threshold. If the gate is absent, coverage regressions
+    can silently slip in.
+    """
+    ci_yml = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+    if not ci_yml.exists():
+        return False, "ci.yml missing"
+    text = ci_yml.read_text()
+    m = re.search(r"--cov-fail-under=(\d+)", text)
+    if not m:
+        return False, "no --cov-fail-under in ci.yml"
+    threshold = int(m.group(1))
+    return True, f"coverage gate present (threshold {threshold}% in ci.yml)"
+
+
+def check_stride_analysis_current() -> tuple[bool, str]:
+    """P2.10 — STRIDE threat model reviewed within the last 90 days.
+
+    Looks for ``stride-control-tower.md`` in ``docs/security/`` with a date
+    line matching ``YYYY-MM-DD`` within 90 days of today. The legacy
+    ``stride-analysis.md`` (Code Puppy agents) is ignored.
+    """
+    stride = REPO_ROOT / "docs" / "security" / "stride-control-tower.md"
+    if not stride.exists():
+        return False, "stride-control-tower.md not found in docs/security/"
+    text = stride.read_text(errors="ignore")
+    today = datetime.now(UTC).date()
+    cutoff = today - timedelta(days=90)
+    rx = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+    for line in text.splitlines():
+        for match in rx.finditer(line):
+            try:
+                d = datetime.strptime(match.group(0), "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if cutoff <= d <= today:
+                return True, f"reviewed {match.group(0)} ({(today - d).days}d ago)"
+    return False, f"no date within {cutoff.isoformat()}..{today.isoformat()}"
+
+
+def check_slsa_signing_in_ci() -> tuple[bool, str]:
+    """P6.7 — SLSA/cosign keyless signing present in production deploy workflow.
+
+    Parses ``deploy-production.yml`` for ``attest-build-provenance`` step.
+    If present, the image is cosign-signed via Sigstore keyless (SLSA L3).
+    The actual ``cosign verify`` is a runtime check; this just verifies the
+    CI step exists.
+    """
+    deploy_yml = REPO_ROOT / ".github" / "workflows" / "deploy-production.yml"
+    if not deploy_yml.exists():
+        return False, "deploy-production.yml missing"
+    text = deploy_yml.read_text()
+    if "attest-build-provenance" in text:
+        return True, "SLSA L3 provenance attestation in deploy workflow"
+    if "cosign" in text.lower():
+        return True, "cosign signing step in deploy workflow"
+    return False, "no SLSA/cosign signing in deploy-production.yml"

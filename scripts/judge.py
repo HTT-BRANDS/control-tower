@@ -26,6 +26,7 @@ from scripts.judge_infra_checks import (
     check_e2e_tests_exist,
     check_integration_tests_exist,
     check_jwt_secret_enforced,
+    check_no_orphaned_sync_jobs,
     check_pip_audit_clean,
     check_prod_deploy_succeeds,
     check_rollback_docs_exist,
@@ -40,6 +41,7 @@ from scripts.judge_repo_checks import (
     check_bd_open_count,
     check_bicep_drift,
     check_changelog_current,
+    check_coverage_gate_in_ci,
     check_dockerfile_non_root,
     check_focus_visible_uses_brand_token,
     check_no_focus_outline_none,
@@ -48,7 +50,9 @@ from scripts.judge_repo_checks import (
     check_no_xpassed,
     check_role_enum_lockstep,
     check_session_handoff_fresh,
+    check_slsa_signing_in_ci,
     check_status_md_fresh,
+    check_stride_analysis_current,
 )
 
 # ---------------------------------------------------------------------------
@@ -556,6 +560,35 @@ def run_checks(env: str) -> list[Pillar]:
                 "Design",
                 "Dark mode toggle present",
                 lambda _: check_dark_mode_toggle(),
+                "P1",
+            ),
+            # ---- Phase 3: coverage gate + orphaned sync jobs + STRIDE ----
+            Check(
+                "P5.6",
+                "Tests",
+                "Coverage gate in CI",
+                lambda _: check_coverage_gate_in_ci(),
+                "P1",
+            ),
+            Check(
+                "P3.3",
+                "Sync",
+                "No orphaned sync jobs",
+                lambda _: check_no_orphaned_sync_jobs(),
+                "P0",
+            ),
+            Check(
+                "P2.10",
+                "Security",
+                "STRIDE analysis current",
+                lambda _: check_stride_analysis_current(),
+                "P1",
+            ),
+            Check(
+                "P6.7",
+                "Infra",
+                "SLSA attestation present",
+                lambda _: check_slsa_signing_in_ci(),
                 "P1",
             ),
         ]
