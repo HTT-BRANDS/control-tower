@@ -144,6 +144,13 @@
         </div>
     </nav>
 
+    <!-- Tenant Health Strip (control tower feel) -->
+    {% from "macros/ds.html" import ds_tenant_strip %}
+    {% set _all_tenant_list = all_tenants() if all_tenants is defined else [] %}
+    {% if _all_tenant_list %}
+      {{ ds_tenant_strip(_all_tenant_list) }}
+    {% endif %}
+
     <!-- Main Content -->
     <main id="main-content" data-page-path="{{ request.url.path if request.url is defined else '' }}" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 w-full">
         <!-- Global HTMX loading indicator -->

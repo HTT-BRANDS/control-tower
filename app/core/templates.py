@@ -76,6 +76,27 @@ def _active_tenant_count() -> int:
 templates.env.globals["active_tenant_count"] = _active_tenant_count
 
 
+def _all_tenants() -> list[dict]:
+    """Jinja global: list of active tenants for the health strip.
+
+    Returns a list of {id, name, key} dicts for all active tenants.
+    Used by the tenant health strip in base.html.
+    Returns empty list on any error.
+    """
+    try:
+        from app.core.database import SessionLocal
+        from app.models.tenant import Tenant
+
+        with SessionLocal() as db:
+            rows = db.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
+            return [{"id": t.id, "name": t.name, "key": t.tenant_id or t.id} for t in rows]
+    except Exception:
+        return []
+
+
+templates.env.globals["all_tenants"] = _all_tenants
+
+
 def _latest_sync_at():
     """Jinja global: timestamp of the most recent successful sync, or None.
 

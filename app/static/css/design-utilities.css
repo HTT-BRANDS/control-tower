@@ -287,6 +287,99 @@ body {
     var(--brand-primary-50) 100%
   );
   border-radius: 9999px;
+}
+
+/* ── Tenant Health Strip (control-tower feel) ─────────────────────────── */
+.tenant-health-strip {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.tenant-chip {
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.tenant-chip:hover {
+  background-color: var(--bg-secondary);
+}
+
+.tenant-status-healthy {
+  border-left: 3px solid var(--brand-success-100);
+}
+.tenant-status-warning {
+  border-left: 3px solid var(--brand-warning-100);
+  background-color: var(--brand-warning-5);
+}
+.tenant-status-critical {
+  border-left: 3px solid var(--brand-danger-100);
+  background-color: var(--brand-danger-5);
+}
+
+.dark .tenant-status-warning {
+  background-color: rgba(var(--brand-warning-100-rgb, 245, 158, 11), 0.1);
+}
+.dark .tenant-status-critical {
+  background-color: rgba(var(--brand-danger-100-rgb, 239, 68, 68), 0.1);
+}
+
+/* ── Tabular numbers for data alignment ───────────────────────────────── */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ── Status dot pulse ──────────────────────────────────────────────────── */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.status-dot-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* ── KPI value styling (big numbers) ──────────────────────────────────── */
+.kpi-value {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
+
+.kpi-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+/* ── Compact table styling ────────────────────────────────────────────── */
+.table-compact td,
+.table-compact th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* ── Control tower card with status border ────────────────────────────── */
+.ct-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.ct-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--status-color, var(--brand-primary-100));
+}
+.ct-card-status-healthy::before { --status-color: var(--brand-success-100); }
+.ct-card-status-warning::before { --status-color: var(--brand-warning-100); }
+.ct-card-status-critical::before { --status-color: var(--brand-danger-100); }
   transition: width 500ms ease-in-out;
 }
 
