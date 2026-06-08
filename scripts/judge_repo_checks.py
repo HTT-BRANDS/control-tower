@@ -639,3 +639,71 @@ def check_runbook_exists() -> tuple[bool, str]:
     if age_days > 90:
         return False, f"runbook age {age_days:.0f}d (>90d threshold)"
     return True, f"runbook present, age {age_days:.0f}d"
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 final extension: more auto-judgeable criteria
+# ---------------------------------------------------------------------------
+
+
+def check_app_insights_flow() -> tuple[bool, str]:
+    """P1.5 -- App Insights telemetry is configured (connection string exists)."""
+    import subprocess
+
+    try:
+        r = subprocess.run(
+            [
+                "az",
+                "monitor",
+                "app-insights",
+                "component",
+                "show",
+                "--app",
+                "governance-appinsights",
+                "-g",
+                "rg-governance-production",
+                "--query",
+                "connectionString",
+                "-o",
+                "tsv",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        cs = r.stdout.strip()
+        if cs and "InstrumentationKey" in cs:
+            return True, "App Insights connection string present"
+        return False, f"no valid connection string: {cs[:80] if cs else 'empty'}"
+    except FileNotFoundError:
+        return False, "az CLI not installed"
+    except Exception as exc:
+        return False, f"az query failed: {exc}"
+
+
+def check_rollback_docs_exist() -> tuple[bool, str]:
+    """P6.2 -- Rollback documentation and drill runbook exist."""
+    required = [
+        REPO_ROOT / "docs" / "release-gate" / "rollback-current-state.yaml",
+        REPO_ROOT / "docs" / "runbooks" / "staging-rollback-drill.md",
+    ]
+    missing = [str(p.relative_to(REPO_ROOT)) for p in required if not p.exists()]
+    if missing:
+        return False, f"missing: {', '.join(missing)}"
+    return True, f"{len(required)} rollback docs present"
+
+
+def check_dark_mode_toggle() -> tuple[bool, str]:
+    """P4.6 -- Dark mode toggle is implemented (JS + template button)."""
+    js_file = REPO_ROOT / "app" / "static" / "js" / "darkMode.js"
+    template = REPO_ROOT / "app" / "templates" / "base.html"
+    js_exists = js_file.exists()
+    tmpl_has_toggle = False
+    if template.exists():
+        content = template.read_text(encoding="utf-8")
+        tmpl_has_toggle = "theme-toggle" in content or "dark mode" in content.lower()
+    if js_exists and tmpl_has_toggle:
+        return True, "dark mode toggle present (JS + template button)"
+    if not js_exists:
+        return False, "darkMode.js not found"
+    return False, "template missing theme-toggle button"
