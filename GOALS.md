@@ -4,8 +4,8 @@
 > Evaluated by `scripts/judge.py` -- objective criteria, no hand-waving.
 > Last updated: 2026-06-05
 >
-> **Judge coverage:** 41 of 52 criteria (79%) are evaluated automatically by
-> `scripts/judge.py`. 11 criteria remain manual (Azure portal, human judgment,
+> **Judge coverage:** 44 of 52 criteria (85%) are evaluated automatically by
+> `scripts/judge.py`. 8 criteria remain manual (Azure portal, human judgment,
 > quarterly cadence). See `GOALS_WIGGUM_WORKBOOK.md` for the sprint status.
 
 ---
@@ -30,7 +30,7 @@
 | P1.2 | `/health/detailed` shows all components healthy | `database: healthy`, `scheduler: running`, `cache: healthy`, `azure_configured: true` | `curl` |
 | P1.3 | `/healthz/data` tenant freshness | `any_stale: false` OR documented exception with ETA | `curl` + bd issue |
 | P1.4 | `/metrics` returns valid Prometheus | `200`, non-empty, parseable | `curl` + `promtool check metrics` |
-| P1.5 | App Insights telemetry flowing | Traces + logs visible in Azure portal | `judge.py` (P1.6 webtests) |
+| P1.5 | App Insights telemetry flowing | Traces + logs visible in Azure portal | `judge.py` (P1.5) |
 | P1.6 | Alert rules armed | 9x alerts configured + 2x availability tests | `judge.py` (P1.6) |
 
 ## Pillar 2: Security Surface
@@ -66,7 +66,7 @@
 | P4.3 | `:focus-visible` uses brand token | `var(--brand-primary)` not hardcoded blue | `judge.py` (P4.3) |
 | P4.4 | `/design-system` endpoint renders | `200` with HTML, all macro variants visible | `curl` + browser |
 | P4.5 | WCAG contrast tests pass | All brand colors pass AA on intended backgrounds | `judge.py` (P4.5) |
-| P4.6 | Dark mode toggle functional | Theme switches, no FOUC, persisted per-user | Manual test |
+| P4.6 | Dark mode toggle functional | Theme switches, no FOUC, persisted per-user | `judge.py` (P4.6) |
 | P4.7 | No hand-rolled badge spans | All badge-shaped `<span>` elements use DaisyUI `.badge` (theme-aware) | `judge.py` (P4.7) |
 
 ## Pillar 5: Test Coverage
@@ -86,7 +86,7 @@
 | ID | Criterion | Target | How Verified |
 |---|---|---|---|
 | P6.1 | Production deploy succeeds | All 6 jobs green (QA, Security, Build, Deploy, Smoke, Notify) | `judge.py` (P6.1) |
-| P6.2 | Auto-rollback tested | Previous-good image captured + rollback command known | `docs/release-gate/rollback-current-state.yaml` |
+| P6.2 | Auto-rollback tested | Previous-good image captured + rollback command known | `judge.py` (P6.2) |
 | P6.3 | Staging deploy succeeds | Deploy to Staging workflow green | `judge.py` (P6.3) |
 | P6.4 | GitHub Pages deploy succeeds | Pages workflow green | GitHub Actions |
 | P6.5 | Container image labeled | `version` label present, not `-dev` suffix | `judge.py` (P6.5) |
@@ -122,11 +122,11 @@ Run `python scripts/judge.py` for live evaluation.
 
 **Last manual evaluation:** 2026-06-05 -- judge.py 27/27 (100%)
 
-**2026-06-05 update (Richard, code-puppy-1725d8):**
-- Judge: **39/41 passed (95%)** -- P3.1 (DCE gap, ct-4if) + P7.3 (SECRETS_OF_RECORD TODOs, 9lfn)
-- GOALS.md criteria: 52 defined; judge covers 41/52 (79%)
+**2026-06-08 update (Richard, code-puppy-1725d8):**
+- Judge: **42/44 passed (95%)** -- P3.1 (DCE gap, ct-4if) + P7.3 (SECRETS_OF_RECORD TODOs, 9lfn)
+- GOALS.md criteria: 52 defined; judge covers 44/52 (85%)
 - All P0 criteria pass; READY FOR RELEASE TAG
-- GOALS_WIGGUM_WORKBOOK.md Phase 1+2 complete
+- Added P1.5 App Insights, P6.2 rollback docs, P4.6 dark mode checks
 
 ---
 

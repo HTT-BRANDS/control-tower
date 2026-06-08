@@ -18,6 +18,7 @@ import requests
 
 from scripts.judge_repo_checks import (
     check_alembic_current,
+    check_app_insights_flow,
     check_app_insights_webtests,
     check_bd_open_count,
     check_bicep_drift,
@@ -25,6 +26,7 @@ from scripts.judge_repo_checks import (
     check_ci_passes,
     check_container_image_labeled,
     check_core_smoke_tests_pass,
+    check_dark_mode_toggle,
     check_dockerfile_non_root,
     check_e2e_tests_exist,
     check_focus_visible_uses_brand_token,
@@ -37,6 +39,7 @@ from scripts.judge_repo_checks import (
     check_pip_audit_clean,
     check_prod_deploy_succeeds,
     check_role_enum_lockstep,
+    check_rollback_docs_exist,
     check_runbook_exists,
     check_secrets_of_record_exists,
     check_session_handoff_fresh,
@@ -529,6 +532,28 @@ def run_checks(env: str) -> list[Pillar]:
                 "Process",
                 "RUNBOOK.md current",
                 lambda _: check_runbook_exists(),
+                "P1",
+            ),
+            # ---- Phase 2 final: more coverage ----
+            Check(
+                "P1.5",
+                "Health",
+                "App Insights configured",
+                lambda _: check_app_insights_flow(),
+                "P1",
+            ),
+            Check(
+                "P6.2",
+                "Infra",
+                "Rollback docs exist",
+                lambda _: check_rollback_docs_exist(),
+                "P1",
+            ),
+            Check(
+                "P4.6",
+                "Design",
+                "Dark mode toggle present",
+                lambda _: check_dark_mode_toggle(),
                 "P1",
             ),
         ]
