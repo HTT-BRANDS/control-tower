@@ -28,67 +28,69 @@
 {% set no_tenants_configured = no_tenants_configured | default(false) %}
 
 {% block content %}
+<h1 class="sr-only">Governance Dashboard</h1>
 <div class="space-y-6" data-testid="dashboard-shell">
     {# ================================================================
        Sync Staleness Banner
        ================================================================ #}
     {% if stale_syncs %}
     <div class="bg-brand-warning-10 border border-brand-warning-50 text-brand-warning-110 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
-        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-        </svg>
+        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
         <div>
             <p class="font-medium text-sm">Data may be stale</p>
-            <p class="text-xs">Some data domains haven't synced in over 48 hours: {{ stale_syncs|join(", ") }}. <a href="/sync-dashboard" class="underline hover:text-brand-warning-130">View sync status</a>.</p>
+            <p class="text-xs">Some domains haven't synced in 48h: {{ stale_syncs|join(", ") }}. <a href="/sync-dashboard" class="underline hover:text-brand-warning-130">View sync status</a>.</p>
         </div>
     </div>
     {% endif %}
 
     {# ================================================================
-       Page Header + Tenant Scope
+       Level 1: Platform Health Score (Mission Control feel)
        ================================================================ #}
-    <div class="flex justify-between items-center flex-wrap gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-primary-theme">Governance Dashboard</h1>
-            <p class="text-secondary-theme">Cross-tenant visibility into costs, compliance, resources, and identity</p>
-        </div>
-        <div class="flex items-center gap-3">
-            {# Tenant Scope Selector #}
-            {% if tenants is defined and tenants|length > 1 %}
-            <label for="tenant-scope" class="sr-only">Filter by tenant</label>
-            <select id="tenant-scope"
-                    name="tenant_id"
-                    hx-get="/dashboard"
-                    hx-target="#main-content"
-                    hx-swap="innerHTML"
-                    hx-push-url="true"
-                    hx-indicator="#refresh-spinner"
-                    class="rounded-lg border-default bg-surface-primary text-primary-theme px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-1"
-                    aria-label="Filter dashboard by tenant">
-                <option value="">All Tenants ({{ tenants|length }})</option>
-                {% for tenant in tenants %}
-                <option value="{{ tenant.tenant_id }}" {% if selected_tenant_id == tenant.tenant_id %}selected{% endif %}>
-                    {{ tenant.name }}
-                </option>
-                {% endfor %}
-            </select>
-            {% endif %}
-            <button
-                hx-post="/api/v1/sync/all"
-                hx-swap="none"
-                hx-confirm="Trigger sync for all data types?"
-                hx-indicator="#refresh-spinner"
-                class="btn-brand flex items-center gap-2"
-            >
-                <svg id="refresh-spinner" class="htmx-indicator animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                Refresh Data
-            </button>
+    {% set platform_score = compliance_summary.average_compliance_percent | default(0) %}
+    {% set platform_status = 'healthy' if platform_score >= 90 else ('warning' if platform_score >= 70 else 'critical') %}
+    {% set status_color = 'text-success' if platform_status == 'healthy' else ('text-warning' if platform_status == 'warning' else 'text-danger') %}
+    {% set status_bg = 'bg-brand-success-5' if platform_status == 'healthy' else ('bg-brand-warning-5' if platform_status == 'warning' else 'bg-brand-danger-5') %}
+    {% set status_border = 'border-success' if platform_status == 'healthy' else ('border-warning' if platform_status == 'warning' else 'border-danger') %}
+
+    <div class="ct-card ct-card-status-{{ platform_status }} p-6 {{ status_bg }} border-l-4 {{ status_border }}">
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8">
+            <div class="flex-shrink-0 text-center md:text-left">
+                <div class="text-xs font-semibold uppercase tracking-wider text-muted-theme mb-1">Platform Health</div>
+                <div class="kpi-value {{ status_color }}">{{ "{:.0f}".format(platform_score) }}%</div>
+                <div class="text-sm font-medium {{ status_color }}">{{ platform_status | upper }}</div>
+            </div>
+            <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-surface-primary rounded-lg">
+                    <div class="text-xs text-muted-theme uppercase">Cost</div>
+                    <div class="text-lg font-bold text-primary-theme">${{ "{:,.0f}".format(cost_summary.total_cost) }}</div>
+                    {% if cost_summary.cost_change_percent is not none %}
+                    <div class="text-xs {{ 'text-danger' if cost_summary.cost_change_percent > 0 else 'text-success' }}">{{ "↑" if cost_summary.cost_change_percent > 0 else "↓" }} {{ "{:.1f}".format(cost_summary.cost_change_percent|abs) }}%</div>
+                    {% endif %}
+                </div>
+                <div class="text-center p-3 bg-surface-primary rounded-lg">
+                    <div class="text-xs text-muted-theme uppercase">Compliance</div>
+                    <div class="text-lg font-bold text-primary-theme">{{ "{:.0f}".format(compliance_summary.average_compliance_percent) }}%</div>
+                    <div class="text-xs text-danger">{{ compliance_summary.total_non_compliant_resources }} issues</div>
+                </div>
+                <div class="text-center p-3 bg-surface-primary rounded-lg">
+                    <div class="text-xs text-muted-theme uppercase">Resources</div>
+                    <div class="text-lg font-bold text-primary-theme">{{ "{:,}".format(resource_inventory.total_resources) }}</div>
+                    <div class="text-xs text-danger">{{ resource_inventory.orphaned_resources }} orphaned</div>
+                </div>
+                <div class="text-center p-3 bg-surface-primary rounded-lg">
+                    <div class="text-xs text-muted-theme uppercase">Identities</div>
+                    <div class="text-lg font-bold text-primary-theme">{{ "{:,}".format(identity_summary.total_users) }}</div>
+                    <div class="text-xs text-muted-theme">{{ "{:.0f}".format(identity_summary.mfa_enabled_percent) }}% MFA</div>
+                </div>
+            </div>
+            <div class="flex-shrink-0">
+                <button hx-post="/api/v1/sync/all" hx-swap="none" hx-confirm="Trigger sync for all data types?" class="btn-brand flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4 animate-spin htmx-indicator hidden" id="refresh-spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Sync All
+                </button>
+            </div>
         </div>
     </div>
-
     {% if no_tenants_configured %}
     {# ================================================================
        Empty State: No tenants configured in this environment
@@ -152,218 +154,219 @@
     {% if not no_tenants_configured %}
 
     {# ================================================================
-       Level 1: KPI Summary Bar
+       Level 2: Per-Tenant Mini Dashboard (Control Tower feel)
        ================================================================ #}
-    <h2 class="sr-only">Key Performance Indicators</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-surface-secondary rounded-xl"
-         role="region" aria-label="Key metrics summary" data-testid="dashboard-kpi-summary">
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Monthly Cost</div>
-            <div class="text-xl font-bold text-primary-theme">${{ "{:,.0f}".format(cost_summary.total_cost) }}</div>
-            {% if cost_summary.cost_change_percent is not none %}
-            <div class="text-xs {{ 'text-danger' if cost_summary.cost_change_percent > 0 else 'text-success' }}">
-                {{ "↑" if cost_summary.cost_change_percent > 0 else "↓" }} {{ "{:.1f}".format(cost_summary.cost_change_percent|abs) }}%
+    <h2 class="text-lg font-semibold text-primary-theme">Tenant Status</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-testid="dashboard-tenant-grid">
+        {% for tenant in tenants|default([], true) %}
+        {% set t_cost = tenant_costs|selectattr('tenant_id', 'equalto', tenant.id)|first if tenant_costs else None %}
+        {% set t_comp = compliance_summary.scores_by_tenant|selectattr('tenant_id', 'equalto', tenant.id)|first if compliance_summary.scores_by_tenant else None %}
+        {% set t_score = t_comp.overall_compliance_percent | default(0) if t_comp else 0 %}
+        {% set t_status = 'healthy' if t_score >= 90 else ('warning' if t_score >= 70 else 'critical') %}
+        <a href="/dashboard?tenant_id={{ tenant.id }}" class="ct-card ct-card-status-{{ t_status }} p-4 hover:shadow-lg transition-all hover:-translate-y-0.5">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full {{ 'bg-success' if t_status == 'healthy' else ('bg-warning' if t_status == 'warning' else 'bg-danger') }}"></span>
+                <span class="text-sm font-semibold text-primary-theme truncate">{{ tenant.name }}</span>
             </div>
-            {% endif %}
-        </div>
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Compliance</div>
-            <div class="text-xl font-bold text-primary-theme">{{ "{:.0f}".format(compliance_summary.average_compliance_percent) }}%</div>
-            <div class="text-xs text-muted-theme">{{ compliance_summary.total_non_compliant_resources }} issues</div>
-        </div>
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Resources</div>
-            <div class="text-xl font-bold text-primary-theme">{{ "{:,}".format(resource_inventory.total_resources) }}</div>
-            <div class="text-xs text-danger">{{ resource_inventory.orphaned_resources }} orphaned</div>
-        </div>
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Identities</div>
-            <div class="text-xl font-bold text-primary-theme">{{ "{:,}".format(identity_summary.total_users) }}</div>
-            <div class="text-xs text-muted-theme">{{ "{:.0f}".format(identity_summary.mfa_enabled_percent) }}% MFA</div>
-        </div>
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Tenants</div>
-            <div class="text-xl font-bold text-primary-theme">{{ tenants|default([], true)|length or cost_summary.tenant_count }}</div>
-        </div>
-        <div class="text-center">
-            <div class="text-xs text-muted-theme uppercase tracking-wide">Privileged</div>
-            <div class="text-xl font-bold text-primary-theme">{{ identity_summary.privileged_users }}</div>
-            <div class="text-xs text-muted-theme">admin users</div>
-        </div>
-    </div>
-
-    {# ================================================================
-       Level 2: Summary Cards (with last-synced timestamps)
-       ================================================================ #}
-    <h2 class="text-lg font-semibold text-primary-theme">Overview</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="dashboard-overview-grid">
-        {# Cost Summary — migrated from bespoke card → ds_stat_card #}
-        {% if cost_summary.cost_change_percent is not none %}
-          {% set cost_trend = {
-            "value": ("↑ %.1f%% vs previous period" % cost_summary.cost_change_percent) if cost_summary.cost_change_percent > 0 else ("↓ %.1f%% vs previous period" % (cost_summary.cost_change_percent|abs)),
-            "positive": cost_summary.cost_change_percent <= 0
-          } %}
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <div class="text-muted-theme">Compliance</div>
+                    <div class="font-bold {{ 'text-success' if t_score >= 90 else ('text-warning' if t_score >= 70 else 'text-danger') }}">{{ "{:.0f}".format(t_score) }}%</div>
+                </div>
+                <div>
+                    <div class="text-muted-theme">Cost</div>
+                    <div class="font-bold text-primary-theme">${{ "{:,.0f}".format(t_cost.total_cost|default(0)) if t_cost else 0 }}</div>
+                </div>
+            </div>
+            <div class="mt-2 w-full bg-surface-tertiary rounded-full h-1.5">
+                <div class="h-1.5 rounded-full {{ 'bg-success' if t_status == 'healthy' else ('bg-warning' if t_status == 'warning' else 'bg-danger') }}" style="width: {{ t_score }}%"></div>
+            </div>
+        </a>
         {% else %}
-          {% set cost_trend = None %}
-        {% endif %}
-        {{ ds_stat_card(
-             label="Total Cost (30d)",
-             value="$" + "{:,.2f}".format(cost_summary.total_cost),
-             icon_svg=icon_cost,
-             trend=cost_trend,
-             footer="Synced " ~ (last_synced.costs|timeago),
-             border_accent="brand"
-        ) }}
-
-        {# Compliance Score — migrated to ds_stat_card #}
-        {{ ds_stat_card(
-             label="Avg Compliance",
-             value="{:.1f}".format(compliance_summary.average_compliance_percent) + "%",
-             icon_svg=icon_compliance,
-             icon_bg="bg-brand-success-5",
-             icon_color="text-success",
-             caption=compliance_summary.total_non_compliant_resources|string + " non-compliant resources",
-             footer="Synced " ~ (last_synced.compliance|timeago),
-             border_accent="success"
-        ) }}
-
-        {# Resources — migrated to ds_stat_card (caption uses HTML for colored "orphaned" span) #}
-        {% set resource_caption %}<span class="text-danger">{{ resource_inventory.orphaned_resources }} orphaned</span><span class="text-muted-theme"> (~${{ "{:,.0f}".format(resource_inventory.orphaned_estimated_cost) }}/mo)</span>{% endset %}
-        {{ ds_stat_card(
-             label="Total Resources",
-             value="{:,}".format(resource_inventory.total_resources),
-             icon_svg=icon_resources,
-             icon_bg="bg-brand-warning-5",
-             icon_color="text-warning",
-             caption=resource_caption,
-             caption_html=true,
-             footer="Synced " ~ (last_synced.resources|timeago),
-             border_accent="warning"
-        ) }}
-
-        {# Identity — migrated to ds_stat_card #}
-        {{ ds_stat_card(
-             label="Total Users",
-             value="{:,}".format(identity_summary.total_users),
-             icon_svg=icon_identity,
-             icon_bg="bg-brand-info-5",
-             icon_color="text-info",
-             caption="{:.1f}".format(identity_summary.mfa_enabled_percent) + "% MFA enabled • " + (identity_summary.privileged_users|string) + " privileged",
-             footer="Synced " ~ (last_synced.identity|timeago),
-             border_accent="info"
-        ) }}
+        <div class="col-span-full p-4 text-center text-muted-theme text-sm">No tenants configured</div>
+        {% endfor %}
     </div>
 
     {# ================================================================
-       Level 3: Charts (Cost & Compliance detail)
+       Level 3: Domain Drill-Down Cards with Status Borders
+       ================================================================ #}
+    <h2 class="text-lg font-semibold text-primary-theme">Domain Overview</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-testid="dashboard-domain-grid">
+        {# Costs Domain #}
+        {% set cost_status = 'healthy' if cost_summary.cost_change_percent is none or cost_summary.cost_change_percent <= 0 else 'warning' %}
+        <div class="ct-card ct-card-status-{{ cost_status }} p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    {{ icon_cost | safe }}
+                    <h3 class="font-semibold text-primary-theme">Costs</h3>
+                </div>
+                <span class="badge badge-sm {{ 'badge-success badge-soft' if cost_status == 'healthy' else 'badge-warning badge-soft' }}">{{ cost_status | upper }}</span>
+            </div>
+            <div class="kpi-value text-primary-theme mb-1">${{ "{:,.0f}".format(cost_summary.total_cost) }}</div>
+            <div class="text-sm text-muted-theme mb-4">{{ cost_summary.tenant_count }} tenants · {{ cost_summary.subscription_count }} subscriptions</div>
+            <div class="space-y-2">
+                {% for service in cost_summary.top_services[:3] %}
+                <div class="flex items-center gap-2 text-sm">
+                    <div class="flex-1 bg-surface-tertiary rounded-full h-2">
+                        <div class="bg-brand-primary-100 h-2 rounded-full" style="width: {{ service.percentage_of_total }}%"></div>
+                    </div>
+                    <span class="text-secondary-theme w-24 text-right truncate">{{ service.service_name }}</span>
+                    <span class="text-primary-theme font-medium w-16 text-right">${{ "{:,.0f}".format(service.cost) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4 pt-3 border-t border-border-default flex justify-between items-center">
+                <span class="text-xs text-muted-theme">Synced {{ last_synced.costs|timeago }}</span>
+                <a href="/costs" class="text-xs text-brand-primary-100 hover:underline">View details &rarr;</a>
+            </div>
+        </div>
+
+        {# Compliance Domain #}
+        {% set comp_status = 'healthy' if compliance_summary.average_compliance_percent >= 90 else ('warning' if compliance_summary.average_compliance_percent >= 70 else 'critical') %}
+        <div class="ct-card ct-card-status-{{ comp_status }} p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    {{ icon_compliance | safe }}
+                    <h3 class="font-semibold text-primary-theme">Compliance</h3>
+                </div>
+                <span class="badge badge-sm {{ 'badge-success badge-soft' if comp_status == 'healthy' else ('badge-warning badge-soft' if comp_status == 'warning' else 'badge-error badge-soft') }}">{{ comp_status | upper }}</span>
+            </div>
+            <div class="kpi-value {{ 'text-success' if comp_status == 'healthy' else ('text-warning' if comp_status == 'warning' else 'text-danger') }} mb-1">{{ "{:.0f}".format(compliance_summary.average_compliance_percent) }}%</div>
+            <div class="text-sm text-muted-theme mb-4">{{ compliance_summary.total_non_compliant_resources }} non-compliant resources</div>
+            <div class="space-y-2">
+                {% for score in compliance_summary.scores_by_tenant[:3] %}
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-secondary-theme w-24 truncate">{{ score.tenant_name }}</span>
+                    <div class="flex-1 bg-surface-tertiary rounded-full h-2">
+                        <div class="h-2 rounded-full {{ 'bg-success' if score.overall_compliance_percent >= 90 else ('bg-warning' if score.overall_compliance_percent >= 70 else 'bg-danger') }}" style="width: {{ score.overall_compliance_percent }}%"></div>
+                    </div>
+                    <span class="text-primary-theme font-medium w-12 text-right">{{ "{:.0f}".format(score.overall_compliance_percent) }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4 pt-3 border-t border-border-default flex justify-between items-center">
+                <span class="text-xs text-muted-theme">Synced {{ last_synced.compliance|timeago }}</span>
+                <a href="/compliance" class="text-xs text-brand-primary-100 hover:underline">View details &rarr;</a>
+            </div>
+        </div>
+
+        {# Resources Domain #}
+        {% set res_status = 'healthy' if resource_inventory.orphaned_resources == 0 else ('warning' if resource_inventory.orphaned_resources < 5 else 'critical') %}
+        <div class="ct-card ct-card-status-{{ res_status }} p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    {{ icon_resources | safe }}
+                    <h3 class="font-semibold text-primary-theme">Resources</h3>
+                </div>
+                <span class="badge badge-sm {{ 'badge-success badge-soft' if res_status == 'healthy' else ('badge-warning badge-soft' if res_status == 'warning' else 'badge-error badge-soft') }}">{{ res_status | upper }}</span>
+            </div>
+            <div class="kpi-value text-primary-theme mb-1">{{ "{:,}".format(resource_inventory.total_resources) }}</div>
+            <div class="text-sm text-muted-theme mb-4">{{ resource_inventory.orphaned_resources }} orphaned · ~${{ "{:,.0f}".format(resource_inventory.orphaned_estimated_cost) }}/mo waste</div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="p-2 bg-surface-secondary rounded">
+                    <div class="text-muted-theme">By Type</div>
+                    <div class="font-semibold text-primary-theme">{{ resource_inventory.resources_by_type | length }}</div>
+                </div>
+                <div class="p-2 bg-surface-secondary rounded">
+                    <div class="text-muted-theme">Locations</div>
+                    <div class="font-semibold text-primary-theme">{{ resource_inventory.resources_by_location | length }}</div>
+                </div>
+                <div class="p-2 bg-surface-secondary rounded">
+                    <div class="text-muted-theme">Tenants</div>
+                    <div class="font-semibold text-primary-theme">{{ resource_inventory.resources_by_tenant | length }}</div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-border-default flex justify-between items-center">
+                <span class="text-xs text-muted-theme">Synced {{ last_synced.resources|timeago }}</span>
+                <a href="/resources" class="text-xs text-brand-primary-100 hover:underline">View details &rarr;</a>
+            </div>
+        </div>
+
+        {# Identity Domain #}
+        {% set id_status = 'healthy' if identity_summary.mfa_enabled_percent >= 90 else ('warning' if identity_summary.mfa_enabled_percent >= 70 else 'critical') %}
+        <div class="ct-card ct-card-status-{{ id_status }} p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    {{ icon_identity | safe }}
+                    <h3 class="font-semibold text-primary-theme">Identity</h3>
+                </div>
+                <span class="badge badge-sm {{ 'badge-success badge-soft' if id_status == 'healthy' else ('badge-warning badge-soft' if id_status == 'warning' else 'badge-error badge-soft') }}">{{ id_status | upper }}</span>
+            </div>
+            <div class="kpi-value text-primary-theme mb-1">{{ "{:,}".format(identity_summary.total_users) }}</div>
+            <div class="text-sm text-muted-theme mb-4">{{ identity_summary.privileged_users }} privileged · {{ identity_summary.guest_users }} guests</div>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-secondary-theme w-20">MFA</span>
+                    <div class="flex-1 bg-surface-tertiary rounded-full h-2">
+                        <div class="bg-brand-primary-100 h-2 rounded-full" style="width: {{ identity_summary.mfa_enabled_percent }}%"></div>
+                    </div>
+                    <span class="text-primary-theme font-medium w-12 text-right">{{ "{:.0f}".format(identity_summary.mfa_enabled_percent) }}%</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-secondary-theme w-20">Stale</span>
+                    <div class="flex-1 bg-surface-tertiary rounded-full h-2">
+                        <div class="bg-warning h-2 rounded-full" style="width: {{ (identity_summary.stale_accounts / identity_summary.total_users * 100) if identity_summary.total_users > 0 else 0 }}%"></div>
+                    </div>
+                    <span class="text-primary-theme font-medium w-12 text-right">{{ identity_summary.stale_accounts }}</span>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-border-default flex justify-between items-center">
+                <span class="text-xs text-muted-theme">Synced {{ last_synced.identity|timeago }}</span>
+                <a href="/identity" class="text-xs text-brand-primary-100 hover:underline">View details &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       Level 4: Charts (Cost & Compliance Trend)
        ================================================================ #}
     <h2 class="text-lg font-semibold text-primary-theme">Trends & Analysis</h2>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {# Cost Trend Chart — migrated to ds_card #}
         {% call ds_card(title="Cost Trend (30 Days)") %}
-            <div style="height: 300px;">
-                <canvas id="costTrendChart"
-                    role="img"
-                    aria-label="Cost trend chart showing daily costs over 30 days"
+            <div style="height: 280px;">
+                <canvas id="costTrendChart" role="img" aria-label="Cost trend chart"
                     data-labels='{{ cost_summary.daily_labels | default([], true) | tojson }}'
-                    data-values='{{ cost_summary.daily_costs | default([], true) | tojson }}'
-                >Cost trend data is available in the table below.</canvas>
+                    data-values='{{ cost_summary.daily_costs | default([], true) | tojson }}'>Cost trend data</canvas>
             </div>
-            <details class="mt-2">
-                <summary class="text-sm text-muted-theme cursor-pointer">View data table</summary>
-                <table class="w-full text-sm mt-2 table-responsive-stack" role="table">
-                    <caption class="sr-only">Daily cost data for the last 30 days</caption>
-                    <thead><tr><th class="text-left py-1">Date</th><th class="text-right py-1">Cost</th></tr></thead>
-                    <tbody>
-                        {% for i in range(cost_summary.daily_labels|default([], true)|length) %}
-                        <tr>
-                            <td class="py-1" data-label="Date">{{ cost_summary.daily_labels[i] }}</td>
-                            <td class="py-1 text-right" data-label="Cost">${{ "{:,.2f}".format(cost_summary.daily_costs[i]) }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </details>
         {% endcall %}
-
-        {# Compliance by Tenant — migrated to ds_card #}
         {% call ds_card(title="Compliance by Tenant") %}
-            <div style="height: 300px;">
-                <canvas id="complianceChart"
-                    role="img"
-                    aria-label="Compliance scores by tenant bar chart"
+            <div style="height: 280px;">
+                <canvas id="complianceChart" role="img" aria-label="Compliance chart"
                     data-labels='{{ compliance_summary.tenant_names | default([], true) | tojson }}'
-                    data-values='{{ compliance_summary.tenant_scores | default([], true) | tojson }}'
-                >Compliance data is available in the table below.</canvas>
+                    data-values='{{ compliance_summary.tenant_scores | default([], true) | tojson }}'>Compliance data</canvas>
             </div>
-            <details class="mt-2">
-                <summary class="text-sm text-muted-theme cursor-pointer">View data table</summary>
-                <table class="w-full text-sm mt-2 table-responsive-stack" role="table">
-                    <caption class="sr-only">Compliance scores by tenant</caption>
-                    <thead><tr><th class="text-left py-1">Tenant</th><th class="text-right py-1">Score</th></tr></thead>
-                    <tbody>
-                        {% for i in range(compliance_summary.tenant_names|default([], true)|length) %}
-                        <tr>
-                            <td class="py-1" data-label="Tenant">{{ compliance_summary.tenant_names[i] }}</td>
-                            <td class="py-1 text-right" data-label="Score">{{ compliance_summary.tenant_scores[i] }}%</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </details>
         {% endcall %}
     </div>
 
     {# ================================================================
-       Level 3: Detail Tables
+       Level 5: Recent Activity Tables
        ================================================================ #}
     <h2 class="text-lg font-semibold text-primary-theme">Recent Activity</h2>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {# Top Cost Services — migrated to ds_static_table #}
-        {% call ds_static_table(
-            title="Top Services by Cost",
-            columns=["Service", "Cost", "% of Total"],
-            caption="Top 5 Azure services by monthly cost across all tenants"
-        ) %}
+        {% call ds_static_table(title="Top Services by Cost", columns=["Service", "Cost", "%"], caption="Top 5 Azure services by monthly cost") %}
             {% for service in cost_summary.top_services[:5] %}
             <tr class="hover:bg-surface-secondary transition-colors">
-                <td class="px-6 py-4 text-sm text-primary-theme">{{ service.service_name }}</td>
-                <td class="px-6 py-4 text-sm text-primary-theme text-right">${{ "{:,.2f}".format(service.cost) }}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme text-right">{{ "{:.1f}".format(service.percentage_of_total) }}%</td>
+                <td class="px-4 py-3 text-sm text-primary-theme">{{ service.service_name }}</td>
+                <td class="px-4 py-3 text-sm text-primary-theme text-right tabular-nums">${{ "{:,.2f}".format(service.cost) }}</td>
+                <td class="px-4 py-3 text-sm text-secondary-theme text-right">{{ "{:.1f}".format(service.percentage_of_total) }}%</td>
             </tr>
             {% else %}
-            <tr>
-                <td colspan="3" class="px-6 py-8 text-sm text-muted-theme text-center">
-                    No cost data available — <a href="/sync-dashboard" class="text-brand-primary-100 underline">run a sync</a>
-                </td>
-            </tr>
+            <tr><td colspan="3" class="px-4 py-6 text-sm text-muted-theme text-center">No cost data — <a href="/sync-dashboard" class="text-brand-primary-100 underline">run a sync</a></td></tr>
             {% endfor %}
         {% endcall %}
-
-        {# Top Policy Violations — migrated to ds_static_table #}
-        {% call ds_static_table(
-            title="Top Policy Violations",
-            columns=["Policy", "Violations", "Tenants"],
-            caption="Top 5 Azure Policy violations across all tenants, ordered by violation count"
-        ) %}
+        {% call ds_static_table(title="Top Policy Violations", columns=["Policy", "Count", "Tenants"], caption="Top 5 Azure Policy violations") %}
             {% for violation in compliance_summary.top_violations[:5] %}
             <tr class="hover:bg-surface-secondary transition-colors">
-                <td class="px-6 py-4 text-sm text-primary-theme">{{ violation.policy_name }}</td>
-                <td class="px-6 py-4 text-sm text-danger text-right">{{ violation.violation_count }}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme text-right">{{ violation.affected_tenants }}</td>
+                <td class="px-4 py-3 text-sm text-primary-theme">{{ violation.policy_name }}</td>
+                <td class="px-4 py-3 text-sm text-danger text-right tabular-nums">{{ violation.violation_count }}</td>
+                <td class="px-4 py-3 text-sm text-secondary-theme text-right">{{ violation.affected_tenants }}</td>
             </tr>
             {% else %}
-            <tr>
-                <td colspan="3" class="px-6 py-8 text-sm text-muted-theme text-center">
-                    No policy violations — <a href="/compliance" class="text-brand-primary-100 underline">view compliance</a>
-                </td>
-            </tr>
+            <tr><td colspan="3" class="px-4 py-6 text-sm text-muted-theme text-center">No violations — <a href="/compliance" class="text-brand-primary-100 underline">view compliance</a></td></tr>
             {% endfor %}
         {% endcall %}
-    </div>
-
     {# ================================================================
-       Skeleton Screen Template (used by HTMX hx-indicator)
+       Skeleton Screen Template
        ================================================================ #}
     <template id="skeleton-card">
         <div class="p-6 space-y-3" aria-busy="true" aria-label="Loading content">
@@ -373,7 +376,7 @@
             <div class="skeleton h-4 w-2/3"></div>
         </div>
     </template>
-    {% endif %}{# /no_tenants_configured guard around KPI + Overview grids #}
+    {% endif %}{# /not no_tenants_configured #}
 </div>
 {% endblock %}
 
