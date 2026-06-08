@@ -446,17 +446,18 @@ def check_pages_render_without_error() -> tuple[bool, str]:
     sys.path.insert(0, str(REPO_ROOT))
 
     try:
-        from fastapi.testclient import TestClient
         from unittest.mock import MagicMock
 
-        from app.main import app
-        from app.core.auth import User, get_current_user
-        from app.core.authorization import TenantAuthorization, get_tenant_authorization
-        from app.core.database import get_db, Base
-        from app.models.tenant import Tenant
+        from fastapi.testclient import TestClient
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         from sqlalchemy.pool import StaticPool
+
+        from app.core.auth import User, get_current_user
+        from app.core.authorization import TenantAuthorization, get_tenant_authorization
+        from app.core.database import Base, get_db
+        from app.main import app
+        from app.models.tenant import Tenant
     except Exception as exc:
         return False, f"import failed: {exc}"
 
