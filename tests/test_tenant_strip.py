@@ -26,15 +26,23 @@ def client():
     db = SessionLocal()
 
     # Seed test tenants
-    db.add(Tenant(id="tenant-htt", tenant_id="tenant-htt", name="Head-To-Toe (HTT)", is_active=True))
+    db.add(
+        Tenant(id="tenant-htt", tenant_id="tenant-htt", name="Head-To-Toe (HTT)", is_active=True)
+    )
     db.add(Tenant(id="tenant-bcc", tenant_id="tenant-bcc", name="Bishops (BCC)", is_active=True))
     db.commit()
 
     mock_user = User(
-        id="user-123", email="test@example.com", name="Test User",
-        roles=["admin"], tenant_ids=["tenant-htt", "tenant-bcc"], is_active=True, auth_provider="internal",
+        id="user-123",
+        email="test@example.com",
+        name="Test User",
+        roles=["admin"],
+        tenant_ids=["tenant-htt", "tenant-bcc"],
+        is_active=True,
+        auth_provider="internal",
     )
     from unittest.mock import MagicMock
+
     mock_authz = MagicMock(spec=TenantAuthorization)
     mock_authz.user = mock_user
     mock_authz.accessible_tenant_ids = {"tenant-htt", "tenant-bcc"}

@@ -443,6 +443,7 @@ def check_pages_render_without_error() -> tuple[bool, str]:
     SQL crashes.
     """
     import sys
+
     sys.path.insert(0, str(REPO_ROOT))
 
     try:
@@ -475,8 +476,13 @@ def check_pages_render_without_error() -> tuple[bool, str]:
 
     # Mock auth
     mock_user = User(
-        id="user-123", email="test@example.com", name="Test User",
-        roles=["admin"], tenant_ids=["test-tenant"], is_active=True, auth_provider="internal",
+        id="user-123",
+        email="test@example.com",
+        name="Test User",
+        roles=["admin"],
+        tenant_ids=["test-tenant"],
+        is_active=True,
+        auth_provider="internal",
     )
     mock_authz = MagicMock(spec=TenantAuthorization)
     mock_authz.user = mock_user
@@ -496,9 +502,19 @@ def check_pages_render_without_error() -> tuple[bool, str]:
 
     # Page routes to validate (registered in app/api/routes/pages.py + dashboard.py)
     page_routes = [
-        "/dashboard", "/costs", "/compliance", "/resources", "/identity",
-        "/riverside", "/dmarc", "/admin", "/franchise-coach",
-        "/topology", "/sync-dashboard", "/design-system", "/privacy",
+        "/dashboard",
+        "/costs",
+        "/compliance",
+        "/resources",
+        "/identity",
+        "/riverside",
+        "/dmarc",
+        "/admin",
+        "/franchise-coach",
+        "/topology",
+        "/sync-dashboard",
+        "/design-system",
+        "/privacy",
     ]
 
     client = TestClient(app)
