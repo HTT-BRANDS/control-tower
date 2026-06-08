@@ -14,6 +14,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# HTT-CORE subscription -- production resources live here.
+# Used by az CLI checks that target rg-governance-production.
+_PROD_SUB_ID = "32a28177-6fb2-4668-a528-6d6cafb9665e"
+
 
 # ---------------------------------------------------------------------------
 # Config/local checks (import from app code)
@@ -129,7 +133,13 @@ def check_staging_deploy_succeeds() -> tuple[bool, str]:
 
 
 def check_tenant_domain_coverage() -> tuple[bool, str]:
-    """P3.1 -- All tenants have required-domain data (resources, compliance, costs, identity)."""
+    """P3.1 -- All tenants have required-domain data.
+
+    For ARM-enabled tenants, all 4 domains are required (resources, compliance,
+    costs, identity). Entra-only tenants (arm_enabled=false) are exempt from
+    ARM-dependent domains (resources, compliance) since they have no Azure
+    subscriptions to scan.
+    """
     try:
         import requests
 
@@ -138,19 +148,26 @@ def check_tenant_domain_coverage() -> tuple[bool, str]:
         if r.status_code != 200:
             return False, f"/healthz/data returned {r.status_code}"
         d = r.json()
-        required_domains = {"resources", "compliance", "costs", "identity"}
+        base_required = {"resources", "compliance", "costs", "identity"}
+        arm_dependent = {"resources", "compliance"}
         gaps = []
         for name, t in d.get("tenants", {}).items():
+            # Entra-only tenants skip ARM-dependent domains
+            if not t.get("arm_enabled", True):
+                required = base_required - arm_dependent
+            else:
+                required = base_required
             tenant_domains = set()
-            for domain in required_domains:
+            for domain in required:
                 if t.get(domain) or t.get(f"{domain}_last_sync"):
                     tenant_domains.add(domain)
-            missing = required_domains - tenant_domains
+            missing = required - tenant_domains
             if missing:
                 gaps.append(f"{name} missing {sorted(missing)}")
         if gaps:
             return False, f"domain gaps: {'; '.join(gaps)}"
-        return True, f"all {len(d.get('tenants', {}))} tenants have 4/4 domains"
+        n = len(d.get("tenants", {}))
+        return True, f"all {n} tenants have required domains"
     except Exception as exc:
         return False, f"error: {exc}"
 
@@ -163,6 +180,8 @@ def check_app_insights_webtests() -> tuple[bool, str]:
                 "az",
                 "resource",
                 "list",
+                "--subscription",
+                _PROD_SUB_ID,
                 "--resource-group",
                 "rg-governance-production",
                 "--resource-type",
@@ -184,6 +203,8 @@ def check_app_insights_webtests() -> tuple[bool, str]:
                 "metrics",
                 "alert",
                 "list",
+                "--subscription",
+                _PROD_SUB_ID,
                 "-g",
                 "rg-governance-production",
                 "--query",
@@ -219,6 +240,8 @@ def check_app_insights_flow() -> tuple[bool, str]:
                 "governance-appinsights",
                 "-g",
                 "rg-governance-production",
+                "--subscription",
+                _PROD_SUB_ID,
                 "--query",
                 "connectionString",
                 "-o",
