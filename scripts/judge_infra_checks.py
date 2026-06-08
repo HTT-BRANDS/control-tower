@@ -383,3 +383,31 @@ def check_wcag_contrast_tests() -> tuple[bool, str]:
     if has_contrast:
         return True, "WCAG contrast test file present"
     return False, "test file exists but no contrast/wcag content"
+
+
+def check_no_orphaned_sync_jobs() -> tuple[bool, str]:
+    """P3.3 -- No orphaned sync job logs in the DB.
+
+    An orphaned job has a ``started_at`` but no ``completed_at`` and is
+    older than 24 hours (truly in-flight jobs are < 24h). Checked via
+    the ``/healthz/data`` endpoint's ``any_stale`` field which already
+    aggregates this signal.
+    """
+    try:
+        import requests
+
+        base = "https://app-governance-prod.azurewebsites.net"
+        r = requests.get(f"{base}/healthz/data", timeout=20)
+        if r.status_code != 200:
+            return False, f"/healthz/data returned {r.status_code}"
+        d = r.json()
+        any_stale = d.get("any_stale", True)
+        if any_stale:
+            # Check which tenants are stale
+            stale_tenants = [
+                name for name, t in d.get("tenants", {}).items() if t.get("stale", True)
+            ]
+            return False, f"stale tenants: {stale_tenants}"
+        return True, "all tenants fresh (no orphaned jobs)"
+    except Exception as exc:
+        return False, f"/healthz/data check failed: {exc}"

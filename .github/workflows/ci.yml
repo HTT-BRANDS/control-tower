@@ -58,13 +58,31 @@ jobs:
       - name: Format check (ruff format)
         run: uv run ruff format --check .
 
-      - name: Unit & integration tests
+      - name: Unit & integration tests + coverage gate
         # Deselect ``visual`` marker — those tests require a Playwright
         # browser runtime which is only installed in the ``browser-smoke``
         # job. Keep the assertion explicit so a future visual-marked test
         # leaking into this job fails fast and visibly, instead of erroring
         # out at collection time on a missing browser executable.
-        run: uv run pytest tests/unit/ tests/integration/ -q --tb=short -m "not visual"
+        #
+        # Coverage gate: --cov-fail-under=35 matches current baseline.
+        # Raise incrementally as coverage improves (target: 60%).
+        run: |
+          uv run pytest tests/unit/ tests/integration/ \
+            -q --tb=short -m "not visual" \
+            --cov=app \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:artifacts/coverage.xml \
+            --cov-fail-under=35
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: artifacts/coverage.xml
+          if-no-files-found: ignore
+          retention-days: 7
 
   # ===========================================================================
   # Job 2: Browser Smoke (required merge gate)
