@@ -1,11 +1,13 @@
 """Dashboard API routes."""
 
 import asyncio
+import logging
+import traceback
 from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -136,7 +138,10 @@ async def _get_dashboard_data(
     }
 
 
-@router.get("/dashboard", response_class=HTMLResponse)
+logger = logging.getLogger(__name__)
+
+
+@router.get("/dashboard")
 async def dashboard_page(
     request: Request,
     db: Session = Depends(get_db),
@@ -144,32 +149,43 @@ async def dashboard_page(
     tenant_id: str | None = None,
 ):
     """Main dashboard view with optional tenant scope filter."""
-    data = await _get_dashboard_data(db, authz)
-    brand_context = get_brand_context_for_request(request)
+    try:
+        data = await _get_dashboard_data(db, authz)
+        brand_context = get_brand_context_for_request(request)
 
-    # Build tenant list for scope selector
-    if "admin" in authz.user.roles:
-        tenants = db.query(Tenant).filter(Tenant.is_active).all()
-    else:
-        tenants = get_user_tenants(authz.user, db, include_inactive=False)
+        # Build tenant list for scope selector
+        if "admin" in authz.user.roles:
+            tenants = db.query(Tenant).filter(Tenant.is_active).all()
+        else:
+            tenants = get_user_tenants(authz.user, db, include_inactive=False)
 
-    # Surface the "no tenants configured anywhere" case explicitly. Non-admins
-    # already get a 403 from ensure_at_least_one_tenant(); admins on an empty
-    # tenant table (e.g. unseeded staging) would otherwise see a silently-blank
-    # dashboard with zero-value KPI cards. The template branches on this flag.
-    no_tenants_configured = len(tenants) == 0
+        # Surface the "no tenants configured anywhere" case explicitly. Non-admins
+        # already get a 403 from ensure_at_least_one_tenant(); admins on an empty
+        # tenant table (e.g. unseeded staging) would otherwise see a silently-blank
+        # dashboard with zero-value KPI cards. The template branches on this flag.
+        no_tenants_configured = len(tenants) == 0
 
-    return templates.TemplateResponse(
-        request,
-        "pages/dashboard.html",
-        {
-            **data,
-            **brand_context,
-            "tenants": tenants,
-            "selected_tenant_id": tenant_id or "",
-            "no_tenants_configured": no_tenants_configured,
-        },
-    )
+        return templates.TemplateResponse(
+            request,
+            "pages/dashboard.html",
+            {
+                **data,
+                **brand_context,
+                "tenants": tenants,
+                "selected_tenant_id": tenant_id or "",
+                "no_tenants_configured": no_tenants_configured,
+            },
+        )
+    except Exception as exc:
+        tb = traceback.format_exc()
+        logger.error(f"Dashboard error: {exc}\n{tb}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": str(exc),
+                "traceback": tb,
+            },
+        )
 
 
 @router.get("/partials/cost-summary-card", response_class=HTMLResponse)
