@@ -68,7 +68,7 @@ def _active_tenant_count() -> int:
         from app.models.tenant import Tenant
 
         with SessionLocal() as db:
-            return db.query(Tenant).filter(Tenant.is_active.is_(True)).count()
+            return db.query(Tenant).filter(Tenant.is_active == True).count()  # noqa: E712
     except Exception:
         return 0
 

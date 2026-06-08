@@ -323,7 +323,7 @@ def build_franchise_coach_view(
         A fully-populated :class:`FranchiseCoachView`.
     """
     now = now or datetime.now(UTC)
-    tenants: list[Tenant] = session.query(Tenant).filter(Tenant.is_active.is_(True)).all()
+    tenants: list[Tenant] = session.query(Tenant).filter(Tenant.is_active == True).all()  # noqa: E712
     cards: list[BrandCoachCard] = []
     needing_attention = 0
     healthy = 0
