@@ -39,8 +39,8 @@
      ) }}
 
     {{ ds_table(
-         title="Non-Compliant Resources",
-         columns=["Policy", "Resource", "State", "Tenant"],
+         title="Non-Compliant Policies",
+         columns=["Policy", "Category", "Affected Resources", "Severity"],
          body_id="non-compliant-table"
      ) }}
 
@@ -75,12 +75,14 @@ async function loadAllData() {
 
     if (summary) {
         const scoreEl = document.getElementById('overall-score');
-        const score = summary.overall_score ?? 0;
+        const score = summary.average_compliance_percent ?? 0;
         scoreEl.textContent = `${score.toFixed(1)}%`;
         scoreEl.className = `mt-2 text-3xl font-bold ${scoreColor(score)}`;
-        document.getElementById('total-policies').textContent = summary.total_policies ?? 0;
-        document.getElementById('compliant-count').textContent = summary.compliant_count ?? 0;
-        document.getElementById('non-compliant-count').textContent = summary.non_compliant_count ?? 0;
+        // Use resource counts from the summary; total_policies is not tracked separately
+        const totalRes = (summary.total_compliant_resources ?? 0) + (summary.total_non_compliant_resources ?? 0) + (summary.total_exempt_resources ?? 0);
+        document.getElementById('total-policies').textContent = totalRes;
+        document.getElementById('compliant-count').textContent = summary.total_compliant_resources ?? 0;
+        document.getElementById('non-compliant-count').textContent = summary.total_non_compliant_resources ?? 0;
     }
 
     const scoresTable = document.getElementById('scores-table');
@@ -93,8 +95,8 @@ async function loadAllData() {
                         ${(s.overall_compliance_percent ?? 0).toFixed(1)}%
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-success">${s.compliant_count ?? 0}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-danger">${s.non_compliant_count ?? 0}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-success">${s.compliant_resources ?? 0}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-danger">${s.non_compliant_resources ?? 0}</td>
             </tr>
         `).join('');
     } else {
@@ -103,20 +105,30 @@ async function loadAllData() {
 
     const ncTable = document.getElementById('non-compliant-table');
     if (nonCompliant && nonCompliant.length > 0) {
-        ncTable.innerHTML = nonCompliant.slice(0, 50).map(r => `
+        // Group by policy name to show unique policies with counts, not per-resource rows
+        const grouped = {};
+        nonCompliant.forEach(r => {
+            const key = r.policy_name || r.policy_definition_id || 'Unknown';
+            if (!grouped[key]) {
+                grouped[key] = { name: key, category: r.policy_category || '--', count: 0, severity: r.severity || 'Medium' };
+            }
+            grouped[key].count += (r.non_compliant_count || 1);
+        });
+        const rows = Object.values(grouped).sort((a, b) => b.count - a.count).slice(0, 20);
+        ncTable.innerHTML = rows.map(r => `
             <tr>
-                <td class="px-6 py-4 text-sm text-primary-theme">${r.policy_name || r.policy_definition_id || '--'}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme max-w-xs truncate">${r.resource_id || '--'}</td>
+                <td class="px-6 py-4 text-sm text-primary-theme">${r.name}</td>
+                <td class="px-6 py-4 text-sm text-secondary-theme">${r.category}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="badge badge-error badge-soft badge-sm font-semibold">
-                        ${r.compliance_state || 'NonCompliant'}
+                        ${r.count} resources
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${r.tenant_name || r.tenant_id || '--'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${r.severity}</td>
             </tr>
         `).join('');
     } else {
-        ncTable.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No non-compliant resources found</td></tr>';
+        ncTable.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No non-compliant policies found</td></tr>';
     }
 }
 
