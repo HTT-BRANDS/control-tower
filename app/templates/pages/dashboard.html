@@ -32,19 +32,6 @@
     {# ================================================================
        Sync Staleness Banner
        ================================================================ #}
-    {% set now = datetime.now() %}
-    {% set max_sync_age_hours = 48 %}
-    {% set stale_syncs = [] %}
-    {% for sync_type, sync_time in last_synced.items() %}
-        {% if sync_time %}
-            {% set age_hours = ((now - sync_time).total_seconds() / 3600) %}
-            {% if age_hours > max_sync_age_hours %}
-                {% set _ = stale_syncs.append(sync_type) %}
-            {% endif %}
-        {% else %}
-            {% set _ = stale_syncs.append(sync_type + " (never)") %}
-        {% endif %}
-    {% endfor %}
     {% if stale_syncs %}
     <div class="bg-brand-warning-10 border border-brand-warning-50 text-brand-warning-110 px-4 py-3 rounded-lg flex items-center gap-3" role="alert">
         <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">

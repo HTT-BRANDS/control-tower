@@ -129,12 +129,23 @@ async def _get_dashboard_data(
     else:
         last_synced = dict.fromkeys(sync_types)
 
+    # Compute stale syncs for the UI banner (>48 hours old or never synced)
+    stale_syncs: list[str] = []
+    now = datetime.now(UTC)
+    max_age = 48 * 3600  # 48 hours in seconds
+    for sync_type, sync_time in last_synced.items():
+        if sync_time is None:
+            stale_syncs.append(f"{sync_type} (never)")
+        elif (now - sync_time).total_seconds() > max_age:
+            stale_syncs.append(sync_type)
+
     return {
         "cost_summary": cost_summary,
         "compliance_summary": compliance_summary,
         "resource_inventory": resource_inventory,
         "identity_summary": identity_summary,
         "last_synced": last_synced,
+        "stale_syncs": stale_syncs,
     }
 
 
