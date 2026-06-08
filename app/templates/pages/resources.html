@@ -100,8 +100,8 @@ async function loadAllData() {
         if (idleList.length > 0) {
             table.innerHTML = idleList.slice(0, 25).map(r => `
                 <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-primary-theme">${r.resource_name || r.name || '--'}</td>
-                    <td class="px-6 py-4 text-sm text-secondary-theme">${r.resource_type || '--'}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-primary-theme">${r.resource_id || '--'}</td>
+                    <td class="px-6 py-4 text-sm text-secondary-theme">${r.idle_type || r.resource_type || '--'}</td>
                     <td class="px-6 py-4 text-sm text-success">${r.estimated_monthly_savings ? formatCurrency(r.estimated_monthly_savings) : '--'}</td>
                 </tr>
             `).join('');
@@ -130,7 +130,7 @@ async function loadAllData() {
     }
 
     if (tagging) {
-        const score = tagging.compliance_percentage ?? tagging.score ?? 0;
+        const score = tagging.compliance_percent ?? tagging.score ?? 0;
         const scoreEl = document.getElementById('tagging-score');
         scoreEl.textContent = `${score.toFixed(1)}%`;
         if (score >= 90) scoreEl.className = 'mt-2 text-3xl font-bold text-success';

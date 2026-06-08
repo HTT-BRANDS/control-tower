@@ -75,7 +75,7 @@ async function loadAllData() {
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${u.display_name || '--'}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">${u.user_principal_name || u.email || '--'}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme">${(u.roles || []).join(', ') || '--'}</td>
+                <td class="px-6 py-4 text-sm text-secondary-theme">${u.role_name || '--'}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
             </tr>
         `).join('');
