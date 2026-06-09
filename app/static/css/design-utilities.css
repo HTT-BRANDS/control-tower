@@ -72,6 +72,51 @@ body {
 .dark .card-title { color: var(--text-primary); }
 .dark .card { background-color: var(--bg-primary); border-color: var(--border-color); }
 
+/* ── DaisyUI badge-soft dark-mode fix (ct-bpt) ───────────────────────────
+   DaisyUI's dark theme color-mix(bright_semantic 8%, dark_base) produces
+   visible tinted boxes on our ultra-dark #0F0F0F surfaces. Override to
+   very-dark low-opacity tints with bright SWA accent text.               */
+.dark .badge-success.badge-soft {
+  background-color: rgba(63, 185, 80, 0.12);
+  color: #bbf7d0;
+  border-color: rgba(63, 185, 80, 0.25);
+}
+.dark .badge-error.badge-soft {
+  background-color: rgba(248, 81, 73, 0.12);
+  color: #fca5a5;
+  border-color: rgba(248, 81, 73, 0.25);
+}
+.dark .badge-warning.badge-soft {
+  background-color: rgba(210, 153, 34, 0.12);
+  color: #fde68a;
+  border-color: rgba(210, 153, 34, 0.25);
+}
+.dark .badge-primary.badge-soft {
+  background-color: rgba(188, 140, 255, 0.12);
+  color: #e9d5ff;
+  border-color: rgba(188, 140, 255, 0.25);
+}
+.dark .badge-info.badge-soft {
+  background-color: rgba(88, 166, 255, 0.12);
+  color: #bfdbfe;
+  border-color: rgba(88, 166, 255, 0.25);
+}
+.dark .badge-ghost {
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+/* ── DaisyUI semantic button text brightening (ct-bpt) ──────────────────
+   DaisyUI dark theme sets --color-X-content to dark shades (oklch ~37%)
+   which read as "faint" against bright button backgrounds. Bump to
+   bright SWA accent colors that stay crisp on noisy gradient buttons.     */
+.dark .btn-success  { --btn-fg: #bbf7d0; }
+.dark .btn-error    { --btn-fg: #fca5a5; }
+.dark .btn-warning  { --btn-fg: #fde68a; }
+.dark .btn-primary  { --btn-fg: #e9d5ff; }
+.dark .btn-info     { --btn-fg: #bfdbfe; }
+
 /* ==========================================================================
    Brand Color Utilities
    ========================================================================== */
