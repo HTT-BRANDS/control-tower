@@ -49,9 +49,7 @@ def upgrade() -> None:
             continue
         # Only update rows where the column is actually NULL
         bind.execute(
-            sa.text(
-                f"UPDATE {table} SET {column} = :ts WHERE {column} IS NULL"
-            ).bindparams(ts=now)
+            sa.text(f"UPDATE {table} SET {column} = :ts WHERE {column} IS NULL").bindparams(ts=now)
         )
 
 
