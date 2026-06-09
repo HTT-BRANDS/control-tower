@@ -1,14 +1,15 @@
 # HTT Control Tower -- Live Status
 
 > **Read this first.** This is the single-glance "where are we right now" answer.
-> Banner refreshed **2026-06-08** by Richard (`code-puppy-1725d8`).
+> Banner refreshed **2026-06-09** by Richard (`code-puppy-c56be7`).
 > If a fact below is older than 24 hours, cross-check against `git log`, `bd ready`,
 > and live `/health`.
 
-**Main is clean + in sync** as of 2026-06-08. 11 PRs merged this session (#114-#124).
-**Package version:** `2.5.0` (per `pyproject.toml`)
-**Last live prod check (2026-06-08):** `/health` -> `healthy / 2.5.0 / production`; `/healthz/data` `any_stale=false` (all 5 tenants fresh, DCE resolved); `/healthz/scheduler` `running=true, any_overdue=false`.
-**Judge:** 48/48 (100%), ALL PASS, READY FOR RELEASE TAG.
+**Main is clean + in sync** as of 2026-06-09. 17 PRs merged since v2.5.0 (#114-#130).
+**Package version:** `2.5.0` (per `pyproject.toml`) — **pending 2.6.0 bump** (see ct-9hl).
+**Last live prod check (2026-06-09):** `/health` -> `healthy / 2.5.0 / production`; all 5 tenants fresh; scheduler running; no overdue jobs.
+**Judge:** 48/48 (100%), ALL PASS.
+**Production deploy:** Run `27213013133` — completed success. All new features live.
 
 **Repo:** <https://github.com/htt-brands/control-tower>
 **Public docs (GitHub Pages):** <https://htt-brands.github.io/control-tower/>
@@ -17,9 +18,9 @@
 
 ## What's live right now
 
-| Surface | URL | Status (verified 2026-06-08) |
+| Surface | URL | Status (verified 2026-06-09) |
 |---|---|---|
-| **Production app** | <https://app-governance-prod.azurewebsites.net> | healthy / 2.5.0 / production |
+| **Production app** | <https://app-governance-prod.azurewebsites.net> | healthy / 2.5.0 / production (code at `4ce0d11`, features through #130) |
 | **Staging app** | <https://app-governance-staging-xnczpwyv.azurewebsites.net> | healthy (allow 30-90s cold-start) |
 | **GitHub Pages** | <https://htt-brands.github.io/control-tower/> | 200 OK |
 | **API docs** | <https://app-governance-prod.azurewebsites.net/docs> | 401 (auth-gated) |
@@ -76,12 +77,13 @@ Q3 2026 drills completed 2026-06-08:
 
 ---
 
-## What's left (2 items, Tyler-human only)
+## What's left (3 items)
 
-| Issue | What | Priority |
-|-------|------|----------|
-| ct-dxb | Deliver ops team training session | P2 |
-| ct-18z | Revoke DomainIQ external creds (Cloudflare + Cloudways) | P3 |
+| Issue | What | Priority | Blocker |
+|-------|------|----------|---------|
+| ct-9hl | Bump package version 2.5.0 → 2.6.0 (pyproject.toml, Dockerfile, uv.lock, env-delta.yaml, tag) | P3 | Needs PR + tag |
+| ct-dxb | Deliver ops team training session | P2 | Tyler-human only |
+| ct-18z | Revoke DomainIQ external creds (Cloudflare + Cloudways) | P3 | Tyler-human only |
 
 ---
 
@@ -100,3 +102,15 @@ Q3 2026 drills completed 2026-06-08:
 | #122 | SECRETS_OF_RECORD complete, ops monitoring, Q3 DR drills |
 | #123 | 6 gap closures (coverage gate, STRIDE, SLSA, cross-browser, k6, orphaned sync) |
 | #124 | Staging cold-start flake fix |
+
+## Session history (2026-06-09)
+
+| PR | What |
+|----|------|
+| #125 | Comprehensive docs update (STATUS, SESSION_HANDOFF, README, Pages) |
+| #126 | Dashboard 500 fix (SQL Server `.is_(True)` syntax) |
+| #127 | Real-time sync (SSE) + keyboard shortcuts + dark mode |
+| #128 | Test-isolation fix (event-loop pollution) |
+| #117 | 6 dependency bumps (uvicorn, redis, idna, etc.) |
+| #129 | Pre-prod UAT fixes — CSP nonce + desktop search visibility |
+| #130 | Dark-mode badge-soft contrast + button text brightness |
