@@ -29,7 +29,9 @@
     {# Sync Status Grid #}
     <div class="grid grid-cols-2 gap-2">
         {% for sync in tenant_data.syncs %}
-        <div class="flex items-center justify-between p-2 rounded bg-white/80 backdrop-blur-sm">
+        {# bg-base-200 (DaisyUI) adapts to data-theme so these tiles render dark
+           in dark mode instead of fixed white boxes (bd ct-6vn). #}
+        <div class="flex items-center justify-between p-2 rounded bg-base-200 backdrop-blur-sm">
             <div class="flex items-center gap-2">
                 {% if sync.sync_type == 'costs' %}
                 <svg class="w-4 h-4 text-brand-primary-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
