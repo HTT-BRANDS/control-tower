@@ -121,7 +121,7 @@ class CustomRuleService:
         if category:
             q = q.filter(CustomComplianceRule.category == category)
         if enabled_only:
-            q = q.filter(CustomComplianceRule.is_enabled.is_(True))
+            q = q.filter(CustomComplianceRule.is_enabled == True)  # noqa: E712
         return (
             q.order_by(CustomComplianceRule.created_at.desc())
             .offset(offset)

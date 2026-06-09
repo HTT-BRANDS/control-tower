@@ -325,7 +325,7 @@ class AdminService:
         users_by_role: dict[str, int] = dict(role_counts)
 
         active_tenants: int = (
-            self.db.query(func.count(Tenant.id)).filter(Tenant.is_active.is_(True)).scalar() or 0
+            self.db.query(func.count(Tenant.id)).filter(Tenant.is_active == True).scalar() or 0  # noqa: E712
         )
         total_tenants: int = self.db.query(func.count(Tenant.id)).scalar() or 0
 

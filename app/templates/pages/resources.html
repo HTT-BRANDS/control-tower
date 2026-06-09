@@ -18,50 +18,204 @@
      subtitle="Azure resources, idle detection & tagging compliance",
      actions=header_actions) %}
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {{ ds_stat_card(label="Total Resources", value="--", value_id="total-resources", caption="Across all tenants") }}
-        {{ ds_stat_card(label="Idle Resources", value="--", value_id="idle-count", caption="Potential savings", border_accent="warning") }}
-        {{ ds_stat_card(label="Orphaned Resources", value="--", value_id="orphaned-count", caption="No owner identified", border_accent="danger") }}
-
-        {# Tagging Compliance — dynamic color swap, stays a caller-body ds_card #}
-        {% call ds_card() %}
-            <div class="text-sm font-medium text-muted-theme">Tagging Compliance</div>
-            <div class="mt-2 text-3xl font-bold" id="tagging-score">--</div>
-            <div class="mt-1 text-sm text-muted-theme">Required tags present</div>
-        {% endcall %}
+    {# ── Per-Tenant Filter Tabs ─────────────────────────────────────── #}
+    <div class="flex items-center gap-2 overflow-x-auto pb-2" id="tenant-tabs">
+        <button class="tenant-tab active px-3 py-1.5 rounded-full text-xs font-medium bg-brand-primary-100 text-white"
+                data-tenant="" onclick="filterTenant('')">All Tenants</button>
     </div>
 
-    {{ ds_table(
-         title="Resource Inventory",
-         columns=["Resource Name", "Type", "Location", "Tenant"],
-         body_id="resources-table"
-     ) }}
+    {# ── Summary Cards ──────────────────────────────────────────────── #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="ct-card p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Total Resources</div>
+            <div class="kpi-value text-primary-theme" id="total-resources">--</div>
+            <div class="text-xs text-muted-theme">Across all tenants</div>
+        </div>
+        <div class="ct-card ct-card-status-warning p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Idle</div>
+            <div class="kpi-value text-warning" id="idle-count">--</div>
+            <div class="text-xs text-muted-theme">Potential savings</div>
+        </div>
+        <div class="ct-card ct-card-status-critical p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Orphaned</div>
+            <div class="kpi-value text-danger" id="orphaned-count">--</div>
+            <div class="text-xs text-muted-theme">No owner</div>
+        </div>
+        <div class="ct-card ct-card-status-healthy p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Tagging</div>
+            <div class="kpi-value text-success" id="tagging-score">--</div>
+            <div class="text-xs text-muted-theme">Required tags</div>
+        </div>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {{ ds_table(
-         title="Idle Resources",
-         columns=["Resource", "Type", "Est. Savings"],
-         body_id="idle-table"
-     ) }}
+    {# ── Resource Inventory (compact) ───────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Resource Inventory</h3>
+            <span class="text-xs text-muted-theme" id="resources-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Name</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Type</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Location</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tags</th>
+                    </tr>
+                </thead>
+                <tbody id="resources-table"></tbody>
+            </table>
+        </div>
+    </div>
 
-        {{ ds_table(
-         title="Orphaned Resources",
-         columns=["Resource", "Type", "Reason"],
-         body_id="orphaned-table"
-     ) }}
+    {# ── Idle Resources (compact) ───────────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Idle Resources</h3>
+            <span class="text-xs text-muted-theme" id="idle-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Resource</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Type</th>
+                        <th class="text-right py-2 px-3 text-xs font-medium text-muted-theme uppercase">Est. Savings</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                    </tr>
+                </thead>
+                <tbody id="idle-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ── Orphaned Resources (compact) ─────────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Orphaned Resources</h3>
+            <span class="text-xs text-muted-theme" id="orphaned-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Resource</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Type</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Reason</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                    </tr>
+                </thead>
+                <tbody id="orphaned-table"></tbody>
+            </table>
+        </div>
     </div>
 
 {% endcall %}
 
 <script nonce="{{ request.state.csp_nonce }}">
 function formatCurrency(value) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 }
 
 async function fetchJSON(url) {
     const resp = await fetch(url, { credentials: 'same-origin' });
     if (!resp.ok) return null;
     return resp.json();
+}
+
+let allResources = [];
+let allIdle = [];
+let allOrphaned = [];
+let currentTenantFilter = '';
+
+function renderTenantTabs(resources) {
+    const tenants = [...new Set(resources.map(r => r.tenant_id || r.tenant_name).filter(Boolean))];
+    const tabs = document.getElementById('tenant-tabs');
+    const existing = tabs.querySelectorAll('.tenant-tab:not([data-tenant=""])');
+    existing.forEach(t => t.remove());
+
+    tenants.forEach(tid => {
+        const tname = resources.find(r => (r.tenant_id || r.tenant_name) === tid)?.tenant_name || tid;
+        const btn = document.createElement('button');
+        btn.className = 'tenant-tab px-3 py-1.5 rounded-full text-xs font-medium bg-surface-secondary text-secondary-theme hover:bg-surface-tertiary transition-colors';
+        btn.dataset.tenant = tid;
+        btn.textContent = tname;
+        btn.onclick = () => filterTenant(tid);
+        tabs.appendChild(btn);
+    });
+}
+
+function filterTenant(tenantId) {
+    currentTenantFilter = tenantId;
+    document.querySelectorAll('.tenant-tab').forEach(t => {
+        t.classList.toggle('active', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-brand-primary-100', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('text-white', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-surface-secondary', (t.dataset.tenant || '') !== tenantId);
+        t.classList.toggle('text-secondary-theme', (t.dataset.tenant || '') !== tenantId);
+    });
+    renderTables();
+}
+
+function renderTables() {
+    const filtRes = currentTenantFilter ? allResources.filter(r => (r.tenant_id || r.tenant_name) === currentTenantFilter) : allResources;
+    const filtIdle = currentTenantFilter ? allIdle.filter(r => (r.tenant_id || r.tenant_name) === currentTenantFilter) : allIdle;
+    const filtOrph = currentTenantFilter ? allOrphaned.filter(r => (r.tenant_id || r.tenant_name) === currentTenantFilter) : allOrphaned;
+
+    // Resources table
+    const rTable = document.getElementById('resources-table');
+    document.getElementById('resources-table-count').textContent = `${filtRes.length} resources`;
+    if (filtRes.length > 0) {
+        rTable.innerHTML = filtRes.slice(0, 50).map(r => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${r.name || r.resource_id || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${r.resource_type || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${r.location || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${r.tenant_name || r.tenant_id || '--'}</td>
+                <td class="py-2 px-3 text-center">
+                    <span class="badge badge-sm ${r.tags && Object.keys(r.tags).length > 0 ? 'badge-success badge-soft' : 'badge-warning badge-soft'}">
+                        ${r.tags ? Object.keys(r.tags).length : 0}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        rTable.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-muted-theme">No resources. Run a sync first.</td></tr>';
+    }
+
+    // Idle table
+    const iTable = document.getElementById('idle-table');
+    document.getElementById('idle-table-count').textContent = `${filtIdle.length} idle`;
+    if (filtIdle.length > 0) {
+        iTable.innerHTML = filtIdle.slice(0, 25).map(r => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${r.resource_id || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${r.idle_type || r.resource_type || '--'}</td>
+                <td class="py-2 px-3 text-right tabular-nums text-success">${r.estimated_monthly_savings ? formatCurrency(r.estimated_monthly_savings) : '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${r.tenant_name || r.tenant_id || '--'}</td>
+            </tr>
+        `).join('');
+    } else {
+        iTable.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-muted-theme">No idle resources</td></tr>';
+    }
+
+    // Orphaned table
+    const oTable = document.getElementById('orphaned-table');
+    document.getElementById('orphaned-table-count').textContent = `${filtOrph.length} orphaned`;
+    if (filtOrph.length > 0) {
+        oTable.innerHTML = filtOrph.slice(0, 25).map(r => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${r.resource_name || r.name || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${r.resource_type || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${r.reason || r.orphan_reason || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${r.tenant_name || r.tenant_id || '--'}</td>
+            </tr>
+        `).join('');
+    } else {
+        oTable.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-muted-theme">No orphaned resources</td></tr>';
+    }
 }
 
 async function loadAllData() {
@@ -74,69 +228,29 @@ async function loadAllData() {
 
     if (inventory) {
         document.getElementById('total-resources').textContent = inventory.total_resources ?? 0;
-
-        const table = document.getElementById('resources-table');
-        const resources = inventory.resources || [];
-        if (resources.length > 0) {
-            table.innerHTML = resources.slice(0, 50).map(r => `
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${r.name || '--'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">${r.resource_type || '--'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${r.location || '--'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${r.tenant_name || r.tenant_id || '--'}</td>
-                </tr>
-            `).join('');
-        } else {
-            table.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No resources found. Run a resource sync first.</td></tr>';
-        }
+        allResources = inventory.resources || [];
+        renderTenantTabs(allResources);
     }
 
     if (idle) {
         const items = idle.idle_resources || idle.resources || idle;
-        const idleList = Array.isArray(items) ? items : [];
-        document.getElementById('idle-count').textContent = idleList.length;
-
-        const table = document.getElementById('idle-table');
-        if (idleList.length > 0) {
-            table.innerHTML = idleList.slice(0, 25).map(r => `
-                <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-primary-theme">${r.resource_name || r.name || '--'}</td>
-                    <td class="px-6 py-4 text-sm text-secondary-theme">${r.resource_type || '--'}</td>
-                    <td class="px-6 py-4 text-sm text-success">${r.estimated_monthly_savings ? formatCurrency(r.estimated_monthly_savings) : '--'}</td>
-                </tr>
-            `).join('');
-        } else {
-            table.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">No idle resources detected</td></tr>';
-        }
+        allIdle = Array.isArray(items) ? items : [];
+        document.getElementById('idle-count').textContent = allIdle.length;
     }
 
     if (orphaned) {
         const items = orphaned.orphaned_resources || orphaned.resources || orphaned;
-        const orphanedList = Array.isArray(items) ? items : [];
-        document.getElementById('orphaned-count').textContent = orphanedList.length;
-
-        const table = document.getElementById('orphaned-table');
-        if (orphanedList.length > 0) {
-            table.innerHTML = orphanedList.slice(0, 25).map(r => `
-                <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-primary-theme">${r.resource_name || r.name || '--'}</td>
-                    <td class="px-6 py-4 text-sm text-secondary-theme">${r.resource_type || '--'}</td>
-                    <td class="px-6 py-4 text-sm text-muted-theme">${r.reason || r.orphan_reason || '--'}</td>
-                </tr>
-            `).join('');
-        } else {
-            table.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">No orphaned resources detected</td></tr>';
-        }
+        allOrphaned = Array.isArray(items) ? items : [];
+        document.getElementById('orphaned-count').textContent = allOrphaned.length;
     }
 
     if (tagging) {
-        const score = tagging.compliance_percentage ?? tagging.score ?? 0;
+        const score = tagging.compliance_percent ?? tagging.score ?? 0;
         const scoreEl = document.getElementById('tagging-score');
         scoreEl.textContent = `${score.toFixed(1)}%`;
-        if (score >= 90) scoreEl.className = 'mt-2 text-3xl font-bold text-success';
-        else if (score >= 70) scoreEl.className = 'mt-2 text-3xl font-bold text-warning';
-        else scoreEl.className = 'mt-2 text-3xl font-bold text-danger';
+        scoreEl.className = `kpi-value ${score >= 90 ? 'text-success' : score >= 70 ? 'text-warning' : 'text-danger'}`;
     }
+    renderTables();
 }
 
 if (document.readyState === 'loading') {

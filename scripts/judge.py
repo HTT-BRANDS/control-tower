@@ -48,6 +48,7 @@ from scripts.judge_repo_checks import (
     check_no_handrolled_badges,
     check_no_invisible_text,
     check_no_xpassed,
+    check_pages_render_without_error,
     check_role_enum_lockstep,
     check_session_handoff_fresh,
     check_slsa_signing_in_ci,
@@ -404,6 +405,13 @@ def run_checks(env: str) -> list[Pillar]:
                 "No hand-rolled badge spans (DaisyUI)",
                 lambda _: check_no_handrolled_badges(),
                 "P1",
+            ),
+            Check(
+                "P4.8",
+                "Design",
+                "Page routes render without template errors",
+                lambda _: check_pages_render_without_error(),
+                "P0",
             ),
             Check(
                 "P5.5",

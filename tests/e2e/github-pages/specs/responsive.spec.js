@@ -152,10 +152,31 @@ test.describe('Responsive Design Testing', () => {
         await page.goto('./');
         await waitForPageLoad(page);
 
-        // Check images don't overflow their containers
+        // Check images don't overflow their containers.
+        // Exempt images inside a horizontal-scroll container (overflow-x:
+        // auto/scroll/hidden) — e.g. the wide architecture diagram, which is
+        // intentionally wider than the viewport and wrapped in a scrollable,
+        // keyboard-focusable region. Scrolling is the intended UX there, so it
+        // is not an overflow bug. Mirrors the hasOverflowContainment exemption
+        // used by the 'text does not overflow viewport' test above.
         const imagesOverflow = await page.evaluate(() => {
+          function inScrollContainer(el) {
+            let current = el.parentElement;
+            while (current && current !== document.body) {
+              const ox = window.getComputedStyle(current).overflowX;
+              if (ox === 'auto' || ox === 'scroll' || ox === 'hidden') {
+                return true;
+              }
+              current = current.parentElement;
+            }
+            return false;
+          }
+
           const images = document.querySelectorAll('img');
           for (const img of images) {
+            if (inScrollContainer(img)) {
+              continue;
+            }
             const rect = img.getBoundingClientRect();
             const parent = img.parentElement;
             if (parent) {

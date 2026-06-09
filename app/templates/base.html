@@ -144,8 +144,35 @@
         </div>
     </nav>
 
+    <!-- Tenant Health Strip (control tower feel) -->
+    {% from "macros/ds.html" import ds_tenant_strip %}
+    {% set _all_tenant_list = all_tenants() if all_tenants is defined else [] %}
+    {% if _all_tenant_list %}
+      {{ ds_tenant_strip(_all_tenant_list) }}
+    {% endif %}
+
     <!-- Main Content -->
     <main id="main-content" data-page-path="{{ request.url.path if request.url is defined else '' }}" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 w-full">
+        <!-- Global HTMX loading indicator -->
+        <div id="htmx-global-loader" class="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent transition-all duration-300"
+             aria-hidden="true">
+            <div class="h-full bg-brand-primary-100 w-0 transition-all duration-300"
+                 data-htmx-loading-bar></div>
+        </div>
+        <script nonce="{{ request.state.csp_nonce }}">
+        document.body.addEventListener('htmx:beforeRequest', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.width = '60%'; bar.style.opacity = '1'; }
+        });
+        document.body.addEventListener('htmx:afterRequest', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.width = '100%'; setTimeout(function(){ bar.style.width = '0'; bar.style.opacity = '0'; }, 300); }
+        });
+        document.body.addEventListener('htmx:responseError', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.backgroundColor = '#C2410C'; bar.style.width = '100%'; setTimeout(function(){ bar.style.width = '0'; bar.style.opacity = '0'; bar.style.backgroundColor = ''; }, 500); }
+        });
+        </script>
         {% block content %}{% endblock %}
     </main>
 

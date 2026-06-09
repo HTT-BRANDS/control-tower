@@ -18,31 +18,98 @@
      subtitle="Entra ID users, guest accounts & privileged access",
      actions=header_actions) %}
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {{ ds_stat_card(label="Total Users",       value="--", value_id="total-users",       caption="Across all tenants") }}
-        {{ ds_stat_card(label="Guest Users",       value="--", value_id="guest-count",       caption="External identities", border_accent="warning") }}
-        {{ ds_stat_card(label="Stale Accounts",    value="--", value_id="stale-count",       caption="No recent sign-in",   border_accent="danger") }}
-        {{ ds_stat_card(label="Privileged Users",  value="--", value_id="privileged-count",  caption="Admin role holders",  border_accent="info") }}
+    {# ── Per-Tenant Filter Tabs ─────────────────────────────────────── #}
+    <div class="flex items-center gap-2 overflow-x-auto pb-2" id="tenant-tabs">
+        <button class="tenant-tab active px-3 py-1.5 rounded-full text-xs font-medium bg-brand-primary-100 text-white"
+                data-tenant="" onclick="filterTenant('')">All Tenants</button>
     </div>
 
-    {{ ds_table(
-         title="Privileged Users",
-         columns=["Display Name", "UPN", "Roles", "Tenant"],
-         body_id="privileged-table"
-     ) }}
+    {# ── Summary Cards ──────────────────────────────────────────────── #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="ct-card p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Total Users</div>
+            <div class="kpi-value text-primary-theme" id="total-users">--</div>
+            <div class="text-xs text-muted-theme">Across all tenants</div>
+        </div>
+        <div class="ct-card ct-card-status-warning p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Guests</div>
+            <div class="kpi-value text-warning" id="guest-count">--</div>
+            <div class="text-xs text-muted-theme">External identities</div>
+        </div>
+        <div class="ct-card ct-card-status-critical p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Stale</div>
+            <div class="kpi-value text-danger" id="stale-count">--</div>
+            <div class="text-xs text-muted-theme">No recent sign-in</div>
+        </div>
+        <div class="ct-card ct-card-status-healthy p-4">
+            <div class="text-xs text-muted-theme uppercase tracking-wide">Privileged</div>
+            <div class="kpi-value text-success" id="privileged-count">--</div>
+            <div class="text-xs text-muted-theme">Admin role holders</div>
+        </div>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {{ ds_table(
-         title="Guest Users",
-         columns=["Name", "Email", "Tenant"],
-         body_id="guests-table"
-     ) }}
+    {# ── Privileged Users (compact) ─────────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Privileged Users</h3>
+            <span class="text-xs text-muted-theme" id="privileged-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Name</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">UPN</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Role</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-muted-theme uppercase">MFA</th>
+                    </tr>
+                </thead>
+                <tbody id="privileged-table"></tbody>
+            </table>
+        </div>
+    </div>
 
-        {{ ds_table(
-         title="Stale Accounts",
-         columns=["Name", "Last Sign-in", "Tenant"],
-         body_id="stale-table"
-     ) }}
+    {# ── Guest Users (compact) ──────────────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Guest Users</h3>
+            <span class="text-xs text-muted-theme" id="guests-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Name</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Email</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-muted-theme uppercase">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="guests-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ── Stale Accounts (compact) ─────────────────────────────────── #}
+    <div class="ct-card p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-primary-theme text-sm">Stale Accounts</h3>
+            <span class="text-xs text-muted-theme" id="stale-table-count"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-compact">
+                <thead>
+                    <tr class="border-b border-border-default">
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Name</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Last Sign-in</th>
+                        <th class="text-left py-2 px-3 text-xs font-medium text-muted-theme uppercase">Tenant</th>
+                        <th class="text-center py-2 px-3 text-xs font-medium text-muted-theme uppercase">Days</th>
+                    </tr>
+                </thead>
+                <tbody id="stale-table"></tbody>
+            </table>
+        </div>
     </div>
 
 {% endcall %}
@@ -52,6 +119,112 @@ async function fetchJSON(url) {
     const resp = await fetch(url, { credentials: 'same-origin' });
     if (!resp.ok) return null;
     return resp.json();
+}
+
+let allPrivileged = [];
+let allGuests = [];
+let allStale = [];
+let currentTenantFilter = '';
+
+function renderTenantTabs(users) {
+    const tenants = [...new Set(users.map(u => u.tenant_id || u.tenant_name).filter(Boolean))];
+    const tabs = document.getElementById('tenant-tabs');
+    const existing = tabs.querySelectorAll('.tenant-tab:not([data-tenant=""])');
+    existing.forEach(t => t.remove());
+
+    tenants.forEach(tid => {
+        const tname = users.find(u => (u.tenant_id || u.tenant_name) === tid)?.tenant_name || tid;
+        const btn = document.createElement('button');
+        btn.className = 'tenant-tab px-3 py-1.5 rounded-full text-xs font-medium bg-surface-secondary text-secondary-theme hover:bg-surface-tertiary transition-colors';
+        btn.dataset.tenant = tid;
+        btn.textContent = tname;
+        btn.onclick = () => filterTenant(tid);
+        tabs.appendChild(btn);
+    });
+}
+
+function filterTenant(tenantId) {
+    currentTenantFilter = tenantId;
+    document.querySelectorAll('.tenant-tab').forEach(t => {
+        t.classList.toggle('active', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-brand-primary-100', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('text-white', (t.dataset.tenant || '') === tenantId);
+        t.classList.toggle('bg-surface-secondary', (t.dataset.tenant || '') !== tenantId);
+        t.classList.toggle('text-secondary-theme', (t.dataset.tenant || '') !== tenantId);
+    });
+    renderTables();
+}
+
+function daysSince(dateStr) {
+    if (!dateStr || dateStr === 'Never') return null;
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d)) return null;
+        return Math.floor((Date.now() - d) / 86400000);
+    } catch (e) { return null; }
+}
+
+function renderTables() {
+    const filtPriv = currentTenantFilter ? allPrivileged.filter(u => (u.tenant_id || u.tenant_name) === currentTenantFilter) : allPrivileged;
+    const filtGuest = currentTenantFilter ? allGuests.filter(u => (u.tenant_id || u.tenant_name) === currentTenantFilter) : allGuests;
+    const filtStale = currentTenantFilter ? allStale.filter(u => (u.tenant_id || u.tenant_name) === currentTenantFilter) : allStale;
+
+    // Privileged table
+    const pTable = document.getElementById('privileged-table');
+    document.getElementById('privileged-table-count').textContent = `${filtPriv.length} users`;
+    if (filtPriv.length > 0) {
+        pTable.innerHTML = filtPriv.slice(0, 50).map(u => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${u.display_name || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${u.user_principal_name || u.email || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${u.role_name || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
+                <td class="py-2 px-3 text-center">
+                    <span class="badge badge-sm ${u.mfa_enabled ? 'badge-success badge-soft' : 'badge-warning badge-soft'}">${u.mfa_enabled ? 'On' : 'Off'}</span>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        pTable.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-muted-theme">No privileged users. Run a sync first.</td></tr>';
+    }
+
+    // Guests table
+    const gTable = document.getElementById('guests-table');
+    document.getElementById('guests-table-count').textContent = `${filtGuest.length} guests`;
+    if (filtGuest.length > 0) {
+        gTable.innerHTML = filtGuest.slice(0, 25).map(u => `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${u.display_name || '--'}</td>
+                <td class="py-2 px-3 text-secondary-theme">${u.email || u.user_principal_name || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
+                <td class="py-2 px-3 text-center">
+                    <span class="badge badge-sm ${u.is_active !== false ? 'badge-ghost' : 'badge-error badge-soft'}">${u.is_active !== false ? 'Active' : 'Inactive'}</span>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        gTable.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-muted-theme">No guest users</td></tr>';
+    }
+
+    // Stale table
+    const sTable = document.getElementById('stale-table');
+    document.getElementById('stale-table-count').textContent = `${filtStale.length} stale`;
+    if (filtStale.length > 0) {
+        sTable.innerHTML = filtStale.slice(0, 25).map(u => {
+            const days = daysSince(u.last_sign_in || u.last_sign_in_date);
+            return `
+            <tr class="border-b border-border-default/50 hover:bg-surface-secondary transition-colors">
+                <td class="py-2 px-3 font-medium text-primary-theme">${u.display_name || '--'}</td>
+                <td class="py-2 px-3 text-muted-theme">${u.last_sign_in || u.last_sign_in_date || 'Never'}</td>
+                <td class="py-2 px-3 text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
+                <td class="py-2 px-3 text-center">
+                    <span class="badge badge-sm ${days && days > 90 ? 'badge-error badge-soft' : days && days > 30 ? 'badge-warning badge-soft' : 'badge-ghost'}">${days !== null ? days + 'd' : '--'}</span>
+                </td>
+            </tr>
+        `;}).join('');
+    } else {
+        sTable.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-muted-theme">No stale accounts</td></tr>';
+    }
 }
 
 async function loadAllData() {
@@ -69,45 +242,13 @@ async function loadAllData() {
         document.getElementById('privileged-count').textContent = summary.privileged_users ?? summary.privileged_count ?? 0;
     }
 
-    const privTable = document.getElementById('privileged-table');
-    if (privileged && privileged.length > 0) {
-        privTable.innerHTML = privileged.slice(0, 50).map(u => `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${u.display_name || '--'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">${u.user_principal_name || u.email || '--'}</td>
-                <td class="px-6 py-4 text-sm text-secondary-theme">${(u.roles || []).join(', ') || '--'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
-            </tr>
-        `).join('');
-    } else {
-        privTable.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-muted-theme">No privileged users found. Run an identity sync first.</td></tr>';
+    if (privileged) {
+        allPrivileged = privileged;
+        renderTenantTabs(privileged);
     }
-
-    const guestTable = document.getElementById('guests-table');
-    if (guests && guests.length > 0) {
-        guestTable.innerHTML = guests.slice(0, 25).map(u => `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${u.display_name || '--'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-theme">${u.email || u.user_principal_name || '--'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
-            </tr>
-        `).join('');
-    } else {
-        guestTable.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">No guest users found</td></tr>';
-    }
-
-    const staleTable = document.getElementById('stale-table');
-    if (stale && stale.length > 0) {
-        staleTable.innerHTML = stale.slice(0, 25).map(u => `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-theme">${u.display_name || '--'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${u.last_sign_in || u.last_sign_in_date || 'Never'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-theme">${u.tenant_name || u.tenant_id || '--'}</td>
-            </tr>
-        `).join('');
-    } else {
-        staleTable.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-muted-theme">No stale accounts found</td></tr>';
-    }
+    if (guests) allGuests = guests;
+    if (stale) allStale = stale;
+    renderTables();
 }
 
 if (document.readyState === 'loading') {
