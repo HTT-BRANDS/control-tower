@@ -59,6 +59,12 @@ jobs:
     # tests/e2e/github-pages/package-lock.json (@playwright/test) — they MUST match.
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
+    env:
+      # The container runs as root, but $HOME defaults to /github/home (owned by
+      # the image's pwuser). Firefox refuses to launch as root unless $HOME is
+      # owned by the current user, so point HOME at root's own dir. Chromium and
+      # webkit are unaffected; this is Playwright's documented container fix.
+      HOME: /root
 
     strategy:
       fail-fast: false
