@@ -45,7 +45,7 @@ flask==3.1.3
     #   flask-cors
     #   flask-login
     #   locust
-flask-cors==6.0.2
+flask-cors==6.0.4
     # via locust
 flask-login==0.6.3
     # via locust
@@ -61,7 +61,7 @@ greenlet==3.5.1
     #   playwright
 h11==0.16.0
     # via wsproto
-idna==3.17
+idna==3.18
     # via requests
 iniconfig==2.3.0
     # via pytest
@@ -130,7 +130,7 @@ requests==2.34.2
     #   locust
     #   pytest-base-url
     #   python-socketio
-ruff==0.15.15
+ruff==0.15.16
 simple-websocket==1.1.0
     # via python-engineio
 text-unidecode==1.3
