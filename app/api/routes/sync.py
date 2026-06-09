@@ -5,10 +5,12 @@ SECURITY FEATURES:
 - Strict input validation
 """
 
+import asyncio
+import json
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.services.monitoring_service import MonitoringService
@@ -17,9 +19,10 @@ from app.core.authorization import (
     TenantAuthorization,
     get_tenant_authorization,
 )
-from app.core.database import get_db
+from app.core.database import get_db, get_db_context
 from app.core.rate_limit import rate_limit
 from app.core.scheduler import get_scheduler, trigger_manual_sync
+from app.core.sync.status_snapshot import build_sync_snapshot
 from app.core.sync.utils import explain_tenant_sync_eligibility
 from app.core.templates import templates
 from app.core.tenant_context import get_brand_context_for_request
@@ -97,6 +100,59 @@ async def get_sync_status(
         )
 
     return {"status": "running", "jobs": jobs}
+
+
+# Server-Sent Events: real-time sync status stream (bd ct-7d6).
+# SSE (not WebSocket) is intentional — one-way push, EventSource auto-reconnect,
+# works under `connect-src 'self'` CSP + cookie auth with no Azure App Service
+# WebSocket toggle. The frontend client lives in static/js/realtimeSync.js.
+_SSE_INTERVAL_SECONDS = 8.0
+_SSE_MAX_LIFETIME_SECONDS = 3600.0  # recycle long-lived streams hourly
+
+
+async def _sync_event_stream(request: Request):
+    """Yield text/event-stream frames with the current sync snapshot.
+
+    Opens a fresh short-lived DB session per tick (never holds a connection
+    open for the whole stream) and stops cleanly when the client disconnects.
+    """
+    elapsed = 0.0
+    # Send an initial snapshot immediately so the UI doesn't wait one interval.
+    while elapsed <= _SSE_MAX_LIFETIME_SECONDS:
+        if await request.is_disconnected():
+            break
+        try:
+            with get_db_context() as db:
+                snapshot = build_sync_snapshot(db)
+            payload = json.dumps(snapshot, separators=(",", ":"))
+            yield f"event: sync\ndata: {payload}\n\n"
+        except Exception:  # pragma: no cover - keep the stream alive on a blip
+            # Comment frame keeps the connection warm without emitting bad data.
+            yield ": snapshot-error\n\n"
+        await asyncio.sleep(_SSE_INTERVAL_SECONDS)
+        elapsed += _SSE_INTERVAL_SECONDS
+
+
+@router.get("/stream")
+async def stream_sync_status(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """Real-time sync status via Server-Sent Events.
+
+    Emits a JSON snapshot (see build_sync_snapshot) every few seconds under the
+    `sync` event name. Auth is enforced by the router's get_current_user
+    dependency; the browser's EventSource handles reconnection.
+    """
+    return StreamingResponse(
+        _sync_event_stream(request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disable proxy buffering (nginx/Azure)
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get(
