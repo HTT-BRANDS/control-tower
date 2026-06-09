@@ -1,46 +1,54 @@
 # Visual Parity Baselines
 
 This directory holds pinned PNG screenshots used by
-`tests/e2e/test_visual_parity.py` (py7u.4).
+`tests/e2e/test_visual_parity.py`.
 
-## What's expected here
+**Status (2026-06):** Infrastructure is wired and the capture script works.
+Baselines have not been committed to the repo because PNG snapshots are
+machine-rendering-dependent (font anti-aliasing, GPU compositing) and would
+create flaky CI failures across different OS images. Capture them locally on
+the machine you want to use as the reference, or run the scheduled capture
+job against a stable staging URL.
 
-One PNG per migrated page. File names must match the `PAGES` list in the
-test file:
+## Expected files
+
+One PNG per migrated page, matching the `PAGES` list in `test_visual_parity.py`:
 
 - `dashboard.png`
 - `costs.png`
 - `compliance.png`
 - `resources.png`
 - `identity.png`
+- `franchise-coach.png`
 
 ## How to populate
 
-### Option A — capture from this app (self-baseline)
-
-Useful for regression-testing design-system refactors against a known-good
-local state:
+### Quick path (self-baseline from local seeded app)
 
 ```bash
-uv run python scripts/capture_visual_baselines.py
+# 1. Seed the local database
+make local-db-reset local-seed
+
+# 2. Capture (app starts automatically on port 8099)
+make capture-baselines
+
+# 3. Run the visual tests to confirm baselines pass
+uv run pytest -m visual -v
 ```
 
-This spins up the app on `127.0.0.1:8099`, logs in as admin, screenshots
-each page at `1280×720` full-page, and writes the PNGs here.
+The capture script waits for each page's readiness selector, then takes a
+full-page screenshot at 1280x720. If the HTMX partial endpoints are slow,
+try increasing the wait in `scripts/capture_visual_baselines.py`.
 
-### Option B — capture from Domain-Intelligence (parity baseline)
-
-To verify this app stays visually consistent with the Domain-Intelligence
-reference:
+### Against staging (recommended for the CI baseline)
 
 ```bash
-uv run python scripts/capture_visual_baselines.py \
-    --base-url https://domain-intelligence-prod.example.com
+make capture-baselines CAPTURE_URL=https://app-governance-staging-xnczpwyv.azurewebsites.net
 ```
 
-(You'll need a valid admin session / access token configured for that URL.)
+This requires the staging server to be up and responding (allow 120s cold-start).
 
-### Option C — only update a subset
+### Subset only
 
 ```bash
 uv run python scripts/capture_visual_baselines.py --only dashboard costs
@@ -48,21 +56,21 @@ uv run python scripts/capture_visual_baselines.py --only dashboard costs
 
 ## Running the tests
 
-These tests are opt-in via the `visual` pytest marker. They don't run by
-default (so CI without Playwright browsers isn't broken):
+Opt-in via the `visual` pytest marker. Tests **skip cleanly** when baselines
+are missing — they do not fail CI when PNGs are absent.
 
 ```bash
-uv run pytest -m visual                # run all 5 visual tests
-uv run pytest -m visual -k dashboard   # just one page
+uv run pytest -m visual -v          # all visual tests
+uv run pytest -m visual -k costs    # one page
 ```
 
-If a test fails, before/after/diff PNGs land in `tests/e2e/visual_diffs/`
-(git-ignored). Inspect the `.diff.png` to see exactly what changed.
+When a test fails, before/after/diff PNGs land in `tests/e2e/visual_diffs/`
+(git-ignored). Inspect `{page}.diff.png` to see exactly what changed.
 
 ## Tolerance
 
 Default: 0.5% of pixels may differ (font anti-aliasing, sub-pixel layout).
-Override via env var:
+Override per-run:
 
 ```bash
 VISUAL_TOLERANCE_PCT=1.0 uv run pytest -m visual
@@ -70,9 +78,16 @@ VISUAL_TOLERANCE_PCT=1.0 uv run pytest -m visual
 
 ## When a design change is intentional
 
-If a commit legitimately changes how a page looks, re-run
-`scripts/capture_visual_baselines.py` to update the baseline(s), then
-commit the updated PNG(s) alongside the code change. This makes the
-design decision visible in diff review.
+Re-run `make capture-baselines` to update baselines, then commit the updated
+PNG(s) alongside the code change. The PNG diff makes the design decision
+visible in code review.
 
-See `docs/testing/visual-parity.md` for the full procedure.
+## CI integration
+
+The `full-suite` runner includes a `WITH_VISUAL=1` optional gate that runs the
+visual suite. It skips cleanly when baselines are absent so CI never fails due
+to missing PNGs. To run locally with the visual gate:
+
+```bash
+WITH_VISUAL=1 bash scripts/run_full_suite.sh
+```

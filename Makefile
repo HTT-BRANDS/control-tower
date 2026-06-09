@@ -182,9 +182,22 @@ e2e-test: ## Run Playwright E2E tests
 # Phase 3: Advanced Testing Targets
 # =============================================================================
 
-visual-test:
+visual-test: ## Run visual-regression tests (requires baselines in tests/e2e/baselines/)
 	@echo "=== Running Visual Regression Tests ==="
-	pytest tests/e2e/test_visual_regression.py -v -m visual
+	uv run pytest tests/e2e/test_visual_parity.py -v -m visual
+
+capture-baselines: ## Capture visual-parity baselines (seeds DB + boots app + screenshots)
+	@echo "=== Capturing visual baselines ==="
+	@echo "Seeding local demo DB first..."
+	$(MAKE) local-db-reset local-seed
+	@echo "Running capture script (app will start on :8099)..."
+	$(if $(CAPTURE_URL),\
+	  ENVIRONMENT=test E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	    uv run python scripts/capture_visual_baselines.py --base-url $(CAPTURE_URL),\
+	  ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	    uv run python scripts/capture_visual_baselines.py)
+	@echo "Baselines captured. Run 'make visual-test' to verify."
+	@echo "Commit the PNGs in tests/e2e/baselines/ alongside your change."
 
 accessibility-test:
 	@echo "=== Running Accessibility Tests ==="
