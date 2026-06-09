@@ -129,9 +129,18 @@ test-security: ## Run security tests only
 	@echo "$(BLUE)Running security tests...$(NC)"
 	pytest tests/ -k "security" -v --tb=short
 
-test-all: ## Run all tests (unit, integration, e2e)
-	@echo "$(BLUE)Running all tests...$(NC)"
-	pytest tests/ -v --tb=short
+test-all: ## Run every test group in ISOLATED passes (avoids cross-group event-loop pollution; see ct-pm3)
+	@echo "$(BLUE)Running all test groups in isolated passes...$(NC)"
+	# NOTE: do NOT collapse these into a single `pytest tests/` run. The
+	# architecture/chaos/performance suites exercise sync<->async bridges and
+	# pytest-asyncio (asyncio_mode=auto) loops that, when run in the SAME
+	# process as the 4000+ unit tests, leak a running event loop and cause
+	# order-dependent `Runner.run() cannot be called from a running event
+	# loop` cascades. Each group passes cleanly in its own process.
+	pytest tests/unit tests/integration -m "not visual" --tb=short
+	pytest tests/architecture --tb=short
+	pytest tests/chaos --tb=short
+	pytest tests/performance --tb=short
 
 test-ci: ## Run tests for CI pipeline (with coverage)
 	@echo "$(BLUE)Running CI test suite...$(NC)"
