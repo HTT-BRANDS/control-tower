@@ -3,8 +3,10 @@
    Auto-fetches health data via fetch() and updates status indicators.
 #}
 
-{% macro ds_tenant_strip(tenants) %}
-{# tenants: list of {id, name, key} objects #}
+{% macro ds_tenant_strip(tenants, nonce='') %}
+{# tenants: list of {id, name, key} objects
+   nonce: CSP nonce so the inline init script is allowed under strict CSP.
+          Imported macros lack template context, so the caller must pass it. #}
 <div id="tenant-health-strip" class="tenant-health-strip" data-tenants="{{ tenants | map(attribute='name') | list | tojson | forceescape }}">
   <div class="flex items-center gap-1 px-4 py-2 bg-surface-secondary border-b border-border-default overflow-x-auto" id="tenant-strip-inner">
     <span class="text-xs font-semibold text-muted-theme uppercase tracking-wider whitespace-nowrap mr-2">Tenants</span>
@@ -24,7 +26,7 @@
     </div>
   </div>
 </div>
-<script>
+<script nonce="{{ nonce }}">
 (function() {
   const STRIP = document.getElementById('tenant-health-strip');
   if (!STRIP) return;

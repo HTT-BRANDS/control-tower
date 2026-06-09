@@ -833,3 +833,11 @@ body[data-realtime-status="offline"] [data-realtime-dot]::before {
 [data-sync-indicator][data-sync-state="running"]   { background: var(--color-info, #3B82F6); }
 [data-sync-indicator][data-sync-state="failed"]    { background: var(--color-error, #EF4444); }
 [data-sync-indicator][data-sync-state="idle"]      { background: var(--text-muted); }
+
+/* Global search header slot — visible on desktop (md+), hidden on mobile where
+   the hamburger menu covers navigation. Self-contained media query instead of
+   Tailwind `hidden md:flex`, because in the compiled (minified, v4) output
+   `.hidden` wins the cascade over `.md:flex` (source-order), which hid the
+   search box on desktop entirely. See ct (CSP/search UAT). */
+.global-search-desktop { display: none; }
+@media (min-width: 768px) { .global-search-desktop { display: flex; } }
