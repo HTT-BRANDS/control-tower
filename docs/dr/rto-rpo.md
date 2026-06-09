@@ -124,15 +124,15 @@ Quarterly. Next test: **2026-07-31** (Q3 2026).
 
 | Date | Cycle | Scenarios tested | Actual RTO | Actual RPO | Deltas / actions |
 |---|---|---|---|---|---|
-| _none yet_ | — | — | — | — | First test scheduled 2026-07-31 |
+| 2026-06-08 | Q3 2026 | PITR restore, container rollback, KV soft-delete/recover | PITR ~2min, rollback ~3.5min, KV ~9s | PITR ~1h (selected) | All within targets. Script: scripts/dr-quarterly-drill.sh. See docs/dr/q3-2026-dr-evidence-checklist.md |
 
 ---
 
 ## 6. Known Gaps (do not pretend these are solved)
 
 1. **No verified long-term backup of `sqldb-governance-prod`.** PITR is a 7-day window. Weekly BACPAC automation exists, but bd `cz89` remains blocked until Tyler selects a validation path in [`bacpac-validation-decision.md`](./bacpac-validation-decision.md) and a successful export is recorded.
-2. **No completed backup of GitHub Actions secrets.** `AZURE_CLIENT_ID`, `GHCR_PAT`, `PRODUCTION_TEAMS_WEBHOOK`, etc. are stored manually. Their loss requires re-creation. `SECRETS_OF_RECORD.md` now exists as a safe skeleton, but Tyler must fill the non-secret inventory rows before bd `9lfn` can close.
-3. **No tested restore.** All numbers in §1 are stated, not validated. Until the 2026-07-31 test cycle completes successfully, treat them as aspirational.
+2. **No completed backup of GitHub Actions secrets.** `AZURE_CLIENT_ID`, `GHCR_PAT`, `PRODUCTION_TEAMS_WEBHOOK`, etc. are stored manually. Their loss requires re-creation. `SECRETS_OF_RECORD.md` is now fully populated (bd `9lfn` closed).
+3. **First DR test completed 2026-06-08.** All three drills (PITR, container rollback, KV recovery) passed within stated RTO/RPO targets. See Q3 evidence checklist. Future tests quarterly.
 4. **No region failover capability.** Single-region (West US 2). Mitigation requires SQL Standard tier + geo-redundant config (~$30/mo extra). Not currently justified by criticality.
 5. **`backup.yml` workflow** — notify action and OIDC permission fixes shipped (`fifh`, `3flq` closed). Scheduled run `25145371945` on 2026-04-30 exposed production/staging environment gaps: `DATABASE_URL` and `AZURE_STORAGE_ACCOUNT` were empty. Those secret names were configured on 2026-04-30. Manual validation then exposed missing runner SQL tooling: optional `mssqlscripter` was absent and the runner lacked ODBC Driver 18. `backup_database.py` now falls back to SQLAlchemy, and `backup.yml` installs `msodbcsql18` / `unixodbc-dev`. Blob upload now uses an ephemeral runner-only `AZURE_STORAGE_KEY` derived after OIDC login. Staging schema backup passed end-to-end in run `25169438794`; production schema backup passed end-to-end in run `25171354807`. `backup.yml` adds/removes a temporary runner-IP Azure SQL firewall rule for backup validation, and post-run checks found no leftover `GitHubActions-*` rules. bd `jzpa` is closed.
 

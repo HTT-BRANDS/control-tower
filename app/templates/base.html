@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% from 'components/search.html' import global_search %}
 <html lang="en" class="light" data-brand="{{ brand.key if brand and brand.key else 'httbrands' }}" data-theme="{{ brand.key if brand and brand.key else 'httbrands' }}" style="{{ brand.inline_style if brand else '' }}">
 <head>
     <meta charset="UTF-8">
@@ -104,6 +105,10 @@
                     <div class="htmx-indicator flex items-center gap-2 text-brand-primary-50 text-sm" id="nav-loading-indicator">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     </div>
+                    {# Global search (⌘K or `/`). Backend: /api/v1/search.
+                       Use md:flex (not md:block — that utility isn't in the
+                       compiled Tailwind output) so it renders on desktop. #}
+                    <div class="hidden md:flex">{{ global_search(request) }}</div>
                     <button id="theme-toggle-btn" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     {% include 'partials/data_health.html' %}
                     {# ct-yju: tenant count is a live count of is_active=True
@@ -144,8 +149,35 @@
         </div>
     </nav>
 
+    <!-- Tenant Health Strip (control tower feel) -->
+    {% from "macros/ds.html" import ds_tenant_strip %}
+    {% set _all_tenant_list = all_tenants() if all_tenants is defined else [] %}
+    {% if _all_tenant_list %}
+      {{ ds_tenant_strip(_all_tenant_list) }}
+    {% endif %}
+
     <!-- Main Content -->
     <main id="main-content" data-page-path="{{ request.url.path if request.url is defined else '' }}" class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 w-full">
+        <!-- Global HTMX loading indicator -->
+        <div id="htmx-global-loader" class="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent transition-all duration-300"
+             aria-hidden="true">
+            <div class="h-full bg-brand-primary-100 w-0 transition-all duration-300"
+                 data-htmx-loading-bar></div>
+        </div>
+        <script nonce="{{ request.state.csp_nonce }}">
+        document.body.addEventListener('htmx:beforeRequest', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.width = '60%'; bar.style.opacity = '1'; }
+        });
+        document.body.addEventListener('htmx:afterRequest', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.width = '100%'; setTimeout(function(){ bar.style.width = '0'; bar.style.opacity = '0'; }, 300); }
+        });
+        document.body.addEventListener('htmx:responseError', function() {
+            var bar = document.querySelector('[data-htmx-loading-bar]');
+            if (bar) { bar.style.backgroundColor = '#C2410C'; bar.style.width = '100%'; setTimeout(function(){ bar.style.width = '0'; bar.style.opacity = '0'; bar.style.backgroundColor = ''; }, 500); }
+        });
+        </script>
         {% block content %}{% endblock %}
     </main>
 
@@ -174,9 +206,9 @@
                    unit tests don't crash the entire page. #}
                 {%- set _last_sync = latest_sync_at() if latest_sync_at is defined else None -%}
                 {% if _last_sync %}
-                <span>Last sync: <span id="last-sync">{{ _last_sync | timeago }}</span></span>
+                <span><span data-realtime-dot title="Live sync status" aria-hidden="true"></span>Last sync: <span id="last-sync">{{ _last_sync | timeago }}</span></span>
                 {% else %}
-                <span>Last sync: <span id="last-sync">no sync data</span></span>
+                <span><span data-realtime-dot title="Live sync status" aria-hidden="true"></span>Last sync: <span id="last-sync">no sync data</span></span>
                 {% endif %}
             </div>
         </div>
@@ -194,6 +226,12 @@
 
     <!-- Design System: tabs keyboard navigation (WAI-ARIA APG) -->
     <script src="/static/js/ds-tabs.js" nonce="{{ request.state.csp_nonce }}"></script>
+
+    <!-- Global keyboard shortcuts (press ? for help) -->
+    <script src="/static/js/keyboardShortcuts.js" nonce="{{ request.state.csp_nonce }}"></script>
+
+    <!-- Real-time sync status via Server-Sent Events -->
+    <script src="/static/js/realtimeSync.js" nonce="{{ request.state.csp_nonce }}"></script>
 
     <!-- HTMX history guard: load-triggered fragments must never become the address bar. -->
     <script nonce="{{ request.state.csp_nonce }}">

@@ -61,14 +61,13 @@ echo "  Mode:        $([ "$DRY_RUN" = true ] && echo 'DRY RUN (preview only)' ||
 echo "═══════════════════════════════════════════════════════════════"
 echo
 
-# Confirm auth is to DCE tenant — supports both subscription and tenant-only context
-CURRENT_TENANT="$(az account show --query tenantId -o tsv 2>/dev/null || echo '')"
-if [[ -z "$CURRENT_TENANT" ]]; then
-  # No active subscription — query via Graph token for tenant-only logins
-  CURRENT_TENANT="$(az rest --method get --url 'https://graph.microsoft.com/v1.0/organization' --query 'value[0].id' -o tsv 2>/dev/null || echo '')"
-fi
-if [[ "$CURRENT_TENANT" != "$DCE_TENANT_ID" ]]; then
-  echo "❌ Current az context is tenant '$CURRENT_TENANT', expected DCE '$DCE_TENANT_ID'."
+# Confirm DCE tenant token is available.
+# az account show returns the *default subscription's* tenant, which is often
+# a home tenant (e.g. HTT) even when a DCE token is cached.  The reliable
+# check is to request a token for the DCE tenant explicitly.
+DCE_TOKEN_TENANT="$(az account get-access-token --tenant "$DCE_TENANT_ID" --query tenant -o tsv 2>/dev/null || echo '')"
+if [[ "$DCE_TOKEN_TENANT" != "$DCE_TENANT_ID" ]]; then
+  echo " No DCE tenant token available (got '$DCE_TOKEN_TENANT')."
   echo "   Run:  az login --tenant $DCE_TENANT_ID --use-device-code --allow-no-subscriptions"
   exit 1
 fi
@@ -81,6 +80,7 @@ if [[ "$ELEVATE" = true ]]; then
   else
     az rest --method post \
       --url "https://management.azure.com/providers/Microsoft.Authorization/elevateAccess?api-version=2016-07-01" \
+      --tenant "$DCE_TENANT_ID" \
       2>&1 | tail -3
     echo "  ✓ Elevation granted (propagation can take 30s-2min)"
     echo "  Waiting 30s for propagation..."
@@ -91,6 +91,10 @@ fi
 
 # Find the SP object ID inside DCE tenant by app client ID
 SP_OBJECT_ID="$(az ad sp show --id "$DCE_APP_CLIENT_ID" --query id -o tsv 2>/dev/null || echo '')"
+# Fallback: query via MS Graph if cross-tenant SP lookup fails
+if [[ -z "$SP_OBJECT_ID" ]]; then
+  SP_OBJECT_ID="$(az rest --method get \n    --url "https://graph.microsoft.com/v1.0/servicePrincipals?\$filter=appId eq '$DCE_APP_CLIENT_ID'" \n    --tenant "$DCE_TENANT_ID" \n    --query 'value[0].id' -o tsv 2>/dev/null || echo '')"
+fi
 if [[ -z "$SP_OBJECT_ID" ]]; then
   echo "❌ Could not find service principal for app $DCE_APP_CLIENT_ID in DCE tenant."
   echo "   The app may need to be admin-consented in DCE first:"
@@ -100,8 +104,14 @@ fi
 echo "✓ Found SP in DCE: $SP_OBJECT_ID"
 echo
 
-# Enumerate DCE subscriptions
-SUBS_JSON="$(az account list --refresh --query "[?tenantId=='$DCE_TENANT_ID'].{id:id,name:name}" -o json)"
+# Enumerate DCE subscriptions via ARM REST API (works even when CLI default
+# is a different tenant -- az account list filters by default sub context).
+SUBS_JSON="$(az rest \
+  --method get \
+  --url "https://management.azure.com/subscriptions?api-version=2022-12-01" \
+  --tenant "$DCE_TENANT_ID" \
+  --query "value[?tenantId=='$DCE_TENANT_ID'].{id:subscriptionId,name:displayName}" \
+  -o json 2>/dev/null || echo '[]')"
 SUB_COUNT="$(echo "$SUBS_JSON" | python3 -c 'import json,sys;print(len(json.load(sys.stdin)))')"
 if [[ "$SUB_COUNT" == "0" ]]; then
   echo "❌ Zero DCE subscriptions visible to current account."
@@ -141,7 +151,7 @@ for s in json.load(sys.stdin): print(s["id"])'); do
         --role "$ROLE" \
         --scope "$SCOPE" \
         --query "{role:roleDefinitionName,scope:scope,principal:principalId}" \
-        -o table
+        -o table 2>&1
     fi
   done
 done

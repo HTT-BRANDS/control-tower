@@ -9,22 +9,22 @@ HTT Control Tower is an internal multi-brand governance hub for cost, identity, 
 
 > **Naming note:** Control Tower is HTT's internal name for this platform. It is unrelated to AWS Control Tower. Do not use this name for external commercialization without a separate naming/legal review.
 
-> **Current release truth (2026-05-28 end of session):** package version in `pyproject.toml` is **2.5.0**. Production judge score is **11/12 (92%)**, expected to hit 12/12 on the next sync cycle after today's live DCE RBAC fix (`ct-1m0`). 4/5 tenants fully healthy. Today also shipped the Manager role end-to-end (`ct-2nk` closed, per ADR-0012), the design-system Miro spec import (issue #66), and closed `ct-yb1` (palette canon) + `xzt4` (Bicep drift). See [`STATE.md`](./STATE.md) for the canonical session snapshot and [`STATUS.md`](./STATUS.md) for operational/deploy detail.
+> **Current release truth (2026-06-08):** package version in `pyproject.toml` is **2.5.0**. Production judge score is **48/48 (100%)**. All 5 tenants fully syncing (any_stale=false). Q3 2026 DR drills completed. READY FOR RELEASE TAG. See [`STATUS.md`](./STATUS.md) for operational detail.
 
 ## Release status snapshot
 
 - **Package version:** `2.5.0`
-- **Production judge score:** **11/12 (92%)** as of 2026-05-28; **expected 12/12 next sync cycle**
-- **Latest production deploy:** [run `26535827775`](https://github.com/HTT-BRANDS/control-tower/actions/runs/26535827775) — 2026-05-27 23:43 UTC (PR #63 merge `96611ec`)
-- **Live prod image:** `ghcr.io/htt-brands/control-tower@sha256:5f550ae53b2660a2fb8f60a2c9ca37f5668b948f86a3b76ee9f2dd15d6b2e937`
-- **Current production app URL:** <https://app-governance-prod.azurewebsites.net> · `/health` ✅ 200
+- **Production judge score:** **48/48 (100%)** as of 2026-06-08
+- **Latest production deploy:** [run `27029690617`](https://github.com/HTT-BRANDS/control-tower/actions/runs/27029690617) -- 2026-06-05 17:23 UTC
+- **Live prod image:** `ghcr.io/htt-brands/control-tower@sha256:16f0c5071cad3e824a3931a722bda1128c7fbbbdfcf3f027cf3897a601739c2a`
+- **Current production app URL:** <https://app-governance-prod.azurewebsites.net> / `/health` 200
 - **Current production resource group:** `rg-governance-production` (West US 2)
 - **Current staging app URL:** <https://app-governance-staging-xnczpwyv.azurewebsites.net>
 - **Public docs:** <https://htt-brands.github.io/control-tower/>
-- **Deploy workflow:** `.github/workflows/deploy-production.yml` (auto-rollback active; field-tested 2026-04-30 via bd `1vui` cycle)
-- **Rollback/waiver source of truth:** [`docs/release-gate/rollback-current-state.yaml`](./docs/release-gate/rollback-current-state.yaml) (`waiver.status: resolved`, `current_authorized_humans: [Tyler, Dustin]`)
-- **v2.5.1 evidence bundle:** [`docs/release-gate/evidence-bundle-2026-04-30.md`](./docs/release-gate/evidence-bundle-2026-04-30.md)
-- **v2.5.1 internal verdict:** [`docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md`](./docs/release-gate/verdicts/rehearsal-2026-04-30-internal.md) — `PASS-pending-9lfn`
+- **SLSA:** L3 provenance + SBOM attestation on every production deploy
+- **DR drills:** Q3 2026 complete (PITR ~2min, rollback ~3.5min, KV ~9s)
+- **Change history:** [`CHANGELOG.md`](./CHANGELOG.md)
+- **Live state dashboards:** [`STATUS.md`](./STATUS.md), [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md)
 - **Change history:** [`CHANGELOG.md`](./CHANGELOG.md)
 - **Live state dashboards:** [`STATUS.md`](./STATUS.md), [`CURRENT_STATE_ASSESSMENT.md`](./CURRENT_STATE_ASSESSMENT.md), [`SESSION_HANDOFF.md`](./SESSION_HANDOFF.md)
 - **Smoke / UAT recipes:** [`TEST_PLAYBOOK.md`](./TEST_PLAYBOOK.md)

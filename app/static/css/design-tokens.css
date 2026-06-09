@@ -238,6 +238,13 @@
   --swa-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Paint the root element dark so overscroll / rubber-band doesn't flash white
+   in dark mode (bd ct-6vn). */
+html.dark {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 /* System preference fallback (when no explicit .light or .dark class set) */
 @media (prefers-color-scheme: dark) {
   html:not(.light):not(.dark) {

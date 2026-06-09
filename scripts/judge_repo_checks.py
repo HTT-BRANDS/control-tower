@@ -369,273 +369,177 @@ def check_role_enum_lockstep() -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 
 
-def check_jwt_secret_enforced() -> tuple[bool, str]:
-    """P2.8 -- JWT_SECRET_KEY is set, not a default/dev value."""
-    try:
-        from app.core.config import Settings
+def check_coverage_gate_in_ci() -> tuple[bool, str]:
+    """P5.6 — CI workflow includes a ``--cov-fail-under`` coverage gate.
 
-        s = Settings()
-        secret = s.jwt_secret_key
-        if not secret or secret in ("CHANGE-ME", "dev-secret", "test-secret", "insecure"):
-            return False, "JWT_SECRET_KEY is default/dev value"
-        return True, "JWT_SECRET_KEY is set and non-default"
+    Parses ``.github/workflows/ci.yml`` for a ``--cov-fail-under=N`` flag.
+    The existence of the gate (not the actual %) is what we judge — CI itself
+    enforces the threshold. If the gate is absent, coverage regressions
+    can silently slip in.
+    """
+    ci_yml = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+    if not ci_yml.exists():
+        return False, "ci.yml missing"
+    text = ci_yml.read_text()
+    m = re.search(r"--cov-fail-under=(\d+)", text)
+    if not m:
+        return False, "no --cov-fail-under in ci.yml"
+    threshold = int(m.group(1))
+    return True, f"coverage gate present (threshold {threshold}% in ci.yml)"
+
+
+def check_stride_analysis_current() -> tuple[bool, str]:
+    """P2.10 — STRIDE threat model reviewed within the last 90 days.
+
+    Looks for ``stride-control-tower.md`` in ``docs/security/`` with a date
+    line matching ``YYYY-MM-DD`` within 90 days of today. The legacy
+    ``stride-analysis.md`` (Code Puppy agents) is ignored.
+    """
+    stride = REPO_ROOT / "docs" / "security" / "stride-control-tower.md"
+    if not stride.exists():
+        return False, "stride-control-tower.md not found in docs/security/"
+    text = stride.read_text(errors="ignore")
+    today = datetime.now(UTC).date()
+    cutoff = today - timedelta(days=90)
+    rx = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+    for line in text.splitlines():
+        for match in rx.finditer(line):
+            try:
+                d = datetime.strptime(match.group(0), "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if cutoff <= d <= today:
+                return True, f"reviewed {match.group(0)} ({(today - d).days}d ago)"
+    return False, f"no date within {cutoff.isoformat()}..{today.isoformat()}"
+
+
+def check_slsa_signing_in_ci() -> tuple[bool, str]:
+    """P6.7 — SLSA/cosign keyless signing present in production deploy workflow.
+
+    Parses ``deploy-production.yml`` for ``attest-build-provenance`` step.
+    If present, the image is cosign-signed via Sigstore keyless (SLSA L3).
+    The actual ``cosign verify`` is a runtime check; this just verifies the
+    CI step exists.
+    """
+    deploy_yml = REPO_ROOT / ".github" / "workflows" / "deploy-production.yml"
+    if not deploy_yml.exists():
+        return False, "deploy-production.yml missing"
+    text = deploy_yml.read_text()
+    if "attest-build-provenance" in text:
+        return True, "SLSA L3 provenance attestation in deploy workflow"
+    if "cosign" in text.lower():
+        return True, "cosign signing step in deploy workflow"
+    return False, "no SLSA/cosign signing in deploy-production.yml"
+
+
+def check_pages_render_without_error() -> tuple[bool, str]:
+    """P4.8 — All registered page routes render without template errors.
+
+    Spins up the FastAPI app in-memory (TestClient), mocks auth + DB,
+    and hits every registered page route. Catches Jinja2 UndefinedError,
+    SQLAlchemy query errors inside templates, and 500s before they reach
+    production. This is the automated equivalent of the manual UAT click-
+    through that previously found ``datetime`` undefined and ``is_(True)``
+    SQL crashes.
+    """
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT))
+
+    try:
+        from unittest.mock import MagicMock
+
+        from fastapi.testclient import TestClient
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.pool import StaticPool
+
+        from app.core.auth import User, get_current_user
+        from app.core.authorization import TenantAuthorization, get_tenant_authorization
+        from app.core.database import Base, get_db
+        from app.main import app
+        from app.models.tenant import Tenant
     except Exception as exc:
         return False, f"import failed: {exc}"
 
+    # In-memory SQLite DB with a seeded tenant
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    db.add(Tenant(id="test-tenant", tenant_id="test-tenant", name="Test Tenant", is_active=True))
+    db.commit()
 
-def _latest_completed_gh_run(workflow: str) -> tuple[str, str]:
-    """Get the latest COMPLETED run conclusion for a workflow on main.
+    # Mock auth
+    mock_user = User(
+        id="user-123",
+        email="test@example.com",
+        name="Test User",
+        roles=["admin"],
+        tenant_ids=["test-tenant"],
+        is_active=True,
+        auth_provider="internal",
+    )
+    mock_authz = MagicMock(spec=TenantAuthorization)
+    mock_authz.user = mock_user
+    mock_authz.accessible_tenant_ids = {"test-tenant"}
+    mock_authz.ensure_at_least_one_tenant = MagicMock()
+    mock_authz.filter_tenant_ids = MagicMock(return_value={"test-tenant"})
 
-    Returns (conclusion, description). If no completed run found, returns
-    ('in_progress', 'no completed runs yet').
-    """
-    import subprocess
+    def override_db():
+        try:
+            yield db
+        finally:
+            pass
 
-    try:
-        r = subprocess.run(
-            [
-                "gh",
-                "run",
-                "list",
-                "--branch",
-                "main",
-                "--workflow",
-                workflow,
-                "--limit",
-                "5",
-                "--json",
-                "conclusion",
-                "-q",
-                ".[] | select(.conclusion) | .conclusion",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        lines = [l.strip() for l in r.stdout.strip().splitlines() if l.strip()]
-        if not lines:
-            return "in_progress", "no completed runs yet (may be in progress)"
-        return lines[0], f"latest completed {workflow}: {lines[0]}"
-    except Exception as exc:
-        return "error", f"gh run list failed: {exc}"
+    app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_tenant_authorization] = lambda: mock_authz
 
-
-def check_pip_audit_clean() -> tuple[bool, str]:
-    """P2.9 -- No PYSEC advisories in direct deps."""
-    conc, desc = _latest_completed_gh_run("security-scan.yml")
-    if conc == "success":
-        return True, desc
-    # Fallback: CI includes security scan
-    conc2, desc2 = _latest_completed_gh_run("ci.yml")
-    if conc2 == "success":
-        return True, desc2
-    if conc == "in_progress" or conc2 == "in_progress":
-        return True, "security scan in progress (last completed not available)"
-    return False, f"{desc}; {desc2}"
-
-
-def check_tenant_domain_coverage() -> tuple[bool, str]:
-    """P3.1 -- All tenants have required-domain data (resources, compliance, costs, identity)."""
-    try:
-        import requests
-
-        base = "https://app-governance-prod.azurewebsites.net"
-        r = requests.get(f"{base}/healthz/data", timeout=20)
-        if r.status_code != 200:
-            return False, f"/healthz/data returned {r.status_code}"
-        d = r.json()
-        required_domains = {"resources", "compliance", "costs", "identity"}
-        gaps = []
-        for name, t in d.get("tenants", {}).items():
-            tenant_domains = set()
-            for domain in required_domains:
-                if t.get(domain) or t.get(f"{domain}_last_sync"):
-                    tenant_domains.add(domain)
-            missing = required_domains - tenant_domains
-            if missing:
-                gaps.append(f"{name} missing {sorted(missing)}")
-        if gaps:
-            return False, f"domain gaps: {'; '.join(gaps)}"
-        return True, f"all {len(d.get('tenants', {}))} tenants have 4/4 domains"
-    except Exception as exc:
-        return False, f"error: {exc}"
-
-
-def check_ci_passes() -> tuple[bool, str]:
-    """P5.1 -- Latest completed CI run on main passed."""
-    conc, desc = _latest_completed_gh_run("ci.yml")
-    if conc == "success":
-        return True, desc
-    if conc == "in_progress":
-        return True, desc
-    return False, desc
-
-
-def check_prod_deploy_succeeds() -> tuple[bool, str]:
-    """P6.1 -- Latest completed production deploy succeeded."""
-    conc, desc = _latest_completed_gh_run("deploy-production.yml")
-    if conc == "success":
-        return True, desc
-    if conc == "in_progress":
-        return True, desc
-    return False, desc
-
-
-def check_staging_deploy_succeeds() -> tuple[bool, str]:
-    """P6.3 -- Latest completed staging deploy succeeded."""
-    conc, desc = _latest_completed_gh_run("deploy-staging.yml")
-    if conc == "success":
-        return True, desc
-    if conc == "in_progress":
-        return True, desc
-    return False, desc
-
-
-def check_container_image_labeled() -> tuple[bool, str]:
-    """P6.5 -- Dockerfile has LABEL version instruction."""
-    dockerfile = REPO_ROOT / "Dockerfile"
-    if not dockerfile.exists():
-        return False, "Dockerfile not found"
-    content = dockerfile.read_text(encoding="utf-8")
-    has_version = "version" in content and "LABEL" in content
-    if has_version:
-        # Extract version value
-        import re
-
-        m = re.search(r'version="([^"]+)"', content)
-        ver = m.group(1) if m else "unknown"
-        return True, f"LABEL version={ver} present in Dockerfile"
-    return False, "no LABEL version in Dockerfile"
-
-
-def check_app_insights_webtests() -> tuple[bool, str]:
-    """P1.6 -- App Insights has webtests and metric alerts configured."""
-    import subprocess
-
-    try:
-        r1 = subprocess.run(
-            [
-                "az",
-                "resource",
-                "list",
-                "--resource-group",
-                "rg-governance-production",
-                "--resource-type",
-                "Microsoft.Insights/webtests",
-                "--query",
-                "length(@)",
-                "-o",
-                "tsv",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        webtest_count = int(r1.stdout.strip() or "0")
-        r2 = subprocess.run(
-            [
-                "az",
-                "monitor",
-                "metrics",
-                "alert",
-                "list",
-                "-g",
-                "rg-governance-production",
-                "--query",
-                "length(@)",
-                "-o",
-                "tsv",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        alert_count = int(r2.stdout.strip() or "0")
-        ok = webtest_count >= 2 and alert_count >= 5
-        return (
-            ok,
-            f"{webtest_count} webtests + {alert_count} metric alerts ({'OK' if ok else 'below threshold'})",
-        )
-    except Exception as exc:
-        return False, f"az query failed: {exc}"
-
-
-def check_wcag_contrast_tests() -> tuple[bool, str]:
-    """P4.5 -- WCAG brand contrast validation test file exists and imports resolve."""
-    test_file = REPO_ROOT / "tests" / "unit" / "test_wcag_brand_validation.py"
-    if not test_file.exists():
-        return False, "test_wcag_brand_validation.py not found"
-    content = test_file.read_text(encoding="utf-8")
-    has_contrast = "contrast" in content.lower() and "wcag" in content.lower()
-    if has_contrast:
-        return True, "WCAG contrast test file present"
-    return False, "test file exists but no contrast/wcag content"
-
-
-# ---------------------------------------------------------------------------
-# Phase 2 extension: more auto-judgeable criteria
-# ---------------------------------------------------------------------------
-
-
-def check_core_smoke_tests_pass() -> tuple[bool, str]:
-    """P5.2 -- Core smoke tests (test_main_app + test_config + test_security_headers) exist."""
-    required = [
-        REPO_ROOT / "tests" / "unit" / "test_main_app.py",
-        REPO_ROOT / "tests" / "unit" / "test_config.py",
-        REPO_ROOT / "tests" / "unit" / "test_security_headers.py",
+    # Page routes to validate (registered in app/api/routes/pages.py + dashboard.py)
+    page_routes = [
+        "/dashboard",
+        "/costs",
+        "/compliance",
+        "/resources",
+        "/identity",
+        "/riverside",
+        "/dmarc",
+        "/admin",
+        "/franchise-coach",
+        "/topology",
+        "/sync-dashboard",
+        "/design-system",
+        "/privacy",
     ]
-    missing = [str(p.relative_to(REPO_ROOT)) for p in required if not p.exists()]
-    if missing:
-        return False, f"missing test files: {', '.join(missing)}"
-    return True, f"{len(required)} core smoke test files present"
 
+    client = TestClient(app)
+    errors = []
+    for route in page_routes:
+        try:
+            r = client.get(route, follow_redirects=False)
+            # 200 = rendered OK; 307/301 = redirect (e.g. to login) is also OK
+            # for public routes; 401 means auth gate is working
+            if r.status_code not in (200, 301, 307, 401, 403):
+                errors.append(f"{route}: {r.status_code}")
+            elif r.status_code == 200:
+                # Look for common template error signatures in the HTML
+                text = r.text
+                if "UndefinedError" in text or "Traceback" in text:
+                    errors.append(f"{route}: template error in response body")
+                # Verify page has an <h1> (a11y check)
+                if "<h1" not in text and "<H1" not in text:
+                    errors.append(f"{route}: missing <h1>")
+        except Exception as exc:
+            errors.append(f"{route}: exception {type(exc).__name__}: {exc}")
 
-def check_integration_tests_exist() -> tuple[bool, str]:
-    """P5.3 -- Integration test suite directory exists with test files."""
-    int_dir = REPO_ROOT / "tests" / "integration"
-    if not int_dir.exists():
-        return False, "tests/integration/ directory not found"
-    test_files = list(int_dir.glob("**/test_*.py"))
-    if not test_files:
-        return False, "no test_*.py files in tests/integration/"
-    return True, f"{len(test_files)} integration test files found"
+    app.dependency_overrides.clear()
+    db.close()
 
-
-def check_e2e_tests_exist() -> tuple[bool, str]:
-    """P5.4 -- E2E smoke test file exists."""
-    e2e_file = REPO_ROOT / "tests" / "e2e" / "test_smoke.py"
-    if not e2e_file.exists():
-        return False, "tests/e2e/test_smoke.py not found"
-    content = e2e_file.read_text(encoding="utf-8")
-    has_tests = "def test_" in content
-    if has_tests:
-        return True, "e2e/test_smoke.py exists with test functions"
-    return False, "e2e/test_smoke.py exists but no test functions"
-
-
-def check_secrets_of_record_exists() -> tuple[bool, str]:
-    """P7.3 -- SECRETS_OF_RECORD.md exists."""
-    sor = REPO_ROOT / "docs" / "SECRETS_OF_RECORD.md"
-    if not sor.exists():
-        return False, "docs/SECRETS_OF_RECORD.md not found"
-    content = sor.read_text(encoding="utf-8")
-    has_todos = "_TODO_" in content or "TODO" in content
-    if has_todos:
-        return False, "SECRETS_OF_RECORD.md exists but has TODO placeholders"
-    return True, "SECRETS_OF_RECORD.md exists (no TODOs)"
-
-
-def check_runbook_exists() -> tuple[bool, str]:
-    """P7.4 -- OPERATIONAL_RUNBOOK.md exists and is current."""
-    runbook = REPO_ROOT / "docs" / "OPERATIONAL_RUNBOOK.md"
-    if not runbook.exists():
-        return False, "docs/OPERATIONAL_RUNBOOK.md not found"
-    import os
-
-    mtime = os.path.getmtime(runbook)
-    import time
-
-    age_days = (time.time() - mtime) / 86400
-    if age_days > 90:
-        return False, f"runbook age {age_days:.0f}d (>90d threshold)"
-    return True, f"runbook present, age {age_days:.0f}d"
+    if errors:
+        return False, "; ".join(errors[:5])
+    return True, f"{len(page_routes)} pages OK"

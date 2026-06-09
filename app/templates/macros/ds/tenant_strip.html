@@ -1,0 +1,72 @@
+{# tenant_strip.html — Persistent per-tenant health bar for every page.
+   Gives the "control tower" feel: at-a-glance status of all 5 brands.
+   Auto-fetches health data via fetch() and updates status indicators.
+#}
+
+{% macro ds_tenant_strip(tenants) %}
+{# tenants: list of {id, name, key} objects #}
+<div id="tenant-health-strip" class="tenant-health-strip" data-tenants="{{ tenants | map(attribute='name') | list | tojson | forceescape }}">
+  <div class="flex items-center gap-1 px-4 py-2 bg-surface-secondary border-b border-border-default overflow-x-auto" id="tenant-strip-inner">
+    <span class="text-xs font-semibold text-muted-theme uppercase tracking-wider whitespace-nowrap mr-2">Tenants</span>
+    {% for tenant in tenants %}
+      <a href="/dashboard?tenant_id={{ tenant.id }}"
+         class="tenant-chip tenant-chip-{{ tenant.id }} tenant-status-healthy flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all hover:scale-105"
+         title="{{ tenant.name }}"
+         data-tenant="{{ tenant.name }}">
+        <span class="w-2 h-2 rounded-full bg-success status-dot animate-pulse"></span>
+        <span class="tenant-name">{{ tenant.name.replace('Head-To-Toe', 'HTT').replace('Frenchies', 'FN').replace('Lash Lounge', 'TLL') }}</span>
+      </a>
+    {% endfor %}
+    <div class="ml-auto flex items-center gap-2 text-xs text-muted-theme">
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-success"></span> Healthy</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-warning"></span> Warn</span>
+      <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-danger"></span> Crit</span>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  const STRIP = document.getElementById('tenant-health-strip');
+  if (!STRIP) return;
+  const tenantNames = JSON.parse(STRIP.dataset.tenants || '[]');
+
+  function updateStrip(data) {
+    if (!data || !data.tenants) return;
+    tenantNames.forEach(function(name) {
+      const health = data.tenants[name] || {};
+      const isStale = health.stale;
+      const isOptStale = health.optional_stale;
+      const chips = STRIP.querySelectorAll('[data-tenant="' + name.replace(/"/g, '\\"') + '"]');
+      chips.forEach(function(chip) {
+        const dot = chip.querySelector('.status-dot');
+        chip.classList.remove('tenant-status-healthy', 'tenant-status-warning', 'tenant-status-critical');
+        dot.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+        if (isStale) {
+          chip.classList.add('tenant-status-critical');
+          dot.classList.add('bg-danger');
+          chip.title = name + ' — Critical: stale required data';
+        } else if (isOptStale) {
+          chip.classList.add('tenant-status-warning');
+          dot.classList.add('bg-warning');
+          chip.title = name + ' — Warning: optional data stale';
+        } else {
+          chip.classList.add('tenant-status-healthy');
+          dot.classList.add('bg-success');
+          chip.title = name + ' — All healthy';
+        }
+      });
+    });
+  }
+
+  async function fetchHealth() {
+    try {
+      const resp = await fetch('/healthz/data', { credentials: 'same-origin' });
+      if (resp.ok) updateStrip(await resp.json());
+    } catch (e) { /* silent fail */ }
+  }
+
+  fetchHealth(); // initial
+  setInterval(fetchHealth, 60000); // every 60s
+})();
+</script>
+{% endmacro %}

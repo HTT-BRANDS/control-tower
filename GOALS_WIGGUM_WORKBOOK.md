@@ -23,7 +23,7 @@
 ## Definition of Done (workbook closes when ALL true)
 
 - [x] **DoD-1**: `judge.py --env production` reports **27/27** (all current checks green)
-- [x] **DoD-2**: `judge.py --env production` reports **>= 37/N** after Phase 2 adds checks (>= 71% coverage) -- 41/52 (79%), target exceeded
+- [x] **DoD-2**: `judge.py --env production` reports **>= 37/N** after Phase 2 adds checks (>= 71% coverage) -- 44/52 (85%), target well exceeded
 - [x] **DoD-3**: Open bd backlog **<= 10** (closes P7.6, satisfies DoD-1) -- currently 6 open
 - [x] **DoD-4**: All bd items are either closed or tagged with clear owner (Richard-solo or Tyler-only)
 - [x] **DoD-5**: GOALS.md Issue-Goal mapping is current
@@ -129,7 +129,7 @@ git push
 
 ```
 Phase 1: [x][x][x][x][x][x][x][x][x]  (9/9) DONE
-Phase 2: [x][x][x][x][x][x][x][x][x][x][x][x][x][x][x]  (15/15) DONE
+Phase 2: [x][x][x][x][x][x][x][x][x][x][x][x][x][x][x][x][x][x]  (18/18) DONE
 Phase 3: [ ][ ][ ][ ][ ][ ][ ]  (0/7 -- Tyler only)
 Phase 4: [ ]  (0/1)
 ```

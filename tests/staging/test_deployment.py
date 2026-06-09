@@ -82,7 +82,14 @@ class TestPerformanceBaseline:
     def test_health_responds_under_2_seconds(
         self, client: requests.Session, staging_url: str
     ) -> None:
-        """Health endpoint must respond in < 2 seconds on a warm instance."""
+        """Health endpoint must respond in < 2 seconds on a warm instance.
+
+        First request after deploy may cold-start (5-10s on Basic tier).
+        We send a warmup ping first, then measure the real request.
+        """
+        # Warmup ping — discard the cold-start latency
+        client.get(f"{staging_url}/health", timeout=15)
+        # Real measurement on warm instance
         resp = client.get(f"{staging_url}/health", timeout=10)
         assert resp.elapsed.total_seconds() < 2.0, (
             f"Health check took {resp.elapsed.total_seconds():.2f}s — "
