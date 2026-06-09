@@ -136,7 +136,12 @@ async def _get_dashboard_data(
     for sync_type, sync_time in last_synced.items():
         if sync_time is None:
             stale_syncs.append(f"{sync_type} (never)")
-        elif (now - sync_time).total_seconds() > max_age:
+            continue
+        # DB datetimes may be naive (SQLite) — coerce to UTC-aware so the
+        # subtraction below never mixes naive/aware operands.
+        sync_time = _coerce_utc_datetime(sync_time)
+        last_synced[sync_type] = sync_time
+        if (now - sync_time).total_seconds() > max_age:
             stale_syncs.append(sync_type)
 
     return {

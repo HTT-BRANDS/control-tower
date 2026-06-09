@@ -52,7 +52,7 @@
     {% set status_bg = 'bg-brand-success-5' if platform_status == 'healthy' else ('bg-brand-warning-5' if platform_status == 'warning' else 'bg-brand-danger-5') %}
     {% set status_border = 'border-success' if platform_status == 'healthy' else ('border-warning' if platform_status == 'warning' else 'border-danger') %}
 
-    <div class="ct-card ct-card-status-{{ platform_status }} p-6 {{ status_bg }} border-l-4 {{ status_border }}">
+    <div class="ct-card ct-card-status-{{ platform_status }} p-6 {{ status_bg }} border-l-4 {{ status_border }}" data-testid="dashboard-kpi-summary">
         <div class="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8">
             <div class="flex-shrink-0 text-center md:text-left">
                 <div class="text-xs font-semibold uppercase tracking-wider text-muted-theme mb-1">Platform Health</div>
@@ -191,7 +191,7 @@
        Level 3: Domain Drill-Down Cards with Status Borders
        ================================================================ #}
     <h2 class="text-lg font-semibold text-primary-theme">Domain Overview</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-testid="dashboard-domain-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-testid="dashboard-overview-grid">
         {# Costs Domain #}
         {% set cost_status = 'healthy' if cost_summary.cost_change_percent is none or cost_summary.cost_change_percent <= 0 else 'warning' %}
         <div class="ct-card ct-card-status-{{ cost_status }} p-5">
