@@ -505,7 +505,7 @@ async def main():
     )
 
     print("\n" + "=" * 70)
-    print("AZURE GOVERNANCE PLATFORM - PREFLIGHT CHECKS")
+    print("HTT CONTROL TOWER - PREFLIGHT CHECKS")
     print("=" * 70 + "\n")
 
     # Check if we have required environment variables

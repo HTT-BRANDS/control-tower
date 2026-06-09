@@ -446,7 +446,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             f"max-age={self.hsts_max_age}; includeSubDomains"
             + ("; preload" if self.hsts_preload else "")
         )
-        response.headers["Server"] = "Azure-Governance-Platform"
+        response.headers["Server"] = "HTT-Control-Tower"
 
     def _add_security_headers(self, response: Response, nonce: str) -> None:
         """Add all security headers to response."""

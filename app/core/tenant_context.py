@@ -277,12 +277,12 @@ def get_brand_context_for_request(request: Request) -> dict[str, Any]:
         },
         "tenant": {
             "id": tenant_config.tenant_id if tenant_config else None,
-            "name": tenant_config.name if tenant_config else "Azure Governance",
+            "name": tenant_config.name if tenant_config else "HTT Control Tower",
             "code": tenant_config.code if tenant_config else None,
         }
         if tenant_config
         else {
-            "name": "Azure Governance",
+            "name": "HTT Control Tower",
             "code": None,
         },
     }

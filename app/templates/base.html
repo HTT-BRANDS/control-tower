@@ -11,7 +11,7 @@
        Pages MAY override og:title/og:description via `extra_head` block. #}
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <meta name="theme-color" content="#500711">
-    <meta name="description" content="{% block meta_description %}Multi-tenant Azure governance, cost, and compliance platform for HTT Brands.{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Multi-tenant governance, cost, and compliance platform for HTT Brands.{% endblock %}">
     <meta property="og:title" content="{% block og_title %}HTT Control Tower{% endblock %}">
     <meta property="og:description" content="{{ self.meta_description() }}">
     <meta property="og:type" content="website">
@@ -92,8 +92,8 @@
             <div class="flex items-center justify-between h-16">
                 <!-- Logo + Desktop Nav -->
                 <div class="flex items-center">
-                    <a href="/dashboard" class="text-xl font-bold hover:opacity-90 transition-opacity flex-shrink-0" aria-label="Azure Governance Home">
-                        Azure Governance
+                    <a href="/dashboard" class="text-xl font-bold hover:opacity-90 transition-opacity flex-shrink-0" aria-label="HTT Control Tower Home">
+                        HTT Control Tower
                     </a>
                     <div class="hidden lg:block ml-8">
                         {% include 'partials/nav.html' %}

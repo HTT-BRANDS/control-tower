@@ -190,7 +190,7 @@ EMAIL_TEMPLATE_HTML = """
         {actions_html}
 
         <div class="footer">
-            <p>Riverside Compliance Platform • Azure Governance</p>
+            <p>HTT Control Tower</p>
             <p>This is an automated alert from the compliance monitoring system.</p>
         </div>
     </div>
@@ -324,7 +324,7 @@ Time: {timestamp}
         for action in actions:
             plain_text += f"  - {action['title']}: {action['url']}\n"
 
-    plain_text += "\n---\nRiverside Compliance Platform • Azure Governance"
+    plain_text += "\n---\nHTT Control Tower"
 
     # Build HTML version
     facts_html = create_facts_html(facts or [])
