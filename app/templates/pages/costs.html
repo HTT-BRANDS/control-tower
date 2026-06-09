@@ -269,6 +269,9 @@ async function loadAllData() {
     renderTables();
 }
 
+// Works on both direct load AND HTMX boosted navigation.
+// DOMContentLoaded won't fire when HTMX swaps <main>; run immediately
+// since by the time this script executes the fragment is in the DOM.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadAllData);
 } else {
