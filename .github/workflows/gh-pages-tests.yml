@@ -86,7 +86,23 @@ jobs:
         working-directory: tests/e2e/github-pages
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+        # --with-deps shells out to apt-get, which intermittently hangs on the
+        # hosted runner's mirror. Cap each attempt at 5 min and retry so a
+        # transient apt stall fails fast and recovers instead of burning the
+        # full 30-min job timeout (see PR #126 post-mortem).
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Playwright install attempt ${attempt}"
+            if timeout 300 npx playwright install --with-deps ${{ matrix.browser }}; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "attempt ${attempt} failed or timed out; retrying in 15s"
+            sleep 15
+          done
+          echo "all playwright install attempts failed" >&2
+          exit 1
         working-directory: tests/e2e/github-pages
 
       - name: Run Playwright tests
@@ -168,7 +184,19 @@ jobs:
         working-directory: tests/e2e/github-pages
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Playwright install attempt ${attempt}"
+            if timeout 300 npx playwright install --with-deps; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "attempt ${attempt} failed or timed out; retrying in 15s"
+            sleep 15
+          done
+          echo "all playwright install attempts failed" >&2
+          exit 1
         working-directory: tests/e2e/github-pages
 
       - name: Update screenshots
