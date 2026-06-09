@@ -18,8 +18,20 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-PY="${PYTHON:-python}"
+# Build the Python + pytest invocation that uses the project venv.
+# uv is preferred (it ensures the .venv is active); fall back to bare python.
+if command -v uv &>/dev/null && [ -f "${ROOT}/.venv/pyvenv.cfg" ]; then
+  PYTEST_RUNNER=(uv run pytest)
+else
+  PY="${PYTHON:-python}"
+  PYTEST_RUNNER=("$PY" -m pytest)
+fi
 export ENVIRONMENT="${ENVIRONMENT:-test}"
+# Prevent APScheduler from making real Azure connections when TestClient spins
+# up the full app during integration tests. These flags are safe for any test
+# run -- they only suppress scheduled background jobs, not request handlers.
+export E2E_HARNESS="${E2E_HARNESS:-true}"
+export BROWSER_TEST_DISABLE_SCHEDULERS="${BROWSER_TEST_DISABLE_SCHEDULERS:-true}"
 
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 OUTDIR="reports/full-suite/$TS"
@@ -47,7 +59,7 @@ run_gate() {
 
 pytest_gate() {  # name, then pytest paths/args
   local name="$1"; shift
-  run_gate "$name" "$PY" -m pytest "${PYTEST_BASE[@]}" "$@"
+  run_gate "$name" "${PYTEST_RUNNER[@]}" "${PYTEST_BASE[@]}" "$@"
 }
 
 # ---- Gates -----------------------------------------------------------------
@@ -85,14 +97,12 @@ pytest_gate "architecture" tests/architecture
 
 if [ "${FAST:-0}" != "1" ]; then
   # 6. Full unit + integration regression
-  #    test_frontend_e2e.py is excluded: its auth_token fixture posts to the live
-  #    login endpoint, which only works against a fully-wired Azure/login env (it
-  #    fails in isolation on a sandbox too). Tracked as a pre-existing finding in
-  #    docs/testing/TESTING_SUITE_AUDIT_2026-06.md, not a regression from this gate.
+  #    auth_flow/ exercises live Azure AD and is skipped in sandboxes; keep that
+  #    ignore. test_frontend_e2e.py is now included: its auth_token fixture was
+  #    de-fragilized (Finding 4 fix) to mint tokens in-process via jwt_manager.
   pytest_gate "unit" tests/unit
   pytest_gate "integration" tests/integration \
-    --ignore=tests/integration/auth_flow \
-    --ignore=tests/integration/test_frontend_e2e.py
+    --ignore=tests/integration/auth_flow
 fi
 
 # 7. Optional: 100+ user local load profile
