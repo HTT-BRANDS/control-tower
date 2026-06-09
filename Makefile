@@ -198,6 +198,22 @@ mutation-test:
 phase3-tests: visual-test accessibility-test
 	@echo "✅ Phase 3 tests complete"
 
+full-suite: ## Run the unified end-to-end gate (security, compliance, design/a11y, chaos, architecture, regression) with a consolidated report
+	@echo "$(BLUE)Running unified full suite...$(NC)"
+	bash scripts/run_full_suite.sh
+
+full-suite-fast: ## Fast subset of the full suite (security + compliance + design only)
+	FAST=1 bash scripts/run_full_suite.sh
+
+full-suite-load: ## Full suite plus the 100+ user local load profile
+	WITH_LOAD=1 bash scripts/run_full_suite.sh
+
+load-profile: ## Run the staged 100+ concurrent-user load profile against a local server
+	bash scripts/run_load_profile.sh
+
+load-profile-quick: ## Quick 100-user / 20s load verification against a local server
+	QUICK=1 bash scripts/run_load_profile.sh
+
 # =============================================================================
 # Code Quality
 # =============================================================================
