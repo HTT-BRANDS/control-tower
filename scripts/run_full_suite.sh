@@ -105,9 +105,14 @@ if [ "${FAST:-0}" != "1" ]; then
     --ignore=tests/integration/auth_flow
 fi
 
-# 7. Optional: 100+ user local load profile
+# 7. Optional: visual-regression suite (skips cleanly when baselines absent)
+if [ "${WITH_VISUAL:-0}" = "1" ]; then
+  pytest_gate "visual" tests/e2e/test_visual_parity.py -m visual
+fi
+
+# 8. Optional: 100+ user local load profile
 if [ "${WITH_LOAD:-0}" = "1" ]; then
-  run_gate "load_100users" env QUICK=1 PYTHON="$PY" bash scripts/run_load_profile.sh
+  run_gate "load_100users" env QUICK=1 bash scripts/run_load_profile.sh
 fi
 
 # ---- Consolidated report ---------------------------------------------------
