@@ -153,7 +153,7 @@
     {% from "macros/ds.html" import ds_tenant_strip %}
     {% set _all_tenant_list = all_tenants() if all_tenants is defined else [] %}
     {% if _all_tenant_list %}
-      {{ ds_tenant_strip(_all_tenant_list) }}
+      {{ ds_tenant_strip(_all_tenant_list, request.state.csp_nonce) }}
     {% endif %}
 
     <!-- Main Content -->
