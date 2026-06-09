@@ -106,9 +106,10 @@
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     </div>
                     {# Global search (⌘K or `/`). Backend: /api/v1/search.
-                       Use md:flex (not md:block — that utility isn't in the
-                       compiled Tailwind output) so it renders on desktop. #}
-                    <div class="hidden md:flex">{{ global_search(request) }}</div>
+                       Uses .global-search-desktop (design-utilities.css): a
+                       self-contained media query, because Tailwind's compiled
+                       `.hidden` beats `.md:flex` on source-order and hid it. #}
+                    <div class="global-search-desktop">{{ global_search(request) }}</div>
                     <button id="theme-toggle-btn" class="text-sm px-2 py-1 rounded hover:bg-brand-primary-110" aria-label="Toggle dark mode" title="Toggle dark mode">🌓</button>
                     {% include 'partials/data_health.html' %}
                     {# ct-yju: tenant count is a live count of is_active=True
