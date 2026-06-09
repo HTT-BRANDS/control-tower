@@ -6,12 +6,12 @@
 # introduces it to pyproject.toml / Dockerfile / infrastructure/. If a new
 # technology lands without updating this file, treat it as stack drift.
 #
-# Last reviewed: 2026-04-22 (release-gate submission v2.5.0)
+# Last reviewed: 2026-06-09 (release-gate submission v2.6.0)
 # Owner:         Tyler Granlund (t-granlund@users.noreply.github.com)
 
 schema_version: 1
 project: control-tower
-version: 2.5.0
+version: 2.6.0
 
 # ---------------------------------------------------------------------------
 # Language runtimes

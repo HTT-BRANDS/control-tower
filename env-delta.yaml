@@ -102,9 +102,9 @@ environments:
 # Recent deltas (must be populated for every release submission)
 # ---------------------------------------------------------------------------
 deltas_since_previous_release:
-  previous_tag: v2.3.0
-  current_tag:  v2.5.0
-  head_sha:     79d72c4
+  previous_tag: v2.5.0
+  current_tag:  v2.6.0
+  head_sha:     aaec64c
   scan_command: git diff v2.3.0..HEAD -- infrastructure/parameters.*.json
 
   infrastructure_parameters:

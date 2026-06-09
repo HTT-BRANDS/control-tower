@@ -45,7 +45,7 @@ Only 2 bd issues remain, both Tyler-human tasks.
 2. Sign in with your HTT Entra ID credentials
 3. You should see the main dashboard with all 5 brand tenants
 4. Navigate to any brand tab -- data should be current (sync runs every 5 min)
-5. Check `/health` -- should return `healthy / 2.5.0 / production`
+5. Check `/health` -- should return `healthy / 2.6.0 / production`
 6. Check `/healthz/data` -- should return `any_stale=false`
 
 ## Key URLs

@@ -56,7 +56,7 @@ ARG PYTHON_VERSION
 
 LABEL maintainer="HTT Control Tower Team" \
       application="HTT Control Tower" \
-      version="2.5.0"
+      version="2.6.0"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -176,7 +176,7 @@ FROM builder as development
 
 LABEL maintainer="HTT Control Tower Team" \
       application="HTT Control Tower" \
-      version="2.5.0-dev"
+      version="2.6.0-dev"
 
 # Install development dependencies
 RUN uv pip install --system -e ".[dev]"
