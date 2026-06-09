@@ -2,6 +2,12 @@
 
 Tracks all user-initiated actions: authentication, sync triggers,
 bulk operations, and configuration changes.
+
+Integrity guarantee (SOC 2 CC7.2):
+  Each row carries a SHA-256 content_hash of its own fields and a prev_hash
+  pointer to the previous row's content_hash, forming a linked chain. A
+  DB-admin-level row mutation changes the content_hash, breaking the chain
+  and making tampering detectable via AuditLogService.verify_chain().
 """
 
 from datetime import UTC, datetime
@@ -39,6 +45,17 @@ class AuditLogEntry(Base):
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # --- Hash-chain integrity (Finding 3 / SOC 2 CC7.2) -------------------
+    # content_hash: SHA-256 of the canonical field payload for this row.
+    # prev_hash:    content_hash of the immediately preceding row in
+    #               chronological order (NULL for the genesis row).
+    # Together they form a linked chain; any mutation to a row's payload
+    # changes its hash and breaks continuity with its successor.
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    prev_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     __table_args__ = (
         Index("ix_audit_log_timestamp_actor", "timestamp", "actor_id"),
         Index("ix_audit_log_action_tenant", "action", "tenant_id"),
@@ -60,4 +77,6 @@ class AuditLogEntry(Base):
             "metadata": self.metadata_json,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
+            "content_hash": self.content_hash,
+            "prev_hash": self.prev_hash,
         }

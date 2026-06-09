@@ -10,10 +10,10 @@ pins the integrity guarantees the service *actually* provides:
   * A failed write never raises into the caller (audit must not break business
     flows) -- but it also must not silently corrupt existing entries.
 
-KNOWN GAP (documented, not asserted as present): entries are not cryptographically
-chained/hashed, so a DB-admin-level actor with direct table access could alter a
-row without detection. `test_no_tamper_evidence_yet_is_documented` records this
-explicitly so it is a conscious, tracked risk rather than a silent assumption.
+INTEGRITY GUARANTEE (Finding 3 closed): entries carry a content_hash (SHA-256
+of their payload) and a prev_hash pointer forming a linked chain. A DB-admin-
+level mutation changes the content_hash, breaking the chain and making tampering
+detectable via AuditLogService.verify_chain(). See migration 014.
 """
 
 from __future__ import annotations
@@ -83,20 +83,46 @@ def test_count_matches_writes(db_session) -> None:
     assert svc.count(tenant_id=TENANT_B) == 3
 
 
-def test_no_tamper_evidence_yet_is_documented(db_session) -> None:
-    """Explicitly record the absence of cryptographic chaining.
+def test_hash_chain_is_present_and_verified(db_session) -> None:
+    """Hash-chain columns exist AND verify_chain() detects tampering.
 
-    This is a guard, not a vulnerability assertion: if someone later adds a
-    `content_hash`/`prev_hash` chain to the model, this test should be updated to
-    assert the chain is verified. Until then, it documents the residual risk so
-    it stays on the radar (ties to STRIDE R1-R3 / T3).
+    Supersedes the old 'test_no_tamper_evidence_yet_is_documented' placeholder
+    that recorded the absence of a chain as a conscious risk. Finding 3 from
+    docs/testing/TESTING_SUITE_AUDIT_2026-06.md is now closed: content_hash +
+    prev_hash are added by migration 014 and computed by AuditLogService.
     """
+    from app.api.services.audit_log_service import _compute_content_hash
     from app.models.audit_log import AuditLogEntry
 
+    # 1. Schema: both columns must exist.
     cols = set(AuditLogEntry.__table__.columns.keys())
-    has_chain = bool(cols & {"content_hash", "prev_hash", "signature", "checksum"})
-    # If this flips to True, tighten this test to verify the chain.
-    assert has_chain is False, (
-        "Audit model gained integrity columns -- upgrade this test to verify "
-        "the hash chain rather than documenting its absence."
+    assert "content_hash" in cols, "content_hash column missing from AuditLogEntry"
+    assert "prev_hash" in cols, "prev_hash column missing from AuditLogEntry"
+
+    # 2. New writes carry hashes.
+    svc = _svc(db_session)
+    e1 = svc.write_entry("audit.chain.test.1", actor_email="a@a.com", tenant_id=TENANT_A)
+    e2 = svc.write_entry("audit.chain.test.2", actor_email="a@a.com", tenant_id=TENANT_A)
+    e3 = svc.write_entry("audit.chain.test.3", actor_email="a@a.com", tenant_id=TENANT_A)
+
+    assert e1.content_hash, "genesis row must have a content_hash"
+    assert e1.prev_hash is None, "genesis row prev_hash must be None"
+    assert e2.prev_hash == e1.content_hash, "e2.prev_hash must point to e1"
+    assert e3.prev_hash == e2.content_hash, "e3.prev_hash must point to e2"
+
+    # 3. verify_chain() passes on an intact chain.
+    ok, reason = svc.verify_chain()
+    assert ok, f"chain should be intact but got: {reason}"
+
+    # 4. verify_chain() detects a field mutation.
+    # Directly mutate a row's payload column in the DB, bypassing the service.
+    db_session.query(AuditLogEntry).filter(
+        AuditLogEntry.id == e2.id
+    ).update({"action": "TAMPERED"}, synchronize_session="fetch")
+    db_session.commit()
+
+    ok_after, reason_after = svc.verify_chain()
+    assert not ok_after, "mutated row should break chain verification"
+    assert e2.id in reason_after or "content_hash mismatch" in reason_after, (
+        f"failure reason should reference the tampered row: {reason_after}"
     )

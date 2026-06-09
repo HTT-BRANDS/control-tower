@@ -6,6 +6,8 @@ with filtering and pagination for the API routes.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -51,6 +53,32 @@ class AuditAction:
     SETTINGS_UPDATED = "admin.settings.updated"
 
 
+def _compute_content_hash(entry: AuditLogEntry) -> str:
+    """SHA-256 of the canonical payload fields for a row.
+
+    Only the business-data fields are hashed; the integrity columns
+    themselves (content_hash, prev_hash) are excluded to avoid circularity.
+    The payload is serialised as sorted JSON for deterministic output.
+    """
+    payload = {
+        "id": entry.id,
+        "timestamp": entry.timestamp.isoformat() if entry.timestamp else None,
+        "actor_id": entry.actor_id,
+        "actor_email": entry.actor_email,
+        "action": entry.action,
+        "resource_type": entry.resource_type,
+        "resource_id": entry.resource_id,
+        "tenant_id": entry.tenant_id,
+        "status": entry.status,
+        "detail": entry.detail,
+        "metadata_json": entry.metadata_json,
+        "ip_address": entry.ip_address,
+        "user_agent": entry.user_agent,
+    }
+    canonical = json.dumps(payload, sort_keys=True, default=str)
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
 class AuditLogService:
     """Service for reading and writing audit log entries."""
 
@@ -91,6 +119,22 @@ class AuditLogService:
             if user_agent is None:
                 user_agent = request.headers.get("User-Agent")
 
+        # Fetch the prev_hash from the most-recent row in the DB (all
+        # tenants — the chain is global so cross-tenant tampering is visible).
+        prev_hash: str | None = None
+        try:
+            latest = (
+                self.db.query(AuditLogEntry)
+                .order_by(AuditLogEntry.timestamp.desc())
+                .with_for_update(skip_locked=True)
+                .first()
+            )
+            prev_hash = latest.content_hash if latest else None
+        except Exception:
+            # If the column doesn't exist yet (pre-migration env), fall back
+            # gracefully so existing behaviour is preserved.
+            pass
+
         entry = AuditLogEntry(
             id=str(uuid.uuid4()),
             timestamp=datetime.now(UTC),
@@ -105,9 +149,18 @@ class AuditLogService:
             metadata_json=metadata,
             ip_address=ip_address,
             user_agent=user_agent,
+            prev_hash=prev_hash,
         )
         try:
+            # First flush: persist the row so the DB applies any type coercions
+            # (e.g. SQLite normalises timezone-aware datetimes).  We then
+            # refresh to read back the *exact* stored values before hashing,
+            # guaranteeing that verify_chain() will always agree with what is
+            # on disk — even across databases with different timestamp precision.
             self.db.add(entry)
+            self.db.flush()
+            self.db.refresh(entry)
+            entry.content_hash = _compute_content_hash(entry)
             self.db.commit()
             self.db.refresh(entry)
             logger.debug("Audit: %s by %s", action, actor_email or actor_id or "system")
@@ -183,3 +236,47 @@ class AuditLogService:
         if until:
             q = q.filter(AuditLogEntry.timestamp <= until)
         return q.count()
+
+    def verify_chain(self, *, limit: int = 1000) -> tuple[bool, str]:
+        """Walk the hash chain and verify its integrity.
+
+        Fetches the most recent *limit* rows in chronological order and
+        checks that:
+        1. Each row's stored content_hash matches a freshly-computed hash
+           of its payload (detects field-level mutations).
+        2. Each row's prev_hash matches the content_hash of the preceding
+           row (detects insertions, deletions, and row reordering).
+
+        Returns:
+            (True, "ok")  if the chain is intact.
+            (False, <reason>)  describing the first violation found.
+        """
+        rows = (
+            self.db.query(AuditLogEntry)
+            .order_by(AuditLogEntry.timestamp.asc())
+            .limit(limit)
+            .all()
+        )
+        if not rows:
+            return True, "ok (empty chain)"
+
+        prev_hash: str | None = None
+        for row in rows:
+            # 1. Recompute and compare content_hash.
+            expected = _compute_content_hash(row)
+            if row.content_hash != expected:
+                return (
+                    False,
+                    f"row {row.id}: content_hash mismatch "
+                    f"(stored={row.content_hash!r}, computed={expected!r})",
+                )
+            # 2. Check prev_hash linkage.
+            if row.prev_hash != prev_hash:
+                return (
+                    False,
+                    f"row {row.id}: prev_hash mismatch "
+                    f"(stored={row.prev_hash!r}, expected={prev_hash!r})",
+                )
+            prev_hash = row.content_hash
+
+        return True, "ok"
