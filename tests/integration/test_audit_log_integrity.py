@@ -91,7 +91,6 @@ def test_hash_chain_is_present_and_verified(db_session) -> None:
     docs/testing/TESTING_SUITE_AUDIT_2026-06.md is now closed: content_hash +
     prev_hash are added by migration 014 and computed by AuditLogService.
     """
-    from app.api.services.audit_log_service import _compute_content_hash
     from app.models.audit_log import AuditLogEntry
 
     # 1. Schema: both columns must exist.
