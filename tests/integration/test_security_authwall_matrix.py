@@ -86,10 +86,7 @@ def test_no_protected_route_serves_200_to_anonymous(anon_client: TestClient) -> 
         resp = anon_client.get(path)
         if resp.status_code == 200:
             leaks.append((path, resp.status_code))
-    assert not leaks, (
-        "Routes served 200 to an unauthenticated caller (data exposure): "
-        f"{leaks}"
-    )
+    assert not leaks, f"Routes served 200 to an unauthenticated caller (data exposure): {leaks}"
 
 
 def test_protected_routes_return_401_not_422(anon_client: TestClient) -> None:

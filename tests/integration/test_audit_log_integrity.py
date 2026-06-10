@@ -48,9 +48,7 @@ def test_reads_are_tenant_scoped(db_session) -> None:
     svc.write_entry("auth.login", actor_email="b@b.com", tenant_id=TENANT_B)
     a_entries = svc.query(tenant_id=TENANT_A)
     assert a_entries, "tenant A should see its own entry"
-    assert all(e.tenant_id == TENANT_A for e in a_entries), (
-        "cross-tenant audit leakage"
-    )
+    assert all(e.tenant_id == TENANT_A for e in a_entries), "cross-tenant audit leakage"
 
 
 def test_service_exposes_no_mutation_methods(db_session) -> None:
@@ -115,9 +113,9 @@ def test_hash_chain_is_present_and_verified(db_session) -> None:
 
     # 4. verify_chain() detects a field mutation.
     # Directly mutate a row's payload column in the DB, bypassing the service.
-    db_session.query(AuditLogEntry).filter(
-        AuditLogEntry.id == e2.id
-    ).update({"action": "TAMPERED"}, synchronize_session="fetch")
+    db_session.query(AuditLogEntry).filter(AuditLogEntry.id == e2.id).update(
+        {"action": "TAMPERED"}, synchronize_session="fetch"
+    )
     db_session.commit()
 
     ok_after, reason_after = svc.verify_chain()

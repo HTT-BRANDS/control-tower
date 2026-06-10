@@ -252,10 +252,7 @@ class AuditLogService:
             (False, <reason>)  describing the first violation found.
         """
         rows = (
-            self.db.query(AuditLogEntry)
-            .order_by(AuditLogEntry.timestamp.asc())
-            .limit(limit)
-            .all()
+            self.db.query(AuditLogEntry).order_by(AuditLogEntry.timestamp.asc()).limit(limit).all()
         )
         if not rows:
             return True, "ok (empty chain)"

@@ -88,7 +88,7 @@ async def test_distinct_clients_have_independent_budgets(limiter: RateLimiter) -
     b = _FakeRequest(ip="198.51.100.2")
     assert (await limiter.is_allowed(a, cfg))[0] is True
     assert (await limiter.is_allowed(a, cfg))[0] is False  # a exhausted
-    assert (await limiter.is_allowed(b, cfg))[0] is True   # b unaffected
+    assert (await limiter.is_allowed(b, cfg))[0] is True  # b unaffected
 
 
 async def test_xforwarded_for_spoofing_does_not_share_one_bucket(

@@ -122,9 +122,7 @@ def test_tenant_cannot_delete_another_tenants_rule(svc) -> None:
 
 def test_tenant_cannot_update_another_tenants_rule(svc) -> None:
     rule, _ = _make(svc, tenant_id=TENANT_A)
-    updated, errors = svc.update(
-        rule.id, tenant_id=TENANT_B, name="hijacked"
-    )
+    updated, errors = svc.update(rule.id, tenant_id=TENANT_B, name="hijacked")
     assert updated is None
     assert errors
 

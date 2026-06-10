@@ -59,8 +59,7 @@ def test_text_on_primary_meets_aa(brand_key: str) -> None:
     assert primary and text, f"{brand_key} missing primary/text tokens"
     ratio = get_contrast_ratio(primary, text)
     assert ratio >= AA_NORMAL, (
-        f"{brand_key}: emitted text {text} on primary {primary} is "
-        f"{ratio:.2f}:1 (< {AA_NORMAL})"
+        f"{brand_key}: emitted text {text} on primary {primary} is {ratio:.2f}:1 (< {AA_NORMAL})"
     )
 
 
@@ -74,16 +73,14 @@ def test_text_on_accent_meets_aa_large(brand_key: str) -> None:
         pytest.skip(f"{brand_key} has no accent token")
     ratio = get_contrast_ratio(accent, text)
     assert ratio >= AA_LARGE, (
-        f"{brand_key}: emitted text {text} on accent {accent} is "
-        f"{ratio:.2f}:1 (< {AA_LARGE})"
+        f"{brand_key}: emitted text {text} on accent {accent} is {ratio:.2f}:1 (< {AA_LARGE})"
     )
 
 
 def test_brands_are_visually_distinct() -> None:
     """A theming regression that collapses all brands to one palette is caught."""
     primaries = {
-        k: generate_brand_css_variables(brands[k]).get("--brand-primary")
-        for k in BRAND_KEYS
+        k: generate_brand_css_variables(brands[k]).get("--brand-primary") for k in BRAND_KEYS
     }
     assert all(primaries.values()), primaries
     # At least 3 distinct primary colors across 5 brands (some may share a base).

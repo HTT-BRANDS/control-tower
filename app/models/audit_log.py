@@ -51,9 +51,7 @@ class AuditLogEntry(Base):
     #               chronological order (NULL for the genesis row).
     # Together they form a linked chain; any mutation to a row's payload
     # changes its hash and breaks continuity with its successor.
-    content_hash: Mapped[str | None] = mapped_column(
-        String(64), nullable=True, index=True
-    )
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     prev_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     __table_args__ = (
