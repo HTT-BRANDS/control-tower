@@ -73,6 +73,28 @@ def _get_access_token(url: str) -> str:
     raise RuntimeError(msg)
 
 
+def _suppress_consent_banner(context: object, base_url: str) -> None:
+    """Pre-seed a dismissed-consent cookie so the GDPR banner never renders.
+
+    The consent banner JS shows itself when document.cookie lacks
+    'consent_preferences='. Seeding any value keeps it hidden, which is
+    essential for deterministic full-page screenshots.
+    """
+    from urllib.parse import urlparse
+
+    host = urlparse(base_url).hostname or "127.0.0.1"
+    context.add_cookies(  # type: ignore[attr-defined]
+        [
+            {
+                "name": "consent_preferences",
+                "value": "all",
+                "domain": host,
+                "path": "/",
+            }
+        ]
+    )
+
+
 def capture(base_url: str, only: list[str] | None) -> None:
     """Drive Playwright through each page and write PNG baselines."""
     from playwright.sync_api import sync_playwright
@@ -92,14 +114,27 @@ def capture(base_url: str, only: list[str] | None) -> None:
             base_url=base_url,
             extra_http_headers={"Authorization": f"Bearer {access_token}"},
         )
+        # Suppress the GDPR/CCPA consent banner. It renders only when the
+        # 'consent_preferences' cookie is absent, and when present it pushes
+        # all page content down by 5-20px — which corrupts full-page baselines
+        # (viewport-height mismatch + cascading text ghosting). Pre-seeding a
+        # dismissed-consent cookie keeps every capture structurally identical.
+        # This MUST match the equivalent suppression in test_visual_parity.py.
+        _suppress_consent_banner(context, base_url)
         page = context.new_page()
 
         for name, path, wait_sel in pages:
             print(f"  → capturing {name:<12} ({path}) ...", end=" ", flush=True)
             page.goto(path)
+            # The readiness selector guarantees the page's main content has
+            # hydrated. We deliberately do NOT wait for 'networkidle' — these
+            # dashboards use HTMX background polling, so the network never goes
+            # idle and that wait would time out. 'load' fires once the initial
+            # document + sub-resources are done; the fixed settle covers CSS
+            # transitions and font swaps.
             page.wait_for_selector(wait_sel, timeout=10_000)
-            page.wait_for_load_state("networkidle")
-            page.wait_for_timeout(500)  # let CSS transitions settle
+            page.wait_for_load_state("load")
+            page.wait_for_timeout(1_000)  # let CSS transitions / fonts settle
             out = BASELINE_DIR / f"{name}.png"
             page.screenshot(path=str(out), full_page=True)
             size_kb = out.stat().st_size // 1024

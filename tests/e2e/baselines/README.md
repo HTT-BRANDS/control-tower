@@ -3,12 +3,16 @@
 This directory holds pinned PNG screenshots used by
 `tests/e2e/test_visual_parity.py`.
 
-**Status (2026-06):** Infrastructure is wired and the capture script works.
-Baselines have not been committed to the repo because PNG snapshots are
-machine-rendering-dependent (font anti-aliasing, GPU compositing) and would
-create flaky CI failures across different OS images. Capture them locally on
-the machine you want to use as the reference, or run the scheduled capture
-job against a stable staging URL.
+**Status (2026-06):** Baselines are committed and the visual gate is green.
+
+**CRITICAL — how baselines must be captured:** baselines MUST be blessed
+through the *same* browser context that compares them (`VISUAL_UPDATE=1`).
+A baseline captured by a *different* context — e.g. the standalone
+`capture_visual_baselines.py` script — drifts at the sub-pixel level (font
+hinting / deviceScaleFactor differences), producing a uniform text-ghosting
+diff of ~3-4% on every run even though nothing actually changed. This is the
+same reason Playwright ships `--update-snapshots`. Always use `make
+capture-baselines` (which runs `VISUAL_UPDATE=1 pytest -m visual`).
 
 ## Expected files
 
@@ -21,37 +25,43 @@ One PNG per migrated page, matching the `PAGES` list in `test_visual_parity.py`:
 - `identity.png`
 - `franchise-coach.png`
 
-## How to populate
-
-### Quick path (self-baseline from local seeded app)
+## How to populate (the right way)
 
 ```bash
-# 1. Seed the local database
-make local-db-reset local-seed
-
-# 2. Capture (app starts automatically on port 8099)
+# Seeds the local demo DB, blesses baselines through the test's own context,
+# then verifies they pass. This is the ONLY supported local path.
 make capture-baselines
-
-# 3. Run the visual tests to confirm baselines pass
-uv run pytest -m visual -v
 ```
 
-The capture script waits for each page's readiness selector, then takes a
-full-page screenshot at 1280x720. If the HTMX partial endpoints are slow,
-try increasing the wait in `scripts/capture_visual_baselines.py`.
-
-### Against staging (recommended for the CI baseline)
-
+Under the hood that runs:
 ```bash
-make capture-baselines CAPTURE_URL=https://app-governance-staging-xnczpwyv.azurewebsites.net
+make local-db-reset local-seed
+VISUAL_UPDATE=1 pytest -m visual   # writes baselines via the test context
+make visual-test                   # verifies they pass
 ```
 
-This requires the staging server to be up and responding (allow 120s cold-start).
+### Determinism safeguards already built in
 
-### Subset only
+The test + capture path neutralises the three things that otherwise make
+full-page dashboard screenshots flaky:
+
+1. **HTMX background polling** — we wait for `load` + a fixed settle, never
+   `networkidle` (which never fires on a polling page).
+2. **GDPR consent banner** — a `consent_preferences` cookie is pre-seeded so
+   the banner never renders (it would shove all content down 5-20px).
+3. **Sub-pixel font drift** — baselines are blessed through the comparison
+   context (`VISUAL_UPDATE=1`), so rendering is identical run-to-run.
+
+### Standalone script (remote URLs only)
+
+`scripts/capture_visual_baselines.py` is retained for capturing against a
+remote URL (e.g. staging) where the in-process test server isn't used. Do NOT
+use it to bless local gate baselines — its context differs from the test's
+and will reintroduce the sub-pixel drift.
 
 ```bash
-uv run python scripts/capture_visual_baselines.py --only dashboard costs
+uv run python scripts/capture_visual_baselines.py \
+  --base-url https://app-governance-staging-xnczpwyv.azurewebsites.net
 ```
 
 ## Running the tests

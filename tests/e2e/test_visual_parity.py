@@ -31,6 +31,7 @@ from __future__ import annotations
 import os
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -70,9 +71,18 @@ def _count_diff_pixels(diff: Image.Image) -> int:
     ImageChops.difference returns per-channel deltas; a pixel is "different"
     if any channel is non-zero. Works for RGB and RGBA.
     """
-    return sum(
-        1 for px in diff.getdata() if any(c > 0 for c in (px if isinstance(px, tuple) else (px,)))
-    )
+    # Collapse the per-channel delta into a single band holding the per-pixel
+    # MAX across channels (ImageChops.lighter = pixel-wise max). A pixel is
+    # "different" iff that max is > 0 — identical semantics to the old
+    # any-channel-nonzero check, but vectorised and without the deprecated
+    # per-pixel getdata() walk (removed in Pillow 14).
+    bands = diff.split()
+    combined = bands[0]
+    for band in bands[1:]:
+        combined = ImageChops.lighter(combined, band)
+    histogram = combined.histogram()
+    # histogram[0] = pixels with zero delta; everything above is a difference.
+    return sum(histogram[1:])
 
 
 def _save_artifacts(
@@ -109,27 +119,60 @@ def test_page_matches_visual_baseline(
 ) -> None:
     """Each migrated page should match its pinned visual baseline.
 
-    If no baseline exists for a page, the test skips with a hint. The first
-    time you run this suite, every page will skip — that is expected.
-    Populate baselines via ``scripts/capture_visual_baselines.py``.
+    Baseline lifecycle:
+      * VISUAL_UPDATE=1 -> this test writes the current screenshot AS the
+        baseline and passes (the "blessing" path). Capturing through the exact
+        same browser context that does the comparison is essential: a baseline
+        captured by a *different* context (e.g. a standalone script) drifts at
+        the sub-pixel level (font hinting / deviceScaleFactor), producing a
+        uniform text-ghosting diff on every run. This is the same pattern as
+        Playwright's --update-snapshots.
+      * No baseline present and VISUAL_UPDATE unset -> skip with a hint.
+      * Baseline present -> compare within VISUAL_TOLERANCE_PCT.
     """
     baseline_path = BASELINE_DIR / f"{page_name}.png"
-    if not baseline_path.exists():
+    update_mode = os.getenv("VISUAL_UPDATE") == "1"
+    if not baseline_path.exists() and not update_mode:
         pytest.skip(
             f"No baseline for {page_name!r} at {baseline_path.relative_to(Path.cwd())}. "
-            f"Run: python scripts/capture_visual_baselines.py"
+            f"Bless baselines via: VISUAL_UPDATE=1 pytest -m visual"
         )
+
+    # --- suppress the GDPR/CCPA consent banner ---
+    # The banner renders only when the 'consent_preferences' cookie is absent,
+    # and when shown it pushes all page content down by 5-20px — corrupting the
+    # full-page baseline (height mismatch + cascading text ghosting). Seeding a
+    # dismissed-consent cookie keeps the layout deterministic. This MUST match
+    # the suppression in scripts/capture_visual_baselines.py.
+    _host = urlparse(authenticated_page._base_url).hostname or "127.0.0.1"  # type: ignore[attr-defined]
+    authenticated_page.context.add_cookies(
+        [{"name": "consent_preferences", "value": "all", "domain": _host, "path": "/"}]
+    )
 
     # --- navigate and stabilize the page ---
     authenticated_page.goto(path)
     authenticated_page.wait_for_selector(wait_selector, timeout=10_000)
-    # networkidle catches HTMX fetches; 500ms buffer lets CSS transitions settle.
-    authenticated_page.wait_for_load_state("networkidle")
-    authenticated_page.wait_for_timeout(500)
+    # NB: we wait for 'load', not 'networkidle'. These dashboards use HTMX
+    # background polling, so the network never goes idle and 'networkidle'
+    # would hang until timeout. The readiness selector above already proves
+    # the page hydrated; the fixed buffer covers CSS transitions / font swaps.
+    # This MUST match the wait strategy in scripts/capture_visual_baselines.py
+    # or the screenshots will differ from the baselines.
+    authenticated_page.wait_for_load_state("load")
+    authenticated_page.wait_for_timeout(1_000)
 
     # --- capture current state ---
     current_bytes = authenticated_page.screenshot(full_page=True)
     current_img = Image.open(BytesIO(current_bytes)).convert("RGB")
+
+    # --- blessing path: write the baseline and pass ---
+    if update_mode:
+        BASELINE_DIR.mkdir(parents=True, exist_ok=True)
+        current_img.save(baseline_path)
+        size_kb = baseline_path.stat().st_size // 1024
+        print(f"\n  blessed baseline: {baseline_path.name} ({size_kb} KB)")
+        return
+
     baseline_img = Image.open(baseline_path).convert("RGB")
 
     # --- size check first (cheap, fails fast on layout changes) ---

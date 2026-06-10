@@ -184,19 +184,21 @@ e2e-test: ## Run Playwright E2E tests
 
 visual-test: ## Run visual-regression tests (requires baselines in tests/e2e/baselines/)
 	@echo "=== Running Visual Regression Tests ==="
-	uv run pytest tests/e2e/test_visual_parity.py -v -m visual
+	ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	  uv run pytest tests/e2e/test_visual_parity.py -v -m visual
 
-capture-baselines: ## Capture visual-parity baselines (seeds DB + boots app + screenshots)
-	@echo "=== Capturing visual baselines ==="
+capture-baselines: ## Bless visual-parity baselines via the test's own context (seeds DB first)
+	@echo "=== Blessing visual baselines ==="
 	@echo "Seeding local demo DB first..."
 	$(MAKE) local-db-reset local-seed
-	@echo "Running capture script (app will start on :8099)..."
-	$(if $(CAPTURE_URL),\
-	  ENVIRONMENT=test E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
-	    uv run python scripts/capture_visual_baselines.py --base-url $(CAPTURE_URL),\
-	  ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
-	    uv run python scripts/capture_visual_baselines.py)
-	@echo "Baselines captured. Run 'make visual-test' to verify."
+	@echo "Blessing baselines through the test path (VISUAL_UPDATE=1)..."
+	@echo "NB: baselines MUST be captured by the same browser context that"
+	@echo "    compares them, or sub-pixel font drift breaks every run. The"
+	@echo "    standalone capture script is for remote-URL captures only."
+	ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	  VISUAL_UPDATE=1 uv run pytest tests/e2e/test_visual_parity.py -m visual -q
+	@echo "Baselines blessed. Verifying they pass..."
+	$(MAKE) visual-test
 	@echo "Commit the PNGs in tests/e2e/baselines/ alongside your change."
 
 accessibility-test:

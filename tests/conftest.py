@@ -215,7 +215,17 @@ def _playwright_browser_available() -> bool:
         _os.path.expanduser("~/Library/Caches/ms-playwright"),
         _os.path.expanduser("~/AppData/Local/ms-playwright"),
     ]
-    patterns = ("**/headless_shell", "**/chrome", "**/chrome-linux/chrome", "**/Chromium")
+    # Binary names vary by platform / Playwright version:
+    #   Linux        -> chrome, chrome-linux/chrome, headless_shell
+    #   macOS (older)-> Chromium.app/.../Chromium
+    #   macOS (newer)-> Google Chrome for Testing.app/.../Google Chrome for Testing
+    patterns = (
+        "**/headless_shell",
+        "**/chrome",
+        "**/chrome-linux/chrome",
+        "**/Chromium",
+        "**/Google Chrome for Testing",
+    )
     for root in cache_roots:
         if not root or not _os.path.isdir(root):
             continue
