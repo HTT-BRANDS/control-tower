@@ -135,6 +135,7 @@ markers = [
 dev = [
     "aiosmtplib>=5.1.0",
     "locust>=2.43.4",
+    "mutmut>=2.4.4,<3",  # 3.x has breaking CLI/config changes (uses in-process pytest)
     "mypy>=1.19.1",
     "pillow>=10.0.0",
     "playwright>=1.58.0",
@@ -160,7 +161,10 @@ module = [
 ignore_errors = true
 
 [tool.mutmut]
-paths_to_mutate = "app/"
+# Targeted mutation testing for the three security-critical modules.
+# Run via: bash scripts/run-mutation-tests.sh
+# The script passes --runner and --paths-to-mutate on the CLI (2.x API).
+paths_to_mutate = "app/core/"
 backup = false
-runner = "python -m pytest tests/ -x"
-tests_dir = "tests/"
+runner = "python -m pytest tests/unit/test_auth.py tests/unit/test_jwt_security.py tests/unit/test_authorization.py tests/unit/test_rate_limit.py tests/unit/test_rate_limit_enforcement.py -x -q --tb=no"
+tests_dir = "tests/unit/"

@@ -182,9 +182,24 @@ e2e-test: ## Run Playwright E2E tests
 # Phase 3: Advanced Testing Targets
 # =============================================================================
 
-visual-test:
+visual-test: ## Run visual-regression tests (requires baselines in tests/e2e/baselines/)
 	@echo "=== Running Visual Regression Tests ==="
-	pytest tests/e2e/test_visual_regression.py -v -m visual
+	ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	  uv run pytest tests/e2e/test_visual_parity.py -v -m visual
+
+capture-baselines: ## Bless visual-parity baselines via the test's own context (seeds DB first)
+	@echo "=== Blessing visual baselines ==="
+	@echo "Seeding local demo DB first..."
+	$(MAKE) local-db-reset local-seed
+	@echo "Blessing baselines through the test path (VISUAL_UPDATE=1)..."
+	@echo "NB: baselines MUST be captured by the same browser context that"
+	@echo "    compares them, or sub-pixel font drift breaks every run. The"
+	@echo "    standalone capture script is for remote-URL captures only."
+	ENVIRONMENT=test DATABASE_URL=$(LOCAL_DB_URL) E2E_HARNESS=true BROWSER_TEST_DISABLE_SCHEDULERS=true \
+	  VISUAL_UPDATE=1 uv run pytest tests/e2e/test_visual_parity.py -m visual -q
+	@echo "Baselines blessed. Verifying they pass..."
+	$(MAKE) visual-test
+	@echo "Commit the PNGs in tests/e2e/baselines/ alongside your change."
 
 accessibility-test:
 	@echo "=== Running Accessibility Tests ==="
@@ -197,6 +212,22 @@ mutation-test:
 # Combined Phase 3 test suite
 phase3-tests: visual-test accessibility-test
 	@echo "✅ Phase 3 tests complete"
+
+full-suite: ## Run the unified end-to-end gate (security, compliance, design/a11y, chaos, architecture, regression) with a consolidated report
+	@echo "$(BLUE)Running unified full suite...$(NC)"
+	bash scripts/run_full_suite.sh
+
+full-suite-fast: ## Fast subset of the full suite (security + compliance + design only)
+	FAST=1 bash scripts/run_full_suite.sh
+
+full-suite-load: ## Full suite plus the 100+ user local load profile
+	WITH_LOAD=1 bash scripts/run_full_suite.sh
+
+load-profile: ## Run the staged 100+ concurrent-user load profile against a local server
+	bash scripts/run_load_profile.sh
+
+load-profile-quick: ## Quick 100-user / 20s load verification against a local server
+	QUICK=1 bash scripts/run_load_profile.sh
 
 # =============================================================================
 # Code Quality

@@ -269,3 +269,33 @@ Symptoms → first place to look:
 | Production deploy red | If prod was un-mutated (failure before image swap), the system is fine — re-dispatch after fix. If prod *was* mutated, auto-rollback should have triggered; verify via `linuxFxVersion`. |
 
 If still stuck: the canonical operational entry point is [`RUNBOOK.md`](./RUNBOOK.md). If the runbook itself has a 🔴 TYLER-ONLY gap on the path you need, that's a Tyler-blocking gap and should be flagged in `bd`.
+
+---
+
+## Full end-to-end suite (security · compliance · design · perf)
+
+Unified gate that runs every layer in isolated passes and writes one report to
+`reports/full-suite/<timestamp>/SUITE_REPORT.md`. See
+[`docs/testing/TESTING_SUITE_AUDIT_2026-06.md`](./docs/testing/TESTING_SUITE_AUDIT_2026-06.md)
+for the full inventory and findings.
+
+```bash
+make full-suite-fast     # security + compliance + design (fast inner loop)
+make full-suite          # all gates + consolidated report
+make full-suite-load     # all gates + 100-user local load profile
+```
+
+### 100+ concurrent-user load profile (local)
+
+Closes the "unknown behavior at 100+ users" residual risk. Boots a local server,
+mints a real JWT in-process, drives DB-backed read paths, gates on p95 ≤ 500 ms
+and error rate ≤ 1 %. Verified: 100 users → 0 failures, median 2 ms.
+
+```bash
+make load-profile-quick  # 100 users / 20s
+make load-profile        # staged ramp 50 → 120 → spike 160 → soak 100
+```
+
+> Trade-off: runs against local SQLite, so it proves the **app tier** scales but
+> does not model Azure SQL Basic (5 DTU) under load. For DTU behaviour, run the
+> profile against staging as a separate, scheduled exercise.

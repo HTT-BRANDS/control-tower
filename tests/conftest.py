@@ -188,3 +188,67 @@ def authed_client(db_session, mock_user, mock_authz, _test_client_session):
     yield _test_client_session
 
     app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# Portable browser-test guard.
+#
+# Playwright-based tests hard-error (not skip) when the Chromium binary is not
+# installed -- e.g. on a CI runner that ran `pip install` but not
+# `playwright install`. This hook turns that into a clean skip so the full
+# suite stays green on machines without a browser, while still running the
+# real e2e tests wherever a browser is present.
+# ---------------------------------------------------------------------------
+def _playwright_browser_available() -> bool:
+    """Detect a usable Chromium *without* launching the Playwright driver.
+
+    Launching sync_playwright() during collection spins up a Node subprocess and
+    can perturb the asyncio event loop the async tests share. We instead glob the
+    Playwright browser cache, which is side-effect free.
+    """
+    import glob
+    import os as _os
+
+    cache_roots = [
+        _os.environ.get("PLAYWRIGHT_BROWSERS_PATH", ""),
+        _os.path.expanduser("~/.cache/ms-playwright"),
+        _os.path.expanduser("~/Library/Caches/ms-playwright"),
+        _os.path.expanduser("~/AppData/Local/ms-playwright"),
+    ]
+    # Binary names vary by platform / Playwright version:
+    #   Linux        -> chrome, chrome-linux/chrome, headless_shell
+    #   macOS (older)-> Chromium.app/.../Chromium
+    #   macOS (newer)-> Google Chrome for Testing.app/.../Google Chrome for Testing
+    patterns = (
+        "**/headless_shell",
+        "**/chrome",
+        "**/chrome-linux/chrome",
+        "**/Chromium",
+        "**/Google Chrome for Testing",
+    )
+    for root in cache_roots:
+        if not root or not _os.path.isdir(root):
+            continue
+        for pat in patterns:
+            if glob.glob(_os.path.join(root, pat), recursive=True):
+                return True
+    return False
+
+
+_BROWSER_FIXTURES = {"page", "browser", "browser_context", "context", "new_context"}
+
+
+def pytest_collection_modifyitems(config, items):
+    import pytest as _pytest
+
+    available = None  # lazy: only probe if a browser test is actually collected
+    skip_marker = _pytest.mark.skip(
+        reason="Playwright browser not installed (run `playwright install chromium`)"
+    )
+    for item in items:
+        fixturenames = set(getattr(item, "fixturenames", ()))
+        if fixturenames & _BROWSER_FIXTURES:
+            if available is None:
+                available = _playwright_browser_available()
+            if not available:
+                item.add_marker(skip_marker)

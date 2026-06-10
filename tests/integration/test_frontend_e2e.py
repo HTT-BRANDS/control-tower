@@ -52,14 +52,22 @@ def client(seeded_db):
 
 @pytest.fixture()
 def auth_token(client):
-    """Get a valid JWT token for authenticated requests."""
-    response = client.post(
-        "/api/v1/auth/login",
-        data={"username": "admin", "password": "admin"},  # pragma: allowlist secret
+    """Mint a valid JWT token in-process — no live login endpoint required.
+
+    Previously this fixture POSTed to /api/v1/auth/login, which fails in any
+    environment without a fully-wired login path (no DB users, no auth config).
+    Fix: use jwt_manager.create_access_token() directly, exactly as the load
+    profile in tests/load/locust_stress_profile.py does.
+
+    Closes Finding 4 from docs/testing/TESTING_SUITE_AUDIT_2026-06.md.
+    """
+    from app.core.auth import jwt_manager
+
+    return jwt_manager.create_access_token(
+        user_id="test-admin",
+        email="admin@httbrands.com",
+        roles=["admin"],
     )
-    assert response.status_code == 200
-    # Token is set as HttpOnly cookie (not in JSON body)
-    return response.cookies.get("access_token")
 
 
 @pytest.fixture()
