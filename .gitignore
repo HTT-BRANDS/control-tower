@@ -114,3 +114,10 @@ tests/e2e/visual_diffs/
 
 # Security research scratch space (ephemeral)
 research/PYSEC-*/
+
+# Auto-generated test/suite artifacts
+reports/full-suite/
+reports/load/
+reports/mutation/
+.mutmut-cache
+mutants/
